@@ -1,0 +1,7 @@
+*.iml
+.idea/
+out/
+*.asm
+*.o
+*.elf
+*.exe
