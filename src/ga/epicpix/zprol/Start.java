@@ -1,7 +1,5 @@
 package ga.epicpix.zprol;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class Start {
@@ -11,10 +9,7 @@ public class Start {
             throw new IllegalArgumentException("File not specified");
         }
         String fileName = String.join(" ", args);
-        File file = new File(fileName);
-        if(!file.exists()) {
-            throw new FileNotFoundException(fileName);
-        }
+        Parser.parse(fileName);
     }
 
 }
