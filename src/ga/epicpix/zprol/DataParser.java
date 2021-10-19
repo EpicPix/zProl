@@ -21,6 +21,7 @@ public class DataParser {
 
     public String nextWord() {
         ignoreWhitespace();
+        if(index + 1 >= data.length()) return null;
         StringBuilder word = new StringBuilder();
         char[] cdata = data.toCharArray();
         while(index + 1 < cdata.length) {
@@ -29,6 +30,10 @@ public class DataParser {
             }
             for(char special : Parser.specialCharacters) {
                 if(cdata[index] == special) {
+                    if(word.length() == 0) {
+                        word.append(cdata[index]);
+                        index++;
+                    }
                     return word.toString();
                 }
             }
@@ -38,4 +43,31 @@ public class DataParser {
         return word.toString();
     }
 
+    public String nextStringStarted() {
+        if(index + 1 >= data.length()) return null;
+        StringBuilder word = new StringBuilder();
+        char[] cdata = data.toCharArray();
+        while(index + 1 < cdata.length) {
+            if(cdata[index] == '\\') {
+                index++;
+                if(cdata[index] == '\"') {
+                    index++;
+                    word.append("\"");
+                }else if(cdata[index] == 'n') {
+                    index++;
+                    word.append('\n');
+                }else {
+                    System.err.println("Unknown escape code: \\" + cdata[index]);
+                }
+                continue;
+            }else if(cdata[index] == '\"') {
+                index++;
+                break;
+            }else {
+                word.append(cdata[index]);
+            }
+            index++;
+        }
+        return word.toString();
+    }
 }

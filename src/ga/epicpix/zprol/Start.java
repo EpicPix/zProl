@@ -9,7 +9,7 @@ public class Start {
             throw new IllegalArgumentException("File not specified");
         }
         String fileName = String.join(" ", args);
-        Parser.parse(fileName);
+        Parser.tokenize(fileName);
     }
 
 }

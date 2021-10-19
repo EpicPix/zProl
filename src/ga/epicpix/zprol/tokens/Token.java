@@ -11,4 +11,12 @@ public class Token {
     public TokenType getType() {
         return type;
     }
+
+    protected String getData() {
+        return type.name().toLowerCase();
+    }
+
+    public String toString() {
+        return "Token(" + getData() + ")";
+    }
 }
