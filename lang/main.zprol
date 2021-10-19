@@ -2,12 +2,12 @@
 // keywords: structure, function, return, internal, typedef, (...types)
 
 structure bruh {
-    abc: uint8;
-    def: void(uint8);
+    uint8 abc;
+    // TODO: void(uint8, uint16, uint32) def;
 }
 
 object pog {
-    internal field data: uint64;
+    internal field uint64 data;
     pog(uint64 param) {
         data = param;
     }

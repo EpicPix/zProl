@@ -43,6 +43,13 @@ public class DataParser {
         return word.toString();
     }
 
+    public String seekWord() {
+        int start = index;
+        String str = nextWord();
+        index = start;
+        return str;
+    }
+
     public String nextStringStarted() {
         if(index + 1 >= data.length()) return null;
         StringBuilder word = new StringBuilder();

@@ -13,7 +13,7 @@ import java.util.List;
 
 public class Parser {
 
-    public static final char[] specialCharacters = "\"{}".toCharArray();
+    public static final char[] specialCharacters = "\"{}()[];,".toCharArray();
 
     public static ArrayList<Token> tokenize(String fileName) throws IOException {
         File file = new File(fileName);
@@ -36,7 +36,7 @@ public class Parser {
         String word;
         while((word = parser.nextWord()) != null) {
             if(word.equals("structure")) {
-                tokens.add(new StructureToken(parser.nextWord()));
+                tokens.add(parseStructure(parser));
             } else if(word.equals("{")) {
                 tokens.add(new Token(TokenType.START_CODE));
             } else if(word.equals("}")) {
@@ -53,6 +53,25 @@ public class Parser {
         }
         return tokens;
 
+    }
+
+    public static StructureToken parseStructure(DataParser parser) {
+        String name = parser.nextWord();
+        if(!parser.nextWord().equals("{")) {
+            throw new RuntimeException("Error 1");
+        }
+        ArrayList<StructureType> types = new ArrayList<>();
+        while(!parser.seekWord().equals("}")) {
+            String sType = parser.nextWord();
+            String sName = parser.nextWord();
+            types.add(new StructureType(sType, sName));
+            // TODO: Make function signatures be parsable using parser.nextType()
+            String tmp;
+            if(!(tmp = parser.nextWord()).equals(";")) {
+                throw new RuntimeException("Error 2: " + tmp);
+            }
+        }
+        return new StructureToken(name, types);
     }
 
 }

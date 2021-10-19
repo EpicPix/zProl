@@ -1,12 +1,18 @@
 package ga.epicpix.zprol.tokens;
 
+import ga.epicpix.zprol.StructureType;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class StructureToken extends Token {
 
     private final String structureName;
+    private final ArrayList<StructureType> types;
 
-    public StructureToken(String structureName) {
+    public StructureToken(String structureName, ArrayList<StructureType> types) {
         super(TokenType.STRUCTURE);
         this.structureName = structureName;
+        this.types = types;
     }
 
     public String getStructureName() {
@@ -14,6 +20,6 @@ public class StructureToken extends Token {
     }
 
     protected String getData() {
-        return super.getData() + ", name=\"" + structureName + "\"";
+        return super.getData() + ", name=\"" + structureName + "\", types=" + types;
     }
 }
