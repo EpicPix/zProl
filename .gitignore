@@ -5,3 +5,4 @@ out/
 *.o
 *.elf
 *.exe
+*.dot

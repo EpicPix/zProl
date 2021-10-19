@@ -4,11 +4,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Parser {
+
+    public static final char[] specialCharacters = "{".toCharArray();
 
     public static void parse(String fileName) throws IOException {
         File file = new File(fileName);
@@ -16,14 +16,17 @@ public class Parser {
             throw new FileNotFoundException(fileName);
         }
 
-        List<String> lines = Files.readAllLines(file.toPath());
-        lines.removeIf((line) -> line.trim().startsWith("//"));
-        lines.removeIf((line) -> line.trim().isEmpty());
+        List<String> listLines = Files.readAllLines(file.toPath());
+        listLines.removeIf((line) -> line.trim().startsWith("//"));
+        listLines.removeIf((line) -> line.trim().isEmpty());
+        String[] lines = new String[listLines.size()];
+        for(int i = 0; i<lines.length; i++) {
+            lines[i] = listLines.get(i).trim();
+        }
 
-        ArrayList<String> words = new ArrayList<>();
-        lines.forEach(line -> words.addAll(Arrays.asList(line.trim().split(" "))));
+        DataParser parser = new DataParser(lines);
+        System.out.println(parser.nextWord()); // should be "structure"
 
-        System.out.println("Words: " + words);
     }
 
 }
