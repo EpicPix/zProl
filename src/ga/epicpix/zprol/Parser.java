@@ -86,6 +86,37 @@ public class Parser {
         if(!parser.nextWord().equals("{")) {
             throw new RuntimeException("Error 3");
         }
+
+        while(true) {
+            if(parser.seekWord().equals("}")) {
+                parser.nextWord();
+                break;
+            }
+
+            String read = parser.nextWord();
+            ArrayList<String> flags = new ArrayList<>();
+            while(true) {
+                if(read.equals("internal")) {
+                    flags.add("internal");
+                    read = parser.nextWord();
+                }else {
+                    break;
+                }
+            }
+
+            if(read.equals("field")) {
+                throw new UnsupportedOperationException("Cannot read fields yet: " + flags);
+            }else if(read.equals(name)) {
+                throw new UnsupportedOperationException("Cannot read constructors yet: " + flags);
+            }else if(read.equals("function")) {
+                throw new UnsupportedOperationException("Cannot read function yet: " + flags);
+            }
+
+            String tmp;
+            if(!(tmp = parser.nextWord()).equals(";")) {
+                throw new RuntimeException("Error 4: " + tmp);
+            }
+        }
         return new ObjectToken(name);
     }
 
