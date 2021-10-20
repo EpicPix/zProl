@@ -66,8 +66,6 @@ public class Parser {
                 tokens.add(new Token(TokenType.START_DATA));
             } else if(word.equals("}")) {
                 tokens.add(new Token(TokenType.END_DATA));
-            } else if(word.equals("\"")) {
-                tokens.add(new StringToken(parser.nextStringStarted()));
             } else {
                 System.out.println("Unknown word: " + word);
             }
@@ -219,6 +217,9 @@ public class Parser {
                 continue;
             }else if(word.equals(",")) {
                 tokens.add(new Token(TokenType.COMMA));
+                continue;
+            }else if(word.equals("\"")) {
+                tokens.add(new StringToken(parser.nextStringStarted()));
                 continue;
             }
             tokens.add(new WordToken(word));
