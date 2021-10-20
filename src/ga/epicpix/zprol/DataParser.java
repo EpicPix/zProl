@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 public class DataParser {
 
     public static final Pattern nonSpecialCharacters = Pattern.compile("[a-zA-Z0-9_]");
-    public static final Pattern assignmentCharacters = Pattern.compile("[+=/*\\-]*");
+    public static final Pattern operatorCharacters = Pattern.compile("[+=/*\\-]*");
 
     private String data;
     private int index;
@@ -36,12 +36,12 @@ public class DataParser {
                 break;
             }
             boolean matches = nonSpecialCharacters.matcher(cdata[index] + "").matches();
-            boolean assignmentMatches = assignmentCharacters.matcher(word.toString() + cdata[index]).matches();
-            if(!assignmentMatches && startType) {
+            boolean operatorMatches = operatorCharacters.matcher(word.toString() + cdata[index]).matches();
+            if(!operatorMatches && startType) {
                 return word.toString();
             }
             if(!matches) {
-                if(assignmentMatches) {
+                if(operatorMatches) {
                     if(word.length() == 0) {
                         startType = true;
                     }

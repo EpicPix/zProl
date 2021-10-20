@@ -2,11 +2,14 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
+import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
+import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
+import ga.epicpix.zprol.tokens.WordToken;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -162,15 +165,35 @@ public class Parser {
             }
 
             if(readFunction) {
-                while(true) {
-                    if(parser.seekWord().equals("}")) {
-                        parser.nextWord();
-                        tokens.add(new Token(TokenType.END_FUNCTION));
-                        break;
-                    }
-                    System.out.println("Read: " + parser.nextWord());
-                }
+                tokens.addAll(readFunctionCode(parser));
             }
+        }
+        return tokens;
+    }
+
+    public static ArrayList<Token> readFunctionCode(DataParser parser) {
+        ArrayList<Token> tokens = new ArrayList<>();
+        while(true) {
+            if(parser.seekWord().equals("}")) {
+                parser.nextWord();
+                tokens.add(new Token(TokenType.END_FUNCTION));
+                break;
+            }
+            String word = parser.nextWord();
+            try {
+                long l = Long.decode(word);
+                tokens.add(new NumberToken(l));
+                continue;
+            } catch(NumberFormatException ignored) {}
+            if(DataParser.operatorCharacters.matcher(word).matches()) {
+                tokens.add(new OperatorToken(word));
+                continue;
+            }
+            if(word.equals(";")) {
+                tokens.add(new Token(TokenType.END_LINE));
+                continue;
+            }
+            tokens.add(new WordToken(word));
         }
         return tokens;
     }

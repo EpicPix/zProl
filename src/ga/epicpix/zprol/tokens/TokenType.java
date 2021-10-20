@@ -6,7 +6,8 @@ public enum TokenType {
     FUNCTION, END_FUNCTION,
     OBJECT, END_OBJECT,
     START_DATA, END_DATA,
-    STRING,
+    END_LINE,
+    STRING, NUMBER, OPERATOR, WORD
 
 
 }
