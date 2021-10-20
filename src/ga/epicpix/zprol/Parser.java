@@ -13,11 +13,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class Parser {
-
-    public static final Pattern nonSpecialCharacters = Pattern.compile("[a-zA-Z0-9_]");
 
     public static ArrayList<Token> tokenize(String fileName) throws IOException {
         File file = new File(fileName);
@@ -124,6 +121,8 @@ public class Parser {
                 }
             }
 
+            boolean readFunction = false;
+
             if(read.equals("field")) {
                 String fieldType = parser.nextType();
                 String fieldName = parser.nextWord();
@@ -143,6 +142,7 @@ public class Parser {
                 }
 
                 tokens.add(new FunctionToken("void", "<init>", functionParameters, flags));
+                readFunction = true;
             }else if(read.equals("function")) {
                 String functionReturn = parser.nextType();
                 String functionName = parser.nextWord();
@@ -156,6 +156,20 @@ public class Parser {
                 }
 
                 tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, flags));
+                readFunction = true;
+            }else {
+                throw new RuntimeException("Error 8: " + read);
+            }
+
+            if(readFunction) {
+                while(true) {
+                    if(parser.seekWord().equals("}")) {
+                        parser.nextWord();
+                        tokens.add(new Token(TokenType.END_FUNCTION));
+                        break;
+                    }
+                    System.out.println("Read: " + parser.nextWord());
+                }
             }
         }
         return tokens;

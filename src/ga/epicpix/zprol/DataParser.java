@@ -1,10 +1,12 @@
 package ga.epicpix.zprol;
 
 import java.util.ArrayList;
-
-import static ga.epicpix.zprol.Parser.nonSpecialCharacters;
+import java.util.regex.Pattern;
 
 public class DataParser {
+
+    public static final Pattern nonSpecialCharacters = Pattern.compile("[a-zA-Z0-9_]");
+    public static final Pattern assignmentCharacters = Pattern.compile("[+=/*\\-]*");
 
     private String data;
     private int index;
@@ -28,17 +30,29 @@ public class DataParser {
         if(index >= data.length()) return null;
         StringBuilder word = new StringBuilder();
         char[] cdata = data.toCharArray();
+        boolean startType = false;
         while(index < cdata.length) {
             if(Character.isWhitespace(cdata[index])) {
                 break;
             }
             boolean matches = nonSpecialCharacters.matcher(cdata[index] + "").matches();
-            if(!matches) {
-                if(word.length() == 0) {
-                    word.append(cdata[index]);
-                    index++;
-                }
+            boolean assignmentMatches = assignmentCharacters.matcher(word.toString() + cdata[index]).matches();
+            if(!assignmentMatches && startType) {
                 return word.toString();
+            }
+            if(!matches) {
+                if(assignmentMatches) {
+                    if(word.length() == 0) {
+                        startType = true;
+                    }
+                }else {
+                    if(word.length() == 0) {
+                        word.append(cdata[index]);
+                        index++;
+                    }
+                    return word.toString();
+                }
+
             }
             word.append(cdata[index]);
             index++;
