@@ -9,6 +9,7 @@ import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
+import ga.epicpix.zprol.tokens.TypedefToken;
 import ga.epicpix.zprol.tokens.WordToken;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -57,6 +58,10 @@ public class Parser {
 
                 tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, new ArrayList<>()));
                 tokens.addAll(readFunctionCode(parser));
+            } else if(word.equals("typedef")) {
+                String fromType = parser.nextType();
+                String toType = parser.nextWord();
+                tokens.add(new TypedefToken(fromType, toType));
             } else if(word.equals("{")) {
                 tokens.add(new Token(TokenType.START_DATA));
             } else if(word.equals("}")) {

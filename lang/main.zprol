@@ -2,28 +2,28 @@
 // built in methods: syscall
 // keywords: structure, function, return, internal, typedef, (...types)
 
-// structure bruh {
-//     uint8 abc;
-//     void(uint8, uint16, uint32) def;
-// }
+structure bruh {
+    uint8 abc;
+    void(uint8, uint16, uint32) def;
+}
 
-// object pog {
-    // internal field uint64 data;
-    // pog(uint64 param) {
-    //     data = param;
-    // }
-    // function void test() {
-    //     write(1, "Ran method from pog\n", 20);
-    // }
-// }
+object pog {
+    internal field uint64 data;
+    pog(uint64 param) {
+        data = param;
+    }
+    function void test() {
+        write(1, "Ran method from pog\n", 20);
+    }
+}
 
-// object more extends pog {
-    // function void test() {
-    //     write(1, "Ran method from more\n", 21);
-    // }
-// }
+ object more extends pog {
+    function void test() {
+        write(1, "Ran method from more\n", 21);
+    }
+ }
 
-// typedef string pointer;
+typedef string pointer;
 
 object example {
     function int64 write(uint64 fd, string ptr, uint64 len) {

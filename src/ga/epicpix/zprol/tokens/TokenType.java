@@ -2,7 +2,7 @@ package ga.epicpix.zprol.tokens;
 
 public enum TokenType {
 
-    STRUCTURE, FIELD,
+    STRUCTURE, FIELD, TYPEDEF,
     FUNCTION, END_FUNCTION,
     OBJECT, END_OBJECT,
     START_DATA, END_DATA,
