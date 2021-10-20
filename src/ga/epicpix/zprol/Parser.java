@@ -1,6 +1,7 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.tokens.FieldToken;
+import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.StructureToken;
@@ -43,9 +44,9 @@ public class Parser {
             }else if(word.equals("object")) {
                 tokens.addAll(parseObject(parser));
             } else if(word.equals("{")) {
-                tokens.add(new Token(TokenType.START_CODE));
+                tokens.add(new Token(TokenType.START_DATA));
             } else if(word.equals("}")) {
-                tokens.add(new Token(TokenType.END_CODE));
+                tokens.add(new Token(TokenType.END_DATA));
             } else if(word.equals("\"")) {
                 tokens.add(new StringToken(parser.nextStringStarted()));
             } else {
@@ -107,12 +108,18 @@ public class Parser {
             }
 
             String read = parser.nextWord();
-            ArrayList<String> flags = new ArrayList<>();
+            ArrayList<ParserFlag> flags = new ArrayList<>();
             while(true) {
-                if(read.equals("internal")) {
-                    flags.add("internal");
-                    read = parser.nextWord();
-                }else {
+                boolean found = false;
+                for(ParserFlag flag : ParserFlag.values()) {
+                    if(flag.isPublicFlag() && flag.name().toLowerCase().equals(read)) {
+                        flags.add(flag);
+                        read = parser.nextWord();
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) {
                     break;
                 }
             }
@@ -120,7 +127,11 @@ public class Parser {
             if(read.equals("field")) {
                 String fieldType = parser.nextType();
                 String fieldName = parser.nextWord();
-                tokens.add(new FieldToken(fieldType, fieldName));
+                tokens.add(new FieldToken(fieldType, fieldName, flags));
+                String tmp;
+                if(!(tmp = parser.nextWord()).equals(";")) {
+                    throw new RuntimeException("Error 4: " + tmp);
+                }
             }else if(read.equals(name)) {
                 throw new UnsupportedOperationException("Cannot read constructors yet: " + flags);
             }else if(read.equals("function")) {
@@ -151,13 +162,14 @@ public class Parser {
                     }
                 }
 
-                System.out.println("Name: " + functionName + " / Return: " + functionReturn + " / Parameters: " + functionParameters);
-                throw new UnsupportedOperationException("Cannot read function yet: " + flags);
-            }
+                String tmp = parser.nextWord();
+                if(tmp.equals(";")) {
+                    flags.add(ParserFlag.NO_IMPLEMENTATION);
+                }else if(!tmp.equals("{")) {
+                    throw new RuntimeException("Error 4: " + tmp);
+                }
 
-            String tmp;
-            if(!(tmp = parser.nextWord()).equals(";")) {
-                throw new RuntimeException("Error 4: " + tmp);
+                tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, flags));
             }
         }
         return tokens;

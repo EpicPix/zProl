@@ -11,6 +11,6 @@ public class ParameterDataType {
     }
 
     public String toString() {
-        return "ParameterDataType(name=\"" + name + "\", type=\"" + type + "\")";
+        return "Parameter(\"" + name + "\": \"" + type + "\")";
     }
 }

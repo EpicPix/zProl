@@ -3,8 +3,10 @@ package ga.epicpix.zprol.tokens;
 public enum TokenType {
 
     STRUCTURE, FIELD,
-    FUNCTION, START_CODE, END_CODE,
+    START_FUNCTION, END_FUNCTION,
     START_OBJECT, END_OBJECT,
+    START_DATA, END_DATA,
     STRING,
+
 
 }
