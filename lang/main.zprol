@@ -1,4 +1,4 @@
-// built in types: uint8, uint16, uint32, uint64, int8, int16, int32, int64, void
+// built in types: uint8, uint16, uint32, uint64, int8, int16, int32, int64, void, pointer
 // keywords: structure, function, return, internal, typedef, (...types)
 
 structure bruh {
@@ -22,7 +22,7 @@ object more extends pog {
     }
 }
 
-typedef string uint64;
+typedef string pointer;
 
 function int64 write(uint64 fd, string ptr, uint64 len) {
     return syscall(1, fd, ptr, len);
