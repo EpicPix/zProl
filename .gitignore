@@ -6,3 +6,5 @@ out/
 *.elf
 *.exe
 *.dot
+vscode/
+.vscode/
