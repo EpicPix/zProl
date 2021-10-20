@@ -1,5 +1,6 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
@@ -37,6 +38,8 @@ public class Parser {
         while((word = parser.nextWord()) != null) {
             if(word.equals("structure")) {
                 tokens.add(parseStructure(parser));
+            }else if(word.equals("object")) {
+                tokens.add(parseObject(parser));
             } else if(word.equals("{")) {
                 tokens.add(new Token(TokenType.START_CODE));
             } else if(word.equals("}")) {
@@ -61,7 +64,11 @@ public class Parser {
             throw new RuntimeException("Error 1");
         }
         ArrayList<StructureType> types = new ArrayList<>();
-        while(!parser.seekWord().equals("}")) {
+        while(true) {
+            if(parser.seekWord().equals("}")) {
+                parser.nextWord();
+                break;
+            }
             String sType = parser.nextType();
             String sName = parser.nextWord();
             types.add(new StructureType(sType, sName));
@@ -71,6 +78,10 @@ public class Parser {
             }
         }
         return new StructureToken(name, types);
+    }
+
+    public static ObjectToken parseObject(DataParser parser) {
+        return new ObjectToken();
     }
 
 }

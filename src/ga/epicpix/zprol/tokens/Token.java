@@ -13,10 +13,14 @@ public class Token {
     }
 
     protected String getData() {
-        return type.name().toLowerCase();
+        return "";
     }
 
     public String toString() {
-        return "Token(" + getData() + ")";
+        String data = getData();
+        if(data.isEmpty()) {
+            return type.name().toLowerCase();
+        }
+        return type.name().toLowerCase() + "(" + data + ")";
     }
 }

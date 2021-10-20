@@ -2,7 +2,6 @@ package ga.epicpix.zprol.tokens;
 
 import ga.epicpix.zprol.StructureType;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class StructureToken extends Token {
 
@@ -20,6 +19,6 @@ public class StructureToken extends Token {
     }
 
     protected String getData() {
-        return super.getData() + ", name=\"" + structureName + "\", types=" + types;
+        return "name=\"" + structureName + "\", types=" + types;
     }
 }

@@ -14,6 +14,6 @@ public class StringToken extends Token {
     }
 
     protected String getData() {
-        return super.getData() + ", string=\"" + string.replace("\"", "\\\"").replace("\n", "\\n") + "\"";
+        return "\"" + string.replace("\"", "\\\"").replace("\n", "\\n") + "\"";
     }
 }
