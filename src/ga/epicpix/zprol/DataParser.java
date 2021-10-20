@@ -1,5 +1,7 @@
 package ga.epicpix.zprol;
 
+import static ga.epicpix.zprol.Parser.nonSpecialCharacters;
+
 public class DataParser {
 
     private String data;
@@ -21,21 +23,20 @@ public class DataParser {
 
     public String nextWord() {
         ignoreWhitespace();
-        if(index + 1 >= data.length()) return null;
+        if(index >= data.length()) return null;
         StringBuilder word = new StringBuilder();
         char[] cdata = data.toCharArray();
-        while(index + 1 < cdata.length) {
+        while(index < cdata.length) {
             if(Character.isWhitespace(cdata[index])) {
                 break;
             }
-            for(char special : Parser.specialCharacters) {
-                if(cdata[index] == special) {
-                    if(word.length() == 0) {
-                        word.append(cdata[index]);
-                        index++;
-                    }
-                    return word.toString();
+            boolean matches = nonSpecialCharacters.matcher(cdata[index] + "").matches();
+            if(!matches) {
+                if(word.length() == 0) {
+                    word.append(cdata[index]);
+                    index++;
                 }
+                return word.toString();
             }
             word.append(cdata[index]);
             index++;

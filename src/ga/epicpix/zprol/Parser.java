@@ -11,10 +11,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Parser {
 
-    public static final char[] specialCharacters = "\"{}()[];,".toCharArray();
+    public static final Pattern nonSpecialCharacters = Pattern.compile("[a-zA-Z0-9_]");
 
     public static ArrayList<Token> tokenize(String fileName) throws IOException {
         File file = new File(fileName);
