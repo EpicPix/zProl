@@ -82,7 +82,11 @@ public class Parser {
     }
 
     public static ObjectToken parseObject(DataParser parser) {
-        return new ObjectToken();
+        String name = parser.nextWord();
+        if(!parser.nextWord().equals("{")) {
+            throw new RuntimeException("Error 3");
+        }
+        return new ObjectToken(name);
     }
 
 }
