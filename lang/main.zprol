@@ -9,18 +9,18 @@ structure bruh {
 
 object pog {
     internal field uint64 data;
-    pog(uint64 param) {
-        data = param;
-    }
-    function void test() {
-        write(1, "Ran method from pog\n", 20);
-    }
+    // pog(uint64 param) {
+    //     data = param;
+    // }
+    // function void test() {
+    //     write(1, "Ran method from pog\n", 20);
+    // }
 }
 
 object more extends pog {
-    function void test() {
-        write(1, "Ran method from more\n", 21);
-    }
+    // function void test() {
+    //     write(1, "Ran method from more\n", 21);
+    // }
 }
 
 typedef string pointer;

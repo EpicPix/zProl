@@ -1,5 +1,6 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.StructureToken;
@@ -40,7 +41,7 @@ public class Parser {
             if(word.equals("structure")) {
                 tokens.add(parseStructure(parser));
             }else if(word.equals("object")) {
-                tokens.add(parseObject(parser));
+                tokens.addAll(parseObject(parser));
             } else if(word.equals("{")) {
                 tokens.add(new Token(TokenType.START_CODE));
             } else if(word.equals("}")) {
@@ -81,14 +82,26 @@ public class Parser {
         return new StructureToken(name, types);
     }
 
-    public static ObjectToken parseObject(DataParser parser) {
+    public static ArrayList<Token> parseObject(DataParser parser) {
         String name = parser.nextWord();
-        if(!parser.nextWord().equals("{")) {
+        ArrayList<Token> tokens = new ArrayList<>();
+
+        String w = parser.nextWord();
+        if(!w.equals("{") && !w.equals("extends")) {
             throw new RuntimeException("Error 3");
         }
+        String extendsFrom = "object";
+        if(w.equals("extends")) {
+            extendsFrom = parser.nextWord();
+            if(!parser.nextWord().equals("{")) {
+                throw new RuntimeException("Error 5");
+            }
+        }
+        tokens.add(new ObjectToken(name, extendsFrom));
 
         while(true) {
             if(parser.seekWord().equals("}")) {
+                tokens.add(new Token(TokenType.END_OBJECT));
                 parser.nextWord();
                 break;
             }
@@ -105,7 +118,9 @@ public class Parser {
             }
 
             if(read.equals("field")) {
-                throw new UnsupportedOperationException("Cannot read fields yet: " + flags);
+                String fieldType = parser.nextType();
+                String fieldName = parser.nextWord();
+                tokens.add(new FieldToken(fieldType, fieldName));
             }else if(read.equals(name)) {
                 throw new UnsupportedOperationException("Cannot read constructors yet: " + flags);
             }else if(read.equals("function")) {
@@ -117,7 +132,7 @@ public class Parser {
                 throw new RuntimeException("Error 4: " + tmp);
             }
         }
-        return new ObjectToken(name);
+        return tokens;
     }
 
 }
