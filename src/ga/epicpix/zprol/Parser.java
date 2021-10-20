@@ -192,6 +192,15 @@ public class Parser {
             if(word.equals(";")) {
                 tokens.add(new Token(TokenType.END_LINE));
                 continue;
+            }else if(word.equals("(")) {
+                tokens.add(new Token(TokenType.OPEN));
+                continue;
+            }else if(word.equals(")")) {
+                tokens.add(new Token(TokenType.CLOSE));
+                continue;
+            }else if(word.equals(",")) {
+                tokens.add(new Token(TokenType.COMMA));
+                continue;
             }
             tokens.add(new WordToken(word));
         }
