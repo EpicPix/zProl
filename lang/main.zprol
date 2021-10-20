@@ -26,7 +26,9 @@
 // typedef string pointer;
 
 object example {
-    function int64 write(uint64 fd, string ptr, uint64 len);
+    example(uint64 fd, string ptr, uint64 len) {
+        
+    }
     // function int64 write(uint64 fd, string ptr, uint64 len) {
         // return syscall(1, fd, ptr, len);
     // }

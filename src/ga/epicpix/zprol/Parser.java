@@ -133,7 +133,16 @@ public class Parser {
                     throw new RuntimeException("Error 4: " + tmp);
                 }
             }else if(read.equals(name)) {
-                throw new UnsupportedOperationException("Cannot read constructors yet: " + flags);
+                ArrayList<ParameterDataType> functionParameters = parser.readParameters();
+
+                String tmp = parser.nextWord();
+                if(tmp.equals(";")) {
+                    throw new RuntimeException("Constructors must have implementation");
+                }else if(!tmp.equals("{")) {
+                    throw new RuntimeException("Error 7: " + tmp);
+                }
+
+                tokens.add(new FunctionToken("void", "<init>", functionParameters, flags));
             }else if(read.equals("function")) {
                 String functionReturn = parser.nextType();
                 String functionName = parser.nextWord();
@@ -143,7 +152,7 @@ public class Parser {
                 if(tmp.equals(";")) {
                     flags.add(ParserFlag.NO_IMPLEMENTATION);
                 }else if(!tmp.equals("{")) {
-                    throw new RuntimeException("Error 4: " + tmp);
+                    throw new RuntimeException("Error 6: " + tmp);
                 }
 
                 tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, flags));
