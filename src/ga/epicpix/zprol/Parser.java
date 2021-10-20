@@ -218,6 +218,9 @@ public class Parser {
             }else if(word.equals(",")) {
                 tokens.add(new Token(TokenType.COMMA));
                 continue;
+            }else if(word.equals(".")) {
+                tokens.add(new Token(TokenType.ACCESSOR));
+                continue;
             }else if(word.equals("\"")) {
                 tokens.add(new StringToken(parser.nextStringStarted()));
                 continue;
