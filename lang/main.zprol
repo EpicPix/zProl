@@ -25,12 +25,14 @@ object more extends pog {
 
 typedef string pointer;
 
-function int64 write(uint64 fd, string ptr, uint64 len) {
-    return syscall(1, fd, ptr, len);
+object example {
+    function int64 write(uint64 fd, string ptr, uint64 len) {
+        // return syscall(1, fd, ptr, len);
+    }
 }
 
 function void main() {
-    write(1, "Hello world\n", 12);
+    // TODO: Think of using stuff from objects: write(1, "Hello world\n", 12);
     pog var1 = private new pog(123);
     var1.test();
     pog var2 = private new more(123);
