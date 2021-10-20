@@ -50,6 +50,20 @@ public class DataParser {
         return str;
     }
 
+    public String nextType() {
+        StringBuilder type = new StringBuilder(nextWord());
+        if(seekWord().equals("(")) {
+            while(true) {
+                String word = nextWord();
+                type.append(word);
+                if(word.equals(")")) {
+                    break;
+                }
+            }
+        }
+        return type.toString();
+    }
+
     public String nextStringStarted() {
         if(index + 1 >= data.length()) return null;
         StringBuilder word = new StringBuilder();

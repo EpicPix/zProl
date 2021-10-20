@@ -3,7 +3,7 @@
 
 structure bruh {
     uint8 abc;
-    // TODO: void(uint8, uint16, uint32) def;
+    void(uint8, uint16, uint32) def;
 }
 
 object pog {

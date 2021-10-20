@@ -62,10 +62,9 @@ public class Parser {
         }
         ArrayList<StructureType> types = new ArrayList<>();
         while(!parser.seekWord().equals("}")) {
-            String sType = parser.nextWord();
+            String sType = parser.nextType();
             String sName = parser.nextWord();
             types.add(new StructureType(sType, sName));
-            // TODO: Make function signatures be parsable using parser.nextType()
             String tmp;
             if(!(tmp = parser.nextWord()).equals(";")) {
                 throw new RuntimeException("Error 2: " + tmp);
