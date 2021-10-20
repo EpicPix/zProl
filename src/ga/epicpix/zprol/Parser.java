@@ -41,8 +41,22 @@ public class Parser {
         while((word = parser.nextWord()) != null) {
             if(word.equals("structure")) {
                 tokens.add(parseStructure(parser));
-            }else if(word.equals("object")) {
+            } else if(word.equals("object")) {
                 tokens.addAll(parseObject(parser));
+            } else if(word.equals("function")) {
+                String functionReturn = parser.nextType();
+                String functionName = parser.nextWord();
+                ArrayList<ParameterDataType> functionParameters = parser.readParameters();
+
+                String tmp = parser.nextWord();
+                if(tmp.equals(";")) {
+                    throw new RuntimeException("Missing function implementation");
+                }else if(!tmp.equals("{")) {
+                    throw new RuntimeException("Error 6: " + tmp);
+                }
+
+                tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, new ArrayList<>()));
+                tokens.addAll(readFunctionCode(parser));
             } else if(word.equals("{")) {
                 tokens.add(new Token(TokenType.START_DATA));
             } else if(word.equals("}")) {
