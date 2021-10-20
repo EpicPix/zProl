@@ -6,7 +6,7 @@ public class ObjectToken extends Token {
     private final String extendsFrom;
 
     public ObjectToken(String objectName, String extendsFrom) {
-        super(TokenType.START_OBJECT);
+        super(TokenType.OBJECT);
         this.objectName = objectName;
         this.extendsFrom = extendsFrom;
     }

@@ -12,7 +12,7 @@ public class FunctionToken extends Token {
     private final ArrayList<ParserFlag> flags;
 
     public FunctionToken(String returnType, String name, ArrayList<ParameterDataType> parameters, ArrayList<ParserFlag> flags) {
-        super(TokenType.START_FUNCTION);
+        super(TokenType.FUNCTION);
         this.returnType = returnType;
         this.name = name;
         this.parameters = parameters;

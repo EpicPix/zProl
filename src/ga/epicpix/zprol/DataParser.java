@@ -1,5 +1,7 @@
 package ga.epicpix.zprol;
 
+import java.util.ArrayList;
+
 import static ga.epicpix.zprol.Parser.nonSpecialCharacters;
 
 public class DataParser {
@@ -91,5 +93,36 @@ public class DataParser {
             index++;
         }
         return word.toString();
+    }
+
+    public ArrayList<ParameterDataType> readParameters() {
+        ArrayList<ParameterDataType> parameters = new ArrayList<>();
+
+        if(!nextWord().equals("(")) {
+            throw new RuntimeException("Start of parameters doesn't have '('");
+        }
+
+        while(true) {
+            if(seekWord().equals(")")) {
+                nextWord();
+                break;
+            }
+            String parameterType = nextType();
+            String parameterName = nextWord();
+
+            parameters.add(new ParameterDataType(parameterType, parameterName));
+
+            String tmp = seekWord();
+            if(tmp.equals(",")) {
+                nextWord();
+            }else if(tmp.equals(")")) {
+                continue;
+            }else {
+                throw new RuntimeException("Cannot parse word: " + seekWord());
+            }
+        }
+
+        return parameters;
+
     }
 }

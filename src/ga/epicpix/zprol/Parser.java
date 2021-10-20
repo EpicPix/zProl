@@ -128,8 +128,8 @@ public class Parser {
                 String fieldType = parser.nextType();
                 String fieldName = parser.nextWord();
                 tokens.add(new FieldToken(fieldType, fieldName, flags));
-                String tmp;
-                if(!(tmp = parser.nextWord()).equals(";")) {
+                String tmp = parser.nextWord();
+                if(!tmp.equals(";")) {
                     throw new RuntimeException("Error 4: " + tmp);
                 }
             }else if(read.equals(name)) {
@@ -137,30 +137,7 @@ public class Parser {
             }else if(read.equals("function")) {
                 String functionReturn = parser.nextType();
                 String functionName = parser.nextWord();
-                if(!parser.nextWord().equals("(")) {
-                    throw new RuntimeException("Error 6");
-                }
-                ArrayList<ParameterDataType> functionParameters = new ArrayList<>();
-
-                while(true) {
-                    if(parser.seekWord().equals(")")) {
-                        parser.nextWord();
-                        break;
-                    }
-                    String parameterType = parser.nextType();
-                    String parameterName = parser.nextWord();
-
-                    functionParameters.add(new ParameterDataType(parameterType, parameterName));
-
-                    String tmp = parser.seekWord();
-                    if(tmp.equals(",")) {
-                        parser.nextWord();
-                    }else if(tmp.equals(")")) {
-                        continue;
-                    }else {
-                        throw new RuntimeException("Error 7: " + parser.seekWord());
-                    }
-                }
+                ArrayList<ParameterDataType> functionParameters = parser.readParameters();
 
                 String tmp = parser.nextWord();
                 if(tmp.equals(";")) {
