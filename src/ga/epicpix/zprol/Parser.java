@@ -62,12 +62,17 @@ public class Parser {
                 String fromType = parser.nextType();
                 String toType = parser.nextWord();
                 tokens.add(new TypedefToken(fromType, toType));
+                if(!parser.nextWord().equals(";")) {
+                    throw new RuntimeException("Error 9");
+                }
             } else if(word.equals("{")) {
                 tokens.add(new Token(TokenType.START_DATA));
             } else if(word.equals("}")) {
                 tokens.add(new Token(TokenType.END_DATA));
+            } else if(word.equals(";")) {
+                continue;
             } else {
-                System.out.println("Unknown word: " + word);
+                throw new RuntimeException("Unknown word: " + word);
             }
         }
 
