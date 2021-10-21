@@ -11,6 +11,6 @@ public class StructureType {
     }
 
     public String toString() {
-        return "StructureType(type=\"" + type + "\", name=\"" + name + "\")";
+        return "(type=\"" + type + "\", name=\"" + name + "\")";
     }
 }

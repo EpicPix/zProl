@@ -1,3 +1,5 @@
-function void main() {
-    uint8 a = 127;
+structure abc {
+    uint8 foo;
+    uint16 bar;
+    uint8 baz;
 }

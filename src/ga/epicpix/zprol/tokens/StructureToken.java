@@ -18,6 +18,10 @@ public class StructureToken extends Token {
         return structureName;
     }
 
+    public ArrayList<StructureType> getTypes() {
+        return types;
+    }
+
     protected String getData() {
         return "name=\"" + structureName + "\", types=" + types;
     }
