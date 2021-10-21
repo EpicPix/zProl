@@ -1,6 +1,8 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.tokens.Token;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -12,7 +14,8 @@ public class Start {
         }
         String fileName = String.join(" ", args);
         ArrayList<Token> tokens = Parser.tokenize(fileName);
-        Compiler.compile(tokens);
+        CompiledData compiled = Compiler.compile(tokens);
+        compiled.save(new File(fileName.substring(0, fileName.lastIndexOf('.')) + ".zpil"));
     }
 
 }
