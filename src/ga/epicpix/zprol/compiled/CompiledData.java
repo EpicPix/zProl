@@ -12,7 +12,15 @@ public class CompiledData {
     private final ArrayList<Structure> structures = new ArrayList<>();
 
     public Type resolveType(String type) {
-//        throw new UnsupportedOperationException("Cannot resolve types yet: " + type);
+        if(type.equals("int8")) return new Type(Types.INT8);
+        else if(type.equals("int16")) return new Type(Types.INT16);
+        else if(type.equals("int32")) return new Type(Types.INT32);
+        else if(type.equals("int64")) return new Type(Types.INT64);
+        else if(type.equals("uint8")) return new Type(Types.UINT8);
+        else if(type.equals("uint16")) return new Type(Types.UINT16);
+        else if(type.equals("uint32")) return new Type(Types.UINT32);
+        else if(type.equals("uint64")) return new Type(Types.UINT64);
+        else if(type.equals("pointer")) return new Type(Types.POINTER);
         return null;
     }
 
