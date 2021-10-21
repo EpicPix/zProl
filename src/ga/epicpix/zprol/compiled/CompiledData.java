@@ -36,7 +36,17 @@ public class CompiledData {
     }
 
     private static void writeType(Type type, DataOutputStream out) throws IOException {
-        out.writeByte(0xff);
+        out.writeByte(type.type.id);
+        if(type.type.additionalData) {
+            if(type instanceof TypeFunctionSignature) {
+                TypeFunctionSignature sig = (TypeFunctionSignature) type;
+                writeType(sig.returnType, out);
+                out.writeShort(sig.parameters.length);
+                for(Type param : sig.parameters) {
+                    writeType(param, out);
+                }
+            }
+        }
     }
 
 }
