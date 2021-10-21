@@ -75,10 +75,6 @@ public class Parser {
                 throw new RuntimeException("Unknown word: " + word);
             }
         }
-
-        for(Token token : tokens) {
-            System.out.println(token);
-        }
         return tokens;
 
     }

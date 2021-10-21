@@ -1,6 +1,8 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.tokens.Token;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Start {
 
@@ -9,7 +11,8 @@ public class Start {
             throw new IllegalArgumentException("File not specified");
         }
         String fileName = String.join(" ", args);
-        Parser.tokenize(fileName);
+        ArrayList<Token> tokens = Parser.tokenize(fileName);
+        Compiler.compile(tokens);
     }
 
 }
