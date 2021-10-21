@@ -6,10 +6,20 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class CompiledData {
 
     private final ArrayList<Structure> structures = new ArrayList<>();
+    private final HashMap<String, Type> typedef = new HashMap<>();
+
+    public void addTypeDefinition(String typeName, Type type) {
+        if(typedef.get(typeName) == null) {
+            typedef.put(typeName, type);
+        }else {
+            throw new RuntimeException("Type definition for " + typeName + " is already defined");
+        }
+    }
 
     public Type resolveType(String type) {
         if(type.equals("int8")) return new Type(Types.INT8);
@@ -21,7 +31,9 @@ public class CompiledData {
         else if(type.equals("uint32")) return new Type(Types.UINT32);
         else if(type.equals("uint64")) return new Type(Types.UINT64);
         else if(type.equals("pointer")) return new Type(Types.POINTER);
-        return null;
+        Type t = typedef.get(type);
+        if(t != null) return t;
+        throw new RuntimeException("Unknown type: " + type);
     }
 
     public void addStructure(Structure structure) {

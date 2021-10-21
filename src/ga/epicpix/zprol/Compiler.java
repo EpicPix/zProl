@@ -6,6 +6,7 @@ import ga.epicpix.zprol.compiled.StructureField;
 import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
+import ga.epicpix.zprol.tokens.TypedefToken;
 import java.util.ArrayList;
 
 public class Compiler {
@@ -21,6 +22,9 @@ public class Compiler {
                     fields.add(new StructureField(field.name, data.resolveType(field.type)));
                 }
                 data.addStructure(new Structure(structureToken.getStructureName(), fields));
+            }else if(token.getType() == TokenType.TYPEDEF) {
+                TypedefToken typedefToken = (TypedefToken) token;
+                data.addTypeDefinition(typedefToken.getName(), data.resolveType(typedefToken.getToType()));
             }
         }
         return data;
