@@ -1,7 +1,7 @@
-typedef string pointer;
-
 structure abc {
-    uint8 foo;
-    uint16 bar;
-    string(string, uint64, int64, int8) baz;
+    def future_definition;
+}
+
+structure def {
+    
 }

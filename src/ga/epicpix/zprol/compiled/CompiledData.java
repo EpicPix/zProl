@@ -14,11 +14,52 @@ public class CompiledData {
     private final ArrayList<Structure> structures = new ArrayList<>();
     private final HashMap<String, Type> typedef = new HashMap<>();
 
+    private final ArrayList<String> futureObjectDefinitions = new ArrayList<>();
+    private final ArrayList<String> futureStructureDefinitions = new ArrayList<>();
+
     public void addTypeDefinition(String typeName, Type type) {
         if(typedef.get(typeName) == null) {
             typedef.put(typeName, type);
         }else {
             throw new RuntimeException("Type definition for " + typeName + " is already defined");
+        }
+    }
+
+    public void addStructure(Structure structure) {
+        structures.add(structure);
+    }
+
+    public void addFutureObjectDefinition(String name) {
+        futureObjectDefinitions.add(name);
+    }
+
+    public void addFutureStructureDefinition(String name) {
+        futureStructureDefinitions.add(name);
+    }
+
+    private Type finish(Type type) {
+        if(type instanceof TypeFutureObject) {
+            type = resolveType(((TypeFutureObject) type).type);
+        }else if(type instanceof TypeFutureStructure) {
+            type = resolveType(((TypeFutureStructure) type).type);
+        }else if(type instanceof TypeFunctionSignature) {
+            TypeFunctionSignature sig = (TypeFunctionSignature) type;
+            sig.returnType = finish(sig.returnType);
+            for(int i = 0; i<sig.parameters.length; i++) {
+                sig.parameters[i] = finish(sig.parameters[i]);
+            }
+        }
+        return type;
+    }
+
+    public void finishFutures() {
+        futureObjectDefinitions.clear();
+        futureStructureDefinitions.clear();
+
+        for(Structure structure : structures) {
+            for(StructureField field : structure.fields) {
+                field.type = finish(field.type);
+            }
         }
     }
 
@@ -35,10 +76,23 @@ public class CompiledData {
         Type t = typedef.get(type);
         if(t != null) return t;
 
+        for(Structure struct : structures) {
+            if(struct.name.equals(type)) {
+                return new TypeStructure(struct.name);
+            }
+        }
+
+        if(futureObjectDefinitions.contains(type)) {
+            return new TypeFutureObject(type);
+        }
+        if(futureStructureDefinitions.contains(type)) {
+            return new TypeFutureStructure(type);
+        }
+
         DataParser parser = new DataParser(type);
 
         String pre = parser.nextWord();
-        if(!parser.nextWord().equals("(")) {
+        if(parser.seekWord() == null || !parser.nextWord().equals("(")) {
             throw new RuntimeException("Unknown type: " + type);
         }
         Type ret = resolveType(pre);
@@ -56,10 +110,6 @@ public class CompiledData {
             }
         }
         return new TypeFunctionSignature(ret, parameters.toArray(new Type[0]));
-    }
-
-    public void addStructure(Structure structure) {
-        structures.add(structure);
     }
 
     public void save(File file) throws IOException {
@@ -87,6 +137,11 @@ public class CompiledData {
                 for(Type param : sig.parameters) {
                     writeType(param, out);
                 }
+            }else if(type instanceof TypeStructure) {
+                TypeStructure sig = (TypeStructure) type;
+                out.writeUTF(sig.name);
+            }else {
+                throw new RuntimeException("Unhandled additional data class: " + type.getClass());
             }
         }
     }
