@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiled;
 
+import ga.epicpix.zprol.DataParser;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -33,7 +34,28 @@ public class CompiledData {
         else if(type.equals("pointer")) return new Type(Types.POINTER);
         Type t = typedef.get(type);
         if(t != null) return t;
-        throw new RuntimeException("Unknown type: " + type);
+
+        DataParser parser = new DataParser(type);
+
+        String pre = parser.nextWord();
+        if(!parser.nextWord().equals("(")) {
+            throw new RuntimeException("Unknown type: " + type);
+        }
+        Type ret = resolveType(pre);
+        ArrayList<Type> parameters = new ArrayList<>();
+        while(true) {
+            if(parser.seekWord().equals(")")) {
+                parser.nextWord();
+                break;
+            }
+            Type param = resolveType(parser.nextType());
+            parameters.add(param);
+
+            if(parser.seekWord().equals(",")) {
+                parser.nextWord();
+            }
+        }
+        return new TypeFunctionSignature(ret, parameters.toArray(new Type[0]));
     }
 
     public void addStructure(Structure structure) {
