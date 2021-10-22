@@ -141,6 +141,17 @@ public class CompiledData {
         output.writeShort(objects.size());
         for(Object obj : objects) {
             output.writeUTF(obj.name);
+            writeType(obj.ext, output);
+            output.writeShort(obj.fields.size());
+            for(ObjectField field : obj.fields) {
+                output.writeUTF(field.name);
+                writeType(field.type, output);
+                int flags = 0;
+                for(Flag f : field.flags) {
+                    flags |= f.mask;
+                }
+                output.writeInt(flags);
+            }
         }
 
         output.close();

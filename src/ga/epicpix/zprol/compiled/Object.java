@@ -9,6 +9,9 @@ public class Object {
     public ArrayList<ObjectField> fields;
 
     public Object(String name, Type ext, ArrayList<ObjectField> fields) {
+        if(!(ext.type == Types.NONE || ext instanceof TypeFutureObject || ext instanceof TypeObject)) {
+            throw new IllegalArgumentException("Type is not instanceof an object");
+        }
         this.name = name;
         this.ext = ext;
         this.fields = fields;

@@ -5,9 +5,9 @@ import java.util.ArrayList;
 
 public class FieldToken extends Token {
 
-    private final String type;
-    private final String name;
-    private final ArrayList<ParserFlag> flags;
+    public final String type;
+    public final String name;
+    public final ArrayList<ParserFlag> flags;
 
     public FieldToken(String type, String name, ArrayList<ParserFlag> flags) {
         super(TokenType.FIELD);

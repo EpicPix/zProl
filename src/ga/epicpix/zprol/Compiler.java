@@ -1,9 +1,12 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
+import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Object;
+import ga.epicpix.zprol.compiled.ObjectField;
 import ga.epicpix.zprol.compiled.Structure;
 import ga.epicpix.zprol.compiled.StructureField;
+import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
@@ -33,7 +36,24 @@ public class Compiler {
                 data.addStructure(new Structure(structureToken.getStructureName(), fields));
             }else if(token.getType() == TokenType.OBJECT) {
                 ObjectToken objectToken = (ObjectToken) token;
-                data.addObject(new Object(objectToken.getObjectName(), data.resolveType(objectToken.getExtendsFrom()), new ArrayList<>()));
+                ArrayList<ObjectField> fields = new ArrayList<>();
+                while(token.getType() != TokenType.END_OBJECT) {
+                    if(token.getType() == TokenType.FIELD) {
+                        FieldToken fieldToken = (FieldToken) token;
+                        ArrayList<Flag> flags = new ArrayList<>();
+                        for(ParserFlag parserFlag : fieldToken.flags) {
+                            if(parserFlag == ParserFlag.INTERNAL) {
+                                flags.add(Flag.INTERNAL);
+                            }else if(parserFlag == ParserFlag.NO_IMPLEMENTATION) {
+                                flags.add(Flag.NO_IMPLEMENTATION);
+                            }
+                        }
+                        fields.add(new ObjectField(fieldToken.name, data.resolveType(fieldToken.type), flags));
+                    }
+                    token = tokens.get(++i);
+                }
+                data.addObject(new Object(objectToken.getObjectName(), data.resolveType(objectToken.getExtendsFrom()), fields));
+
             }else if(token.getType() == TokenType.TYPEDEF) {
                 TypedefToken typedefToken = (TypedefToken) token;
                 data.addTypeDefinition(typedefToken.getName(), data.resolveType(typedefToken.getToType()));
