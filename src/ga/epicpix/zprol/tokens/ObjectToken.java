@@ -15,6 +15,10 @@ public class ObjectToken extends Token {
         return objectName;
     }
 
+    public String getExtendsFrom() {
+        return extendsFrom;
+    }
+
     protected String getData() {
         return "name=\"" + objectName + "\", extends=\"" + extendsFrom + "\"";
     }

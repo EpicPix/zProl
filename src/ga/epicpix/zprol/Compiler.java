@@ -1,6 +1,7 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
+import ga.epicpix.zprol.compiled.Object;
 import ga.epicpix.zprol.compiled.Structure;
 import ga.epicpix.zprol.compiled.StructureField;
 import ga.epicpix.zprol.tokens.ObjectToken;
@@ -30,6 +31,9 @@ public class Compiler {
                     fields.add(new StructureField(field.name, data.resolveType(field.type)));
                 }
                 data.addStructure(new Structure(structureToken.getStructureName(), fields));
+            }else if(token.getType() == TokenType.OBJECT) {
+                ObjectToken objectToken = (ObjectToken) token;
+                data.addObject(new Object(objectToken.getObjectName(), data.resolveType(objectToken.getExtendsFrom()), new ArrayList<>()));
             }else if(token.getType() == TokenType.TYPEDEF) {
                 TypedefToken typedefToken = (TypedefToken) token;
                 data.addTypeDefinition(typedefToken.getName(), data.resolveType(typedefToken.getToType()));

@@ -109,7 +109,7 @@ public class Parser {
         if(!w.equals("{") && !w.equals("extends")) {
             throw new RuntimeException("Error 3");
         }
-        String extendsFrom = "object";
+        String extendsFrom = null;
         if(w.equals("extends")) {
             extendsFrom = parser.nextWord();
             if(!parser.nextWord().equals("{")) {

@@ -1,7 +1,7 @@
 structure abc {
-    def future_definition;
+    def anObject;
 }
 
-structure def {
-    
+object def {
+    internal field abc aField;
 }

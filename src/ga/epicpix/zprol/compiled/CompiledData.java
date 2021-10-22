@@ -12,6 +12,7 @@ import java.util.HashMap;
 public class CompiledData {
 
     private final ArrayList<Structure> structures = new ArrayList<>();
+    private final ArrayList<Object> objects = new ArrayList<>();
     private final HashMap<String, Type> typedef = new HashMap<>();
 
     private final ArrayList<String> futureObjectDefinitions = new ArrayList<>();
@@ -27,6 +28,10 @@ public class CompiledData {
 
     public void addStructure(Structure structure) {
         structures.add(structure);
+    }
+
+    public void addObject(Object object) {
+        objects.add(object);
     }
 
     public void addFutureObjectDefinition(String name) {
@@ -64,6 +69,7 @@ public class CompiledData {
     }
 
     public Type resolveType(String type) {
+        if(type == null) return new Type(Types.NONE);
         if(type.equals("int8")) return new Type(Types.INT8);
         else if(type.equals("int16")) return new Type(Types.INT16);
         else if(type.equals("int32")) return new Type(Types.INT32);
@@ -79,6 +85,12 @@ public class CompiledData {
         for(Structure struct : structures) {
             if(struct.name.equals(type)) {
                 return new TypeStructure(struct.name);
+            }
+        }
+
+        for(Object obj : objects) {
+            if(obj.name.equals(type)) {
+                return new TypeObject(obj.name);
             }
         }
 
@@ -115,6 +127,7 @@ public class CompiledData {
     public void save(File file) throws IOException {
         DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         output.writeBytes("zPRL");
+
         output.writeShort(structures.size());
         for(Structure struct : structures) {
             output.writeUTF(struct.name);
@@ -124,6 +137,12 @@ public class CompiledData {
                 writeType(field.type, output);
             }
         }
+
+        output.writeShort(objects.size());
+        for(Object obj : objects) {
+            output.writeUTF(obj.name);
+        }
+
         output.close();
     }
 
@@ -140,6 +159,9 @@ public class CompiledData {
             }else if(type instanceof TypeStructure) {
                 TypeStructure sig = (TypeStructure) type;
                 out.writeUTF(sig.name);
+            }else if(type instanceof TypeObject) {
+                TypeObject obj = (TypeObject) type;
+                out.writeUTF(obj.name);
             }else {
                 throw new RuntimeException("Unhandled additional data class: " + type.getClass());
             }
