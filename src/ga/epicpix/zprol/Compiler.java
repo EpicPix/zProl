@@ -11,6 +11,7 @@ import ga.epicpix.zprol.compiled.StructureField;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
 import ga.epicpix.zprol.compiled.TypeNamed;
+import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
@@ -27,7 +28,7 @@ public class Compiler {
         return null;
     }
 
-    public static Function compileFunction(CompiledData data, FunctionToken functionToken, Iterator<Token> tokens) {
+    public static Function compileFunction(CompiledData data, FunctionToken functionToken, Iterator<Token> tokens) throws UnknownTypeException {
         ArrayList<Flag> flags = convertFlags(functionToken.flags);
         Type returnType = data.resolveType(functionToken.returnType);
         ArrayList<TypeNamed> parameters = new ArrayList<>();
@@ -41,7 +42,7 @@ public class Compiler {
         return new Function(functionToken.name, signature, flags, parseFunctionCode(data, tokens));
     }
 
-    public static Structure compileStructure(CompiledData data, StructureToken structureToken, Iterator<Token> tokens) {
+    public static Structure compileStructure(CompiledData data, StructureToken structureToken, Iterator<Token> tokens) throws UnknownTypeException {
         ArrayList<StructureField> fields = new ArrayList<>();
         for(StructureType field : structureToken.getTypes()) {
             fields.add(new StructureField(field.name, data.resolveType(field.type)));
@@ -61,7 +62,7 @@ public class Compiler {
         return flags;
     }
 
-    public static Object compileObject(CompiledData data, ObjectToken objectToken, Iterator<Token> tokens) {
+    public static Object compileObject(CompiledData data, ObjectToken objectToken, Iterator<Token> tokens) throws UnknownTypeException {
         ArrayList<ObjectField> fields = new ArrayList<>();
         ArrayList<Function> functions = new ArrayList<>();
         Token currentToken;
@@ -76,7 +77,7 @@ public class Compiler {
         return new Object(objectToken.getObjectName(), data.resolveType(objectToken.getExtendsFrom()), fields, functions);
     }
 
-    public static CompiledData compile(ArrayList<Token> tokens) {
+    public static CompiledData compile(ArrayList<Token> tokens) throws UnknownTypeException {
         CompiledData data = new CompiledData();
         for(Token token : tokens) {
             if(token.getType() == TokenType.STRUCTURE) {

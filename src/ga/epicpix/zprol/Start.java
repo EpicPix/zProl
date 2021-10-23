@@ -1,6 +1,7 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
+import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.tokens.Token;
 import java.io.File;
 import java.io.IOException;
@@ -8,7 +9,7 @@ import java.util.ArrayList;
 
 public class Start {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, UnknownTypeException {
         if(args.length == 0) {
             throw new IllegalArgumentException("File not specified");
         }

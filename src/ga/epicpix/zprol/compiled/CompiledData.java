@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.DataParser;
+import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -47,7 +48,7 @@ public class CompiledData {
         futureStructureDefinitions.add(name);
     }
 
-    private Type finish(Type type) {
+    private Type finish(Type type) throws UnknownTypeException {
         if(type instanceof TypeFutureObject) {
             type = resolveType(((TypeFutureObject) type).type);
         }else if(type instanceof TypeFutureStructure) {
@@ -71,7 +72,7 @@ public class CompiledData {
         return type;
     }
 
-    public void finishFutures() {
+    public void finishFutures() throws UnknownTypeException {
         futureObjectDefinitions.clear();
         futureStructureDefinitions.clear();
 
@@ -96,7 +97,7 @@ public class CompiledData {
         }
     }
 
-    public Type resolveType(String type) {
+    public Type resolveType(String type) throws UnknownTypeException {
         if(type == null) return new Type(Types.NONE);
         if(type.equals("int8")) return new Type(Types.INT8);
         else if(type.equals("int16")) return new Type(Types.INT16);
@@ -134,7 +135,7 @@ public class CompiledData {
 
         String pre = parser.nextWord();
         if(parser.seekWord() == null || !parser.nextWord().equals("(")) {
-            throw new RuntimeException("Unknown type: " + type);
+            throw new UnknownTypeException("Unknown type: " + type);
         }
         Type ret = resolveType(pre);
         ArrayList<Type> parameters = new ArrayList<>();
