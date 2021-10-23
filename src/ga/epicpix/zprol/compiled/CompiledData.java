@@ -58,6 +58,15 @@ public class CompiledData {
             for(int i = 0; i<sig.parameters.length; i++) {
                 sig.parameters[i] = finish(sig.parameters[i]);
             }
+        }else if(type instanceof TypeFunctionSignatureNamed) {
+            TypeFunctionSignatureNamed sig = (TypeFunctionSignatureNamed) type;
+            sig.returnType = finish(sig.returnType);
+            for(int i = 0; i<sig.parameters.length; i++) {
+                sig.parameters[i] = (TypeNamed) finish(sig.parameters[i]);
+            }
+        }else if(type instanceof TypeNamed) {
+            TypeNamed named = (TypeNamed) type;
+            named.type = finish(named.type);
         }
         return type;
     }
@@ -70,6 +79,20 @@ public class CompiledData {
             for(StructureField field : structure.fields) {
                 field.type = finish(field.type);
             }
+        }
+
+        for(Object object : objects) {
+            for(ObjectField field : object.fields) {
+                field.type = finish(field.type);
+            }
+
+            for(Function func : object.functions) {
+                func.signature = (TypeFunctionSignatureNamed) finish(func.signature);
+            }
+        }
+
+        for(Function func : functions) {
+            func.signature = (TypeFunctionSignatureNamed) finish(func.signature);
         }
     }
 
