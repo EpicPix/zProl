@@ -4,6 +4,8 @@ import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.Bytecode;
+import ga.epicpix.zprol.compiled.LocalVariable;
+import ga.epicpix.zprol.compiled.math.MathCompiler;
 import ga.epicpix.zprol.compiled.Object;
 import ga.epicpix.zprol.compiled.ObjectField;
 import ga.epicpix.zprol.compiled.Structure;
@@ -15,38 +17,61 @@ import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
+import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.TypedefToken;
 import ga.epicpix.zprol.tokens.WordToken;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class Compiler {
 
-    public static Bytecode parseFunctionCode(CompiledData data, Iterator<Token> tokens) {
+    public static Bytecode parseFunctionCode(CompiledData data, SeekIterator<Token> tokens) {
+        MathCompiler mathCompiler = new MathCompiler();
         Bytecode bytecode = new Bytecode();
         Token token;
         while((token = tokens.next()).getType() != TokenType.END_FUNCTION) {
             if(token.getType() == TokenType.WORD) {
                 try {
                     Type type = data.resolveType(((WordToken) token).word);
-                    // TODO: Handle creating a variable?
+                    token = tokens.next();
+                    if(token.getType() != TokenType.WORD) {
+                        throw new RuntimeException("Cannot handle this token: " + token);
+                    }
+                    String name = ((WordToken) token).word;
+                    bytecode.defineLocalVariable(name, type);
+                    token = tokens.next();
+                    if(token.getType() != TokenType.END_LINE) {
+                        if(token.getType() == TokenType.OPERATOR) {
+                            if(((OperatorToken) token).operator.equals("=")) {
+                                mathCompiler.compile(data, bytecode, tokens);
+                            }else {
+                                throw new RuntimeException("Cannot handle this token: " + token);
+                            }
+                        }else {
+                            throw new RuntimeException("Cannot handle this token: " + token);
+                        }
+                    }
                 } catch (UnknownTypeException unkType) {
-                    // TODO: Handle maybe an operation?
-                    throw new RuntimeException("Cannot handle this token: " + token);
+                    String name = ((WordToken) token).word;
+                    LocalVariable var = bytecode.getLocalVariable(name);
+                    if(var != null) {
+                        // TODO: Handle maybe an operation?
+                        throw new RuntimeException("Cannot handle this token: " + token);
+                    }else {
+                        throw new RuntimeException("Unknown variable: " + name);
+                    }
                 }
             }else {
-                //TODO: Not sure what this could be
+                //TODO: Not sure what this could be, maybe ++i or --i
                 throw new RuntimeException("Cannot handle this token: " + token);
             }
-//            System.out.println(token);
         }
         return bytecode;
     }
 
-    public static Function compileFunction(CompiledData data, FunctionToken functionToken, Iterator<Token> tokens) throws UnknownTypeException {
+    public static Function compileFunction(CompiledData data, FunctionToken functionToken, SeekIterator<Token> tokens) throws UnknownTypeException {
         ArrayList<Flag> flags = convertFlags(functionToken.flags);
         Type returnType = data.resolveType(functionToken.returnType);
         ArrayList<TypeNamed> parameters = new ArrayList<>();
@@ -60,7 +85,7 @@ public class Compiler {
         return new Function(functionToken.name, signature, flags, parseFunctionCode(data, tokens));
     }
 
-    public static Structure compileStructure(CompiledData data, StructureToken structureToken, Iterator<Token> tokens) throws UnknownTypeException {
+    public static Structure compileStructure(CompiledData data, StructureToken structureToken, SeekIterator<Token> tokens) throws UnknownTypeException {
         ArrayList<StructureField> fields = new ArrayList<>();
         for(StructureType field : structureToken.getTypes()) {
             fields.add(new StructureField(field.name, data.resolveType(field.type)));
@@ -80,7 +105,7 @@ public class Compiler {
         return flags;
     }
 
-    public static Object compileObject(CompiledData data, ObjectToken objectToken, Iterator<Token> tokens) throws UnknownTypeException {
+    public static Object compileObject(CompiledData data, ObjectToken objectToken, SeekIterator<Token> tokens) throws UnknownTypeException {
         ArrayList<ObjectField> fields = new ArrayList<>();
         ArrayList<Function> functions = new ArrayList<>();
         Token currentToken;
@@ -104,7 +129,7 @@ public class Compiler {
                 data.addFutureObjectDefinition(((ObjectToken) token).getObjectName());
             }
         }
-        Iterator<Token> tokenIter = tokens.iterator();
+        SeekIterator<Token> tokenIter = new SeekIterator<>(tokens);
         while(tokenIter.hasNext()) {
             Token token = tokenIter.next();
             if(token.getType() == TokenType.STRUCTURE) {
