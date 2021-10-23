@@ -8,4 +8,7 @@ public class Type {
         this.type = type;
     }
 
+    public String toString() {
+        return type.name().toLowerCase();
+    }
 }

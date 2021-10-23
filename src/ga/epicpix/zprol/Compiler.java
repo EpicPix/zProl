@@ -19,13 +19,31 @@ import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.TypedefToken;
+import ga.epicpix.zprol.tokens.WordToken;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 public class Compiler {
 
     public static Bytecode parseFunctionCode(CompiledData data, Iterator<Token> tokens) {
-        return null;
+        Bytecode bytecode = new Bytecode();
+        Token token;
+        while((token = tokens.next()).getType() != TokenType.END_FUNCTION) {
+            if(token.getType() == TokenType.WORD) {
+                try {
+                    Type type = data.resolveType(((WordToken) token).word);
+                    // TODO: Handle creating a variable?
+                } catch (UnknownTypeException unkType) {
+                    // TODO: Handle maybe an operation?
+                    throw new RuntimeException("Cannot handle this token: " + token);
+                }
+            }else {
+                //TODO: Not sure what this could be
+                throw new RuntimeException("Cannot handle this token: " + token);
+            }
+//            System.out.println(token);
+        }
+        return bytecode;
     }
 
     public static Function compileFunction(CompiledData data, FunctionToken functionToken, Iterator<Token> tokens) throws UnknownTypeException {
