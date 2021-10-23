@@ -84,6 +84,7 @@ public class CompiledData {
         else if(type.equals("uint32")) return new Type(Types.UINT32);
         else if(type.equals("uint64")) return new Type(Types.UINT64);
         else if(type.equals("pointer")) return new Type(Types.POINTER);
+        else if(type.equals("void")) return new Type(Types.VOID);
         Type t = typedef.get(type);
         if(t != null) return t;
 
