@@ -13,6 +13,7 @@ public class CompiledData {
 
     private final ArrayList<Structure> structures = new ArrayList<>();
     private final ArrayList<Object> objects = new ArrayList<>();
+    private final ArrayList<Function> functions = new ArrayList<>();
     private final HashMap<String, Type> typedef = new HashMap<>();
 
     private final ArrayList<String> futureObjectDefinitions = new ArrayList<>();
@@ -32,6 +33,10 @@ public class CompiledData {
 
     public void addObject(Object object) {
         objects.add(object);
+    }
+
+    public void addFunction(Function function) {
+        functions.add(function);
     }
 
     public void addFutureObjectDefinition(String name) {
@@ -152,21 +157,38 @@ public class CompiledData {
                 }
                 output.writeInt(flags);
             }
+            output.writeShort(obj.functions.size());
+            for(Function func : obj.functions) {
+                writeFunction(func, output);
+            }
+        }
+
+        output.writeShort(functions.size());
+        for(Function func : functions) {
+            writeFunction(func, output);
         }
 
         output.close();
+    }
+
+    private static void writeFunction(Function func, DataOutputStream out) throws IOException {
+        out.writeUTF(func.name);
+        writeFunctionSignatureType(func.signature, out);
+    }
+
+    private static void writeFunctionSignatureType(TypeFunctionSignature sig, DataOutputStream out) throws IOException {
+        writeType(sig.returnType, out);
+        out.writeShort(sig.parameters.length);
+        for(Type param : sig.parameters) {
+            writeType(param, out);
+        }
     }
 
     private static void writeType(Type type, DataOutputStream out) throws IOException {
         out.writeByte(type.type.id);
         if(type.type.additionalData) {
             if(type instanceof TypeFunctionSignature) {
-                TypeFunctionSignature sig = (TypeFunctionSignature) type;
-                writeType(sig.returnType, out);
-                out.writeShort(sig.parameters.length);
-                for(Type param : sig.parameters) {
-                    writeType(param, out);
-                }
+                writeFunctionSignatureType((TypeFunctionSignature) type, out);
             }else if(type instanceof TypeStructure) {
                 TypeStructure sig = (TypeStructure) type;
                 out.writeUTF(sig.name);
