@@ -203,6 +203,9 @@ public class CompiledData {
         out.writeUTF(func.name);
         writeFlags(func.flags, out);
         writeFunctionSignatureTypeNamed(func.signature, out);
+        if(!func.flags.contains(Flag.NO_IMPLEMENTATION)) {
+            func.code.write(out);
+        }
     }
 
     private static void writeFunctionSignatureTypeNamed(TypeFunctionSignatureNamed sig, DataOutputStream out) throws IOException {

@@ -3,6 +3,7 @@ package ga.epicpix.zprol;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
+import ga.epicpix.zprol.compiled.Bytecode;
 import ga.epicpix.zprol.compiled.Object;
 import ga.epicpix.zprol.compiled.ObjectField;
 import ga.epicpix.zprol.compiled.Structure;
@@ -22,6 +23,10 @@ import java.util.Iterator;
 
 public class Compiler {
 
+    public static Bytecode parseFunctionCode(CompiledData data, Iterator<Token> tokens) {
+        return null;
+    }
+
     public static Function compileFunction(CompiledData data, FunctionToken functionToken, Iterator<Token> tokens) {
         ArrayList<Flag> flags = convertFlags(functionToken.flags);
         Type returnType = data.resolveType(functionToken.returnType);
@@ -31,9 +36,9 @@ public class Compiler {
         }
         TypeFunctionSignatureNamed signature = new TypeFunctionSignatureNamed(returnType, parameters.toArray(new TypeNamed[0]));
         if(flags.contains(Flag.NO_IMPLEMENTATION)) {
-            return new Function(functionToken.name, signature, flags);
+            return new Function(functionToken.name, signature, flags, null);
         }
-        return null;
+        return new Function(functionToken.name, signature, flags, parseFunctionCode(data, tokens));
     }
 
     public static Structure compileStructure(CompiledData data, StructureToken structureToken, Iterator<Token> tokens) {
