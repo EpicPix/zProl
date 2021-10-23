@@ -149,7 +149,6 @@ public class MathCompiler {
         } catch(IOException e) {
             e.printStackTrace();
         }
-        System.out.println(operations);
     }
 
     private void generateDotFile(MathOperation operation, BufferedWriter writer) throws IOException {
