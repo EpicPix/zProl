@@ -151,11 +151,7 @@ public class CompiledData {
             for(ObjectField field : obj.fields) {
                 output.writeUTF(field.name);
                 writeType(field.type, output);
-                int flags = 0;
-                for(Flag f : field.flags) {
-                    flags |= f.mask;
-                }
-                output.writeInt(flags);
+                writeFlags(field.flags, output);
             }
             output.writeShort(obj.functions.size());
             for(Function func : obj.functions) {
@@ -171,8 +167,17 @@ public class CompiledData {
         output.close();
     }
 
+    private static void writeFlags(ArrayList<Flag> flags, DataOutputStream out) throws IOException {
+        int flagsOut = 0;
+        for(Flag f : flags) {
+            flagsOut |= f.mask;
+        }
+        out.writeInt(flagsOut);
+    }
+
     private static void writeFunction(Function func, DataOutputStream out) throws IOException {
         out.writeUTF(func.name);
+        writeFlags(func.flags, out);
         writeFunctionSignatureType(func.signature, out);
     }
 
