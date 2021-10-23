@@ -177,7 +177,7 @@ public class Parser {
                 }
 
                 tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, flags));
-                readFunction = true;
+                if(!flags.contains(ParserFlag.NO_IMPLEMENTATION)) readFunction = true;
             }else {
                 throw new RuntimeException("Error 8: " + read);
             }

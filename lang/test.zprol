@@ -6,7 +6,5 @@ object def {
     internal field uint8 aField;
     field uint16 anotherField;
     
-    function void aFunction(uint8 t) {
-        
-    }
+    function void aFunction(uint8 t);
 }

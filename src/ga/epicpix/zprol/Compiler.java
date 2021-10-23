@@ -7,6 +7,9 @@ import ga.epicpix.zprol.compiled.Object;
 import ga.epicpix.zprol.compiled.ObjectField;
 import ga.epicpix.zprol.compiled.Structure;
 import ga.epicpix.zprol.compiled.StructureField;
+import ga.epicpix.zprol.compiled.Type;
+import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
+import ga.epicpix.zprol.compiled.TypeNamed;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
@@ -20,6 +23,16 @@ import java.util.Iterator;
 public class Compiler {
 
     public static Function compileFunction(CompiledData data, FunctionToken functionToken, Iterator<Token> tokens) {
+        ArrayList<Flag> flags = convertFlags(functionToken.flags);
+        Type returnType = data.resolveType(functionToken.returnType);
+        ArrayList<TypeNamed> parameters = new ArrayList<>();
+        for(ParameterDataType param : functionToken.parameters) {
+            parameters.add(new TypeNamed(data.resolveType(param.type), param.name));
+        }
+        TypeFunctionSignatureNamed signature = new TypeFunctionSignatureNamed(returnType, parameters.toArray(new TypeNamed[0]));
+        if(flags.contains(Flag.NO_IMPLEMENTATION)) {
+            return new Function(functionToken.name, signature, flags);
+        }
         return null;
     }
 
@@ -31,6 +44,18 @@ public class Compiler {
         return new Structure(structureToken.getStructureName(), fields);
     }
 
+    public static ArrayList<Flag> convertFlags(ArrayList<ParserFlag> pFlags) {
+        ArrayList<Flag> flags = new ArrayList<>();
+        for(ParserFlag parserFlag : pFlags) {
+            if(parserFlag == ParserFlag.INTERNAL) {
+                flags.add(Flag.INTERNAL);
+            }else if(parserFlag == ParserFlag.NO_IMPLEMENTATION) {
+                flags.add(Flag.NO_IMPLEMENTATION);
+            }
+        }
+        return flags;
+    }
+
     public static Object compileObject(CompiledData data, ObjectToken objectToken, Iterator<Token> tokens) {
         ArrayList<ObjectField> fields = new ArrayList<>();
         ArrayList<Function> functions = new ArrayList<>();
@@ -38,15 +63,7 @@ public class Compiler {
         while((currentToken = tokens.next()).getType() != TokenType.END_OBJECT) {
             if(currentToken.getType() == TokenType.FIELD) {
                 FieldToken fieldToken = (FieldToken) currentToken;
-                ArrayList<Flag> flags = new ArrayList<>();
-                for(ParserFlag parserFlag : fieldToken.flags) {
-                    if(parserFlag == ParserFlag.INTERNAL) {
-                        flags.add(Flag.INTERNAL);
-                    }else if(parserFlag == ParserFlag.NO_IMPLEMENTATION) {
-                        flags.add(Flag.NO_IMPLEMENTATION);
-                    }
-                }
-                fields.add(new ObjectField(fieldToken.name, data.resolveType(fieldToken.type), flags));
+                fields.add(new ObjectField(fieldToken.name, data.resolveType(fieldToken.type), convertFlags(fieldToken.flags)));
             }else if(currentToken.getType() == TokenType.FUNCTION) {
                 functions.add(compileFunction(data, (FunctionToken) currentToken, tokens));
             }

@@ -6,10 +6,10 @@ import java.util.ArrayList;
 
 public class FunctionToken extends Token {
 
-    private final String returnType;
-    private final ArrayList<ParameterDataType> parameters;
-    private final String name;
-    private final ArrayList<ParserFlag> flags;
+    public final String returnType;
+    public final ArrayList<ParameterDataType> parameters;
+    public final String name;
+    public final ArrayList<ParserFlag> flags;
 
     public FunctionToken(String returnType, String name, ArrayList<ParameterDataType> parameters, ArrayList<ParserFlag> flags) {
         super(TokenType.FUNCTION);

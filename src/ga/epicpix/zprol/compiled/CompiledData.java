@@ -179,7 +179,15 @@ public class CompiledData {
     private static void writeFunction(Function func, DataOutputStream out) throws IOException {
         out.writeUTF(func.name);
         writeFlags(func.flags, out);
-        writeFunctionSignatureType(func.signature, out);
+        writeFunctionSignatureTypeNamed(func.signature, out);
+    }
+
+    private static void writeFunctionSignatureTypeNamed(TypeFunctionSignatureNamed sig, DataOutputStream out) throws IOException {
+        writeType(sig.returnType, out);
+        out.writeShort(sig.parameters.length);
+        for(Type param : sig.parameters) {
+            writeType(param, out);
+        }
     }
 
     private static void writeFunctionSignatureType(TypeFunctionSignature sig, DataOutputStream out) throws IOException {
@@ -201,6 +209,10 @@ public class CompiledData {
             }else if(type instanceof TypeObject) {
                 TypeObject obj = (TypeObject) type;
                 out.writeUTF(obj.name);
+            }else if(type instanceof TypeNamed) {
+                TypeNamed named = (TypeNamed) type;
+                out.writeUTF(named.name);
+                writeType(named.type, out);
             }else {
                 throw new RuntimeException("Unhandled additional data class: " + type.getClass());
             }
