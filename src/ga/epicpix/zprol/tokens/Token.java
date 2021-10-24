@@ -1,11 +1,25 @@
 package ga.epicpix.zprol.tokens;
 
+import java.util.ArrayList;
+
 public class Token {
 
     private final TokenType type;
 
     public Token(TokenType type) {
         this.type = type;
+    }
+
+    public static String toFriendlyString(ArrayList<Token> tokens) {
+        StringBuilder builder = new StringBuilder();
+        for(Token token : tokens) {
+            if(token.getType() == TokenType.WORD) {
+                builder.append(((WordToken) token).word);
+            }else if(token.getType() == TokenType.ACCESSOR) {
+                builder.append(".");
+            }
+        }
+        return builder.toString();
     }
 
     public TokenType getType() {
