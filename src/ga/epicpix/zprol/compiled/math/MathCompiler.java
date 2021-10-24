@@ -40,8 +40,19 @@ public class MathCompiler {
                 ArrayList<MathOperation> op = new ArrayList<>();
                 compile0(2, op, new Stack<>(), tokens);
                 params.add(op.get(0));
+            }else if(token.getType() == TokenType.COMMA) {
+                tokens.previous();
+                if(call) {
+                    return new MathCall(ref, params);
+                }else {
+                    return new MathField(ref);
+                }
             }else if(token.getType() == TokenType.CLOSE && call) {
+                System.out.println(ref + " / " + params);
                 return new MathCall(ref, params);
+            }else if(token.getType() == TokenType.CLOSE && !call) {
+                tokens.previous();
+                return new MathField(ref);
             }else if(!call) {
                 ref.add(token);
             }
@@ -52,6 +63,9 @@ public class MathCompiler {
     private void compile0(int type, ArrayList<MathOperation> operations, Stack<ArrayList<MathOperation>> stackOperations, SeekIterator<Token> tokens) {
         Token token;
         while(true) {
+            if((tokens.seek().getType() == TokenType.COMMA || tokens.seek().getType() == TokenType.CLOSE) && type == 2) {
+                return;
+            }
             token = tokens.next();
             if(token.getType() == TokenType.END_LINE && type == 0) {
                 return;
@@ -61,10 +75,6 @@ public class MathCompiler {
                 operations.clear();
                 operations.addAll(stackOperations.pop());
                 operations.add(brackets);
-                return;
-            }
-            if((token.getType() == TokenType.COMMA || token.getType() == TokenType.CLOSE) && type == 2) {
-                tokens.previous();
                 return;
             }
 
@@ -146,6 +156,11 @@ public class MathCompiler {
                         compile0(1, operations, stackOperations, tokens);
                         op = operations.get(operations.size() - 1);
                         operations.remove(operations.size() - 1);
+                    }else if(token.getType() == TokenType.WORD) {
+                        Token after = tokens.seek();
+                        if(after.getType() == TokenType.ACCESSOR || after.getType() == TokenType.OPEN) {
+                            op = compileReference(token, tokens);
+                        }
                     }
                     last = operations.get(operations.size() - 1);
                     operations.remove(operations.size() - 1);

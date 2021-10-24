@@ -8,7 +8,7 @@ object def {
     
     //this should test everything
     def(uint8 param) {
-        uint8 a = (2 * 2) + 5 - 65 / 5 + 7 * ((8 - 2 * 4) - 3 + 6) * 2;
+        uint8 a = (2 * 2) + 5 - 65 / 5 + 7 * ((8 - 2 * 4) - 3 + 6) * 2 + a.a(b, c.c, e(), f(4 + b()));
         // -4 42
         // a *= 2;
         // ++a;

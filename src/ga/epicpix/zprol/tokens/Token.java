@@ -17,6 +17,10 @@ public class Token {
                 builder.append(((WordToken) token).word);
             }else if(token.getType() == TokenType.ACCESSOR) {
                 builder.append(".");
+            }else if(token.getType() == TokenType.COMMA) {
+                builder.append(", ");
+            }else {
+                builder.append("(").append(token.getType().name().toLowerCase()).append(")");
             }
         }
         return builder.toString();
