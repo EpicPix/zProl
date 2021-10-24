@@ -48,7 +48,6 @@ public class MathCompiler {
                     return new MathField(ref);
                 }
             }else if(token.getType() == TokenType.CLOSE && call) {
-                System.out.println(ref + " / " + params);
                 return new MathCall(ref, params);
             }else if(token.getType() == TokenType.CLOSE && !call) {
                 tokens.previous();
