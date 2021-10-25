@@ -98,45 +98,31 @@ public class MathCompiler {
                 if(order == -1) throw new RuntimeException("Could not determine the order of operation: '" + operator + "'");
                 Class<? extends MathOperation> operatorClass = MathOrder.ORDER_TO_CLASS.get(operator);
                 if(operatorClass == null) throw new RuntimeException("Could not get the class of operation: '" + operator + "'");
-                if(order == 0) {
-                    token = tokens.next();
-                    MathOperation num = new MathNumber(token);
-                    if(token.getType() == TokenType.OPEN) {
-                        stackOperations.push(new ArrayList<>(operations));
-                        operations.clear();
-                        compile0(1, operations, stackOperations, tokens);
-                        num = operations.get(operations.size() - 1);
-                        operations.remove(operations.size() - 1);
-                    }
-                    MathOperation last = operations.get(operations.size() - 1);
+                token = tokens.next();
+                MathOperation op = new MathNumber(token);
+                MathOperation last;
+                if(token.getType() == TokenType.OPEN) {
+                    stackOperations.push(new ArrayList<>(operations));
+                    operations.clear();
+                    compile0(1, operations, stackOperations, tokens);
+                    op = operations.get(operations.size() - 1);
                     operations.remove(operations.size() - 1);
-                    if(last instanceof MathNumber) {
-                        operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, new MathNumber(token)));
+                }else if(token.getType() == TokenType.WORD) {
+                    Token after = tokens.seek();
+                    if(after.getType() == TokenType.ACCESSOR || after.getType() == TokenType.OPEN) {
+                        op = compileReference(token, tokens);
+                    }
+                }
+                last = operations.get(operations.size() - 1);
+                operations.remove(operations.size() - 1);
+
+                if(order == 0) {
+                    if(last instanceof MathNumber || last instanceof MathBrackets) {
+                        operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, op));
                     }else {
-                        if(last instanceof MathBrackets) {
-                            operations.add(new MathMultiply(last, new MathNumber(token)));
-                        }else {
-                            operations.add(Reflection.createInstance(last.getClass(), new Class[] {MathOperation.class, MathOperation.class}, last.operation, Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last.number, num)));
-                        }
+                        operations.add(Reflection.createInstance(last.getClass(), new Class[] {MathOperation.class, MathOperation.class}, last.operation, Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last.number, op)));
                     }
                 }else if(order == 1) {
-                    token = tokens.next();
-                    MathOperation op = new MathNumber(token);
-                    MathOperation last;
-                    if(token.getType() == TokenType.OPEN) {
-                        stackOperations.push(new ArrayList<>(operations));
-                        operations.clear();
-                        compile0(1, operations, stackOperations, tokens);
-                        op = operations.get(operations.size() - 1);
-                        operations.remove(operations.size() - 1);
-                    }else if(token.getType() == TokenType.WORD) {
-                        Token after = tokens.seek();
-                        if(after.getType() == TokenType.ACCESSOR || after.getType() == TokenType.OPEN) {
-                            op = compileReference(token, tokens);
-                        }
-                    }
-                    last = operations.get(operations.size() - 1);
-                    operations.remove(operations.size() - 1);
                     operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, op));
                 }
             }else if(token.getType() == TokenType.OPEN) {
