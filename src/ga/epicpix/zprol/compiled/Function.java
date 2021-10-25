@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiled;
 
+import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import java.util.ArrayList;
 
 public class Function {

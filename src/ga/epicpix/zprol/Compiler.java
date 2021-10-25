@@ -3,7 +3,7 @@ package ga.epicpix.zprol;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
-import ga.epicpix.zprol.compiled.Bytecode;
+import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.LocalVariable;
 import ga.epicpix.zprol.compiled.math.MathCompiler;
 import ga.epicpix.zprol.compiled.Object;
@@ -45,7 +45,9 @@ public class Compiler {
                     if(token.getType() != TokenType.END_LINE) {
                         if(token.getType() == TokenType.OPERATOR) {
                             if(((OperatorToken) token).operator.equals("=")) {
+                                mathCompiler.reset();
                                 mathCompiler.compile(data, bytecode, tokens);
+
                             }else {
                                 throw new RuntimeException("Cannot handle this token: " + token);
                             }
@@ -69,6 +71,10 @@ public class Compiler {
             }
         }
         return bytecode;
+    }
+
+    public static void convertMathToBytecode(Bytecode bytecode, CompiledData data) {
+
     }
 
     public static Function compileFunction(CompiledData data, FunctionToken functionToken, SeekIterator<Token> tokens) throws UnknownTypeException {

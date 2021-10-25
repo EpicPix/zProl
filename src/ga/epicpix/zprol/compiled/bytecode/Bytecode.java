@@ -1,5 +1,7 @@
-package ga.epicpix.zprol.compiled;
+package ga.epicpix.zprol.compiled.bytecode;
 
+import ga.epicpix.zprol.compiled.LocalVariable;
+import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
 import ga.epicpix.zprol.exceptions.VariableAlreadyDefinedException;
 import java.io.DataOutputStream;

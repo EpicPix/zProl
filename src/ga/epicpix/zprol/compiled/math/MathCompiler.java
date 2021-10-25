@@ -2,7 +2,7 @@ package ga.epicpix.zprol.compiled.math;
 
 import ga.epicpix.zprol.Reflection;
 import ga.epicpix.zprol.SeekIterator;
-import ga.epicpix.zprol.compiled.Bytecode;
+import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
@@ -18,7 +18,11 @@ import java.util.Stack;
 
 public class MathCompiler {
 
-    public int current = 0;
+    private int current = 0;
+
+    public void reset() {
+        current = 0;
+    }
 
     private MathOperation compileReference(Token token, SeekIterator<Token> tokens) {
         ArrayList<Token> ref = new ArrayList<>();
@@ -239,5 +243,4 @@ public class MathCompiler {
         writer.write("    op" + c + " -> op" + current + "\n");
         generateDotFile(operation.number, writer);
     }
-
 }
