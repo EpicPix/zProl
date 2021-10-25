@@ -8,7 +8,7 @@ public class MathNumber extends MathOperation {
 
     public MathNumber(Token token) {
         number = token;
-        super.number = this;
+        super.right = this;
     }
 
     public String toString() {

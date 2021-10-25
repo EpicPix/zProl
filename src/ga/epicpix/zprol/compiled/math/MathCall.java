@@ -11,7 +11,7 @@ public class MathCall extends MathOperation {
     public MathCall(ArrayList<Token> reference, ArrayList<MathOperation> parameters) {
         this.reference = reference;
         this.parameters = parameters;
-        super.number = this;
+        super.right = this;
     }
 
     public String toString() {

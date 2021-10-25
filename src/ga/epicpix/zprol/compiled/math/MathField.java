@@ -9,7 +9,7 @@ public class MathField extends MathOperation {
 
     public MathField(ArrayList<Token> reference) {
         this.reference = reference;
-        super.number = this;
+        super.right = this;
     }
 
     public String toString() {

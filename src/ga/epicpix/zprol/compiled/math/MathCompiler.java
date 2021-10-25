@@ -120,7 +120,7 @@ public class MathCompiler {
                     if(last instanceof MathNumber || last instanceof MathBrackets) {
                         operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, op));
                     }else {
-                        operations.add(Reflection.createInstance(last.getClass(), new Class[] {MathOperation.class, MathOperation.class}, last.operation, Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last.number, op)));
+                        operations.add(Reflection.createInstance(last.getClass(), new Class[] {MathOperation.class, MathOperation.class}, last.left, Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last.right, op)));
                     }
                 }else if(order == 1) {
                     operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, op));
@@ -163,7 +163,7 @@ public class MathCompiler {
             }
             return;
         }else if(operation instanceof MathBrackets) {
-            printOperations(operation.operation);
+            printOperations(operation.left);
             return;
         }else if(operation instanceof MathField) {
             MathField ref = (MathField) operation;
@@ -177,8 +177,8 @@ public class MathCompiler {
             System.out.println("call " + Token.toFriendlyString(call.reference));
             return;
         }
-        printOperations(operation.operation);
-        printOperations(operation.number);
+        printOperations(operation.left);
+        printOperations(operation.right);
         String op = MathOrder.classToOperation(operation.getClass());
         if(op != null) {
             System.out.println(MathOrder.ORDER_TO_NAME.get(op));
@@ -216,7 +216,7 @@ public class MathCompiler {
             int c = current;
             current++;
             writer.write("    op" + c + " -> op" + current + "\n");
-            generateDotFile(operation.operation, writer);
+            generateDotFile(operation.left, writer);
             return;
         }else {
             writer.write("    op" + current + " [label=\"" + MathOrder.classToOperation(operation.getClass()) + "\"]\n");
@@ -224,9 +224,9 @@ public class MathCompiler {
         int c = current;
         current++;
         writer.write("    op" + c + " -> op" + current + "\n");
-        generateDotFile(operation.operation, writer);
+        generateDotFile(operation.left, writer);
         current++;
         writer.write("    op" + c + " -> op" + current + "\n");
-        generateDotFile(operation.number, writer);
+        generateDotFile(operation.right, writer);
     }
 }
