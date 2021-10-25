@@ -116,14 +116,16 @@ public class MathCompiler {
                 last = operations.get(operations.size() - 1);
                 operations.remove(operations.size() - 1);
 
-                if(order == 0) {
-                    if(last instanceof MathNumber || last instanceof MathBrackets) {
+                int lOrder = MathOrder.getOrder(MathOrder.classToOperation(last.getClass()));
+
+                if(lOrder == -1) {
+                    operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, op));
+                }else {
+                    if(order < lOrder) {
                         operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, op));
                     }else {
                         operations.add(Reflection.createInstance(last.getClass(), new Class[] {MathOperation.class, MathOperation.class}, last.left, Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last.right, op)));
                     }
-                }else if(order == 1) {
-                    operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, op));
                 }
             }else if(token.getType() == TokenType.OPEN) {
                 stackOperations.push(new ArrayList<>(operations));
