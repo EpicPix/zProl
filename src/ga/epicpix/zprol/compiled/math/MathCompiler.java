@@ -139,20 +139,22 @@ public class MathCompiler {
         ArrayList<MathOperation> operations = new ArrayList<>();
         Stack<ArrayList<MathOperation>> stackOperations = new Stack<>();
         compile0(0, operations, stackOperations, tokens);
-        File dot = new File("math.dot");
-        try {
-            BufferedWriter out = new BufferedWriter(new FileWriter(dot));
-            out.write("digraph Math {\n");
-            for(MathOperation op : operations) {
-                out.write("    root -> op" + current + "\n");
-                generateDotFile(op, out);
+        if(Boolean.parseBoolean(System.getenv("DEBUG"))) {
+            File dot = new File("math.dot");
+            try {
+                BufferedWriter out = new BufferedWriter(new FileWriter(dot));
+                out.write("digraph Math {\n");
+                for(MathOperation op : operations) {
+                    out.write("    root -> op" + current + "\n");
+                    generateDotFile(op, out);
+                }
+                out.write("}");
+                out.close();
+            } catch(IOException e) {
+                e.printStackTrace();
             }
-            out.write("}");
-            out.close();
-        } catch(IOException e) {
-            e.printStackTrace();
+            printOperations(operations.get(0));
         }
-        printOperations(operations.get(0));
     }
 
     private void printOperations(MathOperation operation) {
