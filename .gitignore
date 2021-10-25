@@ -8,3 +8,5 @@ out/
 *.dot
 .vscode/
 *.zpil
+*.png
+*.svg
