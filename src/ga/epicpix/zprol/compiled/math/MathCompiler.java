@@ -232,7 +232,7 @@ public class MathCompiler {
             writer.write("    op" + c + " -> op" + current + "\n");
             generateDotFile(operation.operation, writer);
             return;
-        }else if(operation instanceof MathAdd) {
+        }else {
             writer.write("    op" + current + " [label=\"" + MathOrder.classToOperation(operation.getClass()) + "\"]\n");
         }
         int c = current;
