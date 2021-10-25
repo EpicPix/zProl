@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiled.math;
 
+import ga.epicpix.zprol.Reflection;
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.Bytecode;
 import ga.epicpix.zprol.compiled.CompiledData;
@@ -87,10 +88,14 @@ public class MathCompiler {
                     operations.add(new MathNumber(token));
                 }
             }else if(token.getType() == TokenType.OPERATOR) {
-                OperatorToken operator = (OperatorToken) token;
-                if(operator.operator.equals("*")) {
+                OperatorToken operatorToken = (OperatorToken) token;
+                String operator = operatorToken.operator;
+                int order = MathOrder.getOrder(operator);
+                if(order == -1) throw new RuntimeException("Could not determine the order of operation: '" + operator + "'");
+                Class<? extends MathOperation> operatorClass = MathOrder.ORDER_TO_CLASS.get(operator);
+                if(operatorClass == null) throw new RuntimeException("Could not get the class of operation: '" + operator + "'");
+                if(order == 0) {
                     token = tokens.next();
-
                     MathOperation num = new MathNumber(token);
                     if(token.getType() == TokenType.OPEN) {
                         stackOperations.push(new ArrayList<>(operations));
@@ -102,50 +107,15 @@ public class MathCompiler {
                     MathOperation last = operations.get(operations.size() - 1);
                     operations.remove(operations.size() - 1);
                     if(last instanceof MathNumber) {
-                        operations.add(new MathMultiply(last, new MathNumber(token)));
+                        operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, new MathNumber(token)));
                     }else {
-                        if(last instanceof MathAdd) {
-                            operations.add(new MathAdd(last.operation, new MathMultiply(last.number, num)));
-                        }else if(last instanceof MathSubtract) {
-                            operations.add(new MathSubtract(last.operation, new MathMultiply(last.number, num)));
-                        }else if(last instanceof MathMultiply) {
-                            operations.add(new MathMultiply(last.operation, new MathMultiply(last.number, num)));
-                        }else if(last instanceof MathDivide) {
-                            operations.add(new MathDivide(last.operation, new MathMultiply(last.number, num)));
-                        }else if(last instanceof MathBrackets) {
+                        if(last instanceof MathBrackets) {
                             operations.add(new MathMultiply(last, new MathNumber(token)));
+                        }else {
+                            operations.add(Reflection.createInstance(last.getClass(), new Class[] {MathOperation.class, MathOperation.class}, last.operation, Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last.number, num)));
                         }
                     }
-
-                }else if(operator.operator.equals("/")) {
-                    token = tokens.next();
-
-                    MathOperation num = new MathNumber(token);
-                    if(token.getType() == TokenType.OPEN) {
-                        stackOperations.push(new ArrayList<>(operations));
-                        operations.clear();
-                        compile0(1, operations, stackOperations, tokens);
-                        num = operations.get(operations.size() - 1);
-                        operations.remove(operations.size() - 1);
-                    }
-                    MathOperation last = operations.get(operations.size() - 1);
-                    operations.remove(operations.size() - 1);
-                    if(last instanceof MathNumber) {
-                        operations.add(new MathDivide(last, new MathNumber(token)));
-                    }else {
-                        if(last instanceof MathAdd) {
-                            operations.add(new MathAdd(last.operation, new MathDivide(last.number, num)));
-                        }else if(last instanceof MathSubtract) {
-                            operations.add(new MathSubtract(last.operation, new MathDivide(last.number, num)));
-                        }else if(last instanceof MathMultiply) {
-                            operations.add(new MathMultiply(last.operation, new MathDivide(last.number, num)));
-                        }else if(last instanceof MathDivide) {
-                            operations.add(new MathDivide(last.operation, new MathDivide(last.number, num)));
-                        }else if(last instanceof MathBrackets) {
-                            operations.add(new MathDivide(last, new MathNumber(token)));
-                        }
-                    }
-                }else if(operator.operator.equals("+")) {
+                }else if(order == 1) {
                     token = tokens.next();
                     MathOperation op = new MathNumber(token);
                     MathOperation last;
@@ -163,21 +133,7 @@ public class MathCompiler {
                     }
                     last = operations.get(operations.size() - 1);
                     operations.remove(operations.size() - 1);
-                    operations.add(new MathAdd(last, op));
-                }else if(operator.operator.equals("-")) {
-                    token = tokens.next();
-                    MathOperation op = new MathNumber(token);
-                    MathOperation last;
-                    if(token.getType() == TokenType.OPEN) {
-                        stackOperations.push(new ArrayList<>(operations));
-                        operations.clear();
-                        compile0(1, operations, stackOperations, tokens);
-                        op = operations.get(operations.size() - 1);
-                        operations.remove(operations.size() - 1);
-                    }
-                    last = operations.get(operations.size() - 1);
-                    operations.remove(operations.size() - 1);
-                    operations.add(new MathSubtract(last, op));
+                    operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, op));
                 }
             }else if(token.getType() == TokenType.OPEN) {
                 stackOperations.push(new ArrayList<>(operations));
@@ -233,14 +189,9 @@ public class MathCompiler {
         }
         printOperations(operation.operation);
         printOperations(operation.number);
-        if(operation instanceof MathAdd) {
-            System.out.println("add");
-        }else if(operation instanceof MathSubtract) {
-            System.out.println("sub");
-        }else if(operation instanceof MathMultiply) {
-            System.out.println("mul");
-        }else if(operation instanceof MathDivide) {
-            System.out.println("div");
+        String op = MathOrder.classToOperation(operation.getClass());
+        if(op != null) {
+            System.out.println(MathOrder.ORDER_TO_NAME.get(op));
         }
     }
 
@@ -270,14 +221,6 @@ public class MathCompiler {
                 current++;
             }
             return;
-        }else if(operation instanceof MathAdd) {
-            writer.write("    op" + current + " [label=\"+\"]\n");
-        }else if(operation instanceof MathSubtract) {
-            writer.write("    op" + current + " [label=\"-\"]\n");
-        }else if(operation instanceof MathMultiply) {
-            writer.write("    op" + current + " [label=\"*\"]\n");
-        }else if(operation instanceof MathDivide) {
-            writer.write("    op" + current + " [label=\"/\"]\n");
         }else if(operation instanceof MathBrackets) {
             writer.write("    op" + current + " [label=\"()\"]\n");
             int c = current;
@@ -285,6 +228,8 @@ public class MathCompiler {
             writer.write("    op" + c + " -> op" + current + "\n");
             generateDotFile(operation.operation, writer);
             return;
+        }else if(operation instanceof MathAdd) {
+            writer.write("    op" + current + " [label=\"" + MathOrder.classToOperation(operation.getClass()) + "\"]\n");
         }
         int c = current;
         current++;
