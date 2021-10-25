@@ -135,7 +135,7 @@ public class MathCompiler {
         }
     }
 
-    public void compile(CompiledData data, Bytecode bytecode, SeekIterator<Token> tokens) {
+    public MathOperation compile(CompiledData data, Bytecode bytecode, SeekIterator<Token> tokens) {
         ArrayList<MathOperation> operations = new ArrayList<>();
         Stack<ArrayList<MathOperation>> stackOperations = new Stack<>();
         compile0(0, operations, stackOperations, tokens);
@@ -144,10 +144,8 @@ public class MathCompiler {
             try {
                 BufferedWriter out = new BufferedWriter(new FileWriter(dot));
                 out.write("digraph Math {\n");
-                for(MathOperation op : operations) {
-                    out.write("    root -> op" + current + "\n");
-                    generateDotFile(op, out);
-                }
+                out.write("    root -> op" + current + "\n");
+                generateDotFile(operations.get(0), out);
                 out.write("}");
                 out.close();
             } catch(IOException e) {
@@ -155,6 +153,7 @@ public class MathCompiler {
             }
             printOperations(operations.get(0));
         }
+        return operations.get(0);
     }
 
     private void printOperations(MathOperation operation) {

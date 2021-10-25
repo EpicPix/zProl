@@ -4,13 +4,13 @@ public class LocalVariable {
 
     public String name;
     public Type type;
-    public int index;
+    public int sizeIndex;
 
     public LocalVariable() {}
 
-    public LocalVariable(String name, Type type, int index) {
+    public LocalVariable(String name, Type type, int sizeIndex) {
         this.name = name;
         this.type = type;
-        this.index = index;
+        this.sizeIndex = sizeIndex;
     }
 }

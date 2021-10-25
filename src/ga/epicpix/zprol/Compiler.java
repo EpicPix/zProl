@@ -5,6 +5,7 @@ import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.LocalVariable;
+import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
 import ga.epicpix.zprol.compiled.math.MathCompiler;
 import ga.epicpix.zprol.compiled.Object;
 import ga.epicpix.zprol.compiled.ObjectField;
@@ -13,6 +14,7 @@ import ga.epicpix.zprol.compiled.StructureField;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
 import ga.epicpix.zprol.compiled.TypeNamed;
+import ga.epicpix.zprol.compiled.math.MathOperation;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
@@ -46,8 +48,7 @@ public class Compiler {
                         if(token.getType() == TokenType.OPERATOR) {
                             if(((OperatorToken) token).operator.equals("=")) {
                                 mathCompiler.reset();
-                                mathCompiler.compile(data, bytecode, tokens);
-
+                                convertMathToBytecode(bytecode, data, mathCompiler.compile(data, bytecode, tokens));
                             }else {
                                 throw new RuntimeException("Cannot handle this token: " + token);
                             }
@@ -73,7 +74,7 @@ public class Compiler {
         return bytecode;
     }
 
-    public static void convertMathToBytecode(Bytecode bytecode, CompiledData data) {
+    public static void convertMathToBytecode(Bytecode bytecode, CompiledData data, MathOperation op) {
 
     }
 

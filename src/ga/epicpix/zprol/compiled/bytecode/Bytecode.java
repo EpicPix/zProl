@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 public class Bytecode {
 
+    private int localVariableSizeIndex = 0;
     private ArrayList<LocalVariable> localVariables = new ArrayList<>();
 
     public LocalVariable defineLocalVariable(String name, Type type) {
@@ -18,7 +19,8 @@ public class Bytecode {
                 throw new VariableAlreadyDefinedException(name);
             }
         }
-        LocalVariable localVar = new LocalVariable(name, type, localVariables.size());
+        localVariableSizeIndex += type.type.memorySize;
+        LocalVariable localVar = new LocalVariable(name, type, localVariableSizeIndex);
         localVariables.add(localVar);
         return localVar;
     }
@@ -33,5 +35,6 @@ public class Bytecode {
     }
 
     public void write(DataOutputStream out) throws IOException {
+        out.writeShort(localVariableSizeIndex);
     }
 }
