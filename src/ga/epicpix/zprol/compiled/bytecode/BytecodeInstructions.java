@@ -53,6 +53,11 @@ public enum BytecodeInstructions {
     LOAD32(0x26, 2), // Load 32 bit value from local variable
     LOAD64(0x27, 2), // Load 64 bit value from local variable and local variable + 1
 
+    AND8(0x28, 0),  // And 8 bits
+    AND16(0x29, 0), // And 16 bits
+    AND32(0x2A, 0), // And 32 bits
+    AND64(0x2B, 0), // And 64 bits
+
     ;
 
     private final int id;

@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 
 public class MathOrder {
 
-    public static final String[][] ORDER = {{"*", "/", "%"}, {"+", "-"}};
+    public static final String[][] ORDER = {{"*", "/", "%"}, {"+", "-", "&"}};
     public static final HashMap<String, Class<? extends MathOperation>> ORDER_TO_CLASS = new HashMap<>();
     public static final HashMap<String, String> ORDER_TO_NAME = new HashMap<>();
 
@@ -15,6 +15,9 @@ public class MathOrder {
 
         ORDER_TO_CLASS.put("-", MathSubtract.class);
         ORDER_TO_NAME.put("-", "sub");
+
+        ORDER_TO_CLASS.put("&", MathAnd.class);
+        ORDER_TO_NAME.put("&", "and");
 
         ORDER_TO_CLASS.put("*", MathMultiply.class);
         ORDER_TO_NAME.put("*", "mul");
