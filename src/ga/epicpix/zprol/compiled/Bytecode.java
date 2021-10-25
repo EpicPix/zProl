@@ -1,6 +1,6 @@
 package ga.epicpix.zprol.compiled;
 
-import ga.epicpix.zprol.VariableNotDefinedException;
+import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
 import ga.epicpix.zprol.exceptions.VariableAlreadyDefinedException;
 import java.io.DataOutputStream;
 import java.io.IOException;

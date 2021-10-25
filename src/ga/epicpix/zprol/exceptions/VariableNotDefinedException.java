@@ -1,4 +1,4 @@
-package ga.epicpix.zprol;
+package ga.epicpix.zprol.exceptions;
 
 public class VariableNotDefinedException extends RuntimeException {
 
