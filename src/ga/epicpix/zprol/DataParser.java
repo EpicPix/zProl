@@ -35,6 +35,20 @@ public class DataParser {
             if(Character.isWhitespace(cdata[index])) {
                 break;
             }
+            if(cdata[index] == '/') {
+                if(index + 1 < cdata.length) {
+                    if(cdata[index + 1] == '/') {
+                        index += 2;
+                        while(index < cdata.length) {
+                            if(cdata[index] == '\n') {
+                                break;
+                            }
+                            index++;
+                        }
+                        ignoreWhitespace();
+                    }
+                }
+            }
             boolean matches = nonSpecialCharacters.matcher(cdata[index] + "").matches();
             boolean operatorMatches = operatorCharacters.matcher(word.toString() + cdata[index]).matches();
             if(!operatorMatches && startType) {
