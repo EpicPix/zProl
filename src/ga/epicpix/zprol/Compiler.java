@@ -3,6 +3,7 @@ package ga.epicpix.zprol;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
+import ga.epicpix.zprol.compiled.Scope;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.LocalVariable;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
@@ -43,7 +44,7 @@ import java.util.ArrayList;
 
 public class Compiler {
 
-    public static Bytecode parseFunctionCode(CompiledData data, SeekIterator<Token> tokens) {
+    public static Bytecode parseFunctionCode(ArrayList<Scope> scopes, CompiledData data, SeekIterator<Token> tokens) {
         MathCompiler mathCompiler = new MathCompiler();
         Bytecode bytecode = new Bytecode();
         Token token;
@@ -62,7 +63,7 @@ public class Compiler {
                         if(token.getType() == TokenType.OPERATOR) {
                             if(((OperatorToken) token).operator.equals("=")) {
                                 mathCompiler.reset();
-                                convertMathToBytecode(type, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
+                                convertMathToBytecode(scopes, type, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
                                 int size = type.type.memorySize;
                                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, lVar.index);
                                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, lVar.index);
@@ -94,7 +95,7 @@ public class Compiler {
         return bytecode;
     }
 
-    public static void convertMathToBytecode(Type type, Bytecode bytecode, CompiledData data, MathOperation op) {
+    public static void convertMathToBytecode(ArrayList<Scope> scopes, Type type, Bytecode bytecode, CompiledData data, MathOperation op) {
         if(!type.isNumberType()) {
             throw new RuntimeException("Type is not number type!");
         }
@@ -110,7 +111,7 @@ public class Compiler {
         }
 
         if(op instanceof MathBrackets) {
-            convertMathToBytecode(type, bytecode, data, op.left);
+            convertMathToBytecode(scopes, type, bytecode, data, op.left);
         }else if(op instanceof MathCall) {
             throw new RuntimeException("Converting calls to instructions is not implemented yet");
         }else if(op instanceof MathField) {
@@ -127,8 +128,8 @@ public class Compiler {
                 throw new RuntimeException("Number " + num + " is not in range of the type (" + smallestNumber + " to " + biggestNumber + ")");
             }
         }else {
-            convertMathToBytecode(type, bytecode, data, op.left);
-            convertMathToBytecode(type, bytecode, data, op.right);
+            convertMathToBytecode(scopes, type, bytecode, data, op.left);
+            convertMathToBytecode(scopes, type, bytecode, data, op.right);
             if(op instanceof MathAdd) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.ADD8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.ADD16);
@@ -197,7 +198,7 @@ public class Compiler {
         return num.compareTo(lowest) >= 0 && highest.compareTo(num) > 0;
     }
 
-    public static Function compileFunction(CompiledData data, FunctionToken functionToken, SeekIterator<Token> tokens) throws UnknownTypeException {
+    public static Function compileFunction(ArrayList<Scope> scopes, CompiledData data, FunctionToken functionToken, SeekIterator<Token> tokens) throws UnknownTypeException {
         ArrayList<Flag> flags = convertFlags(functionToken.flags);
         Type returnType = data.resolveType(functionToken.returnType);
         ArrayList<TypeNamed> parameters = new ArrayList<>();
@@ -208,10 +209,10 @@ public class Compiler {
         if(flags.contains(Flag.NO_IMPLEMENTATION)) {
             return new Function(functionToken.name, signature, flags, null);
         }
-        return new Function(functionToken.name, signature, flags, parseFunctionCode(data, tokens));
+        return new Function(functionToken.name, signature, flags, parseFunctionCode(scopes, data, tokens));
     }
 
-    public static Structure compileStructure(CompiledData data, StructureToken structureToken, SeekIterator<Token> tokens) throws UnknownTypeException {
+    public static Structure compileStructure(ArrayList<Scope> scopes, CompiledData data, StructureToken structureToken, SeekIterator<Token> tokens) throws UnknownTypeException {
         ArrayList<StructureField> fields = new ArrayList<>();
         for(StructureType field : structureToken.getTypes()) {
             fields.add(new StructureField(field.name, data.resolveType(field.type)));
@@ -231,7 +232,7 @@ public class Compiler {
         return flags;
     }
 
-    public static Object compileObject(CompiledData data, ObjectToken objectToken, SeekIterator<Token> tokens) throws UnknownTypeException {
+    public static Object compileObject(ArrayList<Scope> scopes, CompiledData data, ObjectToken objectToken, SeekIterator<Token> tokens) throws UnknownTypeException {
         ArrayList<ObjectField> fields = new ArrayList<>();
         ArrayList<Function> functions = new ArrayList<>();
         Token currentToken;
@@ -240,7 +241,7 @@ public class Compiler {
                 FieldToken fieldToken = (FieldToken) currentToken;
                 fields.add(new ObjectField(fieldToken.name, data.resolveType(fieldToken.type), convertFlags(fieldToken.flags)));
             }else if(currentToken.getType() == TokenType.FUNCTION) {
-                functions.add(compileFunction(data, (FunctionToken) currentToken, tokens));
+                functions.add(compileFunction(scopes, data, (FunctionToken) currentToken, tokens));
             }
         }
         return new Object(objectToken.getObjectName(), data.resolveType(objectToken.getExtendsFrom()), fields, functions);
@@ -255,15 +256,17 @@ public class Compiler {
                 data.addFutureObjectDefinition(((ObjectToken) token).getObjectName());
             }
         }
+        ArrayList<Scope> scopes = new ArrayList<>();
+
         SeekIterator<Token> tokenIter = new SeekIterator<>(tokens);
         while(tokenIter.hasNext()) {
             Token token = tokenIter.next();
             if(token.getType() == TokenType.STRUCTURE) {
-                data.addStructure(compileStructure(data, (StructureToken) token, tokenIter));
+                data.addStructure(compileStructure(scopes, data, (StructureToken) token, tokenIter));
             }else if(token.getType() == TokenType.OBJECT) {
-                data.addObject(compileObject(data, (ObjectToken) token, tokenIter));
+                data.addObject(compileObject(scopes, data, (ObjectToken) token, tokenIter));
             }else if(token.getType() == TokenType.FUNCTION) {
-                data.addFunction(compileFunction(data, (FunctionToken) token, tokenIter));
+                data.addFunction(compileFunction(scopes, data, (FunctionToken) token, tokenIter));
             }else if(token.getType() == TokenType.TYPEDEF) {
                 TypedefToken typedefToken = (TypedefToken) token;
                 data.addTypeDefinition(typedefToken.getName(), data.resolveType(typedefToken.getToType()));
