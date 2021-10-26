@@ -24,8 +24,8 @@ public class Bytecode {
                 throw new VariableAlreadyDefinedException(name);
             }
         }
-        localVariableSizeIndex += type.type.memorySize;
         LocalVariable localVar = new LocalVariable(name, type, localVariableSizeIndex);
+        localVariableSizeIndex += type.type.memorySize;
         localVariables.add(localVar);
         return localVar;
     }

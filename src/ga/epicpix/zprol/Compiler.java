@@ -30,7 +30,6 @@ import ga.epicpix.zprol.compiled.math.MathSubtract;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
-import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.StructureToken;
@@ -57,13 +56,19 @@ public class Compiler {
                         throw new RuntimeException("Cannot handle this token: " + token);
                     }
                     String name = ((WordToken) token).word;
-                    bytecode.defineLocalVariable(name, type);
+                    LocalVariable lVar = bytecode.defineLocalVariable(name, type);
                     token = tokens.next();
                     if(token.getType() != TokenType.END_LINE) {
                         if(token.getType() == TokenType.OPERATOR) {
                             if(((OperatorToken) token).operator.equals("=")) {
                                 mathCompiler.reset();
                                 convertMathToBytecode(type, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
+                                int size = type.type.memorySize;
+                                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, lVar.index);
+                                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, lVar.index);
+                                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.STORE32, lVar.index);
+                                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, lVar.index);
+                                else throw new RuntimeException("Size " + size + " is not supported");
                             }else {
                                 throw new RuntimeException("Cannot handle this token: " + token);
                             }
@@ -111,7 +116,7 @@ public class Compiler {
         }else if(op instanceof MathField) {
             throw new RuntimeException("Converting fields to instructions is not implemented yet");
         }else if(op instanceof MathNumber) {
-            BigInteger num = ((NumberToken) ((MathNumber) op).number).number;
+            BigInteger num = (((MathNumber) op).number).number;
             if(numberInBounds(smallestNumber, biggestNumber, num)) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.PUSHI8, num.byteValueExact());
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.PUSHI16, num.shortValueExact());

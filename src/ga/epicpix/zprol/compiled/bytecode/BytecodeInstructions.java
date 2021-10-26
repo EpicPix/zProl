@@ -47,11 +47,15 @@ public enum BytecodeInstructions {
     GETFIELD(0x22, 4), // Get value from an object/struct field
     SETFIELD(0x23, 4), // Set value of an object/struct field
 
-    STORE32(0x24, 2), // Store popped 32 bit value in local variable
-    STORE64(0x25, 2), // Store popped 64 bit value in local variable and local variable + 1
+    STORE8(0x3C, 2), // Store popped 8 bit value
+    STORE16(0x3D, 2), // Store popped 16 bit value
+    STORE32(0x24, 2), // Store popped 32 bit value
+    STORE64(0x25, 2), // Store popped 64 bit value
 
-    LOAD32(0x26, 2), // Load 32 bit value from local variable
-    LOAD64(0x27, 2), // Load 64 bit value from local variable and local variable + 1
+    LOAD8(0x3E, 2), // Load 8 bit value and push it on the stack
+    LOAD16(0x3F, 2), // Load 16 bit value and push it on the stack
+    LOAD32(0x26, 2), // Load 32 bit value and push it on the stack
+    LOAD64(0x27, 2), // Load 64 bit value and push it on the stack
 
     AND8(0x28, 0),  // And 8 bits
     AND16(0x29, 0), // And 16 bits
