@@ -83,14 +83,9 @@ public class MathCompiler {
             }
 
             if(token.getType() == TokenType.NUMBER) {
-                operations.add(new MathNumber(token));
+                operations.add(new MathNumber((NumberToken) token));
             }else if(token.getType() == TokenType.WORD) {
-                Token next = tokens.seek();
-                if(next.getType() == TokenType.ACCESSOR || next.getType() == TokenType.OPEN) {
-                    operations.add(compileReference(token, tokens));
-                }else {
-                    operations.add(new MathNumber(token));
-                }
+                operations.add(compileReference(token, tokens));
             }else if(token.getType() == TokenType.OPERATOR) {
                 OperatorToken operatorToken = (OperatorToken) token;
                 String operator = operatorToken.operator;
@@ -99,7 +94,7 @@ public class MathCompiler {
                 Class<? extends MathOperation> operatorClass = MathOrder.ORDER_TO_CLASS.get(operator);
                 if(operatorClass == null) throw new RuntimeException("Could not get the class of operation: '" + operator + "'");
                 token = tokens.next();
-                MathOperation op = new MathNumber(token);
+                MathOperation op;
                 MathOperation last;
                 if(token.getType() == TokenType.OPEN) {
                     stackOperations.push(new ArrayList<>(operations));
@@ -108,10 +103,9 @@ public class MathCompiler {
                     op = operations.get(operations.size() - 1);
                     operations.remove(operations.size() - 1);
                 }else if(token.getType() == TokenType.WORD) {
-                    Token after = tokens.seek();
-                    if(after.getType() == TokenType.ACCESSOR || after.getType() == TokenType.OPEN) {
-                        op = compileReference(token, tokens);
-                    }
+                    op = compileReference(token, tokens);
+                }else {
+                    op = new MathNumber((NumberToken) token);
                 }
                 last = operations.get(operations.size() - 1);
                 operations.remove(operations.size() - 1);
