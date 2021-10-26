@@ -5,11 +5,17 @@ import java.util.Map.Entry;
 
 public class MathOrder {
 
-    public static final String[][] ORDER = {{"*", "/", "%"}, {"+", "-", "&"}};
+    public static final String[][] ORDER = {{"*", "/", "%"}, {"+", "-", "&"}, {"<<", ">>"}};
     public static final HashMap<String, Class<? extends MathOperation>> ORDER_TO_CLASS = new HashMap<>();
     public static final HashMap<String, String> ORDER_TO_NAME = new HashMap<>();
 
     static {
+        ORDER_TO_CLASS.put("<<", MathShiftLeft.class);
+        ORDER_TO_NAME.put("<<", "shl");
+
+        ORDER_TO_CLASS.put(">>", MathShiftRight.class);
+        ORDER_TO_NAME.put(">>", "shr");
+
         ORDER_TO_CLASS.put("+", MathAdd.class);
         ORDER_TO_NAME.put("+", "add");
 

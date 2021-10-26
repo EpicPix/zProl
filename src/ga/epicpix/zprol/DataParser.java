@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 public class DataParser {
 
     public static final Pattern nonSpecialCharacters = Pattern.compile("[a-zA-Z0-9_]");
-    public static final Pattern operatorCharacters = Pattern.compile("[+=/*\\-%]*");
+    public static final Pattern operatorCharacters = Pattern.compile("[+=/*\\-%<>]*");
 
     private String data;
     private int index;
