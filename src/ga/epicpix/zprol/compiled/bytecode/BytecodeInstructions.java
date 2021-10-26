@@ -58,6 +58,25 @@ public enum BytecodeInstructions {
     AND32(0x2A, 0), // And 32 bits
     AND64(0x2B, 0), // And 64 bits
 
+    MODS8(0x2C, 0),  // Mod signed 8 bits
+    MODU8(0x2D, 0),  // Mod unsigned 8 bits
+    MODS16(0x2E, 0), // Mod signed 16 bits
+    MODU16(0x2F, 0), // Mod unsigned 16 bits
+    MODS32(0x30, 0), // Mod signed 32 bits
+    MODU32(0x31, 0), // Mod unsigned 32 bits
+    MODS64(0x32, 0), // Mod signed 64 bits
+    MODU64(0x33, 0), // Mod unsigned 64 bits
+
+    SHL8(0x34, 0),  // Shift left popped 8 bits
+    SHL16(0x35, 0), // Shift left popped 16 bits
+    SHL32(0x36, 0), // Shift left popped 32 bits
+    SHL64(0x37, 0), // Shift left popped 64 bits
+
+    SHR8(0x38, 0),  // Shift right popped 8 bits
+    SHR16(0x39, 0), // Shift right popped 16 bits
+    SHR32(0x3A, 0), // Shift right popped 32 bits
+    SHR64(0x3B, 0), // Shift right popped 64 bits
+
     ;
 
     private final int id;

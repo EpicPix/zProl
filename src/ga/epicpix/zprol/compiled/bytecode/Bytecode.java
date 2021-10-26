@@ -10,8 +10,13 @@ import java.util.ArrayList;
 
 public class Bytecode {
 
+    private ArrayList<BytecodeInstruction> instructions = new ArrayList<>();
     private int localVariableSizeIndex = 0;
     private ArrayList<LocalVariable> localVariables = new ArrayList<>();
+
+    public void pushInstruction(BytecodeInstructions instruction, Object... data) {
+        instructions.add(new BytecodeInstruction(instruction, data));
+    }
 
     public LocalVariable defineLocalVariable(String name, Type type) {
         for(LocalVariable localVar : localVariables) {
@@ -36,5 +41,9 @@ public class Bytecode {
 
     public void write(DataOutputStream out) throws IOException {
         out.writeShort(localVariableSizeIndex);
+        out.writeInt(instructions.size());
+        for(BytecodeInstruction instr : instructions) {
+            instr.write(out);
+        }
     }
 }

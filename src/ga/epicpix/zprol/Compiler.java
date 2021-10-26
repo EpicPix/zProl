@@ -6,6 +6,10 @@ import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.LocalVariable;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
+import ga.epicpix.zprol.compiled.math.MathAdd;
+import ga.epicpix.zprol.compiled.math.MathAnd;
+import ga.epicpix.zprol.compiled.math.MathBrackets;
+import ga.epicpix.zprol.compiled.math.MathCall;
 import ga.epicpix.zprol.compiled.math.MathCompiler;
 import ga.epicpix.zprol.compiled.Object;
 import ga.epicpix.zprol.compiled.ObjectField;
@@ -14,10 +18,19 @@ import ga.epicpix.zprol.compiled.StructureField;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
 import ga.epicpix.zprol.compiled.TypeNamed;
+import ga.epicpix.zprol.compiled.math.MathDivide;
+import ga.epicpix.zprol.compiled.math.MathField;
+import ga.epicpix.zprol.compiled.math.MathMod;
+import ga.epicpix.zprol.compiled.math.MathMultiply;
+import ga.epicpix.zprol.compiled.math.MathNumber;
 import ga.epicpix.zprol.compiled.math.MathOperation;
+import ga.epicpix.zprol.compiled.math.MathShiftLeft;
+import ga.epicpix.zprol.compiled.math.MathShiftRight;
+import ga.epicpix.zprol.compiled.math.MathSubtract;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
+import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.StructureToken;
@@ -81,17 +94,98 @@ public class Compiler {
             throw new RuntimeException("Type is not number type!");
         }
         int size = type.type.memorySize;
+        boolean unsigned = type.type.isUnsignedNumber();
         BigInteger biggestNumber;
         BigInteger smallestNumber = BigInteger.ZERO;
-        if(type.type.isUnsignedNumber()) {
+        if(unsigned) {
             biggestNumber = BigDecimal.valueOf(Math.pow(2, size * 8) - 1).toBigInteger();
         }else {
             biggestNumber = BigDecimal.valueOf(Math.pow(2, size * 8 - 1) - 1).toBigInteger();
             smallestNumber = BigDecimal.valueOf(-Math.pow(2, size * 8 - 1)).toBigInteger();
         }
 
-        System.out.println(numberInBounds(smallestNumber, biggestNumber, BigInteger.valueOf(-1)));
-        System.out.printf("Size: %d, %d, %d\n", size, biggestNumber, smallestNumber);
+        if(op instanceof MathBrackets) {
+            convertMathToBytecode(type, bytecode, data, op.left);
+        }else if(op instanceof MathCall) {
+            throw new RuntimeException("Converting calls to instructions is not implemented yet");
+        }else if(op instanceof MathField) {
+            throw new RuntimeException("Converting fields to instructions is not implemented yet");
+        }else if(op instanceof MathNumber) {
+            BigInteger num = ((NumberToken) ((MathNumber) op).number).number;
+            if(numberInBounds(smallestNumber, biggestNumber, num)) {
+                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.PUSHI8, num.byteValueExact());
+                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.PUSHI16, num.shortValueExact());
+                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.PUSHI32, num.intValueExact());
+                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.PUSHI64, num.longValueExact());
+                else throw new RuntimeException("Size " + size + " is not supported");
+            }else {
+                throw new RuntimeException("Number " + num + " is not in range of the type (" + smallestNumber + " to " + biggestNumber + ")");
+            }
+        }else {
+            convertMathToBytecode(type, bytecode, data, op.left);
+            convertMathToBytecode(type, bytecode, data, op.right);
+            if(op instanceof MathAdd) {
+                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.ADD8);
+                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.ADD16);
+                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.ADD32);
+                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.ADD64);
+                else throw new RuntimeException("Size " + size + " is not supported");
+            }else if(op instanceof MathSubtract) {
+                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SUB8);
+                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SUB16);
+                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SUB32);
+                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SUB64);
+                else throw new RuntimeException("Size " + size + " is not supported");
+            }else if(op instanceof MathDivide) {
+                if(size == 1 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU8);
+                else if(size == 2 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU16);
+                else if(size == 4 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU32);
+                else if(size == 8 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU64);
+                else if(size == 1 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVS8);
+                else if(size == 2 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVS16);
+                else if(size == 4 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVS32);
+                else if(size == 8 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVS64);
+                else throw new RuntimeException("Size " + size + " is not supported");
+            }else if(op instanceof MathMultiply) {
+                if(size == 1 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU8);
+                else if(size == 2 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU16);
+                else if(size == 4 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU32);
+                else if(size == 8 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU64);
+                else if(size == 1 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MULS8);
+                else if(size == 2 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MULS16);
+                else if(size == 4 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MULS32);
+                else if(size == 8 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MULS64);
+                else throw new RuntimeException("Size " + size + " is not supported");
+            }else if(op instanceof MathMod) {
+                if(size == 1 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU8);
+                else if(size == 2 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU16);
+                else if(size == 4 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU32);
+                else if(size == 8 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU64);
+                else if(size == 1 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MODS8);
+                else if(size == 2 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MODS16);
+                else if(size == 4 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MODS32);
+                else if(size == 8 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MODS64);
+                else throw new RuntimeException("Size " + size + " is not supported");
+            }else if(op instanceof MathAnd) {
+                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.AND8);
+                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.AND16);
+                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.AND32);
+                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.AND64);
+                else throw new RuntimeException("Size " + size + " is not supported");
+            }else if(op instanceof MathShiftLeft) {
+                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SHL8);
+                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SHL16);
+                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SHL32);
+                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SHL64);
+                else throw new RuntimeException("Size " + size + " is not supported");
+            }else if(op instanceof MathShiftRight) {
+                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SHR8);
+                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SHR16);
+                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SHR32);
+                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SHR64);
+                else throw new RuntimeException("Size " + size + " is not supported");
+            }
+        }
     }
 
     private static boolean numberInBounds(BigInteger lowest, BigInteger highest, BigInteger num) {
