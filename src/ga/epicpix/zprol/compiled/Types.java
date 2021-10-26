@@ -26,4 +26,15 @@ public enum Types {
         this(id, memorySize, false);
     }
 
+    public boolean isNumberType() {
+        return this == INT8  || this == INT16  || this == INT32  || this == INT64  ||
+                this == UINT8 || this == UINT16 || this == UINT32 || this == UINT64 ||
+                this == POINTER;
+    }
+
+    public boolean isUnsignedNumber() {
+        return this == UINT8 || this == UINT16 || this == UINT32 || this == UINT64 ||
+               this == POINTER;
+    }
+
 }

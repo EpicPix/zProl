@@ -8,7 +8,7 @@ object def {
 
     //this should test everything
     def(uint8 param) {
-        uint8 a = 1;
+        uint8 a = 257;
 
         // -4 42
         // a *= 2;

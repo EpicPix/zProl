@@ -25,6 +25,8 @@ import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.TypedefToken;
 import ga.epicpix.zprol.tokens.WordToken;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 
 public class Compiler {
@@ -48,7 +50,7 @@ public class Compiler {
                         if(token.getType() == TokenType.OPERATOR) {
                             if(((OperatorToken) token).operator.equals("=")) {
                                 mathCompiler.reset();
-                                convertMathToBytecode(bytecode, data, mathCompiler.compile(data, bytecode, tokens));
+                                convertMathToBytecode(type, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
                             }else {
                                 throw new RuntimeException("Cannot handle this token: " + token);
                             }
@@ -74,8 +76,26 @@ public class Compiler {
         return bytecode;
     }
 
-    public static void convertMathToBytecode(Bytecode bytecode, CompiledData data, MathOperation op) {
+    public static void convertMathToBytecode(Type type, Bytecode bytecode, CompiledData data, MathOperation op) {
+        if(!type.isNumberType()) {
+            throw new RuntimeException("Type is not number type!");
+        }
+        int size = type.type.memorySize;
+        BigInteger biggestNumber;
+        BigInteger smallestNumber = BigInteger.ZERO;
+        if(type.type.isUnsignedNumber()) {
+            biggestNumber = BigDecimal.valueOf(Math.pow(2, size * 8) - 1).toBigInteger();
+        }else {
+            biggestNumber = BigDecimal.valueOf(Math.pow(2, size * 8 - 1) - 1).toBigInteger();
+            smallestNumber = BigDecimal.valueOf(-Math.pow(2, size * 8 - 1)).toBigInteger();
+        }
 
+        System.out.println(numberInBounds(smallestNumber, biggestNumber, BigInteger.valueOf(-1)));
+        System.out.printf("Size: %d, %d, %d\n", size, biggestNumber, smallestNumber);
+    }
+
+    private static boolean numberInBounds(BigInteger lowest, BigInteger highest, BigInteger num) {
+        return num.compareTo(lowest) >= 0 && highest.compareTo(num) > 0;
     }
 
     public static Function compileFunction(CompiledData data, FunctionToken functionToken, SeekIterator<Token> tokens) throws UnknownTypeException {

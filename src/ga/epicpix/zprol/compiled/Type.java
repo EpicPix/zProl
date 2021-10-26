@@ -11,4 +11,9 @@ public class Type {
     public String toString() {
         return type.name().toLowerCase();
     }
+
+    public boolean isNumberType() {
+        return type.isNumberType();
+    }
+
 }
