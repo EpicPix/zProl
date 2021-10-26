@@ -14,6 +14,7 @@ import ga.epicpix.zprol.tokens.WordToken;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -189,6 +190,18 @@ public class Parser {
         return tokens;
     }
 
+    public static BigInteger getInteger(String str) {
+        int radix = 10;
+        if(str.startsWith("0x") || str.startsWith("0X")) {
+            radix = 16;
+            str = str.substring(2);
+        }else if(str.startsWith("0")) {
+            radix = 8;
+            str = str.substring(1);
+        }
+        return new BigInteger(str, radix);
+    }
+
     public static ArrayList<Token> readFunctionCode(DataParser parser) {
         ArrayList<Token> tokens = new ArrayList<>();
         while(true) {
@@ -199,10 +212,10 @@ public class Parser {
             }
             String word = parser.nextWord();
             try {
-                long l = Long.decode(word);
-                tokens.add(new NumberToken(l));
+                tokens.add(new NumberToken(getInteger(word)));
                 continue;
             } catch(NumberFormatException ignored) {}
+
             if(DataParser.operatorCharacters.matcher(word).matches()) {
                 tokens.add(new OperatorToken(word));
                 continue;

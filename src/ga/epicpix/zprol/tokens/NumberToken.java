@@ -1,15 +1,17 @@
 package ga.epicpix.zprol.tokens;
 
+import java.math.BigInteger;
+
 public class NumberToken extends Token {
 
-    public final long number;
+    public final BigInteger number;
 
-    public NumberToken(long number) {
+    public NumberToken(BigInteger number) {
         super(TokenType.NUMBER);
         this.number = number;
     }
 
     protected String getData() {
-        return Long.toString(number);
+        return number.toString();
     }
 }
