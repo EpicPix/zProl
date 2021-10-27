@@ -1,14 +1,13 @@
 package ga.epicpix.zprol.compiled;
 
-public class LocalVariable {
+public class Variable {
 
     public String name;
     public Type type;
-    public int index;
 
-    public LocalVariable(String name, Type type, int index) {
+    public Variable(String name, Type type) {
         this.name = name;
         this.type = type;
-        this.index = index;
     }
+
 }
