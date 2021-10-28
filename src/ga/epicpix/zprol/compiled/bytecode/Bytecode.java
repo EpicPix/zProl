@@ -39,6 +39,15 @@ public class Bytecode {
         throw new VariableNotDefinedException(name);
     }
 
+    public LocalVariable findLocalVariable(String name) {
+        for(LocalVariable lVar : localVariables) {
+            if(lVar.name.equals(name)) {
+                return lVar;
+            }
+        }
+        return null;
+    }
+
     public void write(DataOutputStream out) throws IOException {
         out.writeShort(localVariableSizeIndex);
         out.writeInt(instructions.size());

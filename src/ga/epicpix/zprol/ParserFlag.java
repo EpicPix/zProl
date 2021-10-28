@@ -3,7 +3,9 @@ package ga.epicpix.zprol;
 public enum ParserFlag {
 
     INTERNAL,
-    NO_IMPLEMENTATION(false);
+    STATIC,
+    NO_IMPLEMENTATION(false),
+    ;
 
     private boolean publicFlag;
 

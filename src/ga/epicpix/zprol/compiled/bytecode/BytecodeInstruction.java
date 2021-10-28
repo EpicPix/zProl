@@ -32,7 +32,7 @@ public class BytecodeInstruction {
             }
         }
         if(instruction.getOperandSize() != -1 && instruction.getOperandSize() != wrote) {
-            throw new RuntimeException("Invalid amount of bytes wrote while writing the instruction");
+            throw new RuntimeException("Invalid amount of bytes wrote while writing the instruction, expected " + instruction.getOperandSize() + " got " + wrote + " (" + instruction + ")");
         }
     }
 

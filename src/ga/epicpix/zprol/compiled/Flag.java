@@ -4,6 +4,7 @@ public enum Flag {
 
     INTERNAL(0),
     NO_IMPLEMENTATION(1),
+    STATIC(2),
 
     ;
 
