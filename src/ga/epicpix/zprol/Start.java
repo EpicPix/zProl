@@ -14,9 +14,16 @@ public class Start {
             throw new IllegalArgumentException("File not specified");
         }
         String fileName = String.join(" ", args);
+        long startToken = System.currentTimeMillis();
         ArrayList<Token> tokens = Parser.tokenize(fileName);
+        long startCompile = System.currentTimeMillis();
         CompiledData compiled = Compiler.compile(tokens);
+        long startSave = System.currentTimeMillis();
         compiled.save(new File(fileName.substring(0, fileName.lastIndexOf('.')) + ".zpil"));
+        long end = System.currentTimeMillis();
+        System.out.printf("Took %d ms to tokenize\n", startCompile - startToken);
+        System.out.printf("Took %d ms to compile\n", startSave - startCompile);
+        System.out.printf("Took %d ms to save\n", end - startSave);
     }
 
 }
