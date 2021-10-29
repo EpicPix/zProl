@@ -1,3 +1,4 @@
 function void _start() {
-
+    uint64 a = 0xfedcba9876543210;
+    uint64 b = a + 0x12;
 }

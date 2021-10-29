@@ -145,10 +145,10 @@ public class Compiler {
         }else if(op instanceof MathNumber) {
             BigInteger num = (((MathNumber) op).number).number;
             if(numberInBounds(smallestNumber, biggestNumber, num)) {
-                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.PUSHI8, num.byteValueExact());
-                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.PUSHI16, num.shortValueExact());
-                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.PUSHI32, num.intValueExact());
-                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.PUSHI64, num.longValueExact());
+                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.PUSHI8, num.byteValue());
+                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.PUSHI16, num.shortValue());
+                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.PUSHI32, num.intValue());
+                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.PUSHI64, num.longValue());
                 else throw new NotImplementedException("Size " + size + " is not supported");
             }else {
                 throw new RuntimeException("Number " + num + " is not in range of the type (" + smallestNumber + " to " + biggestNumber + ")");

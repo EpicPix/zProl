@@ -18,16 +18,19 @@ public class Start {
         long startToken = System.currentTimeMillis();
         ArrayList<Token> tokens = Parser.tokenize(fileName);
         long startCompile = System.currentTimeMillis();
+        System.out.printf("Took %d ms to tokenize\n", startCompile - startToken);
         CompiledData compiled = Compiler.compile(tokens);
         long startSave = System.currentTimeMillis();
+        System.out.printf("Took %d ms to compile\n", startSave - startCompile);
         compiled.save(new File(normalName + ".zpil"));
         long startConvert = System.currentTimeMillis();
-        Generator.generate_x86_64_linux_assembly(compiled, new File(normalName + "_64linux.asm"));
-        long end = System.currentTimeMillis();
-        System.out.printf("Took %d ms to tokenize\n", startCompile - startToken);
-        System.out.printf("Took %d ms to compile\n", startSave - startCompile);
         System.out.printf("Took %d ms to save\n", startConvert - startSave);
-        System.out.printf("Took %d ms to generate x86-64 linux assembly\n", end - startConvert);
+        Generator.generate_x86_linux_assembly(compiled, new File(normalName + "_64linux.asm"), true);
+        long start32BitGen = System.currentTimeMillis();
+        System.out.printf("Took %d ms to generate x86-64 linux assembly\n", start32BitGen - startConvert);
+        Generator.generate_x86_linux_assembly(compiled, new File(normalName + "_32linux.asm"), false);
+        long end = System.currentTimeMillis();
+        System.out.printf("Took %d ms to generate x86 linux assembly\n", end - startConvert);
     }
 
 }
