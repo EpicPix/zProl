@@ -17,6 +17,18 @@ public class CompiledData {
     private final ArrayList<Function> functions = new ArrayList<>();
     private final HashMap<String, Type> typedef = new HashMap<>();
 
+    public ArrayList<Structure> getStructures() {
+        return new ArrayList<>(structures);
+    }
+
+    public ArrayList<Object> getObjects() {
+        return new ArrayList<>(objects);
+    }
+
+    public ArrayList<Function> getFunctions() {
+        return new ArrayList<>(functions);
+    }
+
     private final ArrayList<String> futureObjectDefinitions = new ArrayList<>();
     private final ArrayList<String> futureStructureDefinitions = new ArrayList<>();
 

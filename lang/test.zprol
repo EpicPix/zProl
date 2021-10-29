@@ -1,17 +1,2 @@
-structure abc {
-    def anObject;
-}
-
-object def {
-    internal field uint8 aField;
-    field uint16 anotherField;
-
-    //this should test everything
-    def(uint8 param) {
-        uint8 a = 257;
-
-        // -4 42
-        // a *= 2;
-        // ++a;
-    }
+function void abc() {
 }
