@@ -5,8 +5,8 @@ import java.io.IOException;
 
 public class BytecodeInstruction {
 
-    private final BytecodeInstructions instruction;
-    private final Object[] data;
+    public final BytecodeInstructions instruction;
+    public final Object[] data;
 
     public BytecodeInstruction(BytecodeInstructions instruction, Object[] data) {
         this.instruction = instruction;
@@ -36,4 +36,7 @@ public class BytecodeInstruction {
         }
     }
 
+    public String toString() {
+        return instruction.name().toLowerCase();
+    }
 }

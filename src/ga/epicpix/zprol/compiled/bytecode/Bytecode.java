@@ -14,6 +14,14 @@ public class Bytecode {
     private int localVariableSizeIndex = 0;
     private ArrayList<LocalVariable> localVariables = new ArrayList<>();
 
+    public int getLocalVariablesSize() {
+        return localVariableSizeIndex;
+    }
+
+    public ArrayList<BytecodeInstruction> getInstructions() {
+        return new ArrayList<>(instructions);
+    }
+
     public void pushInstruction(BytecodeInstructions instruction, Object... data) {
         instructions.add(new BytecodeInstruction(instruction, data));
     }
@@ -24,8 +32,8 @@ public class Bytecode {
                 throw new VariableAlreadyDefinedException(name);
             }
         }
-        LocalVariable localVar = new LocalVariable(name, type, localVariableSizeIndex);
         localVariableSizeIndex += type.type.memorySize;
+        LocalVariable localVar = new LocalVariable(name, type, localVariableSizeIndex);
         localVariables.add(localVar);
         return localVar;
     }

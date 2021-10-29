@@ -1,2 +1,6 @@
-function void abc() {
+function void _start() {
+    uint8 abc8 = 0x1;
+    uint16 abc16 = 0x2;
+    uint32 abc32 = 0x3;
+    uint64 abc64 = 0x4;
 }
