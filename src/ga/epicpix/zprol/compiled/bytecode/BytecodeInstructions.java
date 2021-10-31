@@ -91,6 +91,12 @@ public enum BytecodeInstructions {
 
     PUSHSTR(0x47, 2), // Push string
 
+    RETURN(0x48, 0), // Return void
+    RETURN8(0x49, 0), // Return 8 bit
+    RETURN16(0x4A, 0), // Return 16 bit
+    RETURN32(0x4B, 0), // Return 32 bit
+    RETURN64(0x4C, 0), // Return 64 bit
+
     ;
 
     private final int id;

@@ -30,6 +30,7 @@ public class Generator {
 
         for(Function func : data.getFunctions()) {
             if(!func.flags.contains(Flag.NO_IMPLEMENTATION)) {
+                boolean runRet = true;
                 StringBuilder funcName = new StringBuilder(func.name);
                 if(!func.name.equals("_start")) {
                     funcName.append(".").append(func.signature.returnType);
@@ -218,19 +219,84 @@ public class Generator {
                         writer.write("    add " + stackPointer + ", 4\n");
                     }else if(instr.instruction == BytecodeInstructions.POP64) {
                         writer.write("    add " + stackPointer + ", 8\n");
+                    }else if(instr.instruction == BytecodeInstructions.RETURN) {
+                        if(func.name.equals("_start")) {
+                            writer.write("    mov " + calls[1] + ", " + syscallExit + "\n");
+                            writer.write("    mov " + calls[2] + ", 0\n");
+                            writer.write("    " + syscallKeyword + "\n");
+                        }else {
+                            writer.write("    leave\n");
+                            writer.write("    ret\n");
+                        }
+                        runRet = false;
+                        break;
+                    }else if(instr.instruction == BytecodeInstructions.RETURN8) {
+                        if(func.name.equals("_start")) {
+                            writer.write("    mov byte dil, [" + stackPointer + "]\n");
+                            writer.write("    mov " + calls[1] + ", " + syscallExit + "\n");
+                            writer.write("    " + syscallKeyword + "\n");
+                        }else {
+                            writer.write("    mov byte al, [" + stackPointer + "]\n");
+                            writer.write("    inc " + stackPointer + "\n");
+                            writer.write("    leave\n");
+                            writer.write("    ret\n");
+                        }
+                        runRet = false;
+                        break;
+                    }else if(instr.instruction == BytecodeInstructions.RETURN16) {
+                        if(func.name.equals("_start")) {
+                            writer.write("    mov word di, [" + stackPointer + "]\n");
+                            writer.write("    mov " + calls[1] + ", " + syscallExit + "\n");
+                            writer.write("    " + syscallKeyword + "\n");
+                        }else {
+                            writer.write("    mov word ax, [" + stackPointer + "]\n");
+                            writer.write("    add " + stackPointer + ", 2\n");
+                            writer.write("    leave\n");
+                            writer.write("    ret\n");
+                        }
+                        runRet = false;
+                        break;
+                    }else if(instr.instruction == BytecodeInstructions.RETURN32) {
+                        if(func.name.equals("_start")) {
+                            writer.write("    mov dword edi, [" + stackPointer + "]\n");
+                            writer.write("    mov " + calls[1] + ", " + syscallExit + "\n");
+                            writer.write("    " + syscallKeyword + "\n");
+                        }else {
+                            writer.write("    mov dword eax, [" + stackPointer + "]\n");
+                            writer.write("    add " + stackPointer + ", 4\n");
+                            writer.write("    leave\n");
+                            writer.write("    ret\n");
+                        }
+                        runRet = false;
+                        break;
+                    }else if(instr.instruction == BytecodeInstructions.RETURN64) {
+                        if(func.name.equals("_start")) {
+                            writer.write("    mov qword rdi, [" + stackPointer + "]\n");
+                            writer.write("    mov " + calls[1] + ", " + syscallExit + "\n");
+                            writer.write("    " + syscallKeyword + "\n");
+                        }else {
+                            writer.write("    mov qword rax, [" + stackPointer + "]\n");
+                            writer.write("    add " + stackPointer + ", 8\n");
+                            writer.write("    leave\n");
+                            writer.write("    ret\n");
+                        }
+                        runRet = false;
+                        break;
                     }else {
                         System.err.println("Missing instruction: " + instr);
                     }
                 }
-                if(func.name.equals("_start")) {
-                    writer.write("    ; exit\n");
-                    writer.write("    mov " + calls[1] + ", " + syscallExit + "\n");
-                    writer.write("    mov " + calls[2] + ", 0\n");
-                    writer.write("    " + syscallKeyword + "\n");
-                }else {
-                    writer.write("    ; return\n");
-                    writer.write("    leave\n");
-                    writer.write("    ret\n");
+                if(runRet) {
+                    if(func.name.equals("_start")) {
+                        writer.write("    ; exit\n");
+                        writer.write("    mov " + calls[1] + ", " + syscallExit + "\n");
+                        writer.write("    mov " + calls[2] + ", 0\n");
+                        writer.write("    " + syscallKeyword + "\n");
+                    } else {
+                        writer.write("    ; return\n");
+                        writer.write("    leave\n");
+                        writer.write("    ret\n");
+                    }
                 }
 
                 ArrayList<String> strings = bc.getStrings();

@@ -59,38 +59,57 @@ public class Compiler {
         Token token;
         while((token = tokens.next()).getType() != TokenType.END_FUNCTION) {
             if(token.getType() == TokenType.WORD) {
-                try {
-                    Type type = data.resolveType(((WordToken) token).word);
-                    token = tokens.next();
-                    if(token.getType() != TokenType.WORD) {
-                        throw new RuntimeException("Cannot handle this token: " + token);
+                WordToken w = (WordToken) token;
+                if(w.word.equals("return")) {
+                    if(sig.returnType.type.memorySize == 0) {
+                        if(tokens.next().getType() != TokenType.END_LINE) {
+                            throw new RuntimeException("Missing ';'");
+                        }
+                        bytecode.pushInstruction(BytecodeInstructions.RETURN);
+                    }else {
+                        mathCompiler.reset();
+                        convertOperationToBytecode(scopes, sig.returnType.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens), true);
+                        int size = sig.returnType.type.memorySize;
+                        if(size == 1) bytecode.pushInstruction(BytecodeInstructions.RETURN8);
+                        else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.RETURN16);
+                        else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.RETURN32);
+                        else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.RETURN64);
+                        else throw new RuntimeException("Size " + size + " is not supported");
                     }
-                    String name = ((WordToken) token).word;
-                    LocalVariable lVar = bytecode.defineLocalVariable(name, type);
-                    token = tokens.next();
-                    if(token.getType() != TokenType.END_LINE) {
-                        if(token.getType() == TokenType.OPERATOR) {
-                            if(((OperatorToken) token).operator.equals("=")) {
-                                mathCompiler.reset();
-                                convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens), true);
-                                int size = type.type.memorySize;
-                                short index = (short) lVar.index;
-                                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
-                                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, index);
-                                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.STORE32, index);
-                                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, index);
-                                else throw new RuntimeException("Size " + size + " is not supported");
+                }else {
+                    try {
+                        Type type = data.resolveType(w.word);
+                        token = tokens.next();
+                        if(token.getType() != TokenType.WORD) {
+                            throw new RuntimeException("Cannot handle this token: " + token);
+                        }
+                        String name = ((WordToken) token).word;
+                        LocalVariable lVar = bytecode.defineLocalVariable(name, type);
+                        token = tokens.next();
+                        if(token.getType() != TokenType.END_LINE) {
+                            if(token.getType() == TokenType.OPERATOR) {
+                                if(((OperatorToken) token).operator.equals("=")) {
+                                    mathCompiler.reset();
+                                    convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens), true);
+                                    int size = type.type.memorySize;
+                                    short index = (short) lVar.index;
+                                    if(size == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
+                                    else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, index);
+                                    else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.STORE32, index);
+                                    else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, index);
+                                    else throw new RuntimeException("Size " + size + " is not supported");
+                                }else {
+                                    throw new RuntimeException("Cannot handle this token: " + token);
+                                }
                             }else {
                                 throw new RuntimeException("Cannot handle this token: " + token);
                             }
-                        }else {
-                            throw new RuntimeException("Cannot handle this token: " + token);
                         }
+                    } catch (UnknownTypeException unkType) {
+                        tokens.back();
+                        mathCompiler.reset();
+                        convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens), false);
                     }
-                } catch (UnknownTypeException unkType) {
-                    tokens.back();
-                    mathCompiler.reset();
-                    convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens), false);
                 }
             }else {
                 //TODO: Not sure what this could be, maybe ++i or --i

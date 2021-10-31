@@ -1,6 +1,8 @@
-function void test() {
-    uint64 a = syscall(1, 0, "amount\n", 7);
-}
-function void _start() {
-    test();
+//function uint8 stdout() {
+//    return 0;
+//}
+
+function uint64 _start() {
+    //syscall(1, stdout(), "Hello, world!\n", 14);
+    return 12;
 }
