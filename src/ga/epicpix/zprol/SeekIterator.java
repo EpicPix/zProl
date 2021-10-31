@@ -61,4 +61,11 @@ public class SeekIterator<T> implements ListIterator<T> {
         throw new UnsupportedOperationException("add(T)");
     }
 
+    public int currentIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
 }

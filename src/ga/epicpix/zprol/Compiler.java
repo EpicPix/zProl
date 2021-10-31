@@ -77,8 +77,10 @@ public class Compiler {
                         else throw new RuntimeException("Size " + size + " is not supported");
                     }
                 }else {
+                    int startIndex = tokens.currentIndex() - 1;
                     try {
                         tokens.back();
+                        System.out.println(tokens.seek());
                         Type type = data.resolveType(tokens);
                         token = tokens.next();
                         if(token.getType() != TokenType.WORD) {
@@ -107,7 +109,7 @@ public class Compiler {
                             }
                         }
                     } catch (UnknownTypeException unkType) {
-                        tokens.back();
+                        tokens.setIndex(startIndex);
                         mathCompiler.reset();
                         convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens), false);
                     }

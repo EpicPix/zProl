@@ -1,3 +1,7 @@
+function uint64 write(uint64 fd, pointer str, uint64 len) {
+    syscall(1, fd, str, len);
+}
+
 function void _start() {
-    uint8() sigtest;
+    write(1, "hello\n", 6);
 }
