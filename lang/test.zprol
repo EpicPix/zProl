@@ -1,7 +1,3 @@
-function void write(uint64 fd, pointer str, uint64 length) {
-    syscall(1, fd, str, length);
-}
-
 function void _start() {
-    write(0, "test\n", 5);
+    uint8() sigtest;
 }

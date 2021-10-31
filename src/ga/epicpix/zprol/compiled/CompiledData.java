@@ -1,8 +1,11 @@
 package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.DataParser;
+import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.tokens.Token;
+import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.WordToken;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -132,6 +135,62 @@ public class CompiledData {
         for(Function func : functions) {
             func.signature = (TypeFunctionSignatureNamed) finish(func.signature);
         }
+    }
+
+    public Type resolveType(SeekIterator<Token> iter) throws UnknownTypeException {
+        String type = ((WordToken) iter.next()).word;
+        if(type == null) return new Type(Types.NONE);
+        if(iter.seek().getType() == TokenType.OPEN) {
+            iter.next();
+            Type ret = resolveType(type);
+            ArrayList<Type> parameters = new ArrayList<>();
+            while(true) {
+                if(iter.seek().getType() == TokenType.CLOSE) {
+                    iter.next();
+                    break;
+                }
+                Type param = resolveType(iter);
+                parameters.add(param);
+
+                if(iter.seek().getType() == TokenType.COMMA) {
+                    iter.next();
+                }
+            }
+            return new TypeFunctionSignature(ret, parameters.toArray(new Type[0]));
+        }
+        if(type.equals("int8")) return new Type(Types.INT8);
+        else if(type.equals("int16")) return new Type(Types.INT16);
+        else if(type.equals("int32")) return new Type(Types.INT32);
+        else if(type.equals("int64")) return new Type(Types.INT64);
+        else if(type.equals("uint8")) return new Type(Types.UINT8);
+        else if(type.equals("uint16")) return new Type(Types.UINT16);
+        else if(type.equals("uint32")) return new Type(Types.UINT32);
+        else if(type.equals("uint64")) return new Type(Types.UINT64);
+        else if(type.equals("pointer")) return new Type(Types.POINTER);
+        else if(type.equals("void")) return new Type(Types.VOID);
+        Type t = typedef.get(type);
+        if(t != null) return t;
+
+        for(Structure struct : structures) {
+            if(struct.name.equals(type)) {
+                return new TypeStructure(struct.name);
+            }
+        }
+
+        for(Object obj : objects) {
+            if(obj.name.equals(type)) {
+                return new TypeObject(obj.name);
+            }
+        }
+
+        if(futureObjectDefinitions.contains(type)) {
+            return new TypeFutureObject(type);
+        }
+        if(futureStructureDefinitions.contains(type)) {
+            return new TypeFutureStructure(type);
+        }
+
+        throw new UnknownTypeException("Unknown type: " + type);
     }
 
     public Type resolveType(String type) throws UnknownTypeException {

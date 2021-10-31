@@ -78,7 +78,8 @@ public class Compiler {
                     }
                 }else {
                     try {
-                        Type type = data.resolveType(w.word);
+                        tokens.back();
+                        Type type = data.resolveType(tokens);
                         token = tokens.next();
                         if(token.getType() != TokenType.WORD) {
                             throw new RuntimeException("Cannot handle this token: " + token);
