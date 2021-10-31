@@ -125,7 +125,6 @@ public class Compiler {
             while(tokens.hasNext()) {
                 Token token = tokens.next();
                 if(token.getType() == TokenType.WORD) {
-                    System.out.println("Find: " + token);
                     LocalVariable var = bytecode.findLocalVariable(((WordToken) token).word);
                     if(var != null) {
                         int psize = var.type.type.memorySize;

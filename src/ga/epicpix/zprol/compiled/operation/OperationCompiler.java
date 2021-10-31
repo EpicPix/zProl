@@ -137,7 +137,7 @@ public class OperationCompiler {
         ArrayList<Operation> operations = new ArrayList<>();
         Stack<ArrayList<Operation>> stackOperations = new Stack<>();
         compile0(0, operations, stackOperations, tokens);
-        if(Boolean.parseBoolean(System.getenv("DEBUG"))) {
+        if(Boolean.parseBoolean(System.getProperty("DEBUG"))) {
             File dot = new File("math.dot");
             try {
                 BufferedWriter out = new BufferedWriter(new FileWriter(dot));
