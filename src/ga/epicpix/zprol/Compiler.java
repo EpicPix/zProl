@@ -84,14 +84,9 @@ public class Compiler {
                         }
                     }
                 } catch (UnknownTypeException unkType) {
-                    String name = ((WordToken) token).word;
-                    LocalVariable var = bytecode.getLocalVariable(name);
-                    if(var != null) {
-                        // TODO: Handle maybe an operation?
-                        throw new RuntimeException("Cannot handle this token: " + token);
-                    }else {
-                        throw new RuntimeException("Unknown variable: " + name);
-                    }
+                    tokens.back();
+                    mathCompiler.reset();
+                    convertMathToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
                 }
             }else {
                 //TODO: Not sure what this could be, maybe ++i or --i
@@ -102,18 +97,23 @@ public class Compiler {
     }
 
     public static void convertMathToBytecode(ArrayList<Scope> scopes, Type type, Bytecode bytecode, CompiledData data, Operation op) {
-        if(!type.isNumberType()) {
-            throw new RuntimeException("Type is not number type!");
-        }
-        int size = type.type.memorySize;
-        boolean unsigned = type.type.isUnsignedNumber();
-        BigInteger biggestNumber;
+        int size = 0;
+        boolean unsigned = false;
+        BigInteger biggestNumber = BigInteger.ZERO;
         BigInteger smallestNumber = BigInteger.ZERO;
-        if(unsigned) {
-            biggestNumber = BigDecimal.valueOf(Math.pow(2, size * 8) - 1).toBigInteger();
-        }else {
-            biggestNumber = BigDecimal.valueOf(Math.pow(2, size * 8 - 1) - 1).toBigInteger();
-            smallestNumber = BigDecimal.valueOf(-Math.pow(2, size * 8 - 1)).toBigInteger();
+
+        if(type != null) {
+            if(!type.isNumberType()) {
+                throw new RuntimeException("Type is not number type!");
+            }
+            size = type.type.memorySize;
+            unsigned = type.type.isUnsignedNumber();
+            if(unsigned) {
+                biggestNumber = BigDecimal.valueOf(Math.pow(2, size * 8) - 1).toBigInteger();
+            } else {
+                biggestNumber = BigDecimal.valueOf(Math.pow(2, size * 8 - 1) - 1).toBigInteger();
+                smallestNumber = BigDecimal.valueOf(-Math.pow(2, size * 8 - 1)).toBigInteger();
+            }
         }
 
         if(op instanceof OperationBrackets) {
@@ -125,6 +125,7 @@ public class Compiler {
             while(tokens.hasNext()) {
                 Token token = tokens.next();
                 if(token.getType() == TokenType.WORD) {
+                    System.out.println("Find: " + token);
                     LocalVariable var = bytecode.findLocalVariable(((WordToken) token).word);
                     if(var != null) {
                         int psize = var.type.type.memorySize;
@@ -154,6 +155,26 @@ public class Compiler {
             }else {
                 throw new RuntimeException("Number " + num + " is not in range of the type (" + smallestNumber + " to " + biggestNumber + ")");
             }
+        }else if(op instanceof OperationAssignment) {
+            ArrayList<Token> tokens = ((OperationField) op.left).reference;
+
+            LocalVariable lVar;
+
+            if(tokens.size() == 1) {
+                lVar = bytecode.getLocalVariable(((WordToken) tokens.get(0)).word);
+            }else {
+                throw new NotImplementedException("TODO");
+            }
+            convertMathToBytecode(scopes, lVar.type, bytecode, data, op.right);
+
+            short index = (short) lVar.index;
+            int psize = lVar.type.type.memorySize;
+            if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
+            else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, index);
+            else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.STORE32, index);
+            else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, index);
+            else throw new NotImplementedException("Size " + psize + " is not supported");
+
         }else {
             convertMathToBytecode(scopes, type, bytecode, data, op.left);
             convertMathToBytecode(scopes, type, bytecode, data, op.right);
@@ -211,26 +232,6 @@ public class Compiler {
                 else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SHL32);
                 else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SHL64);
                 else throw new NotImplementedException("Size " + size + " is not supported");
-            }else if(op instanceof OperationAssignment) {
-                ArrayList<Token> tokens = ((OperationField) op.left).reference;
-
-                LocalVariable lVar;
-
-                if(tokens.size() == 1) {
-                    lVar = bytecode.getLocalVariable(((WordToken) tokens.get(0)).word);
-                }else {
-                    throw new NotImplementedException("TODO");
-                }
-                convertMathToBytecode(scopes, lVar.type, bytecode, data, op.right);
-
-                short index = (short) lVar.index;
-                int psize = lVar.type.type.memorySize;
-                if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
-                else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, index);
-                else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.STORE32, index);
-                else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, index);
-                else throw new NotImplementedException("Size " + psize + " is not supported");
-
             }else if(op instanceof OperationShiftRight) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SHR8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SHR16);

@@ -36,6 +36,10 @@ public class SeekIterator<T> implements ListIterator<T> {
         index -= 2;
         return elements[index];
     }
+    public T back() {
+        index--;
+        return elements[index];
+    }
 
     public int nextIndex() {
         return index;

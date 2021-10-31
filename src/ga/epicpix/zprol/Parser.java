@@ -196,8 +196,10 @@ public class Parser {
             radix = 16;
             str = str.substring(2);
         }else if(str.startsWith("0")) {
-            radix = 8;
-            str = str.substring(1);
+            if(str.length() >= 2) {
+                radix = 8;
+                str = str.substring(1);
+            }
         }
         return new BigInteger(str, radix);
     }

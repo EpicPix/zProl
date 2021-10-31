@@ -1,4 +1,4 @@
 function void _start() {
-    uint8 a = 1;
-    uint8 b = (a = 2 + 5);
+    uint8 b = 0;
+    b = 123;
 }
