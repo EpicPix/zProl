@@ -81,6 +81,14 @@ public enum BytecodeInstructions {
     SHR32(0x3A, 0), // Shift right popped 32 bits
     SHR64(0x3B, 0), // Shift right popped 64 bits
 
+    SYSCALL1(0x40, 0), // Syscall, parameters on stack
+    SYSCALL2(0x41, 0), // Syscall, parameters on stack
+    SYSCALL3(0x42, 0), // Syscall, parameters on stack
+    SYSCALL4(0x43, 0), // Syscall, parameters on stack
+    SYSCALL5(0x44, 0), // Syscall, parameters on stack
+    SYSCALL6(0x45, 0), // Syscall, parameters on stack
+    SYSCALL7(0x46, 0), // Syscall, parameters on stack
+
     ;
 
     private final int id;

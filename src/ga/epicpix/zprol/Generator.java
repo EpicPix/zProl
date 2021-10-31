@@ -11,6 +11,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigInteger;
 
 public class Generator {
 
@@ -51,10 +52,15 @@ public class Generator {
                         writer.write("    sub " + stackPointer + ", 4\n");
                         writer.write("    mov dword [" + stackPointer + "], " + instr.data[0] + "\n");
                     }else if(instr.instruction == BytecodeInstructions.PUSHI64) {
-                        writer.write("    sub " + stackPointer + ", 4\n");
-                        writer.write("    mov dword [" + stackPointer + "], " + ((long)instr.data[0]&0x00000000ffffffffL) + "\n");
-                        writer.write("    sub " + stackPointer + ", 4\n");
-                        writer.write("    mov dword [" + stackPointer + "], " + (((long)instr.data[0]&0xffffffff00000000L)>>32) + "\n");
+                        long l = (long) instr.data[0];
+                        if(x64 && l < 0x00000000ffffffffL && l >= 0) {
+                            writer.write("    push " + l + "\n");
+                        }else {
+                            writer.write("    sub " + stackPointer + ", 4\n");
+                            writer.write("    mov dword [" + stackPointer + "], " + (l & 0x00000000ffffffffL) + "\n");
+                            writer.write("    sub " + stackPointer + ", 4\n");
+                            writer.write("    mov dword [" + stackPointer + "], " + ((l & 0xffffffff00000000L) >> 32) + "\n");
+                        }
                     }else if(instr.instruction == BytecodeInstructions.STORE8) {
                         writer.write("    mov byte al, [" + stackPointer + "]\n");
                         writer.write("    inc " + stackPointer + "\n");
@@ -156,6 +162,13 @@ public class Generator {
                             }
                         }
                         writer.write("    call " + zfuncName + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.SYSCALL1) {
+                        writer.write("    pop " + calls[1] + "\n");
+                        writer.write("    " + syscallKeyword + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.SYSCALL2) {
+                        writer.write("    pop " + calls[2] + "\n");
+                        writer.write("    pop " + calls[1] + "\n");
+                        writer.write("    " + syscallKeyword + "\n");
                     }else {
                         System.err.println("Missing instruction: " + instr);
                     }

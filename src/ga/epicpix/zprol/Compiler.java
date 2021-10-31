@@ -5,6 +5,7 @@ import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.Scope;
 import ga.epicpix.zprol.compiled.TypeFunctionSignature;
+import ga.epicpix.zprol.compiled.Types;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.LocalVariable;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
@@ -30,6 +31,7 @@ import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
 import ga.epicpix.zprol.compiled.TypeNamed;
 import ga.epicpix.zprol.compiled.operation.Operation;
+import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.tokens.FieldToken;
@@ -69,7 +71,7 @@ public class Compiler {
                         if(token.getType() == TokenType.OPERATOR) {
                             if(((OperatorToken) token).operator.equals("=")) {
                                 mathCompiler.reset();
-                                convertOperationToBytecode(scopes, type, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
+                                convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
                                 int size = type.type.memorySize;
                                 short index = (short) lVar.index;
                                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
@@ -97,7 +99,7 @@ public class Compiler {
         return bytecode;
     }
 
-    public static void convertOperationToBytecode(ArrayList<Scope> scopes, Type type, Bytecode bytecode, CompiledData data, Operation op) {
+    public static void convertOperationToBytecode(ArrayList<Scope> scopes, Types type, Bytecode bytecode, CompiledData data, Operation op) {
         int size = 0;
         boolean unsigned = false;
         BigInteger biggestNumber = BigInteger.ZERO;
@@ -107,8 +109,8 @@ public class Compiler {
             if(!type.isNumberType()) {
                 throw new RuntimeException("Type is not number type!");
             }
-            size = type.type.memorySize;
-            unsigned = type.type.isUnsignedNumber();
+            size = type.memorySize;
+            unsigned = type.isUnsignedNumber();
             if(unsigned) {
                 biggestNumber = BigDecimal.valueOf(Math.pow(2, size * 8) - 1).toBigInteger();
             } else {
@@ -121,6 +123,25 @@ public class Compiler {
             convertOperationToBytecode(scopes, type, bytecode, data, op.left);
         }else if(op instanceof OperationCall) {
             OperationCall call = (OperationCall) op;
+            if(((WordToken) call.reference.get(0)).word.equals("syscall")) {
+                int params = call.parameters.size();
+                if(params > 7 || params <= 0) {
+                    throw new FunctionNotDefinedException("syscall" + params);
+                }
+
+                for(int i = 0; i<call.parameters.size(); i++) {
+                    convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, call.parameters.get(i));
+                }
+
+                if(params == 1) bytecode.pushInstruction(BytecodeInstructions.SYSCALL1);
+                else if(params == 2) bytecode.pushInstruction(BytecodeInstructions.SYSCALL2);
+                else if(params == 3) bytecode.pushInstruction(BytecodeInstructions.SYSCALL3);
+                else if(params == 4) bytecode.pushInstruction(BytecodeInstructions.SYSCALL4);
+                else if(params == 5) bytecode.pushInstruction(BytecodeInstructions.SYSCALL5);
+                else if(params == 6) bytecode.pushInstruction(BytecodeInstructions.SYSCALL6);
+                else if(params == 7) bytecode.pushInstruction(BytecodeInstructions.SYSCALL7);
+                return;
+            }
             if(call.parameters.size() != 0) {
                 throw new NotImplementedException("Calling with parameters is not yet implemented");
             }
@@ -181,7 +202,7 @@ public class Compiler {
             }else {
                 throw new NotImplementedException("TODO");
             }
-            convertOperationToBytecode(scopes, lVar.type, bytecode, data, op.right);
+            convertOperationToBytecode(scopes, lVar.type.type, bytecode, data, op.right);
 
             short index = (short) lVar.index;
             int psize = lVar.type.type.memorySize;

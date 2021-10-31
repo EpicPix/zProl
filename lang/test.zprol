@@ -1,5 +1,5 @@
 function void test() {
-
+    syscall(60, 2);
 }
 function void _start() {
     test(); //TODO
