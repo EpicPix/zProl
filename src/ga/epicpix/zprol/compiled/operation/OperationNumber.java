@@ -1,12 +1,12 @@
-package ga.epicpix.zprol.compiled.math;
+package ga.epicpix.zprol.compiled.operation;
 
 import ga.epicpix.zprol.tokens.NumberToken;
 
-public class MathNumber extends MathOperation {
+public class OperationNumber extends Operation {
 
     public NumberToken number;
 
-    public MathNumber(NumberToken token) {
+    public OperationNumber(NumberToken token) {
         number = token;
         super.right = this;
     }

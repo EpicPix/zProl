@@ -1,4 +1,4 @@
-package ga.epicpix.zprol.compiled.math;
+package ga.epicpix.zprol.compiled.operation;
 
 import ga.epicpix.zprol.Reflection;
 import ga.epicpix.zprol.SeekIterator;
@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Stack;
 
-public class MathCompiler {
+public class OperationCompiler {
 
     private int current = 0;
 
@@ -24,47 +24,47 @@ public class MathCompiler {
         current = 0;
     }
 
-    private MathOperation compileReference(Token token, SeekIterator<Token> tokens) {
+    private Operation compileReference(Token token, SeekIterator<Token> tokens) {
         ArrayList<Token> ref = new ArrayList<>();
         ref.add(token);
-        ArrayList<MathOperation> params = new ArrayList<>();
+        ArrayList<Operation> params = new ArrayList<>();
         boolean call = false;
         while(tokens.seek().getType() != TokenType.OPERATOR && tokens.seek().getType() != TokenType.END_LINE) {
             token = tokens.next();
             if(token.getType() == TokenType.OPEN) {
                 call = true;
                 if(tokens.seek().getType() != TokenType.CLOSE) {
-                    ArrayList<MathOperation> op = new ArrayList<>();
+                    ArrayList<Operation> op = new ArrayList<>();
                     compile0(2, op, new Stack<>(), tokens);
                     params.add(op.get(0));
                 }else {
                     tokens.next();
-                    return new MathCall(ref, params);
+                    return new OperationCall(ref, params);
                 }
             }else if(token.getType() == TokenType.COMMA && call) {
-                ArrayList<MathOperation> op = new ArrayList<>();
+                ArrayList<Operation> op = new ArrayList<>();
                 compile0(2, op, new Stack<>(), tokens);
                 params.add(op.get(0));
             }else if(token.getType() == TokenType.COMMA) {
                 tokens.previous();
                 if(call) {
-                    return new MathCall(ref, params);
+                    return new OperationCall(ref, params);
                 }else {
-                    return new MathField(ref);
+                    return new OperationField(ref);
                 }
             }else if(token.getType() == TokenType.CLOSE && call) {
-                return new MathCall(ref, params);
+                return new OperationCall(ref, params);
             }else if(token.getType() == TokenType.CLOSE && !call) {
                 tokens.previous();
-                return new MathField(ref);
+                return new OperationField(ref);
             }else if(!call) {
                 ref.add(token);
             }
         }
-        return new MathField(ref);
+        return new OperationField(ref);
     }
 
-    private void compile0(int type, ArrayList<MathOperation> operations, Stack<ArrayList<MathOperation>> stackOperations, SeekIterator<Token> tokens) {
+    private void compile0(int type, ArrayList<Operation> operations, Stack<ArrayList<Operation>> stackOperations, SeekIterator<Token> tokens) {
         Token token;
         while(true) {
             if((tokens.seek().getType() == TokenType.COMMA || tokens.seek().getType() == TokenType.CLOSE) && type == 2) {
@@ -75,7 +75,7 @@ public class MathCompiler {
                 return;
             }
             if(token.getType() == TokenType.CLOSE && type == 1) {
-                MathBrackets brackets = new MathBrackets(operations.get(0));
+                OperationBrackets brackets = new OperationBrackets(operations.get(0));
                 operations.clear();
                 operations.addAll(stackOperations.pop());
                 operations.add(brackets);
@@ -83,19 +83,19 @@ public class MathCompiler {
             }
 
             if(token.getType() == TokenType.NUMBER) {
-                operations.add(new MathNumber((NumberToken) token));
+                operations.add(new OperationNumber((NumberToken) token));
             }else if(token.getType() == TokenType.WORD) {
                 operations.add(compileReference(token, tokens));
             }else if(token.getType() == TokenType.OPERATOR) {
                 OperatorToken operatorToken = (OperatorToken) token;
                 String operator = operatorToken.operator;
-                int order = MathOrder.getOrder(operator);
+                int order = OperationOrder.getOrder(operator);
                 if(order == -1) throw new RuntimeException("Could not determine the order of operation: '" + operator + "'");
-                Class<? extends MathOperation> operatorClass = MathOrder.ORDER_TO_CLASS.get(operator);
+                Class<? extends Operation> operatorClass = OperationOrder.ORDER_TO_CLASS.get(operator);
                 if(operatorClass == null) throw new RuntimeException("Could not get the class of operation: '" + operator + "'");
                 token = tokens.next();
-                MathOperation op;
-                MathOperation last;
+                Operation op;
+                Operation last;
                 if(token.getType() == TokenType.OPEN) {
                     stackOperations.push(new ArrayList<>(operations));
                     operations.clear();
@@ -105,20 +105,20 @@ public class MathCompiler {
                 }else if(token.getType() == TokenType.WORD) {
                     op = compileReference(token, tokens);
                 }else {
-                    op = new MathNumber((NumberToken) token);
+                    op = new OperationNumber((NumberToken) token);
                 }
                 last = operations.get(operations.size() - 1);
                 operations.remove(operations.size() - 1);
 
-                int lOrder = MathOrder.getOrder(MathOrder.classToOperation(last.getClass()));
+                int lOrder = OperationOrder.getOrder(OperationOrder.classToOperation(last.getClass()));
 
                 if(lOrder == -1) {
-                    operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, op));
+                    operations.add(Reflection.createInstance(operatorClass, new Class[] {Operation.class, Operation.class}, last, op));
                 }else {
                     if(order < lOrder) {
-                        operations.add(Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last, op));
+                        operations.add(Reflection.createInstance(operatorClass, new Class[] {Operation.class, Operation.class}, last, op));
                     }else {
-                        operations.add(Reflection.createInstance(last.getClass(), new Class[] {MathOperation.class, MathOperation.class}, last.left, Reflection.createInstance(operatorClass, new Class[] {MathOperation.class, MathOperation.class}, last.right, op)));
+                        operations.add(Reflection.createInstance(last.getClass(), new Class[] {Operation.class, Operation.class}, last.left, Reflection.createInstance(operatorClass, new Class[] {Operation.class, Operation.class}, last.right, op)));
                     }
                 }
             }else if(token.getType() == TokenType.OPEN) {
@@ -129,9 +129,9 @@ public class MathCompiler {
         }
     }
 
-    public MathOperation compile(CompiledData data, Bytecode bytecode, SeekIterator<Token> tokens) {
-        ArrayList<MathOperation> operations = new ArrayList<>();
-        Stack<ArrayList<MathOperation>> stackOperations = new Stack<>();
+    public Operation compile(CompiledData data, Bytecode bytecode, SeekIterator<Token> tokens) {
+        ArrayList<Operation> operations = new ArrayList<>();
+        Stack<ArrayList<Operation>> stackOperations = new Stack<>();
         compile0(0, operations, stackOperations, tokens);
         if(Boolean.parseBoolean(System.getenv("DEBUG"))) {
             File dot = new File("math.dot");
@@ -150,25 +150,25 @@ public class MathCompiler {
         return operations.get(0);
     }
 
-    private void printOperations(MathOperation operation) {
-        if(operation instanceof MathNumber) {
-            Token number = ((MathNumber) operation).number;
+    private void printOperations(Operation operation) {
+        if(operation instanceof OperationNumber) {
+            Token number = ((OperationNumber) operation).number;
             if(number instanceof NumberToken) {
                 System.out.println("push " + ((NumberToken) number).number);
             }else if(number instanceof WordToken) {
                 System.out.println("push " + ((WordToken) number).word);
             }
             return;
-        }else if(operation instanceof MathBrackets) {
+        }else if(operation instanceof OperationBrackets) {
             printOperations(operation.left);
             return;
-        }else if(operation instanceof MathField) {
-            MathField ref = (MathField) operation;
+        }else if(operation instanceof OperationField) {
+            OperationField ref = (OperationField) operation;
             System.out.println("push field " + Token.toFriendlyString(ref.reference));
             return;
-        }else if(operation instanceof MathCall) {
-            MathCall call = (MathCall) operation;
-            for(MathOperation op : call.parameters) {
+        }else if(operation instanceof OperationCall) {
+            OperationCall call = (OperationCall) operation;
+            for(Operation op : call.parameters) {
                 printOperations(op);
             }
             System.out.println("call " + Token.toFriendlyString(call.reference));
@@ -176,15 +176,15 @@ public class MathCompiler {
         }
         printOperations(operation.left);
         printOperations(operation.right);
-        String op = MathOrder.classToOperation(operation.getClass());
+        String op = OperationOrder.classToOperation(operation.getClass());
         if(op != null) {
-            System.out.println(MathOrder.ORDER_TO_NAME.get(op));
+            System.out.println(OperationOrder.ORDER_TO_NAME.get(op));
         }
     }
 
-    private void generateDotFile(MathOperation operation, BufferedWriter writer) throws IOException {
-        if(operation instanceof MathNumber) {
-            Token number = ((MathNumber) operation).number;
+    private void generateDotFile(Operation operation, BufferedWriter writer) throws IOException {
+        if(operation instanceof OperationNumber) {
+            Token number = ((OperationNumber) operation).number;
             if(number instanceof NumberToken) {
                 writer.write("    op" + current + " [label=" + ((NumberToken) number).number + "]\n");
             }else if(number instanceof WordToken) {
@@ -192,23 +192,23 @@ public class MathCompiler {
             }
             current++;
             return;
-        }else if(operation instanceof MathField) {
-            MathField field = (MathField) operation;
+        }else if(operation instanceof OperationField) {
+            OperationField field = (OperationField) operation;
             writer.write("    op" + current + " [label=\"" + Token.toFriendlyString(field.reference) + "\"]\n");
             current++;
             return;
-        }else if(operation instanceof MathCall) {
-            MathCall call = (MathCall) operation;
+        }else if(operation instanceof OperationCall) {
+            OperationCall call = (OperationCall) operation;
             int c = current;
             writer.write("    op" + current + " [label=\"" + Token.toFriendlyString(call.reference) + "()\"]\n");
             current++;
-            for(MathOperation op : call.parameters) {
+            for(Operation op : call.parameters) {
                 writer.write("    op" + c + " -> op" + current + "\n");
                 generateDotFile(op, writer);
                 current++;
             }
             return;
-        }else if(operation instanceof MathBrackets) {
+        }else if(operation instanceof OperationBrackets) {
             writer.write("    op" + current + " [label=\"()\"]\n");
             int c = current;
             current++;
@@ -216,7 +216,7 @@ public class MathCompiler {
             generateDotFile(operation.left, writer);
             return;
         }else {
-            writer.write("    op" + current + " [label=\"" + MathOrder.classToOperation(operation.getClass()) + "\"]\n");
+            writer.write("    op" + current + " [label=\"" + OperationOrder.classToOperation(operation.getClass()) + "\"]\n");
         }
         int c = current;
         current++;

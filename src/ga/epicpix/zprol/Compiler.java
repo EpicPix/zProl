@@ -7,11 +7,11 @@ import ga.epicpix.zprol.compiled.Scope;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.LocalVariable;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
-import ga.epicpix.zprol.compiled.math.MathAdd;
-import ga.epicpix.zprol.compiled.math.MathAnd;
-import ga.epicpix.zprol.compiled.math.MathBrackets;
-import ga.epicpix.zprol.compiled.math.MathCall;
-import ga.epicpix.zprol.compiled.math.MathCompiler;
+import ga.epicpix.zprol.compiled.operation.OperationAdd;
+import ga.epicpix.zprol.compiled.operation.OperationAnd;
+import ga.epicpix.zprol.compiled.operation.OperationBrackets;
+import ga.epicpix.zprol.compiled.operation.OperationCall;
+import ga.epicpix.zprol.compiled.operation.OperationCompiler;
 import ga.epicpix.zprol.compiled.Object;
 import ga.epicpix.zprol.compiled.ObjectField;
 import ga.epicpix.zprol.compiled.Structure;
@@ -19,15 +19,15 @@ import ga.epicpix.zprol.compiled.StructureField;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
 import ga.epicpix.zprol.compiled.TypeNamed;
-import ga.epicpix.zprol.compiled.math.MathDivide;
-import ga.epicpix.zprol.compiled.math.MathField;
-import ga.epicpix.zprol.compiled.math.MathMod;
-import ga.epicpix.zprol.compiled.math.MathMultiply;
-import ga.epicpix.zprol.compiled.math.MathNumber;
-import ga.epicpix.zprol.compiled.math.MathOperation;
-import ga.epicpix.zprol.compiled.math.MathShiftLeft;
-import ga.epicpix.zprol.compiled.math.MathShiftRight;
-import ga.epicpix.zprol.compiled.math.MathSubtract;
+import ga.epicpix.zprol.compiled.operation.OperationDivide;
+import ga.epicpix.zprol.compiled.operation.OperationField;
+import ga.epicpix.zprol.compiled.operation.OperationMod;
+import ga.epicpix.zprol.compiled.operation.OperationMultiply;
+import ga.epicpix.zprol.compiled.operation.OperationNumber;
+import ga.epicpix.zprol.compiled.operation.Operation;
+import ga.epicpix.zprol.compiled.operation.OperationShiftLeft;
+import ga.epicpix.zprol.compiled.operation.OperationShiftRight;
+import ga.epicpix.zprol.compiled.operation.OperationSubtract;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.tokens.FieldToken;
@@ -46,7 +46,7 @@ import java.util.ArrayList;
 public class Compiler {
 
     public static Bytecode parseFunctionCode(ArrayList<Scope> scopes, CompiledData data, SeekIterator<Token> tokens, TypeFunctionSignatureNamed sig) {
-        MathCompiler mathCompiler = new MathCompiler();
+        OperationCompiler mathCompiler = new OperationCompiler();
         Bytecode bytecode = new Bytecode();
         for(TypeNamed param : sig.parameters) {
             bytecode.defineLocalVariable(param.name, param.type);
@@ -100,7 +100,7 @@ public class Compiler {
         return bytecode;
     }
 
-    public static void convertMathToBytecode(ArrayList<Scope> scopes, Type type, Bytecode bytecode, CompiledData data, MathOperation op) {
+    public static void convertMathToBytecode(ArrayList<Scope> scopes, Type type, Bytecode bytecode, CompiledData data, Operation op) {
         if(!type.isNumberType()) {
             throw new RuntimeException("Type is not number type!");
         }
@@ -115,12 +115,12 @@ public class Compiler {
             smallestNumber = BigDecimal.valueOf(-Math.pow(2, size * 8 - 1)).toBigInteger();
         }
 
-        if(op instanceof MathBrackets) {
+        if(op instanceof OperationBrackets) {
             convertMathToBytecode(scopes, type, bytecode, data, op.left);
-        }else if(op instanceof MathCall) {
+        }else if(op instanceof OperationCall) {
             throw new NotImplementedException("Converting calls to instructions is not implemented yet");
-        }else if(op instanceof MathField) {
-            SeekIterator<Token> tokens = new SeekIterator<>(((MathField) op).reference);
+        }else if(op instanceof OperationField) {
+            SeekIterator<Token> tokens = new SeekIterator<>(((OperationField) op).reference);
             while(tokens.hasNext()) {
                 Token token = tokens.next();
                 if(token.getType() == TokenType.WORD) {
@@ -142,8 +142,8 @@ public class Compiler {
                     throw new NotImplementedException("Cannot handle token: " + token);
                 }
             }
-        }else if(op instanceof MathNumber) {
-            BigInteger num = (((MathNumber) op).number).number;
+        }else if(op instanceof OperationNumber) {
+            BigInteger num = (((OperationNumber) op).number).number;
             if(numberInBounds(smallestNumber, biggestNumber, num)) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.PUSHI8, num.byteValue());
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.PUSHI16, num.shortValue());
@@ -156,19 +156,19 @@ public class Compiler {
         }else {
             convertMathToBytecode(scopes, type, bytecode, data, op.left);
             convertMathToBytecode(scopes, type, bytecode, data, op.right);
-            if(op instanceof MathAdd) {
+            if(op instanceof OperationAdd) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.ADD8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.ADD16);
                 else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.ADD32);
                 else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.ADD64);
                 else throw new NotImplementedException("Size " + size + " is not supported");
-            }else if(op instanceof MathSubtract) {
+            }else if(op instanceof OperationSubtract) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SUB8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SUB16);
                 else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SUB32);
                 else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SUB64);
                 else throw new NotImplementedException("Size " + size + " is not supported");
-            }else if(op instanceof MathDivide) {
+            }else if(op instanceof OperationDivide) {
                 if(size == 1 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU8);
                 else if(size == 2 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU16);
                 else if(size == 4 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU32);
@@ -178,7 +178,7 @@ public class Compiler {
                 else if(size == 4 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVS32);
                 else if(size == 8 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVS64);
                 else throw new NotImplementedException("Size " + size + " is not supported");
-            }else if(op instanceof MathMultiply) {
+            }else if(op instanceof OperationMultiply) {
                 if(size == 1 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU8);
                 else if(size == 2 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU16);
                 else if(size == 4 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU32);
@@ -188,7 +188,7 @@ public class Compiler {
                 else if(size == 4 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MULS32);
                 else if(size == 8 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MULS64);
                 else throw new NotImplementedException("Size " + size + " is not supported");
-            }else if(op instanceof MathMod) {
+            }else if(op instanceof OperationMod) {
                 if(size == 1 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU8);
                 else if(size == 2 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU16);
                 else if(size == 4 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU32);
@@ -198,19 +198,19 @@ public class Compiler {
                 else if(size == 4 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MODS32);
                 else if(size == 8 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MODS64);
                 else throw new NotImplementedException("Size " + size + " is not supported");
-            }else if(op instanceof MathAnd) {
+            }else if(op instanceof OperationAnd) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.AND8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.AND16);
                 else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.AND32);
                 else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.AND64);
                 else throw new NotImplementedException("Size " + size + " is not supported");
-            }else if(op instanceof MathShiftLeft) {
+            }else if(op instanceof OperationShiftLeft) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SHL8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SHL16);
                 else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SHL32);
                 else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SHL64);
                 else throw new NotImplementedException("Size " + size + " is not supported");
-            }else if(op instanceof MathShiftRight) {
+            }else if(op instanceof OperationShiftRight) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SHR8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SHR16);
                 else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SHR32);
