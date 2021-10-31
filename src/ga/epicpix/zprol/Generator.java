@@ -166,21 +166,25 @@ public class Generator {
                     }else if(instr.instruction == BytecodeInstructions.SYSCALL1) {
                         writer.write("    pop " + calls[1] + "\n");
                         writer.write("    " + syscallKeyword + "\n");
+                        writer.write("    push " + calls[0] + "\n");
                     }else if(instr.instruction == BytecodeInstructions.SYSCALL2) {
                         writer.write("    pop " + calls[2] + "\n");
                         writer.write("    pop " + calls[1] + "\n");
                         writer.write("    " + syscallKeyword + "\n");
+                        writer.write("    push " + calls[0] + "\n");
                     }else if(instr.instruction == BytecodeInstructions.SYSCALL3) {
                         writer.write("    pop " + calls[3] + "\n");
                         writer.write("    pop " + calls[2] + "\n");
                         writer.write("    pop " + calls[1] + "\n");
                         writer.write("    " + syscallKeyword + "\n");
+                        writer.write("    push " + calls[0] + "\n");
                     }else if(instr.instruction == BytecodeInstructions.SYSCALL4) {
                         writer.write("    pop " + calls[4] + "\n");
                         writer.write("    pop " + calls[3] + "\n");
                         writer.write("    pop " + calls[2] + "\n");
                         writer.write("    pop " + calls[1] + "\n");
                         writer.write("    " + syscallKeyword + "\n");
+                        writer.write("    push " + calls[0] + "\n");
                     }else if(instr.instruction == BytecodeInstructions.SYSCALL5) {
                         writer.write("    pop " + calls[5] + "\n");
                         writer.write("    pop " + calls[4] + "\n");
@@ -188,6 +192,7 @@ public class Generator {
                         writer.write("    pop " + calls[2] + "\n");
                         writer.write("    pop " + calls[1] + "\n");
                         writer.write("    " + syscallKeyword + "\n");
+                        writer.write("    push " + calls[0] + "\n");
                     }else if(instr.instruction == BytecodeInstructions.SYSCALL6) {
                         writer.write("    pop " + calls[6] + "\n");
                         writer.write("    pop " + calls[5] + "\n");
@@ -196,6 +201,7 @@ public class Generator {
                         writer.write("    pop " + calls[2] + "\n");
                         writer.write("    pop " + calls[1] + "\n");
                         writer.write("    " + syscallKeyword + "\n");
+                        writer.write("    push " + calls[0] + "\n");
                     }else if(instr.instruction == BytecodeInstructions.SYSCALL7) {
                         writer.write("    pop " + calls[7] + "\n");
                         writer.write("    pop " + calls[6] + "\n");
@@ -205,8 +211,13 @@ public class Generator {
                         writer.write("    pop " + calls[2] + "\n");
                         writer.write("    pop " + calls[1] + "\n");
                         writer.write("    " + syscallKeyword + "\n");
+                        writer.write("    push " + calls[0] + "\n");
                     }else if(instr.instruction == BytecodeInstructions.PUSHSTR) {
                         writer.write("    push " + funcName + ".str" + instr.data[0] + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.POP32) {
+                        writer.write("    add " + stackPointer + ", 4\n");
+                    }else if(instr.instruction == BytecodeInstructions.POP64) {
+                        writer.write("    add " + stackPointer + ", 8\n");
                     }else {
                         System.err.println("Missing instruction: " + instr);
                     }

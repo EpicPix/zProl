@@ -1,6 +1,6 @@
 function void test() {
-    syscall(1, 0, "amount\n", 7);
+    uint64 a = syscall(1, 0, "amount\n", 7);
 }
 function void _start() {
-    test(); //TODO
+    test();
 }

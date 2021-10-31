@@ -72,7 +72,7 @@ public class Compiler {
                         if(token.getType() == TokenType.OPERATOR) {
                             if(((OperatorToken) token).operator.equals("=")) {
                                 mathCompiler.reset();
-                                convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
+                                convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens), true);
                                 int size = type.type.memorySize;
                                 short index = (short) lVar.index;
                                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
@@ -90,7 +90,7 @@ public class Compiler {
                 } catch (UnknownTypeException unkType) {
                     tokens.back();
                     mathCompiler.reset();
-                    convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
+                    convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens), false);
                 }
             }else {
                 //TODO: Not sure what this could be, maybe ++i or --i
@@ -100,7 +100,7 @@ public class Compiler {
         return bytecode;
     }
 
-    public static void convertOperationToBytecode(ArrayList<Scope> scopes, Types type, Bytecode bytecode, CompiledData data, Operation op) {
+    public static void convertOperationToBytecode(ArrayList<Scope> scopes, Types type, Bytecode bytecode, CompiledData data, Operation op, boolean returnRequired) {
         int size = 0;
         boolean unsigned = false;
         BigInteger biggestNumber = BigInteger.ZERO;
@@ -121,7 +121,7 @@ public class Compiler {
         }
 
         if(op instanceof OperationBrackets) {
-            convertOperationToBytecode(scopes, type, bytecode, data, op.left);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.left, true);
         }else if(op instanceof OperationCall) {
             OperationCall call = (OperationCall) op;
             if(((WordToken) call.reference.get(0)).word.equals("syscall")) {
@@ -131,7 +131,7 @@ public class Compiler {
                 }
 
                 for(int i = 0; i<call.parameters.size(); i++) {
-                    convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, call.parameters.get(i));
+                    convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, call.parameters.get(i), true);
                 }
 
                 if(params == 1) bytecode.pushInstruction(BytecodeInstructions.SYSCALL1);
@@ -141,6 +141,11 @@ public class Compiler {
                 else if(params == 5) bytecode.pushInstruction(BytecodeInstructions.SYSCALL5);
                 else if(params == 6) bytecode.pushInstruction(BytecodeInstructions.SYSCALL6);
                 else if(params == 7) bytecode.pushInstruction(BytecodeInstructions.SYSCALL7);
+
+                if(!returnRequired) {
+                    bytecode.pushInstruction(BytecodeInstructions.POP64);
+                }
+
                 return;
             }
             if(call.parameters.size() != 0) {
@@ -207,7 +212,7 @@ public class Compiler {
             }else {
                 throw new NotImplementedException("TODO");
             }
-            convertOperationToBytecode(scopes, lVar.type.type, bytecode, data, op.right);
+            convertOperationToBytecode(scopes, lVar.type.type, bytecode, data, op.right, true);
 
             short index = (short) lVar.index;
             int psize = lVar.type.type.memorySize;
@@ -218,8 +223,8 @@ public class Compiler {
             else throw new NotImplementedException("Size " + psize + " is not supported");
 
         }else {
-            convertOperationToBytecode(scopes, type, bytecode, data, op.left);
-            convertOperationToBytecode(scopes, type, bytecode, data, op.right);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.left, true);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.right, true);
             if(op instanceof OperationAdd) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.ADD8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.ADD16);
