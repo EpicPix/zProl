@@ -3,5 +3,5 @@ function void write(uint64 fd, pointer str, uint64 length) {
 }
 
 function void _start() {
-    //write(0, "test\n", 5);
+    write(0, "test\n", 5);
 }

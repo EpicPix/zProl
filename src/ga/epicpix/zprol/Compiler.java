@@ -167,13 +167,26 @@ public class Compiler {
 
                 return;
             }
-            if(call.parameters.size() != 0) {
-                throw new NotImplementedException("Calling with parameters is not yet implemented");
+            ArrayList<Type> parameters = new ArrayList<>();
+            for(int i = 0; i<call.parameters.size(); i++) {
+                Operation param = call.parameters.get(i);
+                if(param instanceof OperationString) {
+                    parameters.add(new Type(Types.POINTER));
+                }else if(param instanceof OperationField) {
+                    OperationField f = (OperationField) param;
+                    if(f.reference.size() != 1) {
+                        throw new NotImplementedException("Not implemented yet");
+                    }
+                    LocalVariable var = bytecode.getLocalVariable(((WordToken) f.reference.get(0)).word);
+                    parameters.add(var.type);
+                }else {
+                    parameters.add(new Type(Types.NUMBER));
+                }
             }
             if(call.reference.size() != 1) {
                 throw new NotImplementedException("Not implemented yet");
             }
-            Function func = data.getFunction(((WordToken) call.reference.get(0)).word, new TypeFunctionSignature(null));
+            Function func = data.getFunction(((WordToken) call.reference.get(0)).word, new TypeFunctionSignature(null, parameters.toArray(new Type[0])));
             ArrayList<Function> functions = data.getFunctions();
             short index = -1;
             for(int i = 0; i<functions.size(); i++) {
@@ -182,7 +195,20 @@ public class Compiler {
                     break;
                 }
             }
+            for(int i = func.signature.parameters.length - 1; i>=0; i--) {
+                convertOperationToBytecode(scopes, func.signature.parameters[i].type.type, bytecode, data, call.parameters.get(i), true);
+            }
             bytecode.pushInstruction(BytecodeInstructions.INVOKESTATIC, index);
+
+            if(!returnRequired) {
+                int retSize = func.signature.returnType.type.memorySize;
+                if(retSize == 0);
+                else if(retSize == 1) bytecode.pushInstruction(BytecodeInstructions.POP8);
+                else if(retSize == 2) bytecode.pushInstruction(BytecodeInstructions.POP16);
+                else if(retSize == 4) bytecode.pushInstruction(BytecodeInstructions.POP32);
+                else if(retSize == 8) bytecode.pushInstruction(BytecodeInstructions.POP64);
+                else throw new NotImplementedException("Size " + size + " is not supported");
+            }
         }else if(op instanceof OperationField) {
             SeekIterator<Token> tokens = new SeekIterator<>(((OperationField) op).reference);
             while(tokens.hasNext()) {

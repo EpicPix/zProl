@@ -35,8 +35,10 @@ public enum BytecodeInstructions {
     PUSHI32(0x1A, 4), // Push 32 bit immediate
     PUSHI64(0x1B, 8), // Push 64 bit immediate
 
-    POP32(0x1C, 0), // Pop 32 bit
-    POP64(0x1D, 0), // Pop 64 bit
+    POP8(0x4D, 0), // Pop 8 bits
+    POP16(0x4E, 0), // Pop 16 bits
+    POP32(0x1C, 0), // Pop 32 bits
+    POP64(0x1D, 0), // Pop 64 bits
 
     INVOKESTATIC(0x1E, 2), // Invoke a static function
     INVOKEDYNAMIC(0x1F, 2), // Invoke a dynamic function

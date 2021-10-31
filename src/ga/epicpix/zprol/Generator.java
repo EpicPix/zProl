@@ -59,12 +59,10 @@ public class Generator {
                     Types type = sig.parameters[i].type.type;
                     int size = type.memorySize;
                     current += size;
-                    int xsize = 0;
-                    if(size == 1) xsize = 0; else if(size == 2) xsize = 1;  else if(size == 4) xsize = 2; else if(size == 8) xsize = 3;
-                    if(size == 1) writer.write("    mov byte [" + basePointer + "-" + current + "], " + parameters[i][xsize] + "\n");
-                    else if(size == 2) writer.write("    mov word [" + basePointer + "-" + current + "], " + parameters[i][xsize] + "\n");
-                    else if(size == 4) writer.write("    mov dword [" + basePointer + "-" + current + "], " + parameters[i][xsize] + "\n");
-                    else if(size == 8) writer.write("    mov qword [" + basePointer + "-" + current + "], " + parameters[i][xsize] + "\n");
+                    if(size == 1) writer.write("    mov byte [" + basePointer + "-" + current + "], " + parameters[i][3] + "\n");
+                    else if(size == 2) writer.write("    mov word [" + basePointer + "-" + current + "], " + parameters[i][2] + "\n");
+                    else if(size == 4) writer.write("    mov dword [" + basePointer + "-" + current + "], " + parameters[i][1] + "\n");
+                    else if(size == 8) writer.write("    mov qword [" + basePointer + "-" + current + "], " + parameters[i][0] + "\n");
                 }
                 for(BytecodeInstruction instr : bc.getInstructions()) {
                     writer.write("    ; " + instr.instruction.name().toLowerCase() + "\n");
@@ -186,7 +184,39 @@ public class Generator {
                                 zfuncName.append(".").append(param.type.type.toString().toLowerCase());
                             }
                         }
+                        TypeFunctionSignatureNamed s = f.signature;
+                        for(int i = 0; i<s.parameters.length; i++) {
+                            TypeNamed param = s.parameters[i];
+                            int size = param.type.type.memorySize;
+                            if(size == 1) {
+                                writer.write("    mov byte " + parameters[i][3] + ", [" + stackPointer + "]\n");
+                                writer.write("    inc " + stackPointer + "\n");
+                            } else if(size == 2) {
+                                writer.write("    mov word " + parameters[i][2] + ", [" + stackPointer + "]\n");
+                                writer.write("    add " + stackPointer + ", 2\n");
+                            } else if(size == 4) {
+                                writer.write("    mov dword " + parameters[i][1] + ", [" + stackPointer + "]\n");
+                                writer.write("    add " + stackPointer + ", 4\n");
+                            } else if(size == 8) {
+                                writer.write("    mov qword " + parameters[i][0] + ", [" + stackPointer + "]\n");
+                                writer.write("    add " + stackPointer + ", 8\n");
+                            }
+                        }
                         writer.write("    call " + zfuncName + "\n");
+                        int retSize = s.returnType.type.memorySize;
+                        if(retSize == 1) {
+                            writer.write("    dec " + stackPointer + "\n");
+                            writer.write("    mov byte [" + stackPointer + "], " + parameters[0][3] + "\n");
+                        }else if(retSize == 2) {
+                            writer.write("    sub " + stackPointer + ", 2\n");
+                            writer.write("    mov word [" + stackPointer + "], " + parameters[0][2] + "\n");
+                        }else if(retSize == 4) {
+                            writer.write("    sub " + stackPointer + ", 4\n");
+                            writer.write("    mov dword [" + stackPointer + "], " + parameters[0][1] + "\n");
+                        }else if(retSize == 8) {
+                            writer.write("    sub " + stackPointer + ", 8\n");
+                            writer.write("    mov qword [" + stackPointer + "], " + parameters[0][0] + "\n");
+                        }
                     }else if(instr.instruction == BytecodeInstructions.SYSCALL1) {
                         writer.write("    pop " + calls[1] + "\n");
                         writer.write("    " + syscallKeyword + "\n");
@@ -238,6 +268,10 @@ public class Generator {
                         writer.write("    push " + calls[0] + "\n");
                     }else if(instr.instruction == BytecodeInstructions.PUSHSTR) {
                         writer.write("    push " + funcName + ".str" + instr.data[0] + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.POP8) {
+                        writer.write("    inc " + stackPointer + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.POP16) {
+                        writer.write("    add " + stackPointer + ", 2\n");
                     }else if(instr.instruction == BytecodeInstructions.POP32) {
                         writer.write("    add " + stackPointer + ", 4\n");
                     }else if(instr.instruction == BytecodeInstructions.POP64) {

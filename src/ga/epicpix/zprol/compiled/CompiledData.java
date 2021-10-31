@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class CompiledData {
@@ -38,7 +39,7 @@ public class CompiledData {
                     if(func.signature.parameters.length == sig.parameters.length) {
                         boolean success = true;
                         for(int i = 0; i<func.signature.parameters.length; i++) {
-                            if(((TypeNamed) func.signature.parameters[i].type).type.type != sig.parameters[i].type) {
+                            if((func.signature.parameters[i].type.type != sig.parameters[i].type) && !(func.signature.parameters[i].type.type.isNumberType() && sig.parameters[i].type == Types.NUMBER)) {
                                 success = false;
                                 break;
                             }
