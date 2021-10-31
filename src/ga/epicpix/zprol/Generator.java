@@ -3,7 +3,9 @@ package ga.epicpix.zprol;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
+import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
 import ga.epicpix.zprol.compiled.TypeNamed;
+import ga.epicpix.zprol.compiled.Types;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstruction;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
@@ -11,12 +13,20 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 
 public class Generator {
 
     public static void generate_x86_linux_assembly(CompiledData data, File save, boolean x64) throws IOException {
+
+        final String[][] parameters = {
+                {"rax", "eax", "ax", "al"},
+                {"rbx", "ebx", "bx", "bl"},
+                {"rcx", "rcx", "cx", "cl"},
+                {"rdx", "edx", "dx", "dl"},
+                {"r8", "r8d", "r8w", "r8b"},
+                {"r9", "r9d", "r9w", "r9b"},
+        };
 
         final String[] calls = !x64 ? new String[]{ // 32bit
                 "eax", "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp"} : new String[]{ // 64bit
@@ -43,6 +53,19 @@ public class Generator {
                 writer.write(funcName + ":\n");
                 Bytecode bc = func.code;
                 writer.write("    enter " + bc.getLocalVariablesSize() + ", 0\n");
+                TypeFunctionSignatureNamed sig = func.signature;
+                int current = 0;
+                for(int i = 0; i<sig.parameters.length; i++) {
+                    Types type = sig.parameters[i].type.type;
+                    int size = type.memorySize;
+                    current += size;
+                    int xsize = 0;
+                    if(size == 1) xsize = 0; else if(size == 2) xsize = 1;  else if(size == 4) xsize = 2; else if(size == 8) xsize = 3;
+                    if(size == 1) writer.write("    mov byte [" + basePointer + "-" + current + "], " + parameters[i][xsize] + "\n");
+                    else if(size == 2) writer.write("    mov word [" + basePointer + "-" + current + "], " + parameters[i][xsize] + "\n");
+                    else if(size == 4) writer.write("    mov dword [" + basePointer + "-" + current + "], " + parameters[i][xsize] + "\n");
+                    else if(size == 8) writer.write("    mov qword [" + basePointer + "-" + current + "], " + parameters[i][xsize] + "\n");
+                }
                 for(BytecodeInstruction instr : bc.getInstructions()) {
                     writer.write("    ; " + instr.instruction.name().toLowerCase() + "\n");
                     if(instr.instruction == BytecodeInstructions.PUSHI8) {

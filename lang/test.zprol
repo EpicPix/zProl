@@ -1,8 +1,7 @@
-//function uint8 stdout() {
-//    return 0;
-//}
+function void write(uint64 fd, pointer str, uint64 length) {
+    syscall(1, fd, str, length);
+}
 
-function uint64 _start() {
-    //syscall(1, stdout(), "Hello, world!\n", 14);
-    return 12;
+function void _start() {
+    //write(0, "test\n", 5);
 }

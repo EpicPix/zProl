@@ -52,7 +52,7 @@ public class OperationCompiler {
                 compile0(2, op, new Stack<>(), tokens);
                 params.add(op.get(0));
             }else if(token.getType() == TokenType.COMMA) {
-                tokens.previous();
+                tokens.back();
                 if(call) {
                     return new OperationCall(ref, params);
                 }else {
@@ -61,7 +61,7 @@ public class OperationCompiler {
             }else if(token.getType() == TokenType.CLOSE && call) {
                 return new OperationCall(ref, params);
             }else if(token.getType() == TokenType.CLOSE && !call) {
-                tokens.previous();
+                tokens.back();
                 return new OperationField(ref);
             }else if(!call) {
                 ref.add(token);
