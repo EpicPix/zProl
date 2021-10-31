@@ -3,7 +3,8 @@
 out/
 *.asm
 *.o
-*.elf
+lang/
+!*.zprol
 *.exe
 *.dot
 .vscode/
