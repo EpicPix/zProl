@@ -146,6 +146,16 @@ public class Generator {
                             writer.write("    sub " + stackPointer + ", 4\n");
                             writer.write("    mov dword [" + stackPointer + "], eax\n");
                         }
+                    }else if(instr.instruction == BytecodeInstructions.INVOKESTATIC) {
+                        Function f = data.getFunctions().get((short) instr.data[0]);
+                        StringBuilder zfuncName = new StringBuilder(f.name);
+                        if(!f.name.equals("_start")) {
+                            zfuncName.append(".").append(f.signature.returnType);
+                            for(TypeNamed param : f.signature.parameters) {
+                                zfuncName.append(".").append(param.type.type.toString().toLowerCase());
+                            }
+                        }
+                        writer.write("    call " + zfuncName + "\n");
                     }else {
                         System.err.println("Missing instruction: " + instr);
                     }
@@ -157,6 +167,7 @@ public class Generator {
                     writer.write("    " + syscallKeyword + "\n");
                 }else {
                     writer.write("    ; return\n");
+                    writer.write("    leave\n");
                     writer.write("    ret\n");
                 }
             }

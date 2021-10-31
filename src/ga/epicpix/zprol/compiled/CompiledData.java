@@ -1,7 +1,9 @@
 package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.DataParser;
+import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.tokens.WordToken;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -27,6 +29,28 @@ public class CompiledData {
 
     public ArrayList<Function> getFunctions() {
         return new ArrayList<>(functions);
+    }
+
+    public Function getFunction(String name, TypeFunctionSignature sig) {
+        for(Function func : functions) {
+            if(func.name.equals(name)) {
+                if(sig.returnType == null || func.signature.returnType.type == sig.returnType.type) {
+                    if(func.signature.parameters.length == sig.parameters.length) {
+                        boolean success = true;
+                        for(int i = 0; i<func.signature.parameters.length; i++) {
+                            if(((TypeNamed) func.signature.parameters[i].type).type.type != sig.parameters[i].type) {
+                                success = false;
+                                break;
+                            }
+                        }
+                        if(success) {
+                            return func;
+                        }
+                    }
+                }
+            }
+        }
+        throw new FunctionNotDefinedException(name);
     }
 
     private final ArrayList<String> futureObjectDefinitions = new ArrayList<>();

@@ -71,7 +71,7 @@ public class Operation {
         }
 
         public String toString() {
-            return reference.toString();
+            return Token.toFriendlyString(reference) + " " + parameters;
         }
 
     }

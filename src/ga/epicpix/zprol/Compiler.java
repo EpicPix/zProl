@@ -4,6 +4,7 @@ import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.Scope;
+import ga.epicpix.zprol.compiled.TypeFunctionSignature;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.LocalVariable;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
@@ -68,7 +69,7 @@ public class Compiler {
                         if(token.getType() == TokenType.OPERATOR) {
                             if(((OperatorToken) token).operator.equals("=")) {
                                 mathCompiler.reset();
-                                convertMathToBytecode(scopes, type, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
+                                convertOperationToBytecode(scopes, type, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
                                 int size = type.type.memorySize;
                                 short index = (short) lVar.index;
                                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
@@ -86,7 +87,7 @@ public class Compiler {
                 } catch (UnknownTypeException unkType) {
                     tokens.back();
                     mathCompiler.reset();
-                    convertMathToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
+                    convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens));
                 }
             }else {
                 //TODO: Not sure what this could be, maybe ++i or --i
@@ -96,7 +97,7 @@ public class Compiler {
         return bytecode;
     }
 
-    public static void convertMathToBytecode(ArrayList<Scope> scopes, Type type, Bytecode bytecode, CompiledData data, Operation op) {
+    public static void convertOperationToBytecode(ArrayList<Scope> scopes, Type type, Bytecode bytecode, CompiledData data, Operation op) {
         int size = 0;
         boolean unsigned = false;
         BigInteger biggestNumber = BigInteger.ZERO;
@@ -117,9 +118,25 @@ public class Compiler {
         }
 
         if(op instanceof OperationBrackets) {
-            convertMathToBytecode(scopes, type, bytecode, data, op.left);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.left);
         }else if(op instanceof OperationCall) {
-            throw new NotImplementedException("Converting calls to instructions is not implemented yet");
+            OperationCall call = (OperationCall) op;
+            if(call.parameters.size() != 0) {
+                throw new NotImplementedException("Calling with parameters is not yet implemented");
+            }
+            if(call.reference.size() != 1) {
+                throw new NotImplementedException("Not implemented yet");
+            }
+            Function func = data.getFunction(((WordToken) call.reference.get(0)).word, new TypeFunctionSignature(null));
+            ArrayList<Function> functions = data.getFunctions();
+            short index = -1;
+            for(int i = 0; i<functions.size(); i++) {
+                if(functions.get(i) == func) {
+                    index = (short) i;
+                    break;
+                }
+            }
+            bytecode.pushInstruction(BytecodeInstructions.INVOKESTATIC, index);
         }else if(op instanceof OperationField) {
             SeekIterator<Token> tokens = new SeekIterator<>(((OperationField) op).reference);
             while(tokens.hasNext()) {
@@ -164,7 +181,7 @@ public class Compiler {
             }else {
                 throw new NotImplementedException("TODO");
             }
-            convertMathToBytecode(scopes, lVar.type, bytecode, data, op.right);
+            convertOperationToBytecode(scopes, lVar.type, bytecode, data, op.right);
 
             short index = (short) lVar.index;
             int psize = lVar.type.type.memorySize;
@@ -175,8 +192,8 @@ public class Compiler {
             else throw new NotImplementedException("Size " + psize + " is not supported");
 
         }else {
-            convertMathToBytecode(scopes, type, bytecode, data, op.left);
-            convertMathToBytecode(scopes, type, bytecode, data, op.right);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.left);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.right);
             if(op instanceof OperationAdd) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.ADD8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.ADD16);
