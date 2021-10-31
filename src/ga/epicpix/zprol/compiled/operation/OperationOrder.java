@@ -1,5 +1,12 @@
 package ga.epicpix.zprol.compiled.operation;
 
+import ga.epicpix.zprol.compiled.operation.Operation.OperationAdd;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationAnd;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationMod;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationMultiply;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationShiftLeft;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationShiftRight;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationSubtract;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
