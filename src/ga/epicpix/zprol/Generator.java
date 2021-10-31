@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 
 public class Generator {
 
@@ -169,6 +170,43 @@ public class Generator {
                         writer.write("    pop " + calls[2] + "\n");
                         writer.write("    pop " + calls[1] + "\n");
                         writer.write("    " + syscallKeyword + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.SYSCALL3) {
+                        writer.write("    pop " + calls[3] + "\n");
+                        writer.write("    pop " + calls[2] + "\n");
+                        writer.write("    pop " + calls[1] + "\n");
+                        writer.write("    " + syscallKeyword + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.SYSCALL4) {
+                        writer.write("    pop " + calls[4] + "\n");
+                        writer.write("    pop " + calls[3] + "\n");
+                        writer.write("    pop " + calls[2] + "\n");
+                        writer.write("    pop " + calls[1] + "\n");
+                        writer.write("    " + syscallKeyword + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.SYSCALL5) {
+                        writer.write("    pop " + calls[5] + "\n");
+                        writer.write("    pop " + calls[4] + "\n");
+                        writer.write("    pop " + calls[3] + "\n");
+                        writer.write("    pop " + calls[2] + "\n");
+                        writer.write("    pop " + calls[1] + "\n");
+                        writer.write("    " + syscallKeyword + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.SYSCALL6) {
+                        writer.write("    pop " + calls[6] + "\n");
+                        writer.write("    pop " + calls[5] + "\n");
+                        writer.write("    pop " + calls[4] + "\n");
+                        writer.write("    pop " + calls[3] + "\n");
+                        writer.write("    pop " + calls[2] + "\n");
+                        writer.write("    pop " + calls[1] + "\n");
+                        writer.write("    " + syscallKeyword + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.SYSCALL7) {
+                        writer.write("    pop " + calls[7] + "\n");
+                        writer.write("    pop " + calls[6] + "\n");
+                        writer.write("    pop " + calls[5] + "\n");
+                        writer.write("    pop " + calls[4] + "\n");
+                        writer.write("    pop " + calls[3] + "\n");
+                        writer.write("    pop " + calls[2] + "\n");
+                        writer.write("    pop " + calls[1] + "\n");
+                        writer.write("    " + syscallKeyword + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.PUSHSTR) {
+                        writer.write("    push " + funcName + ".str" + instr.data[0] + "\n");
                     }else {
                         System.err.println("Missing instruction: " + instr);
                     }
@@ -182,6 +220,16 @@ public class Generator {
                     writer.write("    ; return\n");
                     writer.write("    leave\n");
                     writer.write("    ret\n");
+                }
+
+                ArrayList<String> strings = bc.getStrings();
+                for(int i = 0; i<strings.size(); i++) {
+                    char[] chars = strings.get(i).toCharArray();
+                    String[] hexs = new String[chars.length];
+                    for(int j = 0; j<chars.length; j++) {
+                        hexs[j] = "0x" + Integer.toHexString(chars[j]);
+                    }
+                    writer.write(funcName + ".str" + i + ": db " + String.join(", ", hexs) + "\n");
                 }
             }
         }

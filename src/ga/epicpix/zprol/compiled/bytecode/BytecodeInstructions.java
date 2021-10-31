@@ -89,6 +89,8 @@ public enum BytecodeInstructions {
     SYSCALL6(0x45, 0), // Syscall, parameters on stack
     SYSCALL7(0x46, 0), // Syscall, parameters on stack
 
+    PUSHSTR(0x47, 2), // Push string
+
     ;
 
     private final int id;

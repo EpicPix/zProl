@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.compiled.operation;
 
 import ga.epicpix.zprol.tokens.NumberToken;
+import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.Token;
 import java.util.ArrayList;
 
@@ -161,6 +162,20 @@ public class Operation {
 
         public String toString() {
             return "shr " + left + " " + right;
+        }
+    }
+
+    public static class OperationString extends Operation {
+
+        public StringToken string;
+
+        public OperationString(StringToken token) {
+            string = token;
+            super.right = this;
+        }
+
+        public String toString() {
+            return string.toString();
         }
     }
 

@@ -8,8 +8,10 @@ import ga.epicpix.zprol.compiled.operation.Operation.OperationBrackets;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationCall;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationField;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationNumber;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationString;
 import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
+import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.WordToken;
@@ -88,6 +90,8 @@ public class OperationCompiler {
 
             if(token.getType() == TokenType.NUMBER) {
                 operations.add(new OperationNumber((NumberToken) token));
+            }else if(token.getType() == TokenType.STRING) {
+                operations.add(new OperationString((StringToken) token));
             }else if(token.getType() == TokenType.WORD) {
                 operations.add(compileReference(token, tokens));
             }else if(token.getType() == TokenType.OPERATOR) {
@@ -156,12 +160,12 @@ public class OperationCompiler {
 
     private void printOperations(Operation operation) {
         if(operation instanceof OperationNumber) {
-            Token number = ((OperationNumber) operation).number;
-            if(number instanceof NumberToken) {
-                System.out.println("push " + ((NumberToken) number).number);
-            }else if(number instanceof WordToken) {
-                System.out.println("push " + ((WordToken) number).word);
-            }
+            NumberToken number = ((OperationNumber) operation).number;
+            System.out.println("push " + number.number);
+            return;
+        }else if(operation instanceof OperationString) {
+            StringToken string = ((OperationString) operation).string;
+            System.out.println("push " + string.getData());
             return;
         }else if(operation instanceof OperationBrackets) {
             printOperations(operation.left);
@@ -188,12 +192,13 @@ public class OperationCompiler {
 
     private void generateDotFile(Operation operation, BufferedWriter writer) throws IOException {
         if(operation instanceof OperationNumber) {
-            Token number = ((OperationNumber) operation).number;
-            if(number instanceof NumberToken) {
-                writer.write("    op" + current + " [label=" + ((NumberToken) number).number + "]\n");
-            }else if(number instanceof WordToken) {
-                writer.write("    op" + current + " [label=" + ((WordToken) number).word + "]\n");
-            }
+            NumberToken number = ((OperationNumber) operation).number;
+            writer.write("    op" + current + " [label=" + number.number + "]\n");
+            current++;
+            return;
+        }else if(operation instanceof OperationString) {
+            StringToken string = ((OperationString) operation).string;
+            writer.write("    op" + current + " [label=\"" + string.getData().replace("\\", "\\\\").replace("\"", "\\\"") + "\"]\n");
             current++;
             return;
         }else if(operation instanceof OperationField) {

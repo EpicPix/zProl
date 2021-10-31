@@ -13,7 +13,7 @@ public class StringToken extends Token {
         return string;
     }
 
-    protected String getData() {
+    public String getData() {
         return "\"" + string.replace("\"", "\\\"").replace("\n", "\\n") + "\"";
     }
 }

@@ -21,6 +21,7 @@ import ga.epicpix.zprol.compiled.operation.Operation.OperationMultiply;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationNumber;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationShiftLeft;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationShiftRight;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationString;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationSubtract;
 import ga.epicpix.zprol.compiled.operation.OperationCompiler;
 import ga.epicpix.zprol.compiled.Object;
@@ -192,6 +193,10 @@ public class Compiler {
             }else {
                 throw new RuntimeException("Number " + num + " is not in range of the type (" + smallestNumber + " to " + biggestNumber + ")");
             }
+        }else if(op instanceof OperationString) {
+            String str = ((OperationString) op).string.getString();
+            short index = bytecode.addString(str);
+            bytecode.pushInstruction(BytecodeInstructions.PUSHSTR, index);
         }else if(op instanceof OperationAssignment) {
             ArrayList<Token> tokens = ((OperationField) op.left).reference;
 

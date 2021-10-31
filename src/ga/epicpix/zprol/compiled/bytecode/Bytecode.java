@@ -13,6 +13,21 @@ public class Bytecode {
     private ArrayList<BytecodeInstruction> instructions = new ArrayList<>();
     private int localVariableSizeIndex = 0;
     private ArrayList<LocalVariable> localVariables = new ArrayList<>();
+    private ArrayList<String> strings = new ArrayList<>();
+
+    public short addString(String str) {
+        for(int i = 0; i<strings.size(); i++) {
+            if(strings.get(i).equals(str)) {
+                return (short) i;
+            }
+        }
+        strings.add(str);
+        return (short) (strings.size() - 1);
+    }
+
+    public ArrayList<String> getStrings() {
+        return new ArrayList<>(strings);
+    }
 
     public int getLocalVariablesSize() {
         return localVariableSizeIndex;
