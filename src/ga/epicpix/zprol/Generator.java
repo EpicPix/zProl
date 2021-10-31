@@ -150,10 +150,15 @@ public class Generator {
                         System.err.println("Missing instruction: " + instr);
                     }
                 }
-                writer.write("    ; exit\n");
-                writer.write("    mov " + calls[1] + ", " + syscallExit + "\n");
-                writer.write("    mov " + calls[2] + ", 0\n");
-                writer.write("    " + syscallKeyword + "\n");
+                if(func.name.equals("_start")) {
+                    writer.write("    ; exit\n");
+                    writer.write("    mov " + calls[1] + ", " + syscallExit + "\n");
+                    writer.write("    mov " + calls[2] + ", 0\n");
+                    writer.write("    " + syscallKeyword + "\n");
+                }else {
+                    writer.write("    ; return\n");
+                    writer.write("    ret\n");
+                }
             }
         }
 
