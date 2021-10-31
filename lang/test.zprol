@@ -1,4 +1,4 @@
 function void _start() {
-    uint64 a = 0xfedcba9876543210;
-    uint64 b = a + 0x12;
+    uint8 a = 1;
+    uint8 b = (a = 2 + 5);
 }

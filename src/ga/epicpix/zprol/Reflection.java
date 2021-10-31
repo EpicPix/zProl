@@ -2,9 +2,9 @@ package ga.epicpix.zprol;
 
 public class Reflection {
 
-    public static <T> T createInstance(Class<T> t, Class<?>[] classArguments, Object... args) {
+    public static <T> T createInstance(Class<T> t, Object... args) {
         try {
-            return t.getConstructor(classArguments).newInstance(args);
+            return (T) t.getConstructors()[0].newInstance(args);
         } catch (ReflectiveOperationException e) {
             e.printStackTrace();
             return null;

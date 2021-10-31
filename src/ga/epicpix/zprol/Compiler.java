@@ -9,6 +9,7 @@ import ga.epicpix.zprol.compiled.LocalVariable;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAdd;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAnd;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationAssignment;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationBrackets;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationCall;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationDivide;
@@ -210,12 +211,34 @@ public class Compiler {
                 else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SHL32);
                 else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SHL64);
                 else throw new NotImplementedException("Size " + size + " is not supported");
+            }else if(op instanceof OperationAssignment) {
+                ArrayList<Token> tokens = ((OperationField) op.left).reference;
+
+                LocalVariable lVar;
+
+                if(tokens.size() == 1) {
+                    lVar = bytecode.getLocalVariable(((WordToken) tokens.get(0)).word);
+                }else {
+                    throw new NotImplementedException("TODO");
+                }
+                convertMathToBytecode(scopes, lVar.type, bytecode, data, op.right);
+
+                short index = (short) lVar.index;
+                int psize = lVar.type.type.memorySize;
+                if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
+                else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, index);
+                else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.STORE32, index);
+                else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, index);
+                else throw new NotImplementedException("Size " + psize + " is not supported");
+
             }else if(op instanceof OperationShiftRight) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SHR8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SHR16);
                 else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SHR32);
                 else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SHR64);
                 else throw new NotImplementedException("Size " + size + " is not supported");
+            }else {
+                throw new NotImplementedException(op.getClass().getSimpleName() + " is not implemented!");
             }
         }
     }

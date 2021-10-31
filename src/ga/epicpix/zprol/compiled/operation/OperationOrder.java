@@ -2,6 +2,7 @@ package ga.epicpix.zprol.compiled.operation;
 
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAdd;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAnd;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationAssignment;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationMod;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationMultiply;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationShiftLeft;
@@ -12,11 +13,14 @@ import java.util.Map.Entry;
 
 public class OperationOrder {
 
-    public static final String[][] ORDER = {{"*", "/", "%"}, {"+", "-", "&"}, {"<<", ">>"}};
+    public static final String[][] ORDER = {{"*", "/", "%"}, {"+", "-", "&"}, {"<<", ">>"}, {"="}};
     public static final HashMap<String, Class<? extends Operation>> ORDER_TO_CLASS = new HashMap<>();
     public static final HashMap<String, String> ORDER_TO_NAME = new HashMap<>();
 
     static {
+        ORDER_TO_CLASS.put("=", OperationAssignment.class);
+        ORDER_TO_NAME.put("=", "set");
+
         ORDER_TO_CLASS.put("<<", OperationShiftLeft.class);
         ORDER_TO_NAME.put("<<", "shl");
 

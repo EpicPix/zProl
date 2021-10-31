@@ -35,6 +35,18 @@ public class Operation {
         }
     }
 
+    public static class OperationAssignment extends Operation {
+
+        public OperationAssignment(OperationField operation, Operation number) {
+            this.left = operation;
+            this.right = number;
+        }
+
+        public String toString() {
+            return "set " + left + " " + right;
+        }
+    }
+
     public static class OperationBrackets extends Operation {
 
         public OperationBrackets(Operation operation) {

@@ -117,12 +117,12 @@ public class OperationCompiler {
                 int lOrder = OperationOrder.getOrder(OperationOrder.classToOperation(last.getClass()));
 
                 if(lOrder == -1) {
-                    operations.add(Reflection.createInstance(operatorClass, new Class[] {Operation.class, Operation.class}, last, op));
+                    operations.add(Reflection.createInstance(operatorClass, last, op));
                 }else {
                     if(order < lOrder) {
-                        operations.add(Reflection.createInstance(operatorClass, new Class[] {Operation.class, Operation.class}, last, op));
+                        operations.add(Reflection.createInstance(operatorClass, last, op));
                     }else {
-                        operations.add(Reflection.createInstance(last.getClass(), new Class[] {Operation.class, Operation.class}, last.left, Reflection.createInstance(operatorClass, new Class[] {Operation.class, Operation.class}, last.right, op)));
+                        operations.add(Reflection.createInstance(last.getClass(), last.left, Reflection.createInstance(operatorClass, last.right, op)));
                     }
                 }
             }else if(token.getType() == TokenType.OPEN) {
