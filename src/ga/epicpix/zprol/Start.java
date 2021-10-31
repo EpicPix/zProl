@@ -25,12 +25,9 @@ public class Start {
         compiled.save(new File(normalName + ".zpil"));
         long startConvert = System.currentTimeMillis();
         System.out.printf("Took %d ms to save\n", startConvert - startSave);
-        Generator.generate_x86_linux_assembly(compiled, new File(normalName + "_64linux.asm"), true);
-        long start32BitGen = System.currentTimeMillis();
-        System.out.printf("Took %d ms to generate x86-64 linux assembly\n", start32BitGen - startConvert);
-        Generator.generate_x86_linux_assembly(compiled, new File(normalName + "_32linux.asm"), false);
+        Generator.generate_x86_64_linux_assembly(compiled, new File(normalName + "_64linux.asm"));
         long end = System.currentTimeMillis();
-        System.out.printf("Took %d ms to generate x86 linux assembly\n", end - startConvert);
+        System.out.printf("Took %d ms to generate x86-64 linux assembly\n", end - startConvert);
     }
 
 }
