@@ -179,6 +179,35 @@ public class Generator {
                         writer.write("    add rax, rbx\n");
                         writer.write("    sub rsp, 8\n");
                         writer.write("    mov qword [rsp], rax\n");
+                    }else if(instr.instruction == BytecodeInstructions.AND8) {
+                        writer.write("    mov byte al, [rsp]\n");
+                        writer.write("    inc rsp\n");
+                        writer.write("    mov byte ah, [rsp]\n");
+                        writer.write("    inc rsp\n");
+                        writer.write("    and al, ah\n");
+                        writer.write("    dec rsp\n");
+                        writer.write("    mov byte [rsp], al\n");
+                    }else if(instr.instruction == BytecodeInstructions.AND16) {
+                        writer.write("    pop ax\n");
+                        writer.write("    pop bx\n");
+                        writer.write("    and ax, bx\n");
+                        writer.write("    push ax\n");
+                    }else if(instr.instruction == BytecodeInstructions.AND32) {
+                        writer.write("    mov dword eax, [rsp]\n");
+                        writer.write("    add rsp, 4\n");
+                        writer.write("    mov dword ebx, [rsp]\n");
+                        writer.write("    add rsp, 4\n");
+                        writer.write("    and eax, ebx\n");
+                        writer.write("    sub rsp, 4\n");
+                        writer.write("    mov dword [rsp], eax\n");
+                    }else if(instr.instruction == BytecodeInstructions.AND64) {
+                        writer.write("    mov qword rax, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        writer.write("    mov qword rbx, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        writer.write("    and rax, rbx\n");
+                        writer.write("    sub rsp, 8\n");
+                        writer.write("    mov qword [rsp], rax\n");
                     }else if(instr.instruction == BytecodeInstructions.COMPARE64) {
                         writer.write("    mov qword rax, [rsp]\n");
                         writer.write("    add rsp, 8\n");
