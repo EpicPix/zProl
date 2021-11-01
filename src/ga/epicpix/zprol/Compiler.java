@@ -162,9 +162,26 @@ public class Compiler {
                         i.instruction.data[0] = (short) (bytecode.getInstructions().size() - s);
                         if(i.type == CompileOperationType.IF) {
                             if(tokens.seek().getType() == TokenType.WORD && ((WordToken) tokens.seek()).word.equals("else")) {
-                                i.instruction.data[0] = (short) ((short) i.instruction.data[0] + 1);
                                 tokens.next();
-                                operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMP, (short) bytecode.getInstructions().size()), CompileOperationType.ELSE));
+                                Token w = tokens.seek();
+                                if(w instanceof WordToken && ((WordToken) w).word.equals("if")) {
+                                    tokens.next();
+                                    if(tokens.next().getType() != TokenType.OPEN) {
+                                        throw new RuntimeException("Missing '('");
+                                    }
+                                    ArrayList<Operation> op = new ArrayList<>();
+                                    mathCompiler.reset();
+                                    mathCompiler.compile0(1, op, new Stack<>(), tokens, data);
+                                    convertOperationToBytecode(scopes, Types.BOOLEAN, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
+                                    if(tokens.seek().getType() == TokenType.OPEN) {
+                                        operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMPNE, (short) bytecode.getInstructions().size()), CompileOperationType.IF));
+                                    }else if(tokens.seek().getType() != TokenType.CLOSE) {
+                                        throw new RuntimeException("Unknown symbol: '" + tokens.seek() + "'");
+                                    }
+                                }else {
+                                    i.instruction.data[0] = (short) ((short) i.instruction.data[0] + 1);
+                                    operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMP, (short) bytecode.getInstructions().size()), CompileOperationType.ELSE));
+                                }
                             }
                         }else if(i.type == CompileOperationType.WHILE) {
                             short pos = (short) i.instruction.data[1];
