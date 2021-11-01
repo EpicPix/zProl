@@ -314,19 +314,19 @@ public class Compiler {
                             else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX8T64);
                         } else if(psize == 2) {
                             bytecode.pushInstruction(BytecodeInstructions.LOAD16, index);
-                            if(type.memorySize == 1) throw new RuntimeException("Cannot load 2 bytes into 1 byte");
+                            if(type.memorySize == 1) bytecode.pushInstruction(BytecodeInstructions.EX16T8);
                             else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX16T32);
                             else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX16T64);
                         } else if(psize == 4) {
                             bytecode.pushInstruction(BytecodeInstructions.LOAD32, index);
-                            if(type.memorySize == 1) throw new RuntimeException("Cannot load 4 bytes into 1 byte");
-                            else if(type.memorySize == 2) throw new RuntimeException("Cannot load 4 bytes into 2 bytes");
+                            if(type.memorySize == 1) bytecode.pushInstruction(BytecodeInstructions.EX32T8);
+                            else if(type.memorySize == 2) bytecode.pushInstruction(BytecodeInstructions.EX32T16);
                             else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX32T64);
-                        } else {
-                            if(type.memorySize == 1) throw new RuntimeException("Cannot load 8 bytes into 1 byte");
-                            else if(type.memorySize == 2) throw new RuntimeException("Cannot load 8 bytes into 2 bytes");
-                            else if(type.memorySize == 4) throw new RuntimeException("Cannot load 8 bytes into 4 bytes");
-                            else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
+                        } else if(psize == 8) {
+                            bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
+                            if(type.memorySize == 1) bytecode.pushInstruction(BytecodeInstructions.EX64T8);
+                            else if(type.memorySize == 2) bytecode.pushInstruction(BytecodeInstructions.EX64T16);
+                            else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX64T32);
                             else throw new NotImplementedException("Size " + psize + " is not supported");
                         }
                     }else {
@@ -379,17 +379,17 @@ public class Compiler {
                 else if(s2 == 4) bytecode.pushInstruction(BytecodeInstructions.EX8T32);
                 else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX8T64);
             }else if(s1 == 2) {
-                if(s2 == 1) throw new NotImplementedException("Not supported cast");
+                if(s2 == 1) bytecode.pushInstruction(BytecodeInstructions.EX16T8);
                 else if(s2 == 4) bytecode.pushInstruction(BytecodeInstructions.EX16T32);
                 else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX16T64);
             }else if(s1 == 4) {
-                if(s2 == 1) throw new NotImplementedException("Not supported cast");
-                else if(s2 == 2) throw new NotImplementedException("Not supported cast");
+                if(s2 == 1) bytecode.pushInstruction(BytecodeInstructions.EX32T8);
+                else if(s2 == 2) bytecode.pushInstruction(BytecodeInstructions.EX32T16);
                 else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX32T64);
             }else if(s1 == 8) {
-                if(s2 == 1) throw new NotImplementedException("Not supported cast");
-                else if(s2 == 2) throw new NotImplementedException("Not supported cast");
-                else if(s2 == 4) throw new NotImplementedException("Not supported cast");
+                if(s2 == 1) bytecode.pushInstruction(BytecodeInstructions.EX64T8);
+                else if(s2 == 2) bytecode.pushInstruction(BytecodeInstructions.EX64T16);
+                else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX64T32);
             }else throw new NotImplementedException("Not supported cast");
         }else if(op instanceof OperationAssignment) {
             ArrayList<Token> tokens = ((OperationField) op.left).reference;

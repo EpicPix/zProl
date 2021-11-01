@@ -109,10 +109,17 @@ public enum BytecodeInstructions {
     JUMPE(0x5A, 2), // Jump if equal, depends on COMPARE64
     JUMP(0x59, 2), // Jump always
 
+    EX16T8(0x5C, 0), // Convert 16 bits to 8 bits
+    EX32T8(0x5D, 0), // Convert 32 bits to 8 bits
+    EX64T8(0x5E, 0), // Convert 64 bits to 8 bits
+
     EX8T16(0x53, 0), // Extend 8 bits to 16 bits
+    EX32T16(0x59, 0), // Convert 32 bits to 16 bits
+    EX64T16(0x5A, 0), // Convert 64 bits to 16 bits
 
     EX8T32(0x54, 0), // Extend 8 bits to 32 bits
     EX16T32(0x55, 0), // Extend 16 bits to 32 bits
+    EX64T32(0x5B, 0), // Convert 64 bits to 32 bits
 
     EX8T64(0x56, 0), // Extend 8 bits to 64 bits
     EX16T64(0x57, 0), // Extend 16 bits to 64 bits
