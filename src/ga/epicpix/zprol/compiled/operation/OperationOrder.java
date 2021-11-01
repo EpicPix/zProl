@@ -15,7 +15,7 @@ import java.util.Map.Entry;
 
 public class OperationOrder {
 
-    public static final String[][] ORDER = {{"*", "/", "%"}, {"+", "-", "&"}, {"<<", ">>"}, {"="}, {"==", "!="}};
+    public static final String[][] ORDER = {{"="}, {"*", "/", "%"}, {"+", "-", "&"}, {"<<", ">>"}, {"==", "!="}};
     public static final HashMap<String, Class<? extends Operation>> ORDER_TO_CLASS = new HashMap<>();
     public static final HashMap<String, String> ORDER_TO_NAME = new HashMap<>();
 
