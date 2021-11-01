@@ -70,7 +70,7 @@ public class OperationCompiler {
         return new OperationField(ref);
     }
 
-    private void compile0(int type, ArrayList<Operation> operations, Stack<ArrayList<Operation>> stackOperations, SeekIterator<Token> tokens) {
+    public void compile0(int type, ArrayList<Operation> operations, Stack<ArrayList<Operation>> stackOperations, SeekIterator<Token> tokens) {
         Token token;
         while(true) {
             if((tokens.seek().getType() == TokenType.COMMA || tokens.seek().getType() == TokenType.CLOSE) && type == 2) {
@@ -83,7 +83,9 @@ public class OperationCompiler {
             if(token.getType() == TokenType.CLOSE && type == 1) {
                 OperationBrackets brackets = new OperationBrackets(operations.get(0));
                 operations.clear();
-                operations.addAll(stackOperations.pop());
+                if(stackOperations.size() != 0) {
+                    operations.addAll(stackOperations.pop());
+                }
                 operations.add(brackets);
                 return;
             }

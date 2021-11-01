@@ -101,6 +101,10 @@ public enum BytecodeInstructions {
     RETURN32(0x4B, 0), // Return 32 bit
     RETURN64(0x4C, 0), // Return 64 bit
 
+    COMPARE64(0x51, 0), // Compare 64 bit
+
+    JUMPNE(0x52, 2), // Jump if not equal, depends on COMPARE64
+
     ;
 
     private final int id;

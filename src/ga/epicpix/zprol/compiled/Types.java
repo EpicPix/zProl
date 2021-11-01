@@ -4,7 +4,7 @@ public enum Types {
 
     INT8(0, 1), INT16(1, 2), INT32(2, 4), INT64(3, 8),
     UINT8(4, 1), UINT16(5, 2), UINT32(6, 4), UINT64(7, 8),
-    NONE(14, 0), VOID(15, 0), NUMBER(17, 0),
+    NONE(14, 0), VOID(15, 0), NUMBER(17, 0), BOOLEAN(18, 1),
     POINTER(8, 8), NAMED(16, 0, true),
     FUTURE_OBJECT(12, 8), OBJECT(9, 8, true),
     FUTURE_STRUCTURE(13, 8), STRUCTURE(10, 8, true),

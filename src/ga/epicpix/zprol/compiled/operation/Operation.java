@@ -77,6 +77,18 @@ public class Operation {
 
     }
 
+    public static class OperationComparison extends Operation {
+
+        public OperationComparison(Operation operation, Operation number) {
+            this.left = operation;
+            this.right = number;
+        }
+
+        public String toString() {
+            return "equal " + left + " " + right;
+        }
+    }
+
     public static class OperationDivide extends Operation {
 
         public OperationDivide(Operation operation, Operation number) {

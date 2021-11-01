@@ -8,12 +8,14 @@ import ga.epicpix.zprol.compiled.TypeFunctionSignature;
 import ga.epicpix.zprol.compiled.Types;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.LocalVariable;
+import ga.epicpix.zprol.compiled.bytecode.BytecodeInstruction;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAdd;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAnd;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAssignment;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationBrackets;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationCall;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationComparison;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationDivide;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationField;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationMod;
@@ -47,6 +49,7 @@ import ga.epicpix.zprol.tokens.WordToken;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Stack;
 
 public class Compiler {
 
@@ -57,6 +60,7 @@ public class Compiler {
             bytecode.getCurrentScope().defineLocalVariable(param.name, param.type);
         }
         int opens = 0;
+        Stack<BytecodeInstruction> operations = new Stack<>();
         Token token;
         while((token = tokens.next()).getType() != TokenType.END_FUNCTION || opens != 0) {
             if(token.getType() == TokenType.WORD) {
@@ -76,6 +80,19 @@ public class Compiler {
                         else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.RETURN32);
                         else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.RETURN64);
                         else throw new RuntimeException("Size " + size + " is not supported");
+                    }
+                }else if(w.word.equals("if")) {
+                    if(tokens.next().getType() != TokenType.OPEN) {
+                        throw new RuntimeException("Missing '('");
+                    }
+                    ArrayList<Operation> op = new ArrayList<>();
+                    mathCompiler.reset();
+                    mathCompiler.compile0(1, op, new Stack<>(), tokens);
+                    convertOperationToBytecode(scopes, Types.BOOLEAN, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
+                    if(tokens.seek().getType() == TokenType.OPEN) {
+                        operations.add(bytecode.pushInstruction(BytecodeInstructions.JUMPNE, (short) bytecode.getInstructions().size()));
+                    }else if(tokens.seek().getType() != TokenType.CLOSE) {
+                        throw new RuntimeException("Unknown symbol: '" + tokens.seek() + "'");
                     }
                 }else {
                     int startIndex = tokens.currentIndex() - 1;
@@ -122,6 +139,10 @@ public class Compiler {
                 }else if(token.getType() == TokenType.CLOSE) {
                     opens--;
                     bytecode.leaveScope();
+                    if(operations.size() != 0) {
+                        BytecodeInstruction i = operations.pop();
+                        i.data[0] = (short) (bytecode.getInstructions().size() - (short) i.data[0]);
+                    }
                     continue;
                 }
                 //TODO: Not sure what this could be, maybe ++i or --i
@@ -318,6 +339,10 @@ public class Compiler {
             else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, index);
             else throw new NotImplementedException("Size " + psize + " is not supported");
 
+        }else if(op instanceof OperationComparison) {
+            convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, op.left, true, null);
+            convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, op.right, true, null);
+            bytecode.pushInstruction(BytecodeInstructions.COMPARE64);
         }else {
             convertOperationToBytecode(scopes, type, bytecode, data, op.left, true, null);
             convertOperationToBytecode(scopes, type, bytecode, data, op.right, true, null);

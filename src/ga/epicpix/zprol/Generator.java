@@ -60,8 +60,9 @@ public class Generator {
                     else if(size == 4) writer.write("    mov dword [rbp-" + current + "], " + parameters[i][1] + "\n");
                     else if(size == 8) writer.write("    mov qword [rbp-" + current + "], " + parameters[i][0] + "\n");
                 }
+                int instrIndex = 0;
                 for(BytecodeInstruction instr : bc.getInstructions()) {
-                    writer.write("    ; " + instr.instruction.name().toLowerCase() + "\n");
+                    writer.write(funcName + "@" + instrIndex + ":   ; " + instr.instruction.name().toLowerCase() + "\n");
                     if(instr.instruction == BytecodeInstructions.PUSHI8) {
                         writer.write("    dec rsp\n");
                         writer.write("    mov byte [rsp], " + instr.data[0] + "\n");
@@ -138,6 +139,14 @@ public class Generator {
                         writer.write("    add rax, rbx\n");
                         writer.write("    sub rsp, 8\n");
                         writer.write("    mov qword [rsp], rax\n");
+                    }else if(instr.instruction == BytecodeInstructions.COMPARE64) {
+                        writer.write("    mov qword rax, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        writer.write("    mov qword rbx, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        writer.write("    cmp rax, rbx\n");
+                    }else if(instr.instruction == BytecodeInstructions.JUMPNE) {
+                        writer.write("    jne " + funcName + "@" + (instrIndex + (short) instr.data[0]) + "\n");
                     }else if(instr.instruction == BytecodeInstructions.PUSHFUNCTION) {
                         Function f = data.getFunctions().get((short) instr.data[0]);
                         StringBuilder zfuncName = new StringBuilder(f.name);
@@ -295,8 +304,6 @@ public class Generator {
                             writer.write("    leave\n");
                             writer.write("    ret\n");
                         }
-                        runRet = false;
-                        break;
                     }else if(instr.instruction == BytecodeInstructions.RETURN8) {
                         if(func.name.equals("_start")) {
                             writer.write("    mov byte dil, [rsp]\n");
@@ -308,8 +315,6 @@ public class Generator {
                             writer.write("    leave\n");
                             writer.write("    ret\n");
                         }
-                        runRet = false;
-                        break;
                     }else if(instr.instruction == BytecodeInstructions.RETURN16) {
                         if(func.name.equals("_start")) {
                             writer.write("    mov word di, [rsp]\n");
@@ -321,8 +326,6 @@ public class Generator {
                             writer.write("    leave\n");
                             writer.write("    ret\n");
                         }
-                        runRet = false;
-                        break;
                     }else if(instr.instruction == BytecodeInstructions.RETURN32) {
                         if(func.name.equals("_start")) {
                             writer.write("    mov dword edi, [rsp]\n");
@@ -334,8 +337,6 @@ public class Generator {
                             writer.write("    leave\n");
                             writer.write("    ret\n");
                         }
-                        runRet = false;
-                        break;
                     }else if(instr.instruction == BytecodeInstructions.RETURN64) {
                         if(func.name.equals("_start")) {
                             writer.write("    mov qword rdi, [rsp]\n");
@@ -347,11 +348,10 @@ public class Generator {
                             writer.write("    leave\n");
                             writer.write("    ret\n");
                         }
-                        runRet = false;
-                        break;
                     }else {
                         System.err.println("Missing instruction: " + instr);
                     }
+                    instrIndex++;
                 }
                 if(runRet) {
                     if(func.name.equals("_start")) {

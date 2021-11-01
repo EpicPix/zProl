@@ -1,8 +1,8 @@
 function void _start() {
-    uint8 a = 1;
-    {
-        uint8 b = 2;
-        b = 3;
+    uint64 a = 69;
+    if(a == 70) {
+        syscall(1, 0, "69\n", 3);
+        return;
     }
-    b = 4;
+    syscall(1, 0, "420\n", 4);
 }

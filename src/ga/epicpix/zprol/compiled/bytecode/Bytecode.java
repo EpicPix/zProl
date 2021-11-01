@@ -33,8 +33,10 @@ public class Bytecode {
         return new ArrayList<>(instructions);
     }
 
-    public void pushInstruction(BytecodeInstructions instruction, Object... data) {
-        instructions.add(new BytecodeInstruction(instruction, data));
+    public BytecodeInstruction pushInstruction(BytecodeInstructions instruction, Object... data) {
+        BytecodeInstruction in = new BytecodeInstruction(instruction, data);
+        instructions.add(in);
+        return in;
     }
     public int getLocalVariablesSize() {
         return currentScope.getLocalVariablesSize();
