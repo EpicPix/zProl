@@ -373,7 +373,13 @@ public class Compiler {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.PUSHI8, num.byteValue());
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.PUSHI16, num.shortValue());
                 else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.PUSHI32, num.intValue());
-                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.PUSHI64, num.longValue());
+                else if(size == 8) {
+                    if(numberInBounds(BigInteger.ZERO, BigInteger.valueOf(0xff), num)) {
+                        bytecode.pushInstruction(BytecodeInstructions.PUSHI64F8, num.byteValue());
+                    }else {
+                        bytecode.pushInstruction(BytecodeInstructions.PUSHI64, num.longValue());
+                    }
+                }
                 else throw new NotImplementedException("Size " + size + " is not supported");
             }else {
                 throw new RuntimeException("Number " + num + " is not in range of the type (" + smallestNumber + " to " + biggestNumber + ")");

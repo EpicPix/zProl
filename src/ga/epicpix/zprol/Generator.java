@@ -71,6 +71,16 @@ public class Generator {
                     }else if(instr.instruction == BytecodeInstructions.PUSHI32) {
                         writer.write("    sub rsp, 4\n");
                         writer.write("    mov dword [rsp], " + instr.data[0] + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.PUSHI64F8) {
+                        long l = ((long) (byte) instr.data[0]) & 0xff;
+                        if(l < 0x00000000ffffffffL && l >= 0) {
+                            writer.write("    push " + l + "\n");
+                        }else {
+                            writer.write("    sub rsp, 4\n");
+                            writer.write("    mov dword [rsp], " + (l & 0x00000000ffffffffL) + "\n");
+                            writer.write("    sub rsp, 4\n");
+                            writer.write("    mov dword [rsp], " + ((l & 0xffffffff00000000L) >> 32) + "\n");
+                        }
                     }else if(instr.instruction == BytecodeInstructions.PUSHI64) {
                         long l = (long) instr.data[0];
                         if(l < 0x00000000ffffffffL && l >= 0) {

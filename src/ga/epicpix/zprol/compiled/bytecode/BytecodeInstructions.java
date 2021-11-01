@@ -33,6 +33,7 @@ public enum BytecodeInstructions {
     PUSHI8(0x18, 1), // Push 8 bit immediate
     PUSHI16(0x19, 2), // Push 16 bit immediate
     PUSHI32(0x1A, 4), // Push 32 bit immediate
+    PUSHI64F8(0x5F, 1), // Push 64 bit immediate from 8 bits
     PUSHI64(0x1B, 8), // Push 64 bit immediate
 
     POP8(0x4D, 0), // Pop 8 bits
