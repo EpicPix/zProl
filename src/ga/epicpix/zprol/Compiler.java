@@ -455,7 +455,7 @@ public class Compiler {
     }
 
     private static boolean numberInBounds(BigInteger lowest, BigInteger highest, BigInteger num) {
-        return num.compareTo(lowest) >= 0 && highest.compareTo(num) > 0;
+        return num.compareTo(lowest) >= 0 && highest.compareTo(num) >= 0;
     }
 
     public static Function compileFunction(ArrayList<Scope> scopes, CompiledData data, FunctionToken functionToken, SeekIterator<Token> tokens) throws UnknownTypeException {
