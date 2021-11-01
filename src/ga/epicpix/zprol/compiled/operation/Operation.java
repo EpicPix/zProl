@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiled.operation;
 
+import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.Token;
@@ -75,6 +76,20 @@ public class Operation {
             return Token.toFriendlyString(reference) + " " + parameters;
         }
 
+    }
+
+    public static class OperationCast extends Operation {
+
+        public Type type;
+
+        public OperationCast(Type type) {
+            this.type = type;
+            this.right = this;
+        }
+
+        public String toString() {
+            return "cast " + type + " " + left;
+        }
     }
 
     public static class OperationComparison extends Operation {

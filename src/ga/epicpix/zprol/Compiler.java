@@ -16,6 +16,7 @@ import ga.epicpix.zprol.compiled.operation.Operation.OperationAnd;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAssignment;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationBrackets;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationCall;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationCast;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationComparison;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationComparisonNot;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationDivide;
@@ -89,7 +90,7 @@ public class Compiler {
                     }
                     ArrayList<Operation> op = new ArrayList<>();
                     mathCompiler.reset();
-                    mathCompiler.compile0(1, op, new Stack<>(), tokens);
+                    mathCompiler.compile0(1, op, new Stack<>(), tokens, data);
                     convertOperationToBytecode(scopes, Types.BOOLEAN, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
                     if(tokens.seek().getType() == TokenType.OPEN) {
                         operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMPNE, (short) bytecode.getInstructions().size()), CompileOperationType.IF));
@@ -102,7 +103,7 @@ public class Compiler {
                     }
                     ArrayList<Operation> op = new ArrayList<>();
                     mathCompiler.reset();
-                    mathCompiler.compile0(1, op, new Stack<>(), tokens);
+                    mathCompiler.compile0(1, op, new Stack<>(), tokens, data);
                     int s = bytecode.getInstructions().size();
                     convertOperationToBytecode(scopes, Types.BOOLEAN, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
                     if(tokens.seek().getType() == TokenType.OPEN) {
@@ -365,6 +366,31 @@ public class Compiler {
             String str = ((OperationString) op).string.getString();
             short index = bytecode.addString(str);
             bytecode.pushInstruction(BytecodeInstructions.PUSHSTR, index);
+        }else if(op instanceof OperationCast) {
+            if(t == null) throw new NotImplementedException("Not supported cast");
+            if(((OperationCast) op).type == null) throw new NotImplementedException("Not supported cast");
+            convertOperationToBytecode(scopes, ((OperationCast) op).type.type, bytecode, data, op.left, true, ((OperationCast) op).type);
+
+            Type t2 = ((OperationCast) op).type;
+            int s1 = t2.type.memorySize;
+            int s2 = t.type.memorySize;
+            if(s1 == 1) {
+                if(s2 == 2) bytecode.pushInstruction(BytecodeInstructions.EX8T16);
+                else if(s2 == 4) bytecode.pushInstruction(BytecodeInstructions.EX8T32);
+                else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX8T64);
+            }else if(s1 == 2) {
+                if(s2 == 1) throw new NotImplementedException("Not supported cast");
+                else if(s2 == 4) bytecode.pushInstruction(BytecodeInstructions.EX16T32);
+                else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX16T64);
+            }else if(s1 == 4) {
+                if(s2 == 1) throw new NotImplementedException("Not supported cast");
+                else if(s2 == 2) throw new NotImplementedException("Not supported cast");
+                else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX32T64);
+            }else if(s1 == 8) {
+                if(s2 == 1) throw new NotImplementedException("Not supported cast");
+                else if(s2 == 2) throw new NotImplementedException("Not supported cast");
+                else if(s2 == 4) throw new NotImplementedException("Not supported cast");
+            }else throw new NotImplementedException("Not supported cast");
         }else if(op instanceof OperationAssignment) {
             ArrayList<Token> tokens = ((OperationField) op.left).reference;
 

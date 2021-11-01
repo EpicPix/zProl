@@ -2,13 +2,17 @@ package ga.epicpix.zprol.compiled.operation;
 
 import ga.epicpix.zprol.Reflection;
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.compiled.Type;
+import ga.epicpix.zprol.compiled.Types;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationBrackets;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationCall;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationCast;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationField;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationNumber;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationString;
+import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.StringToken;
@@ -30,7 +34,7 @@ public class OperationCompiler {
         current = 0;
     }
 
-    private Operation compileReference(Token token, SeekIterator<Token> tokens) {
+    private Operation compileReference(Token token, SeekIterator<Token> tokens, CompiledData data) {
         ArrayList<Token> ref = new ArrayList<>();
         ref.add(token);
         ArrayList<Operation> params = new ArrayList<>();
@@ -41,7 +45,7 @@ public class OperationCompiler {
                 call = true;
                 if(tokens.seek().getType() != TokenType.CLOSE) {
                     ArrayList<Operation> op = new ArrayList<>();
-                    compile0(2, op, new Stack<>(), tokens);
+                    compile0(2, op, new Stack<>(), tokens, data);
                     params.add(op.get(0));
                 }else {
                     tokens.next();
@@ -49,7 +53,7 @@ public class OperationCompiler {
                 }
             }else if(token.getType() == TokenType.COMMA && call) {
                 ArrayList<Operation> op = new ArrayList<>();
-                compile0(2, op, new Stack<>(), tokens);
+                compile0(2, op, new Stack<>(), tokens, data);
                 params.add(op.get(0));
             }else if(token.getType() == TokenType.COMMA) {
                 tokens.back();
@@ -70,7 +74,7 @@ public class OperationCompiler {
         return new OperationField(ref);
     }
 
-    public void compile0(int type, ArrayList<Operation> operations, Stack<ArrayList<Operation>> stackOperations, SeekIterator<Token> tokens) {
+    public void compile0(int type, ArrayList<Operation> operations, Stack<ArrayList<Operation>> stackOperations, SeekIterator<Token> tokens, CompiledData data) {
         Token token;
         while(true) {
             if((tokens.seek().getType() == TokenType.COMMA || tokens.seek().getType() == TokenType.CLOSE) && type == 2) {
@@ -95,7 +99,7 @@ public class OperationCompiler {
             }else if(token.getType() == TokenType.STRING) {
                 operations.add(new OperationString((StringToken) token));
             }else if(token.getType() == TokenType.WORD) {
-                operations.add(compileReference(token, tokens));
+                operations.add(compileReference(token, tokens, data));
             }else if(token.getType() == TokenType.OPERATOR) {
                 OperatorToken operatorToken = (OperatorToken) token;
                 String operator = operatorToken.operator;
@@ -109,11 +113,11 @@ public class OperationCompiler {
                 if(token.getType() == TokenType.OPEN) {
                     stackOperations.push(new ArrayList<>(operations));
                     operations.clear();
-                    compile0(1, operations, stackOperations, tokens);
+                    compile0(1, operations, stackOperations, tokens, data);
                     op = operations.get(operations.size() - 1);
                     operations.remove(operations.size() - 1);
                 }else if(token.getType() == TokenType.WORD) {
-                    op = compileReference(token, tokens);
+                    op = compileReference(token, tokens, data);
                 }else {
                     op = new OperationNumber((NumberToken) token);
                 }
@@ -132,9 +136,27 @@ public class OperationCompiler {
                     }
                 }
             }else if(token.getType() == TokenType.OPEN) {
-                stackOperations.push(new ArrayList<>(operations));
-                operations.clear();
-                compile0(1, operations, stackOperations, tokens);
+                int current = tokens.currentIndex();
+                try {
+                    Type t = data.resolveType(tokens);
+                    operations.add(new OperationCast(t));
+                    if(tokens.next().getType() != TokenType.CLOSE) {
+                        throw new RuntimeException("Missing ')'");
+                    }
+                } catch(UnknownTypeException unk) {
+                    tokens.setIndex(current);
+                    stackOperations.push(new ArrayList<>(operations));
+                    operations.clear();
+                    compile0(1, operations, stackOperations, tokens, data);
+                }
+            }
+            if(operations.size() >= 2) {
+                Operation o = operations.get(operations.size() - 2);
+                if(o instanceof OperationCast) {
+                    OperationCast c = (OperationCast) o;
+                    c.left = operations.get(operations.size() - 1);
+                    operations.remove(operations.size() - 1);
+                }
             }
         }
     }
@@ -142,8 +164,10 @@ public class OperationCompiler {
     public Operation compile(CompiledData data, Bytecode bytecode, SeekIterator<Token> tokens) {
         ArrayList<Operation> operations = new ArrayList<>();
         Stack<ArrayList<Operation>> stackOperations = new Stack<>();
-        compile0(0, operations, stackOperations, tokens);
+        compile0(0, operations, stackOperations, tokens, data);
         if(Boolean.parseBoolean(System.getProperty("DEBUG"))) {
+            System.out.println(operations);
+            printOperations(operations.get(0));
             File dot = new File("math.dot");
             try {
                 BufferedWriter out = new BufferedWriter(new FileWriter(dot));
@@ -155,7 +179,6 @@ public class OperationCompiler {
             } catch(IOException e) {
                 e.printStackTrace();
             }
-            printOperations(operations.get(0));
         }
         return operations.get(0);
     }
@@ -171,6 +194,10 @@ public class OperationCompiler {
             return;
         }else if(operation instanceof OperationBrackets) {
             printOperations(operation.left);
+            return;
+        }else if(operation instanceof OperationCast) {
+            printOperations(operation.left);
+            System.out.println("cast " + ((OperationCast) operation).type);
             return;
         }else if(operation instanceof OperationField) {
             OperationField ref = (OperationField) operation;
@@ -221,6 +248,13 @@ public class OperationCompiler {
             return;
         }else if(operation instanceof OperationBrackets) {
             writer.write("    op" + current + " [label=\"()\"]\n");
+            int c = current;
+            current++;
+            writer.write("    op" + c + " -> op" + current + "\n");
+            generateDotFile(operation.left, writer);
+            return;
+        }else if(operation instanceof OperationCast) {
+            writer.write("    op" + current + " [label=\"(" + ((OperationCast) operation).type + ")\"]\n");
             int c = current;
             current++;
             writer.write("    op" + c + " -> op" + current + "\n");
