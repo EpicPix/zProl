@@ -8,7 +8,7 @@ import java.io.IOException;
 public class BytecodeInstruction {
 
     public final BytecodeInstructions instruction;
-    public final Object[] data;
+    public Object[] data;
 
     public BytecodeInstruction(BytecodeInstructions instruction, Object... data) {
         this.instruction = instruction;

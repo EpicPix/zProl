@@ -1,8 +1,7 @@
 function void _start() {
-    uint8 a = 70;
-    if(a == 69) {
-        syscall(1, 0, "69\n", 3);
-    }else {
-        syscall(1, 0, "420\n", 4);
+    uint8 a = 0;
+    while(a != 2) {
+        syscall(1, 0, "r\n", 2);
+        a = (a + 1);
     }
 }

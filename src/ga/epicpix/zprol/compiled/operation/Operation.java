@@ -89,6 +89,18 @@ public class Operation {
         }
     }
 
+    public static class OperationComparisonNot extends Operation {
+
+        public OperationComparisonNot(Operation operation, Operation number) {
+            this.left = operation;
+            this.right = number;
+        }
+
+        public String toString() {
+            return "notequal " + left + " " + right;
+        }
+    }
+
     public static class OperationDivide extends Operation {
 
         public OperationDivide(Operation operation, Operation number) {

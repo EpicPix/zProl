@@ -36,7 +36,7 @@ public class Generator {
 
         for(Function func : data.getFunctions()) {
             if(!func.flags.contains(Flag.NO_IMPLEMENTATION)) {
-                boolean runRet = true;
+                boolean flipNot = false;
                 StringBuilder funcName = new StringBuilder(func.name);
                 if(!func.name.equals("_start")) {
                     funcName.append(".").append(func.signature.returnType);
@@ -185,8 +185,27 @@ public class Generator {
                         writer.write("    mov qword rbx, [rsp]\n");
                         writer.write("    add rsp, 8\n");
                         writer.write("    cmp rax, rbx\n");
+                    }else if(instr.instruction == BytecodeInstructions.COMPAREN64) {
+                        writer.write("    mov qword rax, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        writer.write("    mov qword rbx, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        writer.write("    cmp rax, rbx\n");
+                        flipNot = !flipNot;
                     }else if(instr.instruction == BytecodeInstructions.JUMPNE) {
-                        writer.write("    jne " + funcName + "@" + (instrIndex + (short) instr.data[0]) + "\n");
+                        if(!flipNot) {
+                            writer.write("    jne " + funcName + "@" + (instrIndex + (short) instr.data[0]) + "\n");
+                        }else {
+                            writer.write("    je " + funcName + "@" + (instrIndex + (short) instr.data[0]) + "\n");
+                        }
+                        flipNot = false;
+                    }else if(instr.instruction == BytecodeInstructions.JUMPE) {
+                        if(!flipNot) {
+                            writer.write("    je " + funcName + "@" + (instrIndex + (short) instr.data[0]) + "\n");
+                        }else {
+                            writer.write("    jne " + funcName + "@" + (instrIndex + (short) instr.data[0]) + "\n");
+                        }
+                        flipNot = false;
                     }else if(instr.instruction == BytecodeInstructions.JUMP) {
                         writer.write("    jmp " + funcName + "@" + (instrIndex + (short) instr.data[0]) + "\n");
                     }else if(instr.instruction == BytecodeInstructions.PUSHFUNCTION) {

@@ -10,7 +10,6 @@ import ga.epicpix.zprol.compiled.TypeFunctionSignature;
 import ga.epicpix.zprol.compiled.Types;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.LocalVariable;
-import ga.epicpix.zprol.compiled.bytecode.BytecodeInstruction;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAdd;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAnd;
@@ -18,6 +17,7 @@ import ga.epicpix.zprol.compiled.operation.Operation.OperationAssignment;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationBrackets;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationCall;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationComparison;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationComparisonNot;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationDivide;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationField;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationMod;
@@ -96,6 +96,20 @@ public class Compiler {
                     }else if(tokens.seek().getType() != TokenType.CLOSE) {
                         throw new RuntimeException("Unknown symbol: '" + tokens.seek() + "'");
                     }
+                }else if(w.word.equals("while")) {
+                    if(tokens.next().getType() != TokenType.OPEN) {
+                        throw new RuntimeException("Missing '('");
+                    }
+                    ArrayList<Operation> op = new ArrayList<>();
+                    mathCompiler.reset();
+                    mathCompiler.compile0(1, op, new Stack<>(), tokens);
+                    int s = bytecode.getInstructions().size();
+                    convertOperationToBytecode(scopes, Types.BOOLEAN, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
+                    if(tokens.seek().getType() == TokenType.OPEN) {
+                        operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMPNE, (short) s, (short) bytecode.getInstructions().size()), CompileOperationType.WHILE));
+                    }else if(tokens.seek().getType() != TokenType.CLOSE) {
+                        throw new RuntimeException("Unknown symbol: '" + tokens.seek() + "'");
+                    }
                 }else {
                     int startIndex = tokens.currentIndex() - 1;
                     try {
@@ -145,12 +159,17 @@ public class Compiler {
                         CompileOperation i = operations.pop();
                         short s = (short) i.instruction.data[0];
                         i.instruction.data[0] = (short) (bytecode.getInstructions().size() - s);
-                        if(i.type != CompileOperationType.ELSE) {
+                        if(i.type == CompileOperationType.IF) {
                             if(tokens.seek().getType() == TokenType.WORD && ((WordToken) tokens.seek()).word.equals("else")) {
                                 i.instruction.data[0] = (short) ((short) i.instruction.data[0] + 1);
                                 tokens.next();
                                 operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMP, (short) bytecode.getInstructions().size()), CompileOperationType.ELSE));
                             }
+                        }else if(i.type == CompileOperationType.WHILE) {
+                            short pos = (short) i.instruction.data[1];
+                            i.instruction.data = new java.lang.Object[] {i.instruction.data[0]};
+                            bytecode.pushInstruction(BytecodeInstructions.JUMP, (short) (s - bytecode.getInstructions().size()));
+                            i.instruction.data[0] = (short) (bytecode.getInstructions().size() - pos);
                         }
                     }
                     continue;
@@ -362,6 +381,10 @@ public class Compiler {
             convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, op.left, true, null);
             convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, op.right, true, null);
             bytecode.pushInstruction(BytecodeInstructions.COMPARE64);
+        }else if(op instanceof OperationComparisonNot) {
+            convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, op.left, true, null);
+            convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, op.right, true, null);
+            bytecode.pushInstruction(BytecodeInstructions.COMPAREN64);
         }else {
             convertOperationToBytecode(scopes, type, bytecode, data, op.left, true, null);
             convertOperationToBytecode(scopes, type, bytecode, data, op.right, true, null);
