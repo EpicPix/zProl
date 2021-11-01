@@ -327,7 +327,6 @@ public class Compiler {
                             if(type.memorySize == 1) bytecode.pushInstruction(BytecodeInstructions.EX64T8);
                             else if(type.memorySize == 2) bytecode.pushInstruction(BytecodeInstructions.EX64T16);
                             else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX64T32);
-                            else throw new NotImplementedException("Size " + psize + " is not supported");
                         }
                     }else {
                         if(t.type == Types.FUNCTION_SIGNATURE) {
