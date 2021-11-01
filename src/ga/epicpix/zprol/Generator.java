@@ -433,7 +433,7 @@ public class Generator {
                     for(int j = 0; j<chars.length; j++) {
                         hexs[j] = "0x" + Integer.toHexString(chars[j]);
                     }
-                    writer.write(funcName + ".str" + i + ": db " + String.join(", ", hexs) + "\n");
+                    writer.write(funcName + ".str" + i + ": db " + String.join(", ", hexs) + ", 0x0\n");
                 }
             }
         }
