@@ -277,10 +277,19 @@ public class Compiler {
                     if(var != null) {
                         int psize = var.type.type.memorySize;
                         short index = (short) var.index;
-                        if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.LOAD8, index);
-                        else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.LOAD16, index);
-                        else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.LOAD32, index);
-                        else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
+                        if(psize == 1) {
+                            bytecode.pushInstruction(BytecodeInstructions.LOAD8, index);
+                            if(type.memorySize == 2) bytecode.pushInstruction(BytecodeInstructions.EX8T16);
+                            else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX8T32);
+                            else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX8T64);
+                        } else if(psize == 2) {
+                            bytecode.pushInstruction(BytecodeInstructions.LOAD16, index);
+                            if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX16T32);
+                            else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX16T64);
+                        } else if(psize == 4) {
+                            bytecode.pushInstruction(BytecodeInstructions.LOAD32, index);
+                            if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX32T64);
+                        } else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
                         else throw new NotImplementedException("Size " + psize + " is not supported");
                     }else {
                         if(t.type == Types.FUNCTION_SIGNATURE) {

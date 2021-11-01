@@ -1,6 +1,6 @@
 function void _start() {
-    uint64 a = 69;
-    if(a == 70) {
+    uint8 a = 69;
+    if(a == 69) {
         syscall(1, 0, "69\n", 3);
         return;
     }

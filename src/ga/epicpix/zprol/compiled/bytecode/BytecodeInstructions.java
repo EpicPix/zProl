@@ -105,6 +105,15 @@ public enum BytecodeInstructions {
 
     JUMPNE(0x52, 2), // Jump if not equal, depends on COMPARE64
 
+    EX8T16(0x53, 0), // Extend 8 bits to 16 bits
+
+    EX8T32(0x54, 0), // Extend 8 bits to 32 bits
+    EX16T32(0x55, 0), // Extend 16 bits to 32 bits
+
+    EX8T64(0x56, 0), // Extend 8 bits to 64 bits
+    EX16T64(0x57, 0), // Extend 16 bits to 64 bits
+    EX32T64(0x58, 0), // Extend 32 bits to 64 bits
+
     ;
 
     private final int id;

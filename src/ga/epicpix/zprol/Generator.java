@@ -81,6 +81,46 @@ public class Generator {
                             writer.write("    sub rsp, 4\n");
                             writer.write("    mov dword [rsp], " + ((l & 0xffffffff00000000L) >> 32) + "\n");
                         }
+                    }else if(instr.instruction == BytecodeInstructions.EX8T16) {
+                        writer.write("    mov byte al, [rsp]\n");
+                        writer.write("    inc rsp\n");
+                        writer.write("    cbw\n");
+                        writer.write("    sub rsp, 2\n");
+                        writer.write("    mov word [rsp], ax\n");
+                    }else if(instr.instruction == BytecodeInstructions.EX8T32) {
+                        writer.write("    mov byte al, [rsp]\n");
+                        writer.write("    inc rsp\n");
+                        writer.write("    cbw\n");
+                        writer.write("    cwde\n");
+                        writer.write("    sub rsp, 4\n");
+                        writer.write("    mov dword [rsp], eax\n");
+                    }else if(instr.instruction == BytecodeInstructions.EX8T64) {
+                        writer.write("    mov byte al, [rsp]\n");
+                        writer.write("    inc rsp\n");
+                        writer.write("    cbw\n");
+                        writer.write("    cwde\n");
+                        writer.write("    cdqe\n");
+                        writer.write("    sub rsp, 8\n");
+                        writer.write("    mov qword [rsp], rax\n");
+                    }else if(instr.instruction == BytecodeInstructions.EX16T32) {
+                        writer.write("    mov word ax, [rsp]\n");
+                        writer.write("    add rsp, 2\n");
+                        writer.write("    cwde\n");
+                        writer.write("    sub rsp, 4\n");
+                        writer.write("    mov dword [rsp], eax\n");
+                    }else if(instr.instruction == BytecodeInstructions.EX16T64) {
+                        writer.write("    mov word ax, [rsp]\n");
+                        writer.write("    add rsp, 2\n");
+                        writer.write("    cwde\n");
+                        writer.write("    cdqe\n");
+                        writer.write("    sub rsp, 8\n");
+                        writer.write("    mov qword [rsp], rax\n");
+                    }else if(instr.instruction == BytecodeInstructions.EX32T64) {
+                        writer.write("    mov dword eax, [rsp]\n");
+                        writer.write("    add rsp, 4\n");
+                        writer.write("    cdqe\n");
+                        writer.write("    sub rsp, 8\n");
+                        writer.write("    mov qword [rsp], rax\n");
                     }else if(instr.instruction == BytecodeInstructions.STORE8) {
                         writer.write("    mov byte al, [rsp]\n");
                         writer.write("    inc rsp\n");
