@@ -1,5 +1,7 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.compiled.CompileOperation;
+import ga.epicpix.zprol.compiled.CompileOperationType;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
@@ -60,7 +62,7 @@ public class Compiler {
             bytecode.getCurrentScope().defineLocalVariable(param.name, param.type);
         }
         int opens = 0;
-        Stack<BytecodeInstruction> operations = new Stack<>();
+        Stack<CompileOperation> operations = new Stack<>();
         Token token;
         while((token = tokens.next()).getType() != TokenType.END_FUNCTION || opens != 0) {
             if(token.getType() == TokenType.WORD) {
@@ -90,7 +92,7 @@ public class Compiler {
                     mathCompiler.compile0(1, op, new Stack<>(), tokens);
                     convertOperationToBytecode(scopes, Types.BOOLEAN, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
                     if(tokens.seek().getType() == TokenType.OPEN) {
-                        operations.add(bytecode.pushInstruction(BytecodeInstructions.JUMPNE, (short) bytecode.getInstructions().size()));
+                        operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMPNE, (short) bytecode.getInstructions().size()), CompileOperationType.IF));
                     }else if(tokens.seek().getType() != TokenType.CLOSE) {
                         throw new RuntimeException("Unknown symbol: '" + tokens.seek() + "'");
                     }
@@ -140,8 +142,16 @@ public class Compiler {
                     opens--;
                     bytecode.leaveScope();
                     if(operations.size() != 0) {
-                        BytecodeInstruction i = operations.pop();
-                        i.data[0] = (short) (bytecode.getInstructions().size() - (short) i.data[0]);
+                        CompileOperation i = operations.pop();
+                        short s = (short) i.instruction.data[0];
+                        i.instruction.data[0] = (short) (bytecode.getInstructions().size() - s);
+                        if(i.type != CompileOperationType.ELSE) {
+                            if(tokens.seek().getType() == TokenType.WORD && ((WordToken) tokens.seek()).word.equals("else")) {
+                                i.instruction.data[0] = (short) ((short) i.instruction.data[0] + 1);
+                                tokens.next();
+                                operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMP, (short) bytecode.getInstructions().size()), CompileOperationType.ELSE));
+                            }
+                        }
                     }
                     continue;
                 }

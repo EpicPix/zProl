@@ -104,6 +104,7 @@ public enum BytecodeInstructions {
     COMPARE64(0x51, 0), // Compare 64 bit
 
     JUMPNE(0x52, 2), // Jump if not equal, depends on COMPARE64
+    JUMP(0x59, 2), // Jump always
 
     EX8T16(0x53, 0), // Extend 8 bits to 16 bits
 

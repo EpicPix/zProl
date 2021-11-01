@@ -10,7 +10,7 @@ public class BytecodeInstruction {
     public final BytecodeInstructions instruction;
     public final Object[] data;
 
-    public BytecodeInstruction(BytecodeInstructions instruction, Object[] data) {
+    public BytecodeInstruction(BytecodeInstructions instruction, Object... data) {
         this.instruction = instruction;
         this.data = data;
     }

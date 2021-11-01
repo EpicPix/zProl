@@ -187,6 +187,8 @@ public class Generator {
                         writer.write("    cmp rax, rbx\n");
                     }else if(instr.instruction == BytecodeInstructions.JUMPNE) {
                         writer.write("    jne " + funcName + "@" + (instrIndex + (short) instr.data[0]) + "\n");
+                    }else if(instr.instruction == BytecodeInstructions.JUMP) {
+                        writer.write("    jmp " + funcName + "@" + (instrIndex + (short) instr.data[0]) + "\n");
                     }else if(instr.instruction == BytecodeInstructions.PUSHFUNCTION) {
                         Function f = data.getFunctions().get((short) instr.data[0]);
                         StringBuilder zfuncName = new StringBuilder(f.name);
@@ -393,17 +395,16 @@ public class Generator {
                     }
                     instrIndex++;
                 }
-                if(runRet) {
-                    if(func.name.equals("_start")) {
-                        writer.write("    ; exit\n");
-                        writer.write("    mov " + calls[1] + ", 60\n");
-                        writer.write("    mov " + calls[2] + ", 0\n");
-                        writer.write("    syscall\n");
-                    } else {
-                        writer.write("    ; return\n");
-                        writer.write("    leave\n");
-                        writer.write("    ret\n");
-                    }
+                writer.write(funcName + "@" + instrIndex + ":\n");
+                if(func.name.equals("_start")) {
+                    writer.write("    ; exit\n");
+                    writer.write("    mov " + calls[1] + ", 60\n");
+                    writer.write("    mov " + calls[2] + ", 0\n");
+                    writer.write("    syscall\n");
+                } else {
+                    writer.write("    ; return\n");
+                    writer.write("    leave\n");
+                    writer.write("    ret\n");
                 }
 
                 ArrayList<String> strings = bc.getStrings();

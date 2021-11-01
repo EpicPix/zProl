@@ -33,6 +33,10 @@ public class Bytecode {
         return new ArrayList<>(instructions);
     }
 
+    public ArrayList<BytecodeInstruction> getRawInstructions() {
+        return instructions;
+    }
+
     public BytecodeInstruction pushInstruction(BytecodeInstructions instruction, Object... data) {
         BytecodeInstruction in = new BytecodeInstruction(instruction, data);
         instructions.add(in);
