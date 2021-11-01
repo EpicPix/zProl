@@ -1,8 +1,8 @@
-function uint64 write(uint64 fd, pointer str, uint64 len) {
-    syscall(1, fd, str, len);
-}
-
 function void _start() {
-    uint64(uint64, pointer, uint64) w = write;
-    w(1, "hello\n", 6);
+    uint8 a = 1;
+    {
+        uint8 b = 2;
+        b = 3;
+    }
+    b = 4;
 }

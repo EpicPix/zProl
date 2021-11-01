@@ -54,10 +54,11 @@ public class Compiler {
         OperationCompiler mathCompiler = new OperationCompiler();
         Bytecode bytecode = new Bytecode();
         for(TypeNamed param : sig.parameters) {
-            bytecode.defineLocalVariable(param.name, param.type);
+            bytecode.getCurrentScope().defineLocalVariable(param.name, param.type);
         }
+        int opens = 0;
         Token token;
-        while((token = tokens.next()).getType() != TokenType.END_FUNCTION) {
+        while((token = tokens.next()).getType() != TokenType.END_FUNCTION || opens != 0) {
             if(token.getType() == TokenType.WORD) {
                 WordToken w = (WordToken) token;
                 if(w.word.equals("return")) {
@@ -86,7 +87,7 @@ public class Compiler {
                             throw new RuntimeException("Cannot handle this token: " + token);
                         }
                         String name = ((WordToken) token).word;
-                        LocalVariable lVar = bytecode.defineLocalVariable(name, type);
+                        LocalVariable lVar = bytecode.getCurrentScope().defineLocalVariable(name, type);
                         token = tokens.next();
                         if(token.getType() != TokenType.END_LINE) {
                             if(token.getType() == TokenType.OPERATOR) {
@@ -114,6 +115,15 @@ public class Compiler {
                     }
                 }
             }else {
+                if(token.getType() == TokenType.OPEN) {
+                    opens++;
+                    bytecode.newScope();
+                    continue;
+                }else if(token.getType() == TokenType.CLOSE) {
+                    opens--;
+                    bytecode.leaveScope();
+                    continue;
+                }
                 //TODO: Not sure what this could be, maybe ++i or --i
                 throw new RuntimeException("Cannot handle this token: " + token);
             }
@@ -176,7 +186,7 @@ public class Compiler {
                     if(f.reference.size() != 1) {
                         throw new NotImplementedException("Not implemented yet");
                     }
-                    LocalVariable var = bytecode.getLocalVariable(((WordToken) f.reference.get(0)).word);
+                    LocalVariable var = bytecode.getCurrentScope().getLocalVariable(((WordToken) f.reference.get(0)).word);
                     parameters.add(var.type);
                 }else {
                     parameters.add(new Type(Types.NUMBER));
@@ -185,7 +195,7 @@ public class Compiler {
             if(call.reference.size() != 1) {
                 throw new NotImplementedException("Not implemented yet");
             }
-            LocalVariable v = bytecode.findLocalVariable(((WordToken) call.reference.get(0)).word);
+            LocalVariable v = bytecode.getCurrentScope().findLocalVariable(((WordToken) call.reference.get(0)).word);
             TypeFunctionSignature ss = new TypeFunctionSignature(null, parameters.toArray(new Type[0]));
             if(v == null) {
                 Function func = data.getFunction(((WordToken) call.reference.get(0)).word, ss);
@@ -242,7 +252,7 @@ public class Compiler {
             while(tokens.hasNext()) {
                 Token token = tokens.next();
                 if(token.getType() == TokenType.WORD) {
-                    LocalVariable var = bytecode.findLocalVariable(((WordToken) token).word);
+                    LocalVariable var = bytecode.getCurrentScope().findLocalVariable(((WordToken) token).word);
                     if(var != null) {
                         int psize = var.type.type.memorySize;
                         short index = (short) var.index;
@@ -294,7 +304,7 @@ public class Compiler {
             LocalVariable lVar;
 
             if(tokens.size() == 1) {
-                lVar = bytecode.getLocalVariable(((WordToken) tokens.get(0)).word);
+                lVar = bytecode.getCurrentScope().getLocalVariable(((WordToken) tokens.get(0)).word);
             }else {
                 throw new NotImplementedException("TODO");
             }

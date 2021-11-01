@@ -206,8 +206,9 @@ public class Parser {
 
     public static ArrayList<Token> readFunctionCode(DataParser parser) {
         ArrayList<Token> tokens = new ArrayList<>();
+        int opens = 0;
         while(true) {
-            if(parser.seekWord().equals("}")) {
+            if(parser.seekWord().equals("}") && opens == 0) {
                 parser.nextWord();
                 tokens.add(new Token(TokenType.END_FUNCTION));
                 break;
@@ -239,6 +240,14 @@ public class Parser {
                 continue;
             }else if(word.equals("\"")) {
                 tokens.add(new StringToken(parser.nextStringStarted()));
+                continue;
+            }else if(word.equals("{")) {
+                opens++;
+                tokens.add(new Token(TokenType.OPEN));
+                continue;
+            }else if(word.equals("}")) {
+                opens--;
+                tokens.add(new Token(TokenType.CLOSE));
                 continue;
             }
             tokens.add(new WordToken(word));

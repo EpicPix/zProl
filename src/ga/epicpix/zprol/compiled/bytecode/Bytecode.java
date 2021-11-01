@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiled.bytecode;
 
+import ga.epicpix.zprol.compiled.LocalScope;
 import ga.epicpix.zprol.compiled.LocalVariable;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
@@ -11,8 +12,7 @@ import java.util.ArrayList;
 public class Bytecode {
 
     private ArrayList<BytecodeInstruction> instructions = new ArrayList<>();
-    private int localVariableSizeIndex = 0;
-    private ArrayList<LocalVariable> localVariables = new ArrayList<>();
+    private LocalScope currentScope = new LocalScope();
     private ArrayList<String> strings = new ArrayList<>();
 
     public short addString(String str) {
@@ -29,10 +29,6 @@ public class Bytecode {
         return new ArrayList<>(strings);
     }
 
-    public int getLocalVariablesSize() {
-        return localVariableSizeIndex;
-    }
-
     public ArrayList<BytecodeInstruction> getInstructions() {
         return new ArrayList<>(instructions);
     }
@@ -40,39 +36,28 @@ public class Bytecode {
     public void pushInstruction(BytecodeInstructions instruction, Object... data) {
         instructions.add(new BytecodeInstruction(instruction, data));
     }
-
-    public LocalVariable defineLocalVariable(String name, Type type) {
-        for(LocalVariable localVar : localVariables) {
-            if(localVar.name.equals(name)) {
-                throw new VariableAlreadyDefinedException(name);
-            }
-        }
-        localVariableSizeIndex += type.type.memorySize;
-        LocalVariable localVar = new LocalVariable(name, type, localVariableSizeIndex);
-        localVariables.add(localVar);
-        return localVar;
+    public int getLocalVariablesSize() {
+        return currentScope.getLocalVariablesSize();
     }
 
-    public LocalVariable getLocalVariable(String name) {
-        for(LocalVariable lVar : localVariables) {
-            if(lVar.name.equals(name)) {
-                return lVar;
-            }
-        }
-        throw new VariableNotDefinedException(name);
+    public LocalScope newScope() {
+        return currentScope = new LocalScope(currentScope);
     }
 
-    public LocalVariable findLocalVariable(String name) {
-        for(LocalVariable lVar : localVariables) {
-            if(lVar.name.equals(name)) {
-                return lVar;
-            }
+    public LocalScope leaveScope() {
+        if(currentScope.parent == null) {
+            throw new IllegalArgumentException("Cannot leave scope, no scopes available!");
         }
-        return null;
+        currentScope.parent.addMin(currentScope.getScopeLocalVariableScope());
+        return currentScope = currentScope.parent;
+    }
+
+    public LocalScope getCurrentScope() {
+        return currentScope;
     }
 
     public void write(DataOutputStream out) throws IOException {
-        out.writeShort(localVariableSizeIndex);
+        out.writeShort(getCurrentScope().getLocalVariablesSize());
         out.writeInt(instructions.size());
         for(BytecodeInstruction instr : instructions) {
             instr.write(out);
