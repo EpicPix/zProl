@@ -419,8 +419,8 @@ public class Compiler {
             convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, op.right, true, null);
             bytecode.pushInstruction(BytecodeInstructions.COMPAREN64);
         }else {
-            convertOperationToBytecode(scopes, type, bytecode, data, op.left, true, null);
-            convertOperationToBytecode(scopes, type, bytecode, data, op.right, true, null);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.left, true, t);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.right, true, t);
             if(op instanceof OperationAdd) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.ADD8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.ADD16);

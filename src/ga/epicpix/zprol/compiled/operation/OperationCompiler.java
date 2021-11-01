@@ -143,7 +143,7 @@ public class OperationCompiler {
                     if(tokens.next().getType() != TokenType.CLOSE) {
                         throw new RuntimeException("Missing ')'");
                     }
-                } catch(UnknownTypeException unk) {
+                } catch(UnknownTypeException | ClassCastException unk) {
                     tokens.setIndex(current);
                     stackOperations.push(new ArrayList<>(operations));
                     operations.clear();

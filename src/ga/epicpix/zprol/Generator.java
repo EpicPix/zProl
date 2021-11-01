@@ -209,60 +209,89 @@ public class Generator {
                         writer.write("    add rax, rbx\n");
                         writer.write("    sub rsp, 8\n");
                         writer.write("    mov qword [rsp], rax\n");
-                    }else if(instr.instruction == BytecodeInstructions.SHL8) {
+                    }else if(instr.instruction == BytecodeInstructions.SUB8) {
+                        writer.write("    mov byte ah, [rsp]\n");
+                        writer.write("    inc rsp\n");
                         writer.write("    mov byte al, [rsp]\n");
                         writer.write("    inc rsp\n");
+                        writer.write("    sub al, ah\n");
+                        writer.write("    dec rsp\n");
+                        writer.write("    mov byte [rsp], al\n");
+                    }else if(instr.instruction == BytecodeInstructions.SUB16) {
+                        writer.write("    pop bx\n");
+                        writer.write("    pop ax\n");
+                        writer.write("    sub ax, bx\n");
+                        writer.write("    push ax\n");
+                    }else if(instr.instruction == BytecodeInstructions.SUB32) {
+                        writer.write("    mov dword ebx, [rsp]\n");
+                        writer.write("    add rsp, 4\n");
+                        writer.write("    mov dword eax, [rsp]\n");
+                        writer.write("    add rsp, 4\n");
+                        writer.write("    sub eax, ebx\n");
+                        writer.write("    sub rsp, 4\n");
+                        writer.write("    mov dword [rsp], eax\n");
+                    }else if(instr.instruction == BytecodeInstructions.SUB64) {
+                        writer.write("    mov qword rbx, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        writer.write("    mov qword rax, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        writer.write("    sub rax, rbx\n");
+                        writer.write("    sub rsp, 8\n");
+                        writer.write("    mov qword [rsp], rax\n");
+                    }else if(instr.instruction == BytecodeInstructions.SHL8) {
                         writer.write("    mov byte cl, [rsp]\n");
+                        writer.write("    inc rsp\n");
+                        writer.write("    mov byte al, [rsp]\n");
                         writer.write("    inc rsp\n");
                         writer.write("    shl al, cl\n");
                         writer.write("    dec rsp\n");
                         writer.write("    mov byte [rsp], al\n");
                     }else if(instr.instruction == BytecodeInstructions.SHL16) {
-                        writer.write("    pop ax\n");
                         writer.write("    pop cx\n");
+                        writer.write("    pop ax\n");
                         writer.write("    shl ax, cl\n");
                         writer.write("    push ax\n");
                     }else if(instr.instruction == BytecodeInstructions.SHL32) {
-                        writer.write("    mov dword eax, [rsp]\n");
-                        writer.write("    add rsp, 4\n");
                         writer.write("    mov dword ecx, [rsp]\n");
+                        writer.write("    add rsp, 4\n");
+                        writer.write("    mov dword eax, [rsp]\n");
                         writer.write("    add rsp, 4\n");
                         writer.write("    shl eax, cl\n");
                         writer.write("    sub rsp, 4\n");
                         writer.write("    mov dword [rsp], eax\n");
                     }else if(instr.instruction == BytecodeInstructions.SHL64) {
-                        writer.write("    mov qword rax, [rsp]\n");
-                        writer.write("    add rsp, 8\n");
                         writer.write("    mov qword rcx, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        writer.write("    mov qword rax, [rsp]\n");
                         writer.write("    add rsp, 8\n");
                         writer.write("    shl rax, cl\n");
                         writer.write("    sub rsp, 8\n");
                         writer.write("    mov qword [rsp], rax\n");
                     }else if(instr.instruction == BytecodeInstructions.SHR8) {
-                        writer.write("    mov byte al, [rsp]\n");
-                        writer.write("    inc rsp\n");
                         writer.write("    mov byte cl, [rsp]\n");
+                        writer.write("    inc rsp\n");
+                        writer.write("    mov byte al, [rsp]\n");
                         writer.write("    inc rsp\n");
                         writer.write("    shr al, cl\n");
                         writer.write("    dec rsp\n");
                         writer.write("    mov byte [rsp], al\n");
                     }else if(instr.instruction == BytecodeInstructions.SHR16) {
-                        writer.write("    pop ax\n");
                         writer.write("    pop cx\n");
+                        writer.write("    pop ax\n");
                         writer.write("    shr ax, cl\n");
                         writer.write("    push ax\n");
-                    }else if(instr.instruction == BytecodeInstructions.SHL32) {
-                        writer.write("    mov dword eax, [rsp]\n");
-                        writer.write("    add rsp, 4\n");
+                    }else if(instr.instruction == BytecodeInstructions.SHR32) {
                         writer.write("    mov dword ecx, [rsp]\n");
+                        writer.write("    add rsp, 4\n");
+                        writer.write("    mov dword eax, [rsp]\n");
                         writer.write("    add rsp, 4\n");
                         writer.write("    shr eax, cl\n");
                         writer.write("    sub rsp, 4\n");
                         writer.write("    mov dword [rsp], eax\n");
-                    }else if(instr.instruction == BytecodeInstructions.SHL64) {
-                        writer.write("    mov qword rax, [rsp]\n");
-                        writer.write("    add rsp, 8\n");
+                    }else if(instr.instruction == BytecodeInstructions.SHR64) {
                         writer.write("    mov qword rcx, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        writer.write("    mov qword rax, [rsp]\n");
                         writer.write("    add rsp, 8\n");
                         writer.write("    shr rax, cl\n");
                         writer.write("    sub rsp, 8\n");
