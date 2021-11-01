@@ -1,5 +1,7 @@
 package ga.epicpix.zprol.compiled.bytecode;
 
+import ga.epicpix.zprol.compiled.CompiledData;
+import ga.epicpix.zprol.compiled.TypeFunctionSignature;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
@@ -29,6 +31,8 @@ public class BytecodeInstruction {
             }else if(obj instanceof Long) {
                 out.writeLong((long) obj);
                 wrote+=8;
+            }else if(obj instanceof TypeFunctionSignature) {
+                CompiledData.writeFunctionSignatureType((TypeFunctionSignature) obj, out);
             }
         }
         if(instruction.getOperandSize() != -1 && instruction.getOperandSize() != wrote) {

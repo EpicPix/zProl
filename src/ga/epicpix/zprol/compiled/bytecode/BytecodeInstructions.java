@@ -42,6 +42,8 @@ public enum BytecodeInstructions {
 
     INVOKESTATIC(0x1E, 2), // Invoke a static function
     INVOKEDYNAMIC(0x1F, 2), // Invoke a dynamic function
+    INVOKESIGNATURE(0x4F, -1), // Invoke a signature function
+    PUSHFUNCTION(0x50, 2), // Push string
 
     GETSTATICFIELD(0x20, 2), // Get value from a static field
     SETSTATICFIELD(0x21, 2), // Set value of a static field

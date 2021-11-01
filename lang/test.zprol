@@ -3,5 +3,6 @@ function uint64 write(uint64 fd, pointer str, uint64 len) {
 }
 
 function void _start() {
-    write(1, "hello\n", 6);
+    uint64(uint64, pointer, uint64) w = write;
+    w(1, "hello\n", 6);
 }

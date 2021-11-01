@@ -68,7 +68,7 @@ public class Compiler {
                         bytecode.pushInstruction(BytecodeInstructions.RETURN);
                     }else {
                         mathCompiler.reset();
-                        convertOperationToBytecode(scopes, sig.returnType.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens), true);
+                        convertOperationToBytecode(scopes, sig.returnType.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens), true, sig.returnType);
                         int size = sig.returnType.type.memorySize;
                         if(size == 1) bytecode.pushInstruction(BytecodeInstructions.RETURN8);
                         else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.RETURN16);
@@ -80,7 +80,6 @@ public class Compiler {
                     int startIndex = tokens.currentIndex() - 1;
                     try {
                         tokens.back();
-                        System.out.println(tokens.seek());
                         Type type = data.resolveType(tokens);
                         token = tokens.next();
                         if(token.getType() != TokenType.WORD) {
@@ -93,7 +92,7 @@ public class Compiler {
                             if(token.getType() == TokenType.OPERATOR) {
                                 if(((OperatorToken) token).operator.equals("=")) {
                                     mathCompiler.reset();
-                                    convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens), true);
+                                    convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens), true, type);
                                     int size = type.type.memorySize;
                                     short index = (short) lVar.index;
                                     if(size == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
@@ -111,7 +110,7 @@ public class Compiler {
                     } catch (UnknownTypeException unkType) {
                         tokens.setIndex(startIndex);
                         mathCompiler.reset();
-                        convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens), false);
+                        convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens), false, null);
                     }
                 }
             }else {
@@ -122,16 +121,13 @@ public class Compiler {
         return bytecode;
     }
 
-    public static void convertOperationToBytecode(ArrayList<Scope> scopes, Types type, Bytecode bytecode, CompiledData data, Operation op, boolean returnRequired) {
+    public static void convertOperationToBytecode(ArrayList<Scope> scopes, Types type, Bytecode bytecode, CompiledData data, Operation op, boolean returnRequired, Type t) {
         int size = 0;
         boolean unsigned = false;
         BigInteger biggestNumber = BigInteger.ZERO;
         BigInteger smallestNumber = BigInteger.ZERO;
 
-        if(type != null) {
-            if(!type.isNumberType()) {
-                throw new RuntimeException("Type is not number type!");
-            }
+        if(type != null && type.isNumberType()) {
             size = type.memorySize;
             unsigned = type.isUnsignedNumber();
             if(unsigned) {
@@ -143,7 +139,7 @@ public class Compiler {
         }
 
         if(op instanceof OperationBrackets) {
-            convertOperationToBytecode(scopes, type, bytecode, data, op.left, true);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.left, true, t);
         }else if(op instanceof OperationCall) {
             OperationCall call = (OperationCall) op;
             if(((WordToken) call.reference.get(0)).word.equals("syscall")) {
@@ -153,7 +149,7 @@ public class Compiler {
                 }
 
                 for(int i = 0; i<call.parameters.size(); i++) {
-                    convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, call.parameters.get(i), true);
+                    convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, call.parameters.get(i), true, null);
                 }
 
                 if(params == 1) bytecode.pushInstruction(BytecodeInstructions.SYSCALL1);
@@ -189,28 +185,57 @@ public class Compiler {
             if(call.reference.size() != 1) {
                 throw new NotImplementedException("Not implemented yet");
             }
-            Function func = data.getFunction(((WordToken) call.reference.get(0)).word, new TypeFunctionSignature(null, parameters.toArray(new Type[0])));
-            ArrayList<Function> functions = data.getFunctions();
-            short index = -1;
-            for(int i = 0; i<functions.size(); i++) {
-                if(functions.get(i) == func) {
-                    index = (short) i;
-                    break;
+            LocalVariable v = bytecode.findLocalVariable(((WordToken) call.reference.get(0)).word);
+            TypeFunctionSignature ss = new TypeFunctionSignature(null, parameters.toArray(new Type[0]));
+            if(v == null) {
+                Function func = data.getFunction(((WordToken) call.reference.get(0)).word, ss);
+                ArrayList<Function> functions = data.getFunctions();
+                short index = -1;
+                for(int i = 0; i < functions.size(); i++) {
+                    if(functions.get(i) == func) {
+                        index = (short) i;
+                        break;
+                    }
                 }
-            }
-            for(int i = func.signature.parameters.length - 1; i>=0; i--) {
-                convertOperationToBytecode(scopes, func.signature.parameters[i].type.type, bytecode, data, call.parameters.get(i), true);
-            }
-            bytecode.pushInstruction(BytecodeInstructions.INVOKESTATIC, index);
+                for(int i = func.signature.parameters.length - 1; i >= 0; i--) {
+                    convertOperationToBytecode(scopes, func.signature.parameters[i].type.type, bytecode, data, call.parameters.get(i), true, func.signature.parameters[i].type);
+                }
+                bytecode.pushInstruction(BytecodeInstructions.INVOKESTATIC, index);
 
-            if(!returnRequired) {
-                int retSize = func.signature.returnType.type.memorySize;
-                if(retSize == 0);
-                else if(retSize == 1) bytecode.pushInstruction(BytecodeInstructions.POP8);
-                else if(retSize == 2) bytecode.pushInstruction(BytecodeInstructions.POP16);
-                else if(retSize == 4) bytecode.pushInstruction(BytecodeInstructions.POP32);
-                else if(retSize == 8) bytecode.pushInstruction(BytecodeInstructions.POP64);
-                else throw new NotImplementedException("Size " + size + " is not supported");
+                if(!returnRequired) {
+                    int retSize = func.signature.returnType.type.memorySize;
+                    if(retSize == 0) ;
+                    else if(retSize == 1) bytecode.pushInstruction(BytecodeInstructions.POP8);
+                    else if(retSize == 2) bytecode.pushInstruction(BytecodeInstructions.POP16);
+                    else if(retSize == 4) bytecode.pushInstruction(BytecodeInstructions.POP32);
+                    else if(retSize == 8) bytecode.pushInstruction(BytecodeInstructions.POP64);
+                    else throw new NotImplementedException("Size " + size + " is not supported");
+                }
+            }else {
+                if(v.type.type == Types.FUNCTION_SIGNATURE) {
+                    TypeFunctionSignature sig = (TypeFunctionSignature) v.type;
+                    if(sig.validateFunctionSignature(ss)) {
+                        for(int i = sig.parameters.length - 1; i >= 0; i--) {
+                            convertOperationToBytecode(scopes, sig.parameters[i].type, bytecode, data, call.parameters.get(i), true, sig.parameters[i]);
+                        }
+                        bytecode.pushInstruction(BytecodeInstructions.LOAD64, (short) v.index);
+                        bytecode.pushInstruction(BytecodeInstructions.INVOKESIGNATURE, sig);
+
+                        if(!returnRequired) {
+                            int retSize = sig.returnType.type.memorySize;
+                            if(retSize == 0) ;
+                            else if(retSize == 1) bytecode.pushInstruction(BytecodeInstructions.POP8);
+                            else if(retSize == 2) bytecode.pushInstruction(BytecodeInstructions.POP16);
+                            else if(retSize == 4) bytecode.pushInstruction(BytecodeInstructions.POP32);
+                            else if(retSize == 8) bytecode.pushInstruction(BytecodeInstructions.POP64);
+                            else throw new NotImplementedException("Size " + size + " is not supported");
+                        }
+                    }else {
+                        throw new IllegalArgumentException("Function signatures do not match!");
+                    }
+                }else {
+                    throw new IllegalArgumentException("Cannot call not a function!");
+                }
             }
         }else if(op instanceof OperationField) {
             SeekIterator<Token> tokens = new SeekIterator<>(((OperationField) op).reference);
@@ -227,7 +252,20 @@ public class Compiler {
                         else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
                         else throw new NotImplementedException("Size " + psize + " is not supported");
                     }else {
-                        throw new NotImplementedException("Finding variables outside of function is not implemented");
+                        if(t.type == Types.FUNCTION_SIGNATURE) {
+                            Function func = data.getFunction(((WordToken) token).word, (TypeFunctionSignature) t);
+                            ArrayList<Function> functions = data.getFunctions();
+                            short index = -1;
+                            for(int i = 0; i < functions.size(); i++) {
+                                if(functions.get(i) == func) {
+                                    index = (short) i;
+                                    break;
+                                }
+                            }
+                            bytecode.pushInstruction(BytecodeInstructions.PUSHFUNCTION, index);
+                        }else {
+                            throw new NotImplementedException("Finding variables outside of function is not implemented");
+                        }
                     }
                 }else if(token.getType() == TokenType.ACCESSOR) {
                     throw new NotImplementedException("Dereferencing is not implemented yet");
@@ -260,7 +298,7 @@ public class Compiler {
             }else {
                 throw new NotImplementedException("TODO");
             }
-            convertOperationToBytecode(scopes, lVar.type.type, bytecode, data, op.right, true);
+            convertOperationToBytecode(scopes, lVar.type.type, bytecode, data, op.right, true, lVar.type);
 
             short index = (short) lVar.index;
             int psize = lVar.type.type.memorySize;
@@ -271,8 +309,8 @@ public class Compiler {
             else throw new NotImplementedException("Size " + psize + " is not supported");
 
         }else {
-            convertOperationToBytecode(scopes, type, bytecode, data, op.left, true);
-            convertOperationToBytecode(scopes, type, bytecode, data, op.right, true);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.left, true, null);
+            convertOperationToBytecode(scopes, type, bytecode, data, op.right, true, null);
             if(op instanceof OperationAdd) {
                 if(size == 1) bytecode.pushInstruction(BytecodeInstructions.ADD8);
                 else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.ADD16);

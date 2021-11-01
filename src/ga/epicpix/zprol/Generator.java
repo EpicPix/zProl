@@ -3,6 +3,8 @@ package ga.epicpix.zprol;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
+import ga.epicpix.zprol.compiled.Type;
+import ga.epicpix.zprol.compiled.TypeFunctionSignature;
 import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
 import ga.epicpix.zprol.compiled.TypeNamed;
 import ga.epicpix.zprol.compiled.Types;
@@ -136,6 +138,17 @@ public class Generator {
                         writer.write("    add rax, rbx\n");
                         writer.write("    sub rsp, 8\n");
                         writer.write("    mov qword [rsp], rax\n");
+                    }else if(instr.instruction == BytecodeInstructions.PUSHFUNCTION) {
+                        Function f = data.getFunctions().get((short) instr.data[0]);
+                        StringBuilder zfuncName = new StringBuilder(f.name);
+                        if(!f.name.equals("_start")) {
+                            zfuncName.append(".").append(f.signature.returnType);
+                            for(TypeNamed param : f.signature.parameters) {
+                                zfuncName.append(".").append(param.type.type.toString().toLowerCase());
+                            }
+                        }
+                        writer.write("    sub rsp, 8\n");
+                        writer.write("    mov qword [rsp], " + zfuncName + "\n");
                     }else if(instr.instruction == BytecodeInstructions.INVOKESTATIC) {
                         Function f = data.getFunctions().get((short) instr.data[0]);
                         StringBuilder zfuncName = new StringBuilder(f.name);
@@ -165,6 +178,42 @@ public class Generator {
                         }
                         writer.write("    call " + zfuncName + "\n");
                         int retSize = s.returnType.type.memorySize;
+                        if(retSize == 1) {
+                            writer.write("    dec rsp\n");
+                            writer.write("    mov byte [rsp], " + parameters[0][3] + "\n");
+                        }else if(retSize == 2) {
+                            writer.write("    sub rsp, 2\n");
+                            writer.write("    mov word [rsp], " + parameters[0][2] + "\n");
+                        }else if(retSize == 4) {
+                            writer.write("    sub rsp, 4\n");
+                            writer.write("    mov dword [rsp], " + parameters[0][1] + "\n");
+                        }else if(retSize == 8) {
+                            writer.write("    sub rsp, 8\n");
+                            writer.write("    mov qword [rsp], " + parameters[0][0] + "\n");
+                        }
+                    }else if(instr.instruction == BytecodeInstructions.INVOKESIGNATURE) {
+                        TypeFunctionSignature fsig = (TypeFunctionSignature) instr.data[0];
+                        writer.write("    mov qword r15, [rsp]\n");
+                        writer.write("    add rsp, 8\n");
+                        for(int i = 0; i<fsig.parameters.length; i++) {
+                            Type param = fsig.parameters[i];
+                            int size = param.type.memorySize;
+                            if(size == 1) {
+                                writer.write("    mov byte " + parameters[i][3] + ", [rsp]\n");
+                                writer.write("    inc rsp\n");
+                            } else if(size == 2) {
+                                writer.write("    mov word " + parameters[i][2] + ", [rsp]\n");
+                                writer.write("    add rsp, 2\n");
+                            } else if(size == 4) {
+                                writer.write("    mov dword " + parameters[i][1] + ", [rsp]\n");
+                                writer.write("    add rsp, 4\n");
+                            } else if(size == 8) {
+                                writer.write("    mov qword " + parameters[i][0] + ", [rsp]\n");
+                                writer.write("    add rsp, 8\n");
+                            }
+                        }
+                        writer.write("    call r15\n");
+                        int retSize = fsig.returnType.type.memorySize;
                         if(retSize == 1) {
                             writer.write("    dec rsp\n");
                             writer.write("    mov byte [rsp], " + parameters[0][3] + "\n");

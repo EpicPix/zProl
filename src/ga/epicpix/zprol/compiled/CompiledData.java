@@ -313,7 +313,7 @@ public class CompiledData {
         }
     }
 
-    private static void writeFunctionSignatureType(TypeFunctionSignature sig, DataOutputStream out) throws IOException {
+    public static void writeFunctionSignatureType(TypeFunctionSignature sig, DataOutputStream out) throws IOException {
         writeType(sig.returnType, out);
         out.writeShort(sig.parameters.length);
         for(Type param : sig.parameters) {
