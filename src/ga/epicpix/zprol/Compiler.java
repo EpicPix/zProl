@@ -313,13 +313,21 @@ public class Compiler {
                             else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX8T64);
                         } else if(psize == 2) {
                             bytecode.pushInstruction(BytecodeInstructions.LOAD16, index);
-                            if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX16T32);
+                            if(type.memorySize == 1) throw new RuntimeException("Cannot load 2 bytes into 1 byte");
+                            else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX16T32);
                             else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX16T64);
                         } else if(psize == 4) {
                             bytecode.pushInstruction(BytecodeInstructions.LOAD32, index);
-                            if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX32T64);
-                        } else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
-                        else throw new NotImplementedException("Size " + psize + " is not supported");
+                            if(type.memorySize == 1) throw new RuntimeException("Cannot load 4 bytes into 1 byte");
+                            else if(type.memorySize == 2) throw new RuntimeException("Cannot load 4 bytes into 2 bytes");
+                            else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX32T64);
+                        } else {
+                            if(type.memorySize == 1) throw new RuntimeException("Cannot load 8 bytes into 1 byte");
+                            else if(type.memorySize == 2) throw new RuntimeException("Cannot load 8 bytes into 2 bytes");
+                            else if(type.memorySize == 4) throw new RuntimeException("Cannot load 8 bytes into 4 bytes");
+                            else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
+                            else throw new NotImplementedException("Size " + psize + " is not supported");
+                        }
                     }else {
                         if(t.type == Types.FUNCTION_SIGNATURE) {
                             Function func = data.getFunction(((WordToken) token).word, (TypeFunctionSignature) t);
