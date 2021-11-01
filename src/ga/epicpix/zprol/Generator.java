@@ -139,17 +139,17 @@ public class Generator {
                     }else if(instr.instruction == BytecodeInstructions.EX64T8) {
                         writer.write("    mov qword rax, [rsp]\n");
                         writer.write("    add rsp, 8\n");
-                        writer.write("    sub rsp\n");
+                        writer.write("    dec rsp\n");
                         writer.write("    mov byte [rsp], al\n");
                     }else if(instr.instruction == BytecodeInstructions.EX64T16) {
                         writer.write("    mov qword rax, [rsp]\n");
                         writer.write("    add rsp, 8\n");
-                        writer.write("    dec rsp, 2\n");
+                        writer.write("    sub rsp, 2\n");
                         writer.write("    mov word [rsp], ax\n");
                     }else if(instr.instruction == BytecodeInstructions.EX64T32) {
                         writer.write("    mov qword rax, [rsp]\n");
                         writer.write("    add rsp, 8\n");
-                        writer.write("    dec rsp, 4\n");
+                        writer.write("    sub rsp, 4\n");
                         writer.write("    mov dword [rsp], eax\n");
                     }else if(instr.instruction == BytecodeInstructions.STORE8) {
                         writer.write("    mov byte al, [rsp]\n");
