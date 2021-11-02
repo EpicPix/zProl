@@ -68,5 +68,10 @@ public class Bytecode {
         for(BytecodeInstruction instr : instructions) {
             instr.write(out);
         }
+        out.writeShort(strings.size());
+        for(String str : strings) {
+            out.writeShort(str.length());
+            out.writeBytes(str);
+        }
     }
 }
