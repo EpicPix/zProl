@@ -1,4 +1,4 @@
-package ga.epicpix.zprol;
+package ga.epicpix.zprol.generators;
 
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
@@ -17,7 +17,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class Generator {
+public class GeneratorAssembly {
 
     public static void generate_x86_64_linux_assembly(CompiledData data, File save) throws IOException {
 

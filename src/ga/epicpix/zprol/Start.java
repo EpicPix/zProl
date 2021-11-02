@@ -2,6 +2,7 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.generators.GeneratorAssembly;
 import ga.epicpix.zprol.tokens.Token;
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +26,7 @@ public class Start {
         compiled.save(new File(normalName + ".zpil"));
         long startConvert = System.currentTimeMillis();
         System.out.printf("Took %d ms to save\n", startConvert - startSave);
-        Generator.generate_x86_64_linux_assembly(compiled, new File(normalName + "_64linux.asm"));
+        GeneratorAssembly.generate_x86_64_linux_assembly(compiled, new File(normalName + "_64linux.asm"));
         long end = System.currentTimeMillis();
         System.out.printf("Took %d ms to generate x86-64 linux assembly\n", end - startConvert);
     }
