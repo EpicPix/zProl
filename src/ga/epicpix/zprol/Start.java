@@ -8,14 +8,27 @@ import ga.epicpix.zprol.tokens.Token;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Start {
 
     public static void main(String[] args) throws IOException, UnknownTypeException {
-        if(args.length == 0) {
+        String fileName = null;
+        for(String s : args) {
+            if(s.startsWith("-")) {
+                System.err.println("Unknown setting: " + s);
+                System.exit(1);
+            }else {
+                if(fileName != null) {
+                    System.err.println("Multiple file names specified, already contains \"" + fileName + "\" but also found \"" + s + "\"");
+                    System.exit(1);
+                }
+                fileName = s;
+            }
+        }
+        if(fileName == null) {
             throw new IllegalArgumentException("File not specified");
         }
-        String fileName = String.join(" ", args);
         String normalName = fileName.substring(0, fileName.lastIndexOf('.'));
         long startToken = System.currentTimeMillis();
         ArrayList<Token> tokens = Parser.tokenize(fileName);
