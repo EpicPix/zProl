@@ -587,7 +587,7 @@ public class Compiler {
                 data.addFunction(compileFunction(scopes, data, (FunctionToken) token, tokenIter));
             }else if(token.getType() == TokenType.TYPEDEF) {
                 TypedefToken typedefToken = (TypedefToken) token;
-                data.addTypeDefinition(typedefToken.getName(), data.resolveType(typedefToken.getToType()));
+                data.addTypeDefinition(typedefToken.getToType(), data.resolveType(typedefToken.getFromType()));
             }
         }
         data.finishFutures();

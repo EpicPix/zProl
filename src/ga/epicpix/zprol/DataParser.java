@@ -83,11 +83,20 @@ public class DataParser {
 
     public String nextType() {
         StringBuilder type = new StringBuilder(nextWord());
-        if(seekWord().equals("(")) {
+        String x = seekWord();
+        if(x.equals("(")) {
             while(true) {
                 String word = nextWord();
                 type.append(word);
                 if(word.equals(")")) {
+                    break;
+                }
+            }
+        }else if(x.equals("<")) {
+            while(true) {
+                String word = nextWord();
+                type.append(word);
+                if(word.equals(">")) {
                     break;
                 }
             }

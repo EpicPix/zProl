@@ -11,7 +11,7 @@ public class TypedefToken extends Token {
         this.toType = toType;
     }
 
-    public String getName() {
+    public String getFromType() {
         return fromType;
     }
 

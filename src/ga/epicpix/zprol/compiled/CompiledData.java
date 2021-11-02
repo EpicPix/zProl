@@ -4,6 +4,7 @@ import ga.epicpix.zprol.DataParser;
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.WordToken;
@@ -166,8 +167,19 @@ public class CompiledData {
         else if(type.equals("uint16")) return new Type(Types.UINT16);
         else if(type.equals("uint32")) return new Type(Types.UINT32);
         else if(type.equals("uint64")) return new Type(Types.UINT64);
-        else if(type.equals("pointer")) return new Type(Types.POINTER);
-        else if(type.equals("void")) return new Type(Types.VOID);
+        else if(type.equals("pointer")) {
+            if(iter.seek().getType() == TokenType.OPERATOR && ((OperatorToken) iter.seek()).operator.equals("<")) {
+                iter.next();
+                Type ret = resolveType(iter);
+                Token n = iter.next();
+                if(n.getType() != TokenType.OPERATOR && !((OperatorToken) n).operator.equals(">")) {
+                    throw new RuntimeException("Missing '>'");
+                }
+                return new TypePointer(ret);
+            }else {
+                return new TypePointer(null);
+            }
+        } else if(type.equals("void")) return new Type(Types.VOID);
         Type t = typedef.get(type);
         if(t != null) return t;
 
@@ -203,7 +215,6 @@ public class CompiledData {
         else if(type.equals("uint16")) return new Type(Types.UINT16);
         else if(type.equals("uint32")) return new Type(Types.UINT32);
         else if(type.equals("uint64")) return new Type(Types.UINT64);
-        else if(type.equals("pointer")) return new Type(Types.POINTER);
         else if(type.equals("void")) return new Type(Types.VOID);
         Type t = typedef.get(type);
         if(t != null) return t;
@@ -230,6 +241,19 @@ public class CompiledData {
         DataParser parser = new DataParser(type);
 
         String pre = parser.nextWord();
+
+        if(pre.equals("pointer")) {
+            Type t2 = null;
+            if(parser.seekWord().equals("<")) {
+                parser.nextWord();
+                t2 = resolveType(parser.nextType());
+                if(!parser.nextWord().equals(">")) {
+                    throw new RuntimeException("Missing '>'");
+                }
+            }
+            return new TypePointer(t2);
+        }
+
         if(parser.seekWord() == null || !parser.nextWord().equals("(")) {
             throw new UnknownTypeException("Unknown type: " + type);
         }
@@ -336,6 +360,9 @@ public class CompiledData {
                 TypeNamed named = (TypeNamed) type;
                 out.writeUTF(named.name);
                 writeType(named.type, out);
+            }else if(type instanceof TypePointer) {
+                TypePointer ptr = (TypePointer) type;
+                writeType(ptr.holding, out);
             }else {
                 throw new RuntimeException("Unhandled additional data class: " + type.getClass());
             }
