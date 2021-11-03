@@ -2,19 +2,22 @@ package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.DataParser;
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.WordToken;
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class CompiledData {
@@ -274,6 +277,100 @@ public class CompiledData {
         return new TypeFunctionSignature(ret, parameters.toArray(new Type[0]));
     }
 
+    public static CompiledData load(File file) throws IOException {
+        DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+        if(input.readInt() != 0x7a50524c) throw new RuntimeException("Invalid file");
+        CompiledData data = new CompiledData();
+        int structuresLength = input.readUnsignedShort();
+        for(int i = 0; i<structuresLength; i++) {
+            String structName = input.readUTF();
+            int fieldsLength = input.readUnsignedShort();
+            ArrayList<StructureField> fields = new ArrayList<>();
+            for(int j = 0; j<fieldsLength; j++) {
+                fields.add(new StructureField(input.readUTF(), readType(input)));
+            }
+            data.addStructure(new Structure(structName, fields));
+        }
+        int objectsLength = input.readUnsignedShort();
+        for(int i = 0; i<objectsLength; i++) {
+            String objectName = input.readUTF();
+            Type ext = readType(input);
+            int fieldsLength = input.readUnsignedShort();
+            ArrayList<ObjectField> fields = new ArrayList<>();
+            for(int j = 0; j<fieldsLength; j++) {
+                String name = input.readUTF();
+                Type type = readType(input);
+                fields.add(new ObjectField(name, type, Flag.fromBits(input.readInt())));
+            }
+
+            int functionsLength = input.readUnsignedShort();
+            ArrayList<Function> functions = new ArrayList<>();
+            for(int j = 0; j<functionsLength; j++) {
+                functions.add(readFunction(input));
+            }
+            data.addObject(new Object(objectName, ext, fields, functions));
+        }
+        int functionsLength = input.readUnsignedShort();
+        for(int j = 0; j<functionsLength; j++) {
+            data.functions.add(readFunction(input));
+        }
+        return data;
+    }
+
+    private static Function readFunction(DataInputStream in) throws IOException {
+        String name = in.readUTF();
+        ArrayList<Flag> flags = Flag.fromBits(in.readInt());
+        TypeFunctionSignatureNamed sig = readFunctionSignatureTypeNamed(in);
+        Bytecode bytecode = null;
+        if(!flags.contains(Flag.NO_IMPLEMENTATION)) {
+            bytecode = new Bytecode();
+            bytecode.load(in);
+        }
+        return new Function(name, sig, flags, bytecode);
+    }
+
+    private static TypeFunctionSignatureNamed readFunctionSignatureTypeNamed(DataInputStream in) throws IOException {
+        Type ret = readType(in);
+        int parametersLength = in.readUnsignedShort();
+        TypeNamed[] parameters = new TypeNamed[parametersLength];
+        for(int i = 0; i<parametersLength; i++) {
+            String name = in.readUTF();
+            parameters[i] = new TypeNamed(readType(in), name);
+        }
+        return new TypeFunctionSignatureNamed(ret, parameters);
+    }
+
+    private static TypeFunctionSignature readFunctionSignature(DataInputStream in) throws IOException {
+        Type ret = readType(in);
+        short paramsLength = in.readShort();
+        Type[] params = new Type[paramsLength];
+        for(int i = 0; i<params.length; i++) {
+            params[i] = readType(in);
+        }
+        return new TypeFunctionSignature(ret, params);
+    }
+
+    private static Type readType(DataInputStream in) throws IOException {
+        Types types = Types.fromId(in.readUnsignedByte());
+        if(types.additionalData) {
+            if(types == Types.FUNCTION_SIGNATURE) {
+                return readFunctionSignature(in);
+            }else if(types == Types.STRUCTURE) {
+                return new TypeStructure(in.readUTF());
+            }else if(types == Types.OBJECT) {
+                return new TypeObject(in.readUTF());
+            }else if(types == Types.NAMED) {
+                String name = in.readUTF();
+                return new TypeNamed(readType(in), name);
+            }else if(types == Types.POINTER) {
+                return new TypePointer(readType(in));
+            }
+            throw new RuntimeException("TODO");
+        }else {
+            return new Type(types);
+        }
+    }
+
     public void save(File file) throws IOException {
         DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         output.writeBytes("zPRL");
@@ -332,8 +429,9 @@ public class CompiledData {
     private static void writeFunctionSignatureTypeNamed(TypeFunctionSignatureNamed sig, DataOutputStream out) throws IOException {
         writeType(sig.returnType, out);
         out.writeShort(sig.parameters.length);
-        for(Type param : sig.parameters) {
-            writeType(param, out);
+        for(TypeNamed param : sig.parameters) {
+            out.writeUTF(param.name);
+            writeType(param.type, out);
         }
     }
 

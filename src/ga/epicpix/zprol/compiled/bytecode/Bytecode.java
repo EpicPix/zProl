@@ -5,6 +5,7 @@ import ga.epicpix.zprol.compiled.LocalVariable;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
 import ga.epicpix.zprol.exceptions.VariableAlreadyDefinedException;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -70,8 +71,36 @@ public class Bytecode {
         }
         out.writeShort(strings.size());
         for(String str : strings) {
-            out.writeShort(str.length());
-            out.writeBytes(str);
+            out.writeUTF(str);
         }
     }
+
+    public void load(DataInputStream in) throws IOException {
+        getCurrentScope().addMin(in.readUnsignedShort());
+        int codeLength = in.readInt();
+        for(int i = 0; i<codeLength; i++) {
+            BytecodeInstructions instr = BytecodeInstructions.fromOpcode(in.readUnsignedByte());
+            int opSize = instr.getOperandSize();
+            if(opSize == -1) {
+                throw new RuntimeException("Unhandled instruction with variable size: " + instr);
+            }else if(opSize == 0) {
+                instructions.add(new BytecodeInstruction(instr));
+            }else if(opSize == 1) {
+                instructions.add(new BytecodeInstruction(instr, in.readByte()));
+            }else if(opSize == 2) {
+                instructions.add(new BytecodeInstruction(instr, in.readShort()));
+            }else if(opSize == 4) {
+                instructions.add(new BytecodeInstruction(instr, in.readInt()));
+            }else if(opSize == 8) {
+                instructions.add(new BytecodeInstruction(instr, in.readLong()));
+            }else {
+                throw new RuntimeException("Unknown instruction size: " + opSize + " in instruction " + instr);
+            }
+        }
+        int stringsLength = in.readUnsignedShort();
+        for(int i = 0; i<stringsLength; i++) {
+            addString(in.readUTF());
+        }
+    }
+
 }

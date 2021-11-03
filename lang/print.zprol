@@ -1,18 +1,17 @@
 typedef pointer<uint8> string;
 
-// function void print_uint64_hex(uint64 fd, uint64 num) {
-//     uint8 i = 0;
-//     uint64 n;
-//     while(i != 16) {
-//         n = num >> (60 - (i << 2));
-//         uint8 data = (n & 0xf) + 0x30;
-//         string loc = " ";
-//         syscall(1, fd, loc, 1);
-//         i = i + 1;
-//     }
-// }
+function void print_uint64_hex(uint64 fd, uint64 num) {
+    uint8 i = 0;
+    uint64 n;
+    while(i != 16) {
+        n = num >> (60 - (i << 2));
+        uint8 data = (n & 0xf) + 0x30;
+        string loc = " ";
+        syscall(1, fd, loc, 1);
+        i = i + 1;
+    }
+}
 
 function void _start() {
-    // print_uint64_hex(0, 0x69420);
-    syscall(1, 0, "Hello, world!\n", 14);
+    print_uint64_hex(0, 0x69420);
 }

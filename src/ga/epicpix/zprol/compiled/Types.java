@@ -26,6 +26,15 @@ public enum Types {
         this(id, memorySize, false);
     }
 
+    public static Types fromId(int id) {
+        for(Types t : values()) {
+            if(t.id == id) {
+                return t;
+            }
+        }
+        throw new RuntimeException("Cannot find type with id: " + id);
+    }
+
     public boolean isNumberType() {
         return this == INT8  || this == INT16  || this == INT32  || this == INT64  ||
                 this == UINT8 || this == UINT16 || this == UINT32 || this == UINT64 ||

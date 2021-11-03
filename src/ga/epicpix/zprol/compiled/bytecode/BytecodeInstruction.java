@@ -32,7 +32,13 @@ public class BytecodeInstruction {
                 out.writeLong((long) obj);
                 wrote+=8;
             }else if(obj instanceof TypeFunctionSignature) {
-                CompiledData.writeFunctionSignatureType((TypeFunctionSignature) obj, out);
+                if(instruction.getOperandSize() == -1) {
+                    CompiledData.writeFunctionSignatureType((TypeFunctionSignature) obj, out);
+                }else {
+                    throw new RuntimeException("Tried to write function signature without the size being variable sized");
+                }
+            }else {
+                throw new RuntimeException("Tried to parse unknown object");
             }
         }
         if(instruction.getOperandSize() != -1 && instruction.getOperandSize() != wrote) {
