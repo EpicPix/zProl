@@ -5,7 +5,10 @@ import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.generators.GeneratorAssembly;
 import ga.epicpix.zprol.generators.GeneratorPorth;
 import ga.epicpix.zprol.tokens.Token;
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,14 +16,9 @@ import java.util.Arrays;
 public class Start {
 
     public static void main(String[] args) throws IOException, UnknownTypeException {
-        boolean load = false;
         String fileName = null;
         for(String s : args) {
             if(s.startsWith("-")) {
-                if(s.equals("-load")) {
-                    load = true;
-                    continue;
-                }
                 System.err.println("Unknown setting: " + s);
                 System.exit(1);
             }else {
@@ -33,6 +31,14 @@ public class Start {
         }
         if(fileName == null) {
             throw new IllegalArgumentException("File not specified");
+        }
+        boolean load = false;
+        if(new File(fileName).exists()) {
+            DataInputStream in = new DataInputStream(new FileInputStream(fileName));
+            if(in.readInt() == 0x7a50524c) {
+                load = true;
+            }
+            in.close();
         }
         String normalName = fileName.substring(0, fileName.lastIndexOf('.'));
 
