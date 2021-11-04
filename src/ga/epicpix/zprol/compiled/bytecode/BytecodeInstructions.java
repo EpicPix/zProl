@@ -46,8 +46,14 @@ public enum BytecodeInstructions {
     INVOKESIGNATURE(0x23, -1), // Invoke a signature function
     PUSHFUNCTION(0x24, 2), // Push string
 
-    GETSTATICFIELD(0x25, 2), // Get value from a static field
-    SETSTATICFIELD(0x26, 2), // Set value of a static field
+    GETSTATICFIELD8(0x25, 2), // Get value from a static field that is 8 bits
+    GETSTATICFIELD16(0x66, 2), // Get value from a static field that is 16 bits
+    GETSTATICFIELD32(0x67, 2), // Get value from a static field that is 32 bits
+    GETSTATICFIELD64(0x68, 2), // Get value from a static field that is 64 bits
+    SETSTATICFIELD8(0x26, 2), // Set value of a static field that is 8 bits
+    SETSTATICFIELD16(0x63, 2), // Set value of a static field that is 16 bits
+    SETSTATICFIELD32(0x64, 2), // Set value of a static field that is 32 bits
+    SETSTATICFIELD64(0x65, 2), // Set value of a static field that is 64 bits
 
     GETFIELD(0x27, 4), // Get value from an object/struct field
     SETFIELD(0x28, 4), // Set value of an object/struct field

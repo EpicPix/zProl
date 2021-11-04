@@ -1,7 +1,5 @@
+field uint8 test = 123;
+
 function void _start() {
-    uint8 a = 0;
-    while(a != 2) {
-        syscall(1, 0, "r\n", 2);
-        a = (a + 1);
-    }
+    test = test + 1;
 }

@@ -5,6 +5,7 @@ import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
@@ -25,6 +26,7 @@ public class CompiledData {
     private final ArrayList<Structure> structures = new ArrayList<>();
     private final ArrayList<Object> objects = new ArrayList<>();
     private final ArrayList<Function> functions = new ArrayList<>();
+    private final ArrayList<ObjectField> fields = new ArrayList<>();
     private final HashMap<String, Type> typedef = new HashMap<>();
 
     public ArrayList<Structure> getStructures() {
@@ -37,6 +39,29 @@ public class CompiledData {
 
     public ArrayList<Function> getFunctions() {
         return new ArrayList<>(functions);
+    }
+
+    public ArrayList<ObjectField> getFields() {
+        return new ArrayList<>(fields);
+    }
+    public ObjectField getField(String name) {
+        for(ObjectField field : fields) {
+            if(field.name.equals(name)) {
+                return field;
+            }
+        }
+        throw new VariableNotDefinedException(name);
+    }
+
+    public short getFieldIndex(String name) {
+        short index = 0;
+        for(ObjectField field : fields) {
+            if(field.name.equals(name)) {
+                return index;
+            }
+            index++;
+        }
+        throw new VariableNotDefinedException(name);
     }
 
     public Function getFunction(String name, TypeFunctionSignature sig) {
@@ -84,12 +109,27 @@ public class CompiledData {
         functions.add(function);
     }
 
+    public void addField(ObjectField field) {
+        fields.add(field);
+    }
+
     public void addFutureObjectDefinition(String name) {
         futureObjectDefinitions.add(name);
     }
 
     public void addFutureStructureDefinition(String name) {
         futureStructureDefinitions.add(name);
+    }
+
+    public Function getInitFunction() {
+        Function func;
+        try {
+            func = getFunction("<clinit>", new TypeFunctionSignature(new Type(Types.VOID)));
+        } catch(FunctionNotDefinedException e) {
+            func = new Function("<clinit>", new TypeFunctionSignatureNamed(new Type(Types.VOID)), new ArrayList<>(), new Bytecode());
+            addFunction(func);
+        }
+        return func;
     }
 
     private Type finish(Type type) throws UnknownTypeException {
@@ -314,6 +354,12 @@ public class CompiledData {
         for(int j = 0; j<functionsLength; j++) {
             data.functions.add(readFunction(input));
         }
+        int fieldsLength = input.readUnsignedShort();
+        for(int j = 0; j<fieldsLength; j++) {
+            String name = input.readUTF();
+            Type type = readType(input);
+            data.fields.add(new ObjectField(name, type, Flag.fromBits(input.readInt())));
+        }
         return data;
     }
 
@@ -404,6 +450,13 @@ public class CompiledData {
         output.writeShort(functions.size());
         for(Function func : functions) {
             writeFunction(func, output);
+        }
+
+        output.writeShort(fields.size());
+        for(ObjectField field : fields) {
+            output.writeUTF(field.name);
+            writeType(field.type, output);
+            writeFlags(field.flags, output);
         }
 
         output.close();

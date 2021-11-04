@@ -3,6 +3,7 @@ package ga.epicpix.zprol.generators;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
+import ga.epicpix.zprol.compiled.ObjectField;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.compiled.TypeFunctionSignature;
 import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
@@ -15,6 +16,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 public class GeneratorAssembly {
@@ -37,7 +39,7 @@ public class GeneratorAssembly {
         for(Function func : data.getFunctions()) {
             if(!func.flags.contains(Flag.NO_IMPLEMENTATION)) {
                 boolean flipNot = false;
-                StringBuilder funcName = new StringBuilder(func.name);
+                StringBuilder funcName = new StringBuilder(func.name.replace('<', '@').replace('>', '@'));
                 if(!func.name.equals("_start")) {
                     funcName.append(".").append(func.signature.returnType);
                     for(TypeNamed param : func.signature.parameters) {
@@ -188,6 +190,35 @@ public class GeneratorAssembly {
                         writer.write("    mov dword [rsp], eax\n");
                     }else if(instr.instruction == BytecodeInstructions.LOAD64) {
                         writer.write("    mov qword rax, [rbp-" + instr.data[0] + "]\n");
+                        writer.write("    sub rsp, 8\n");
+                        writer.write("    mov qword [rsp], rax\n");
+                    }else if(instr.instruction == BytecodeInstructions.SETSTATICFIELD8) {
+                        writer.write("    mov byte al, [rsp]\n");
+                        writer.write("    inc rsp\n");
+                        writer.write("    mov byte [" + data.getFields().get((short)instr.data[0]).name + "], al\n");
+                    }else if(instr.instruction == BytecodeInstructions.SETSTATICFIELD16) {
+                        writer.write("    pop ax\n");
+                        writer.write("    mov word [" + data.getFields().get((short)instr.data[0]).name + "], ax\n");
+                    }else if(instr.instruction == BytecodeInstructions.SETSTATICFIELD32) {
+                        writer.write("    mov dword eax, [rsp]\n");
+                        writer.write("    add rsp, 4\n");
+                        writer.write("    mov dword [" + data.getFields().get((short)instr.data[0]).name + "], eax\n");
+                    }else if(instr.instruction == BytecodeInstructions.SETSTATICFIELD64) {
+                        writer.write("    pop rax\n");
+                        writer.write("    mov qword [" + data.getFields().get((short)instr.data[0]).name + "], rax\n");
+                    }else if(instr.instruction == BytecodeInstructions.GETSTATICFIELD8) {
+                        writer.write("    mov byte al, [" + data.getFields().get((short)instr.data[0]).name + "],\n");
+                        writer.write("    dec rsp\n");
+                        writer.write("    mov byte [rsp], al\n");
+                    }else if(instr.instruction == BytecodeInstructions.GETSTATICFIELD16) {
+                        writer.write("    mov word ax, [" + data.getFields().get((short)instr.data[0]).name + "],\n");
+                        writer.write("    push ax\n");
+                    }else if(instr.instruction == BytecodeInstructions.GETSTATICFIELD32) {
+                        writer.write("    mov dword eax, [" + data.getFields().get((short)instr.data[0]).name + "],\n");
+                        writer.write("    sub rsp, 4\n");
+                        writer.write("    mov dword [rsp], eax\n");
+                    }else if(instr.instruction == BytecodeInstructions.GETSTATICFIELD64) {
+                        writer.write("    mov qword rax, [" + data.getFields().get((short)instr.data[0]).name + "]\n");
                         writer.write("    sub rsp, 8\n");
                         writer.write("    mov qword [rsp], rax\n");
                     }else if(instr.instruction == BytecodeInstructions.ADD8) {
@@ -592,6 +623,13 @@ public class GeneratorAssembly {
                     writer.write(funcName + ".str" + i + ": db " + String.join(", ", hexs) + ", 0x0\n");
                 }
             }
+        }
+
+        //data.getFields().get((short)instr.data[0]).name
+
+        writer.write(".bss:\n");
+        for(ObjectField field : data.getFields()) {
+            writer.write(field.name + ": resb " + field.type.type.memorySize + "\n");
         }
 
 //        writer.write();

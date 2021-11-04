@@ -4,6 +4,7 @@ public enum ParserFlag {
 
     INTERNAL,
     STATIC,
+    FINAL,
     NO_IMPLEMENTATION(false),
     ;
 
@@ -19,5 +20,14 @@ public enum ParserFlag {
 
     public boolean isPublicFlag() {
         return publicFlag;
+    }
+
+    public static ParserFlag getFlag(String name) {
+        for(ParserFlag flag : values()) {
+            if(flag.isPublicFlag() && flag.name().toLowerCase().equals(name)) {
+                return flag;
+            }
+        }
+        return null;
     }
 }

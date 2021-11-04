@@ -40,6 +40,7 @@ import ga.epicpix.zprol.compiled.operation.Operation;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
@@ -321,30 +322,15 @@ public class Compiler {
                 Token token = tokens.next();
                 if(token.getType() == TokenType.WORD) {
                     LocalVariable var = bytecode.getCurrentScope().findLocalVariable(((WordToken) token).word);
+                    int psize = 0;
                     if(var != null) {
-                        int psize = var.type.type.memorySize;
+                        psize = var.type.type.memorySize;
                         short index = (short) var.index;
-                        if(psize == 1) {
-                            bytecode.pushInstruction(BytecodeInstructions.LOAD8, index);
-                            if(type.memorySize == 2) bytecode.pushInstruction(BytecodeInstructions.EX8T16);
-                            else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX8T32);
-                            else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX8T64);
-                        } else if(psize == 2) {
-                            bytecode.pushInstruction(BytecodeInstructions.LOAD16, index);
-                            if(type.memorySize == 1) bytecode.pushInstruction(BytecodeInstructions.EX16T8);
-                            else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX16T32);
-                            else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX16T64);
-                        } else if(psize == 4) {
-                            bytecode.pushInstruction(BytecodeInstructions.LOAD32, index);
-                            if(type.memorySize == 1) bytecode.pushInstruction(BytecodeInstructions.EX32T8);
-                            else if(type.memorySize == 2) bytecode.pushInstruction(BytecodeInstructions.EX32T16);
-                            else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX32T64);
-                        } else if(psize == 8) {
-                            bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
-                            if(type.memorySize == 1) bytecode.pushInstruction(BytecodeInstructions.EX64T8);
-                            else if(type.memorySize == 2) bytecode.pushInstruction(BytecodeInstructions.EX64T16);
-                            else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX64T32);
-                        }
+
+                        if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.LOAD8, index);
+                        else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.LOAD16, index);
+                        else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.LOAD32, index);
+                        else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
                     }else {
                         if(t.type == Types.FUNCTION_SIGNATURE) {
                             Function func = data.getFunction(((WordToken) token).word, (TypeFunctionSignature) t);
@@ -357,10 +343,37 @@ public class Compiler {
                                 }
                             }
                             bytecode.pushInstruction(BytecodeInstructions.PUSHFUNCTION, index);
+                            continue;
                         }else {
-                            throw new NotImplementedException("Finding variables outside of function is not implemented");
+                            ObjectField ovar = data.getField(((WordToken) token).word);
+                            psize = ovar.type.type.memorySize;
+                            short index = data.getFieldIndex(((WordToken) token).word);
+
+                            if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.GETSTATICFIELD8, index);
+                            else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.GETSTATICFIELD16, index);
+                            else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.GETSTATICFIELD32, index);
+                            else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.GETSTATICFIELD64, index);
                         }
                     }
+
+                    if(psize == 1) {
+                        if(type.memorySize == 2) bytecode.pushInstruction(BytecodeInstructions.EX8T16);
+                        else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX8T32);
+                        else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX8T64);
+                    } else if(psize == 2) {
+                        if(type.memorySize == 1) bytecode.pushInstruction(BytecodeInstructions.EX16T8);
+                        else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX16T32);
+                        else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX16T64);
+                    } else if(psize == 4) {
+                        if(type.memorySize == 1) bytecode.pushInstruction(BytecodeInstructions.EX32T8);
+                        else if(type.memorySize == 2) bytecode.pushInstruction(BytecodeInstructions.EX32T16);
+                        else if(type.memorySize == 8) bytecode.pushInstruction(BytecodeInstructions.EX32T64);
+                    } else if(psize == 8) {
+                        if(type.memorySize == 1) bytecode.pushInstruction(BytecodeInstructions.EX64T8);
+                        else if(type.memorySize == 2) bytecode.pushInstruction(BytecodeInstructions.EX64T16);
+                        else if(type.memorySize == 4) bytecode.pushInstruction(BytecodeInstructions.EX64T32);
+                    }
+
                 }else if(token.getType() == TokenType.ACCESSOR) {
                     throw new NotImplementedException("Dereferencing is not implemented yet");
                 }else {
@@ -416,22 +429,45 @@ public class Compiler {
         }else if(op instanceof OperationAssignment) {
             ArrayList<Token> tokens = ((OperationField) op.left).reference;
 
-            LocalVariable lVar;
+            try {
+                LocalVariable lVar;
 
-            if(tokens.size() == 1) {
-                lVar = bytecode.getCurrentScope().getLocalVariable(((WordToken) tokens.get(0)).word);
-            }else {
-                throw new NotImplementedException("TODO");
+                if(tokens.size() == 1) {
+                    lVar = bytecode.getCurrentScope().getLocalVariable(((WordToken) tokens.get(0)).word);
+                } else {
+                    throw new NotImplementedException("TODO");
+                }
+                convertOperationToBytecode(scopes, lVar.type.type, bytecode, data, op.right, true, lVar.type);
+
+                short index = (short) lVar.index;
+                int psize = lVar.type.type.memorySize;
+                if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
+                else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, index);
+                else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.STORE32, index);
+                else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, index);
+                else throw new NotImplementedException("Size " + psize + " is not supported");
+            }catch(VariableNotDefinedException e) {
+                ObjectField var;
+
+                if(tokens.size() == 1) {
+                    var = data.getField(((WordToken) tokens.get(0)).word);
+                    if(var.flags.contains(Flag.FINAL)) {
+                        throw new RuntimeException("Cannot change contents of a final variable: " + var.name);
+                    }
+                } else {
+                    throw new NotImplementedException("TODO");
+                }
+                convertOperationToBytecode(scopes, var.type.type, bytecode, data, op.right, true, var.type);
+
+
+                short index = data.getFieldIndex(((WordToken) tokens.get(0)).word);
+                int psize = var.type.type.memorySize;
+                if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD8, index);
+                else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD16, index);
+                else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD32, index);
+                else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD64, index);
+                else throw new NotImplementedException("Size " + psize + " is not supported");
             }
-            convertOperationToBytecode(scopes, lVar.type.type, bytecode, data, op.right, true, lVar.type);
-
-            short index = (short) lVar.index;
-            int psize = lVar.type.type.memorySize;
-            if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
-            else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, index);
-            else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.STORE32, index);
-            else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, index);
-            else throw new NotImplementedException("Size " + psize + " is not supported");
 
         }else if(op instanceof OperationComparison) {
             convertOperationToBytecode(scopes, Types.UINT64, bytecode, data, op.left, true, null);
@@ -545,9 +581,30 @@ public class Compiler {
                 flags.add(Flag.NO_IMPLEMENTATION);
             }else if(parserFlag == ParserFlag.STATIC) {
                 flags.add(Flag.STATIC);
+            }else if(parserFlag == ParserFlag.FINAL) {
+                flags.add(Flag.FINAL);
             }
         }
         return flags;
+    }
+
+    public static ObjectField compileField(ArrayList<Scope> scopes, CompiledData data, FieldToken field, boolean primary) throws UnknownTypeException {
+        Type type = data.resolveType(field.type);
+        if(primary) {
+            Function func = data.getInitFunction();
+            Bytecode bytecode = func.code;
+            if(field.ops.size() != 1) {
+                Operation op = new OperationCompiler().compile(data, bytecode, new SeekIterator<>(field.ops));
+                convertOperationToBytecode(scopes, type.type, bytecode, data, op, true, type);
+                int psize = type.type.memorySize;
+                if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD8, (short) data.getFields().size());
+                else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD16, (short) data.getFields().size());
+                else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD32, (short) data.getFields().size());
+                else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD64, (short) data.getFields().size());
+                else throw new NotImplementedException("Size " + psize + " is not supported");
+            }
+        }
+        return new ObjectField(field.name, type, convertFlags(field.flags));
     }
 
     public static Object compileObject(ArrayList<Scope> scopes, CompiledData data, ObjectToken objectToken, SeekIterator<Token> tokens) throws UnknownTypeException {
@@ -557,7 +614,7 @@ public class Compiler {
         while((currentToken = tokens.next()).getType() != TokenType.END_OBJECT) {
             if(currentToken.getType() == TokenType.FIELD) {
                 FieldToken fieldToken = (FieldToken) currentToken;
-                fields.add(new ObjectField(fieldToken.name, data.resolveType(fieldToken.type), convertFlags(fieldToken.flags)));
+                fields.add(compileField(scopes, data, fieldToken, false));
             }else if(currentToken.getType() == TokenType.FUNCTION) {
                 functions.add(compileFunction(scopes, data, (FunctionToken) currentToken, tokens));
             }
@@ -585,6 +642,8 @@ public class Compiler {
                 data.addObject(compileObject(scopes, data, (ObjectToken) token, tokenIter));
             }else if(token.getType() == TokenType.FUNCTION) {
                 data.addFunction(compileFunction(scopes, data, (FunctionToken) token, tokenIter));
+            }else if(token.getType() == TokenType.FIELD) {
+                data.addField(compileField(scopes, data, (FieldToken) token, true));
             }else if(token.getType() == TokenType.TYPEDEF) {
                 TypedefToken typedefToken = (TypedefToken) token;
                 data.addTypeDefinition(typedefToken.getToType(), data.resolveType(typedefToken.getFromType()));

@@ -39,6 +39,7 @@ public class Parser {
 
         ArrayList<Token> tokens = new ArrayList<>();
 
+        ArrayList<ParserFlag> flags = new ArrayList<>();
         String word;
         while((word = parser.nextWord()) != null) {
             if(word.equals("structure")) {
@@ -66,15 +67,39 @@ public class Parser {
                 if(!parser.nextWord().equals(";")) {
                     throw new RuntimeException("Error 9");
                 }
+            } else if(word.equals("field")) {
+                String type = parser.nextType();
+                String name = parser.nextWord();
+                ArrayList<Token> ops = new ArrayList<>();
+                String as = parser.nextWord();
+                if(as.equals("=")) {
+                    Token c;
+                    while((c = getToken(parser)).getType() != TokenType.END_LINE) {
+                        ops.add(c);
+                    }
+                }else if(!as.equals(";")) {
+                    throw new RuntimeException("Error 4: " + as);
+                }
+                ops.add(new Token(TokenType.END_LINE));
+                tokens.add(new FieldToken(type, name, ops, new ArrayList<>(flags)));
             } else if(word.equals("{")) {
                 tokens.add(new Token(TokenType.START_DATA));
             } else if(word.equals("}")) {
                 tokens.add(new Token(TokenType.END_DATA));
             } else if(word.equals(";")) {
                 continue;
+            } else if(ParserFlag.getFlag(word) != null) {
+                ParserFlag f = ParserFlag.getFlag(word);
+                if(!flags.contains(f)) {
+                    flags.add(f);
+                    continue;
+                }else {
+                    throw new RuntimeException("Redefined flag: " + f.name().toLowerCase());
+                }
             } else {
                 throw new RuntimeException("Unknown word: " + word);
             }
+            flags.clear();
         }
         return tokens;
 
@@ -148,11 +173,18 @@ public class Parser {
             if(read.equals("field")) {
                 String fieldType = parser.nextType();
                 String fieldName = parser.nextWord();
-                tokens.add(new FieldToken(fieldType, fieldName, flags));
-                String tmp = parser.nextWord();
-                if(!tmp.equals(";")) {
-                    throw new RuntimeException("Error 4: " + tmp);
+                ArrayList<Token> ops = new ArrayList<>();
+                String as = parser.nextWord();
+                if(as.equals("=")) {
+                    Token c;
+                    while((c = getToken(parser)).getType() != TokenType.END_LINE) {
+                        ops.add(c);
+                    }
+                }else if(!as.equals(";")) {
+                    throw new RuntimeException("Error 4: " + as);
                 }
+                ops.add(new Token(TokenType.END_LINE));
+                tokens.add(new FieldToken(fieldType, fieldName, ops, flags));
             }else if(read.equals(name)) {
                 ArrayList<ParameterDataType> functionParameters = parser.readParameters();
 
@@ -253,6 +285,35 @@ public class Parser {
             tokens.add(new WordToken(word));
         }
         return tokens;
+    }
+
+    public static Token getToken(DataParser parser) {
+        String word = parser.nextWord();
+        try {
+            return new NumberToken(getInteger(word));
+        } catch(NumberFormatException ignored) {}
+
+        if(DataParser.operatorCharacters.matcher(word).matches()) {
+            return new OperatorToken(word);
+        }
+        if(word.equals(";")) {
+            return new Token(TokenType.END_LINE);
+        }else if(word.equals("(")) {
+            return new Token(TokenType.OPEN);
+        }else if(word.equals(")")) {
+            return new Token(TokenType.CLOSE);
+        }else if(word.equals(",")) {
+            return new Token(TokenType.COMMA);
+        }else if(word.equals(".")) {
+            return new Token(TokenType.ACCESSOR);
+        }else if(word.equals("\"")) {
+            return new StringToken(parser.nextStringStarted());
+        }else if(word.equals("{")) {
+            return new Token(TokenType.OPEN);
+        }else if(word.equals("}")) {
+            return new Token(TokenType.CLOSE);
+        }
+        return new WordToken(word);
     }
 
 }
