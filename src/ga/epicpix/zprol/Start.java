@@ -1,6 +1,7 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
+import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.generators.GeneratorAssembly;
 import ga.epicpix.zprol.generators.GeneratorPorth;
@@ -59,10 +60,18 @@ public class Start {
             long loadEnd = System.currentTimeMillis();
             System.out.printf("Took %d ms to load\n", loadEnd - loadStart);
         }else {
-            long startToken = System.currentTimeMillis();
-            ArrayList<Token> tokens = Parser.tokenize(fileName);
+            ArrayList<Token> tokens;
+            try {
+                long startToken = System.currentTimeMillis();
+                tokens = Parser.tokenize(fileName);
+                long endToken = System.currentTimeMillis();
+                System.out.printf("Took %d ms to tokenize\n", endToken - startToken);
+            }catch(ParserException e) {
+                e.printError();
+                System.exit(1);
+                return;
+            }
             long startCompile = System.currentTimeMillis();
-            System.out.printf("Took %d ms to tokenize\n", startCompile - startToken);
             zpil = Compiler.compile(tokens);
             long startSave = System.currentTimeMillis();
             System.out.printf("Took %d ms to compile\n", startSave - startCompile);

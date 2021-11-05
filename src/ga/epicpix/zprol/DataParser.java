@@ -1,5 +1,6 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.exceptions.ParserException;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
@@ -9,18 +10,36 @@ public class DataParser {
     public static final Pattern operatorCharacters = Pattern.compile("[+=/*\\-%<>!&]*");
 
     private String data;
+    private String[] lines;
     private int index;
 
+    private int lineNumber;
+    private int lineRow;
+
     public DataParser(String... lines) {
+        this.lines = lines;
         data = String.join("\n", lines);
+    }
+
+    public String[] getLines() {
+        return lines;
+    }
+
+    public ParserLocation getLocation() {
+        return new ParserLocation(lineNumber, lineRow);
     }
 
     public void ignoreWhitespace() {
         char[] cdata = data.toCharArray();
         while(index + 1 < cdata.length) {
+            if(cdata[index] == '\n') {
+                lineNumber++;
+                lineRow = 0;
+            }
             if(!Character.isWhitespace(cdata[index])) {
                 break;
             }
+            lineRow++;
             index++;
         }
     }
@@ -39,10 +58,14 @@ public class DataParser {
                 if(index + 1 < cdata.length) {
                     if(cdata[index + 1] == '/') {
                         index += 2;
+                        lineRow += 2;
                         while(index < cdata.length) {
                             if(cdata[index] == '\n') {
+                                lineNumber++;
+                                lineRow = 0;
                                 break;
                             }
+                            lineRow++;
                             index++;
                         }
                         ignoreWhitespace();
@@ -62,12 +85,14 @@ public class DataParser {
                 }else {
                     if(word.length() == 0) {
                         word.append(cdata[index]);
+                        lineRow++;
                         index++;
                     }
                     return word.toString();
                 }
 
             }
+            lineRow++;
             word.append(cdata[index]);
             index++;
         }
@@ -76,8 +101,12 @@ public class DataParser {
 
     public String seekWord() {
         int start = index;
+        int currentLine = lineNumber;
+        int currentLineRow = lineRow;
         String str = nextWord();
         index = start;
+        lineNumber = currentLine;
+        lineRow = currentLineRow;
         return str;
     }
 
@@ -110,11 +139,14 @@ public class DataParser {
         char[] cdata = data.toCharArray();
         while(index + 1 < cdata.length) {
             if(cdata[index] == '\\') {
+                lineRow++;
                 index++;
                 if(cdata[index] == '\"') {
+                    lineRow++;
                     index++;
                     word.append("\"");
                 }else if(cdata[index] == 'n') {
+                    lineRow++;
                     index++;
                     word.append('\n');
                 }else {
@@ -122,11 +154,17 @@ public class DataParser {
                 }
                 continue;
             }else if(cdata[index] == '\"') {
+                lineRow++;
                 index++;
                 break;
             }else {
+                if(cdata[index] == '\n') {
+                    lineNumber++;
+                    lineRow = 0;
+                }
                 word.append(cdata[index]);
             }
+            lineRow++;
             index++;
         }
         return word.toString();
@@ -135,8 +173,9 @@ public class DataParser {
     public ArrayList<ParameterDataType> readParameters() {
         ArrayList<ParameterDataType> parameters = new ArrayList<>();
 
+        ParserLocation loc = getLocation();
         if(!nextWord().equals("(")) {
-            throw new RuntimeException("Start of parameters doesn't have '('");
+            throw new ParserException("Start of parameters doesn't have '('", this, loc);
         }
 
         while(true) {
@@ -155,7 +194,8 @@ public class DataParser {
             }else if(tmp.equals(")")) {
                 continue;
             }else {
-                throw new RuntimeException("Cannot parse word: " + seekWord());
+                loc = getLocation();
+                throw new ParserException("Cannot parse word: " + nextWord(), this, loc);
             }
         }
 

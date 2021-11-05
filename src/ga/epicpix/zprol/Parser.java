@@ -1,5 +1,6 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.NumberToken;
@@ -27,21 +28,15 @@ public class Parser {
             throw new FileNotFoundException(fileName);
         }
 
-        List<String> listLines = Files.readAllLines(file.toPath());
-        listLines.removeIf((line) -> line.trim().startsWith("//"));
-        listLines.removeIf((line) -> line.trim().isEmpty());
-        String[] lines = new String[listLines.size()];
-        for(int i = 0; i<lines.length; i++) {
-            lines[i] = listLines.get(i).trim();
-        }
-
-        DataParser parser = new DataParser(lines);
+        DataParser parser = new DataParser(Files.readAllLines(file.toPath()).toArray(new String[0]));
 
         ArrayList<Token> tokens = new ArrayList<>();
 
         ArrayList<ParserFlag> flags = new ArrayList<>();
         String word;
+        ParserLocation loc;
         while((word = parser.nextWord()) != null) {
+            loc = parser.getLocation();
             if(word.equals("structure")) {
                 tokens.add(parseStructure(parser));
             } else if(word.equals("object")) {
@@ -50,12 +45,12 @@ public class Parser {
                 String functionReturn = parser.nextType();
                 String functionName = parser.nextWord();
                 ArrayList<ParameterDataType> functionParameters = parser.readParameters();
-
+                loc = parser.getLocation();
                 String tmp = parser.nextWord();
                 if(tmp.equals(";")) {
-                    throw new RuntimeException("Missing function implementation");
+                    throw new ParserException("Missing function implementation", parser, loc);
                 }else if(!tmp.equals("{")) {
-                    throw new RuntimeException("Error 6: " + tmp);
+                    throw new ParserException("Error 6: " + tmp, parser, loc);
                 }
 
                 tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, new ArrayList<>()));
@@ -64,13 +59,15 @@ public class Parser {
                 String fromType = parser.nextType();
                 String toType = parser.nextWord();
                 tokens.add(new TypedefToken(fromType, toType));
+                loc = parser.getLocation();
                 if(!parser.nextWord().equals(";")) {
-                    throw new RuntimeException("Error 9");
+                    throw new ParserException("Error 9", parser, loc);
                 }
             } else if(word.equals("field")) {
                 String type = parser.nextType();
                 String name = parser.nextWord();
                 ArrayList<Token> ops = new ArrayList<>();
+                loc = parser.getLocation();
                 String as = parser.nextWord();
                 if(as.equals("=")) {
                     Token c;
@@ -78,7 +75,7 @@ public class Parser {
                         ops.add(c);
                     }
                 }else if(!as.equals(";")) {
-                    throw new RuntimeException("Error 4: " + as);
+                    throw new ParserException("Error 4: " + as, parser, loc);
                 }
                 ops.add(new Token(TokenType.END_LINE));
                 tokens.add(new FieldToken(type, name, ops, new ArrayList<>(flags)));
@@ -94,10 +91,10 @@ public class Parser {
                     flags.add(f);
                     continue;
                 }else {
-                    throw new RuntimeException("Redefined flag: " + f.name().toLowerCase());
+                    throw new ParserException("Redefined flag: " + f.name().toLowerCase(), parser, loc);
                 }
             } else {
-                throw new RuntimeException("Unknown word: " + word);
+                throw new ParserException("Unknown word: " + word, parser, loc);
             }
             flags.clear();
         }
@@ -107,8 +104,9 @@ public class Parser {
 
     public static StructureToken parseStructure(DataParser parser) {
         String name = parser.nextWord();
+        ParserLocation loc = parser.getLocation();
         if(!parser.nextWord().equals("{")) {
-            throw new RuntimeException("Error 1");
+            throw new ParserException("Error 1", parser, loc);
         }
         ArrayList<StructureType> types = new ArrayList<>();
         while(true) {
@@ -120,8 +118,9 @@ public class Parser {
             String sName = parser.nextWord();
             types.add(new StructureType(sType, sName));
             String tmp;
+            loc = parser.getLocation();
             if(!(tmp = parser.nextWord()).equals(";")) {
-                throw new RuntimeException("Error 2: " + tmp);
+                throw new ParserException("Error 2: " + tmp, parser, loc);
             }
         }
         return new StructureToken(name, types);
@@ -131,15 +130,17 @@ public class Parser {
         String name = parser.nextWord();
         ArrayList<Token> tokens = new ArrayList<>();
 
+        ParserLocation loc = parser.getLocation();
         String w = parser.nextWord();
         if(!w.equals("{") && !w.equals("extends")) {
-            throw new RuntimeException("Error 3");
+            throw new ParserException("Error 3", parser, loc);
         }
         String extendsFrom = null;
         if(w.equals("extends")) {
             extendsFrom = parser.nextWord();
+            loc = parser.getLocation();
             if(!parser.nextWord().equals("{")) {
-                throw new RuntimeException("Error 5");
+                throw new ParserException("Error 5", parser, loc);
             }
         }
         tokens.add(new ObjectToken(name, extendsFrom));
@@ -150,7 +151,7 @@ public class Parser {
                 parser.nextWord();
                 break;
             }
-
+            loc = parser.getLocation();
             String read = parser.nextWord();
             ArrayList<ParserFlag> flags = new ArrayList<>();
             while(true) {
@@ -174,6 +175,7 @@ public class Parser {
                 String fieldType = parser.nextType();
                 String fieldName = parser.nextWord();
                 ArrayList<Token> ops = new ArrayList<>();
+                loc = parser.getLocation();
                 String as = parser.nextWord();
                 if(as.equals("=")) {
                     Token c;
@@ -181,18 +183,18 @@ public class Parser {
                         ops.add(c);
                     }
                 }else if(!as.equals(";")) {
-                    throw new RuntimeException("Error 4: " + as);
+                    throw new ParserException("Error 4: " + as, parser, loc);
                 }
                 ops.add(new Token(TokenType.END_LINE));
                 tokens.add(new FieldToken(fieldType, fieldName, ops, flags));
             }else if(read.equals(name)) {
                 ArrayList<ParameterDataType> functionParameters = parser.readParameters();
-
+                loc = parser.getLocation();
                 String tmp = parser.nextWord();
                 if(tmp.equals(";")) {
-                    throw new RuntimeException("Constructors must have implementation");
+                    throw new ParserException("Constructors must have implementation", parser, loc);
                 }else if(!tmp.equals("{")) {
-                    throw new RuntimeException("Error 7: " + tmp);
+                    throw new ParserException("Error 7: " + tmp, parser, loc);
                 }
 
                 tokens.add(new FunctionToken("void", "<init>", functionParameters, flags));
@@ -201,18 +203,18 @@ public class Parser {
                 String functionReturn = parser.nextType();
                 String functionName = parser.nextWord();
                 ArrayList<ParameterDataType> functionParameters = parser.readParameters();
-
+                loc = parser.getLocation();
                 String tmp = parser.nextWord();
                 if(tmp.equals(";")) {
                     flags.add(ParserFlag.NO_IMPLEMENTATION);
                 }else if(!tmp.equals("{")) {
-                    throw new RuntimeException("Error 6: " + tmp);
+                    throw new ParserException("Error 6: " + tmp, parser, loc);
                 }
 
                 tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, flags));
                 if(!flags.contains(ParserFlag.NO_IMPLEMENTATION)) readFunction = true;
             }else {
-                throw new RuntimeException("Error 8: " + read);
+                throw new ParserException("Error 8: " + read, parser, loc);
             }
 
             if(readFunction) {
