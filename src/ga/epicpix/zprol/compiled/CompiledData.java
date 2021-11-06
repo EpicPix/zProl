@@ -321,44 +321,47 @@ public class CompiledData {
         DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
         if(input.readInt() != 0x7a50524c) throw new RuntimeException("Invalid file");
         CompiledData data = new CompiledData();
-        int structuresLength = input.readUnsignedShort();
-        for(int i = 0; i<structuresLength; i++) {
-            String structName = input.readUTF();
-            int fieldsLength = input.readUnsignedShort();
-            ArrayList<StructureField> fields = new ArrayList<>();
-            for(int j = 0; j<fieldsLength; j++) {
-                fields.add(new StructureField(input.readUTF(), readType(input)));
+        int packages = input.readInt();
+        for(int p = 0; p<packages; p++) {
+            int structuresLength = input.readUnsignedShort();
+            for(int i = 0; i < structuresLength; i++) {
+                String structName = input.readUTF();
+                int fieldsLength = input.readUnsignedShort();
+                ArrayList<StructureField> fields = new ArrayList<>();
+                for(int j = 0; j < fieldsLength; j++) {
+                    fields.add(new StructureField(input.readUTF(), readType(input)));
+                }
+                data.addStructure(new Structure(structName, fields));
             }
-            data.addStructure(new Structure(structName, fields));
-        }
-        int objectsLength = input.readUnsignedShort();
-        for(int i = 0; i<objectsLength; i++) {
-            String objectName = input.readUTF();
-            Type ext = readType(input);
+            int objectsLength = input.readUnsignedShort();
+            for(int i = 0; i < objectsLength; i++) {
+                String objectName = input.readUTF();
+                Type ext = readType(input);
+                int fieldsLength = input.readUnsignedShort();
+                ArrayList<ObjectField> fields = new ArrayList<>();
+                for(int j = 0; j < fieldsLength; j++) {
+                    String name = input.readUTF();
+                    Type type = readType(input);
+                    fields.add(new ObjectField(name, type, Flag.fromBits(input.readInt())));
+                }
+
+                int functionsLength = input.readUnsignedShort();
+                ArrayList<Function> functions = new ArrayList<>();
+                for(int j = 0; j < functionsLength; j++) {
+                    functions.add(readFunction(input));
+                }
+                data.addObject(new Object(objectName, ext, fields, functions));
+            }
+            int functionsLength = input.readUnsignedShort();
+            for(int j = 0; j < functionsLength; j++) {
+                data.functions.add(readFunction(input));
+            }
             int fieldsLength = input.readUnsignedShort();
-            ArrayList<ObjectField> fields = new ArrayList<>();
-            for(int j = 0; j<fieldsLength; j++) {
+            for(int j = 0; j < fieldsLength; j++) {
                 String name = input.readUTF();
                 Type type = readType(input);
-                fields.add(new ObjectField(name, type, Flag.fromBits(input.readInt())));
+                data.fields.add(new ObjectField(name, type, Flag.fromBits(input.readInt())));
             }
-
-            int functionsLength = input.readUnsignedShort();
-            ArrayList<Function> functions = new ArrayList<>();
-            for(int j = 0; j<functionsLength; j++) {
-                functions.add(readFunction(input));
-            }
-            data.addObject(new Object(objectName, ext, fields, functions));
-        }
-        int functionsLength = input.readUnsignedShort();
-        for(int j = 0; j<functionsLength; j++) {
-            data.functions.add(readFunction(input));
-        }
-        int fieldsLength = input.readUnsignedShort();
-        for(int j = 0; j<fieldsLength; j++) {
-            String name = input.readUTF();
-            Type type = readType(input);
-            data.fields.add(new ObjectField(name, type, Flag.fromBits(input.readInt())));
         }
         return data;
     }
@@ -421,6 +424,7 @@ public class CompiledData {
         DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         output.writeBytes("zPRL");
 
+        output.writeInt(1);
         output.writeShort(structures.size());
         for(Structure struct : structures) {
             output.writeUTF(struct.name);
