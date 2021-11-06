@@ -82,6 +82,10 @@ public class Parser {
                 }
                 ops.add(new Token(TokenType.END_LINE));
                 tokens.add(new FieldToken(type, name, ops, new ArrayList<>(flags)));
+            } else if(word.equals("import")) {
+                throw new ParserException("Not implemented yet", parser, loc);
+            } else if(word.equals("export")) {
+                throw new ParserException("Not implemented yet", parser, loc);
             } else if(word.equals("{")) {
                 tokens.add(new Token(TokenType.START_DATA));
             } else if(word.equals("}")) {
