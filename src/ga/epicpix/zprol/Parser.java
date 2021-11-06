@@ -50,7 +50,7 @@ public class Parser {
                 if(tmp.equals(";")) {
                     throw new ParserException("Missing function implementation", parser, loc);
                 }else if(!tmp.equals("{")) {
-                    throw new ParserException("Error 6: " + tmp, parser, loc);
+                    throw new ParserException("Expected '{' after arguments of function", parser, loc);
                 }
 
                 tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, new ArrayList<>()));
@@ -61,7 +61,7 @@ public class Parser {
                 tokens.add(new TypedefToken(fromType, toType));
                 loc = parser.getLocation();
                 if(!parser.nextWord().equals(";")) {
-                    throw new ParserException("Error 9", parser, loc);
+                    throw new ParserException("Expected ';' after typedef definition", parser, loc);
                 }
             } else if(word.equals("field")) {
                 String type = parser.nextType();
@@ -75,7 +75,7 @@ public class Parser {
                         ops.add(c);
                     }
                 }else if(!as.equals(";")) {
-                    throw new ParserException("Error 4: " + as, parser, loc);
+                    throw new ParserException("Expected ';' or '=' after field declaration", parser, loc);
                 }
                 ops.add(new Token(TokenType.END_LINE));
                 tokens.add(new FieldToken(type, name, ops, new ArrayList<>(flags)));
@@ -106,7 +106,7 @@ public class Parser {
         String name = parser.nextWord();
         ParserLocation loc = parser.getLocation();
         if(!parser.nextWord().equals("{")) {
-            throw new ParserException("Error 1", parser, loc);
+            throw new ParserException("Missing '{' after structure name", parser, loc);
         }
         ArrayList<StructureType> types = new ArrayList<>();
         while(true) {
@@ -117,10 +117,9 @@ public class Parser {
             String sType = parser.nextType();
             String sName = parser.nextWord();
             types.add(new StructureType(sType, sName));
-            String tmp;
             loc = parser.getLocation();
-            if(!(tmp = parser.nextWord()).equals(";")) {
-                throw new ParserException("Error 2: " + tmp, parser, loc);
+            if(!(parser.nextWord()).equals(";")) {
+                throw new ParserException("Missing ';' after structure field definition", parser, loc);
             }
         }
         return new StructureToken(name, types);
@@ -133,14 +132,14 @@ public class Parser {
         ParserLocation loc = parser.getLocation();
         String w = parser.nextWord();
         if(!w.equals("{") && !w.equals("extends")) {
-            throw new ParserException("Error 3", parser, loc);
+            throw new ParserException("Expected '{' or 'extends' after name of object", parser, loc);
         }
         String extendsFrom = null;
         if(w.equals("extends")) {
             extendsFrom = parser.nextWord();
             loc = parser.getLocation();
             if(!parser.nextWord().equals("{")) {
-                throw new ParserException("Error 5", parser, loc);
+                throw new ParserException("Expected '{' after name of extended object", parser, loc);
             }
         }
         tokens.add(new ObjectToken(name, extendsFrom));
@@ -183,7 +182,7 @@ public class Parser {
                         ops.add(c);
                     }
                 }else if(!as.equals(";")) {
-                    throw new ParserException("Error 4: " + as, parser, loc);
+                    throw new ParserException("Expected ';' or '=' after field declaration", parser, loc);
                 }
                 ops.add(new Token(TokenType.END_LINE));
                 tokens.add(new FieldToken(fieldType, fieldName, ops, flags));
@@ -194,7 +193,7 @@ public class Parser {
                 if(tmp.equals(";")) {
                     throw new ParserException("Constructors must have implementation", parser, loc);
                 }else if(!tmp.equals("{")) {
-                    throw new ParserException("Error 7: " + tmp, parser, loc);
+                    throw new ParserException("Expected '{' after arguments of constructor", parser, loc);
                 }
 
                 tokens.add(new FunctionToken("void", "<init>", functionParameters, flags));
@@ -208,13 +207,13 @@ public class Parser {
                 if(tmp.equals(";")) {
                     flags.add(ParserFlag.NO_IMPLEMENTATION);
                 }else if(!tmp.equals("{")) {
-                    throw new ParserException("Error 6: " + tmp, parser, loc);
+                    throw new ParserException("Expected '{' after arguments of function", parser, loc);
                 }
 
                 tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, flags));
                 if(!flags.contains(ParserFlag.NO_IMPLEMENTATION)) readFunction = true;
             }else {
-                throw new ParserException("Error 8: " + read, parser, loc);
+                throw new ParserException("Unexpected keyword '" + read + "'", parser, loc);
             }
 
             if(readFunction) {
