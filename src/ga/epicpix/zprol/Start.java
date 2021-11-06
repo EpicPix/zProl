@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 
 public class Start {
 
@@ -18,15 +20,27 @@ public class Start {
 
         boolean generate_x86_64_linux = false;
         boolean generate_porth = false;
+        String outputFile = null;
 
         ArrayList<String> files = new ArrayList<>();
-        for(String s : args) {
+        Iterator<String> argsIterator = Arrays.asList(args).iterator();
+        while(argsIterator.hasNext()) {
+            String s = argsIterator.next();
             if(s.startsWith("-")) {
                 if(s.equals("-glinux64")) {
                     generate_x86_64_linux = true;
                     continue;
                 } else if(s.equals("-gporth")) {
                     generate_porth = true;
+                    continue;
+                } else if(s.equals("-o")) {
+                    if(outputFile != null) {
+                        throw new IllegalArgumentException("Tried to declare output file multiple times");
+                    }
+                    if(!argsIterator.hasNext()) {
+                        throw new IllegalArgumentException("Missing output filename after -o");
+                    }
+                    outputFile = argsIterator.next();
                     continue;
                 }
                 System.err.println("Unknown setting: " + s);
@@ -38,11 +52,14 @@ public class Start {
         if(files.size() == 0) {
             throw new IllegalArgumentException("Files to compile not specified");
         }
+        if(files.size() >= 2 && outputFile == null) {
+            throw new IllegalArgumentException("Output file not specified");
+        }
         for(String file : files) {
-            loadFile(file, generate_x86_64_linux, generate_porth);
+            loadFile(file, outputFile, generate_x86_64_linux, generate_porth);
         }
     }
-    public static void loadFile(String file, boolean generate_x86_64_linux, boolean generate_porth) throws IOException, UnknownTypeException {
+    public static void loadFile(String file, String output, boolean generate_x86_64_linux, boolean generate_porth) throws IOException, UnknownTypeException {
         boolean load = false;
         if(new File(file).exists()) {
             DataInputStream in = new DataInputStream(new FileInputStream(file));
@@ -51,7 +68,7 @@ public class Start {
             }
             in.close();
         }
-        String normalName = file.substring(0, file.lastIndexOf('.'));
+        String normalName = output == null ? file.substring(0, file.lastIndexOf('.')) : output.substring(0, output.lastIndexOf('.'));
 
         CompiledData zpil;
 
@@ -74,11 +91,13 @@ public class Start {
             }
             long startCompile = System.currentTimeMillis();
             zpil = Compiler.compile(tokens);
+            long stopCompile = System.currentTimeMillis();
+            System.out.printf("[%s] Took %d ms to compile\n", file, stopCompile - startCompile);
+
             long startSave = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to compile\n", file, startSave - startCompile);
             zpil.save(new File(normalName + ".zpil"));
-            long startConvert = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to save\n", file, startConvert - startSave);
+            long stopSave = System.currentTimeMillis();
+            System.out.printf("[%s] Took %d ms to save\n", file, stopSave - startSave);
         }
 
         if(generate_x86_64_linux) {
