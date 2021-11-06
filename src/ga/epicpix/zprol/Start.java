@@ -52,9 +52,6 @@ public class Start {
         if(files.size() == 0) {
             throw new IllegalArgumentException("Files to compile not specified");
         }
-        if(files.size() >= 2 && outputFile == null) {
-            throw new IllegalArgumentException("Output file not specified");
-        }
         for(String file : files) {
             loadFile(file, outputFile, generate_x86_64_linux, generate_porth);
         }
