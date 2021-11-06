@@ -1,5 +1,5 @@
-field uint8 test = 123;
+import hello.world as hw;
 
 function void _start() {
-    test = test + 1;
+    hw.hello_world();
 }

@@ -53,10 +53,14 @@ public class Start {
             throw new IllegalArgumentException("Files to compile not specified");
         }
         for(String file : files) {
-            loadFile(file, outputFile, generate_x86_64_linux, generate_porth);
+            CompiledData data = loadFile(file, outputFile, generate_x86_64_linux, generate_porth);
+            if(data == null) {
+                System.exit(1);
+                return;
+            }
         }
     }
-    public static void loadFile(String file, String output, boolean generate_x86_64_linux, boolean generate_porth) throws IOException, UnknownTypeException {
+    public static CompiledData loadFile(String file, String output, boolean generate_x86_64_linux, boolean generate_porth) throws IOException, UnknownTypeException {
         boolean load = false;
         if(new File(file).exists()) {
             DataInputStream in = new DataInputStream(new FileInputStream(file));
@@ -84,7 +88,7 @@ public class Start {
             }catch(ParserException e) {
                 e.printError();
                 System.exit(1);
-                return;
+                return null;
             }
             long startCompile = System.currentTimeMillis();
             zpil = Compiler.compile(tokens);
@@ -110,6 +114,7 @@ public class Start {
             long gen_porth_end = System.currentTimeMillis();
             System.out.printf("[%s] Took %d ms to generate porth\n", file, gen_porth_end - gen_porth_start);
         }
+        return zpil;
     }
 
 }
