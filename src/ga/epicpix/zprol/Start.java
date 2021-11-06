@@ -25,43 +25,48 @@ public class Start {
                 if(s.equals("-glinux64")) {
                     generate_x86_64_linux = true;
                     continue;
-                }else if(s.equals("-gporth")) {
+                } else if(s.equals("-gporth")) {
                     generate_porth = true;
                     continue;
                 }
                 System.err.println("Unknown setting: " + s);
                 System.exit(1);
-            }else {
+            } else {
                 files.add(s);
             }
         }
         if(files.size() == 0) {
             throw new IllegalArgumentException("Files to compile not specified");
         }
+        for(String file : files) {
+            loadFile(file, generate_x86_64_linux, generate_porth);
+        }
+    }
+    public static void loadFile(String file, boolean generate_x86_64_linux, boolean generate_porth) throws IOException, UnknownTypeException {
         boolean load = false;
-        if(new File(files.get(0)).exists()) {
-            DataInputStream in = new DataInputStream(new FileInputStream(files.get(0)));
+        if(new File(file).exists()) {
+            DataInputStream in = new DataInputStream(new FileInputStream(file));
             if(in.readInt() == 0x7a50524c) {
                 load = true;
             }
             in.close();
         }
-        String normalName = files.get(0).substring(0, files.get(0).lastIndexOf('.'));
+        String normalName = file.substring(0, file.lastIndexOf('.'));
 
         CompiledData zpil;
 
         if(load) {
             long loadStart = System.currentTimeMillis();
-            zpil = CompiledData.load(new File(files.get(0)));
+            zpil = CompiledData.load(new File(file));
             long loadEnd = System.currentTimeMillis();
-            System.out.printf("Took %d ms to load\n", loadEnd - loadStart);
+            System.out.printf("[%s] Took %d ms to load\n", file, loadEnd - loadStart);
         }else {
             ArrayList<Token> tokens;
             try {
                 long startToken = System.currentTimeMillis();
-                tokens = Parser.tokenize(files.get(0));
+                tokens = Parser.tokenize(file);
                 long endToken = System.currentTimeMillis();
-                System.out.printf("Took %d ms to tokenize\n", endToken - startToken);
+                System.out.printf("[%s] Took %d ms to tokenize\n", file, endToken - startToken);
             }catch(ParserException e) {
                 e.printError();
                 System.exit(1);
@@ -70,24 +75,24 @@ public class Start {
             long startCompile = System.currentTimeMillis();
             zpil = Compiler.compile(tokens);
             long startSave = System.currentTimeMillis();
-            System.out.printf("Took %d ms to compile\n", startSave - startCompile);
+            System.out.printf("[%s] Took %d ms to compile\n", file, startSave - startCompile);
             zpil.save(new File(normalName + ".zpil"));
             long startConvert = System.currentTimeMillis();
-            System.out.printf("Took %d ms to save\n", startConvert - startSave);
+            System.out.printf("[%s] Took %d ms to save\n", file, startConvert - startSave);
         }
 
         if(generate_x86_64_linux) {
             long gen_x86_64_linux_asm_start = System.currentTimeMillis();
             GeneratorAssembly.generate_x86_64_linux_assembly(zpil, new File(normalName + "_64linux.asm"));
             long gen_x86_64_linux_asm_end = System.currentTimeMillis();
-            System.out.printf("Took %d ms to generate x86-64 linux assembly\n", gen_x86_64_linux_asm_end - gen_x86_64_linux_asm_start);
+            System.out.printf("[%s] Took %d ms to generate x86-64 linux assembly\n", file, gen_x86_64_linux_asm_end - gen_x86_64_linux_asm_start);
         }
 
         if(generate_porth) {
             long gen_porth_start = System.currentTimeMillis();
             GeneratorPorth.generate_porth(zpil, new File(normalName + ".porth"));
             long gen_porth_end = System.currentTimeMillis();
-            System.out.printf("Took %d ms to generate porth\n", gen_porth_end - gen_porth_start);
+            System.out.printf("[%s] Took %d ms to generate porth\n", file, gen_porth_end - gen_porth_start);
         }
     }
 
