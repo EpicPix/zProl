@@ -35,8 +35,11 @@ public class Parser {
         ArrayList<ParserFlag> flags = new ArrayList<>();
         String word;
         ParserLocation loc;
-        while((word = parser.nextWord()) != null) {
+        while(true) {
             loc = parser.getLocation();
+            if((word = parser.nextWord()) == null) {
+                break;
+            }
             if(word.equals("structure")) {
                 tokens.add(parseStructure(parser));
             } else if(word.equals("object")) {
