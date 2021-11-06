@@ -19,7 +19,7 @@ public class Start {
         boolean generate_x86_64_linux = false;
         boolean generate_porth = false;
 
-        String fileName = null;
+        ArrayList<String> files = new ArrayList<>();
         for(String s : args) {
             if(s.startsWith("-")) {
                 if(s.equals("-glinux64")) {
@@ -32,38 +32,34 @@ public class Start {
                 System.err.println("Unknown setting: " + s);
                 System.exit(1);
             }else {
-                if(fileName != null) {
-                    System.err.println("Multiple file names specified, already contains \"" + fileName + "\" but also found \"" + s + "\"");
-                    System.exit(1);
-                }
-                fileName = s;
+                files.add(s);
             }
         }
-        if(fileName == null) {
-            throw new IllegalArgumentException("File not specified");
+        if(files.size() == 0) {
+            throw new IllegalArgumentException("Files to compile not specified");
         }
         boolean load = false;
-        if(new File(fileName).exists()) {
-            DataInputStream in = new DataInputStream(new FileInputStream(fileName));
+        if(new File(files.get(0)).exists()) {
+            DataInputStream in = new DataInputStream(new FileInputStream(files.get(0)));
             if(in.readInt() == 0x7a50524c) {
                 load = true;
             }
             in.close();
         }
-        String normalName = fileName.substring(0, fileName.lastIndexOf('.'));
+        String normalName = files.get(0).substring(0, files.get(0).lastIndexOf('.'));
 
         CompiledData zpil;
 
         if(load) {
             long loadStart = System.currentTimeMillis();
-            zpil = CompiledData.load(new File(fileName));
+            zpil = CompiledData.load(new File(files.get(0)));
             long loadEnd = System.currentTimeMillis();
             System.out.printf("Took %d ms to load\n", loadEnd - loadStart);
         }else {
             ArrayList<Token> tokens;
             try {
                 long startToken = System.currentTimeMillis();
-                tokens = Parser.tokenize(fileName);
+                tokens = Parser.tokenize(files.get(0));
                 long endToken = System.currentTimeMillis();
                 System.out.printf("Took %d ms to tokenize\n", endToken - startToken);
             }catch(ParserException e) {
