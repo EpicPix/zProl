@@ -8,6 +8,7 @@ public class DataParser {
 
     public static final Pattern nonSpecialCharacters = Pattern.compile("[a-zA-Z0-9_]");
     public static final Pattern operatorCharacters = Pattern.compile("[+=/*\\-%<>!&]*");
+    public static final Pattern validLongWordCharacters = Pattern.compile("[a-zA-Z0-9_.+\\-]*");
 
     private String data;
     private String[] lines;
@@ -91,6 +92,44 @@ public class DataParser {
                     return word.toString();
                 }
 
+            }
+            lineRow++;
+            word.append(cdata[index]);
+            index++;
+        }
+        return word.toString();
+    }
+
+    public String nextLongWord() {
+        ignoreWhitespace();
+        if(index >= data.length()) return null;
+        StringBuilder word = new StringBuilder();
+        char[] cdata = data.toCharArray();
+        while(index < cdata.length) {
+            if(Character.isWhitespace(cdata[index])) {
+                break;
+            }
+            if(cdata[index] == '/') {
+                if(index + 1 < cdata.length) {
+                    if(cdata[index + 1] == '/') {
+                        index += 2;
+                        lineRow += 2;
+                        while(index < cdata.length) {
+                            if(cdata[index] == '\n') {
+                                lineNumber++;
+                                lineRow = 0;
+                                break;
+                            }
+                            lineRow++;
+                            index++;
+                        }
+                        ignoreWhitespace();
+                    }
+                }
+            }
+            boolean matches = validLongWordCharacters.matcher(cdata[index] + "").matches();
+            if(!matches) {
+                return word.toString();
             }
             lineRow++;
             word.append(cdata[index]);

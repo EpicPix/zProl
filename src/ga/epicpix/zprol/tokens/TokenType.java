@@ -8,5 +8,6 @@ public enum TokenType {
     START_DATA, END_DATA,
     OPEN, CLOSE, COMMA, ACCESSOR, END_LINE,
     STRING, NUMBER, OPERATOR, WORD,
+    EXPORT, IMPORT,
 
 }

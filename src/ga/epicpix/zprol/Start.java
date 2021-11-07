@@ -1,7 +1,8 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
-import ga.epicpix.zprol.compiled.PreCompiledData;
+import ga.epicpix.zprol.compiled.precompiled.PreCompiledData;
+import ga.epicpix.zprol.compiled.precompiled.PreCompiler;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
@@ -93,7 +94,7 @@ public class Start {
                     System.out.printf("[%s] Took %d ms to tokenize\n", file, endToken - startToken);
 
                     long startPreCompile = System.currentTimeMillis();
-                    PreCompiledData data = Compiler.preCompile(tokens);
+                    PreCompiledData data = PreCompiler.preCompile(tokens);
                     long stopPreCompile = System.currentTimeMillis();
                     System.out.printf("[%s] Took %d ms to precompile\n", file, stopPreCompile - startPreCompile);
                     preCompiled.add(data);
@@ -160,7 +161,7 @@ public class Start {
             }
 
             long startPreCompile = System.currentTimeMillis();
-            PreCompiledData precompiled = Compiler.preCompile(tokens);
+            PreCompiledData precompiled = PreCompiler.preCompile(tokens);
             long stopPreCompile = System.currentTimeMillis();
             System.out.printf("[%s] Took %d ms to precompile\n", file, stopPreCompile - startPreCompile);
 
