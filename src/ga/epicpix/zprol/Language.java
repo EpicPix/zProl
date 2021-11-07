@@ -17,13 +17,15 @@ public class Language {
             data.append((char) temp);
         }
 
-        DataParser parser = new DataParser(fileName, data.toString().split("(\r|\n|\r\n|\n\r)+"));
+        DataParser parser = new DataParser(fileName, data.toString().split("(\r|\n|\r\n|\n\r)"));
         while(parser.seekWord() != null) {
             String d = parser.nextWord();
             if(d.equals("keyword")) {
                 KEYWORDS.add(parser.nextWord());
-            }else {
-                throw new ParserException("An error occurred while loading a language file", parser);
+            } else if(d.equals("tok")) {
+                throw new ParserException("Cannot add tokenizers yet", parser);
+            } else {
+                throw new ParserException("Unknown language file word", parser);
             }
         }
     }

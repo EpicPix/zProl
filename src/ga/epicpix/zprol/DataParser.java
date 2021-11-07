@@ -57,6 +57,26 @@ public class DataParser {
         }
     }
 
+    public String nextLine() {
+        ignoreWhitespace();
+        lastLocation = getLocation();
+        if(index >= data.length()) return null;
+        StringBuilder word = new StringBuilder();
+        char[] cdata = data.toCharArray();
+        while(index < cdata.length) {
+            if(cdata[index] == '\n') {
+                lineNumber++;
+                lineRow = 0;
+                index++;
+                break;
+            }
+            word.append(cdata[index]);
+            lineRow++;
+            index++;
+        }
+        return word.toString();
+    }
+
     public String nextWord() {
         ignoreWhitespace();
         lastLocation = getLocation();
@@ -77,6 +97,7 @@ public class DataParser {
                             if(cdata[index] == '\n') {
                                 lineNumber++;
                                 lineRow = 0;
+                                index++;
                                 break;
                             }
                             lineRow++;
