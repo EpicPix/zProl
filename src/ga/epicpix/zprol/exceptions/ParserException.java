@@ -8,10 +8,10 @@ public class ParserException extends RuntimeException {
     private final DataParser parser;
     private final ParserLocation location;
 
-    public ParserException(String message, DataParser parser, ParserLocation location) {
+    public ParserException(String message, DataParser parser) {
         super(message);
         this.parser = parser;
-        this.location = location;
+        this.location = parser.getLastLocation();
     }
 
     public void printError() {

@@ -17,6 +17,8 @@ public class DataParser {
     private int lineNumber;
     private int lineRow;
 
+    private ParserLocation lastLocation = new ParserLocation(0, 0);
+
     public DataParser(String... lines) {
         this.lines = lines;
         data = String.join("\n", lines);
@@ -28,6 +30,10 @@ public class DataParser {
 
     public ParserLocation getLocation() {
         return new ParserLocation(lineNumber, lineRow);
+    }
+
+    public ParserLocation getLastLocation() {
+        return lastLocation;
     }
 
     public void ignoreWhitespace() {
@@ -47,6 +53,7 @@ public class DataParser {
 
     public String nextWord() {
         ignoreWhitespace();
+        lastLocation = getLocation();
         if(index >= data.length()) return null;
         StringBuilder word = new StringBuilder();
         char[] cdata = data.toCharArray();
@@ -102,6 +109,7 @@ public class DataParser {
 
     public String nextLongWord() {
         ignoreWhitespace();
+        lastLocation = getLocation();
         if(index >= data.length()) return null;
         StringBuilder word = new StringBuilder();
         char[] cdata = data.toCharArray();
@@ -142,14 +150,18 @@ public class DataParser {
         int start = index;
         int currentLine = lineNumber;
         int currentLineRow = lineRow;
+        ParserLocation last = lastLocation;
         String str = nextWord();
         index = start;
         lineNumber = currentLine;
         lineRow = currentLineRow;
+        lastLocation = last;
         return str;
     }
 
     public String nextType() {
+        ignoreWhitespace();
+        lastLocation = getLocation();
         StringBuilder type = new StringBuilder(nextWord());
         String x = seekWord();
         if(x.equals("(")) {
@@ -173,6 +185,7 @@ public class DataParser {
     }
 
     public String nextStringStarted() {
+        lastLocation = getLocation();
         if(index + 1 >= data.length()) return null;
         StringBuilder word = new StringBuilder();
         char[] cdata = data.toCharArray();
@@ -211,10 +224,10 @@ public class DataParser {
 
     public ArrayList<ParameterDataType> readParameters() {
         ArrayList<ParameterDataType> parameters = new ArrayList<>();
+        lastLocation = getLocation();
 
-        ParserLocation loc = getLocation();
         if(!nextWord().equals("(")) {
-            throw new ParserException("Start of parameters doesn't have '('", this, loc);
+            throw new ParserException("Start of parameters doesn't have '('", this);
         }
 
         while(true) {
@@ -233,8 +246,7 @@ public class DataParser {
             }else if(tmp.equals(")")) {
                 continue;
             }else {
-                loc = getLocation();
-                throw new ParserException("Cannot parse word: " + nextWord(), this, loc);
+                throw new ParserException("Cannot parse word: " + nextWord(), this);
             }
         }
 
