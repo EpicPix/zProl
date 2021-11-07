@@ -1,4 +1,4 @@
-import hello.world as hw;
+import hello.world;
 
 function void _start() {
     hw.hello_world();

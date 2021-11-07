@@ -1,8 +1,10 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.exceptions.ParserException;
+import ga.epicpix.zprol.tokens.ExportToken;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
+import ga.epicpix.zprol.tokens.ImportToken;
 import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
@@ -35,8 +37,12 @@ public class Parser {
         ArrayList<ParserFlag> flags = new ArrayList<>();
         String word;
         ParserLocation loc;
-        while((word = parser.nextWord()) != null) {
+        while(true) {
+            parser.ignoreWhitespace();
             loc = parser.getLocation();
+            if((word = parser.nextWord()) == null) {
+                break;
+            }
             if(word.equals("structure")) {
                 tokens.add(parseStructure(parser));
             } else if(word.equals("object")) {
@@ -79,6 +85,28 @@ public class Parser {
                 }
                 ops.add(new Token(TokenType.END_LINE));
                 tokens.add(new FieldToken(type, name, ops, new ArrayList<>(flags)));
+            } else if(word.equals("import")) {
+                loc = parser.getLocation();
+                String w = parser.nextLongWord();
+                String imported = w;
+                System.out.println(w);
+                if(parser.seekWord().equals(";")) {
+                    if(!DataParser.nonSpecialCharacters.matcher(w).matches()) {
+                        throw new ParserException("Invalid name \"" + w + "\" as a imported name, you need 'as' to import with this name", parser, loc);
+                    }
+                }else if(parser.seekWord().equals("as")) {
+                    parser.nextWord();
+                    imported = parser.nextWord();
+                    loc = parser.getLocation();
+                    if(!parser.nextWord().equals(";")) {
+                        throw new ParserException("Unexpected word '" + parser.nextWord() + "' after importing", parser, loc);
+                    }
+                }else {
+                    throw new ParserException("Unexpected word '" + parser.nextWord() + "'", parser, loc);
+                }
+                tokens.add(new ImportToken());
+            } else if(word.equals("export")) {
+                tokens.add(new ExportToken());
             } else if(word.equals("{")) {
                 tokens.add(new Token(TokenType.START_DATA));
             } else if(word.equals("}")) {
