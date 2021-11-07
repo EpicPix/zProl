@@ -5,6 +5,7 @@ import ga.epicpix.zprol.compiled.CompileOperationType;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
+import ga.epicpix.zprol.compiled.PreCompiledData;
 import ga.epicpix.zprol.compiled.Scope;
 import ga.epicpix.zprol.compiled.TypeFunctionSignature;
 import ga.epicpix.zprol.compiled.Types;
@@ -622,8 +623,12 @@ public class Compiler {
         return new Object(objectToken.getObjectName(), data.resolveType(objectToken.getExtendsFrom()), fields, functions);
     }
 
-    public static void preCompile(ArrayList<Token> tokens) {
+    public static PreCompiledData preCompile(ArrayList<Token> tokens) {
         throw new NotImplementedException("Precompiling is not supported yet!");
+    }
+
+    public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {
+        throw new NotImplementedException("Compiling using precompiled data is not yet supported!");
     }
 
     public static CompiledData compile(ArrayList<Token> tokens) throws UnknownTypeException {
