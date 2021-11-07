@@ -9,4 +9,7 @@ public class KeywordToken extends Token {
         this.keyword = keyword;
     }
 
+    protected String getData() {
+        return keyword;
+    }
 }

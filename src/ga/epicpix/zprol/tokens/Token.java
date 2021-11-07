@@ -19,6 +19,20 @@ public class Token {
                 builder.append(".");
             }else if(token.getType() == TokenType.COMMA) {
                 builder.append(", ");
+            }else if(token.getType() == TokenType.KEYWORD) {
+                builder.append(((KeywordToken) token).keyword).append(" ");
+            }else if(token.getType() == TokenType.END_LINE) {
+                builder.append(";\n");
+            }else if(token.getType() == TokenType.OPEN) {
+                builder.append("(");
+            }else if(token.getType() == TokenType.CLOSE) {
+                builder.append(")");
+            }else if(token.getType() == TokenType.OPEN_SCOPE) {
+                builder.append("{\n");
+            }else if(token.getType() == TokenType.CLOSE_SCOPE) {
+                builder.append("}\n");
+            }else if(token.getType() == TokenType.NUMBER) {
+                builder.append(((NumberToken) token).number);
             }else {
                 builder.append("(").append(token.getType().name().toLowerCase()).append(")");
             }

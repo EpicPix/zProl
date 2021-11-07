@@ -102,12 +102,6 @@ public class Parser {
                 }
                 parser.nextWord();
                 tokens.add(new ExportToken(w));
-            } else if(word.equals("{")) {
-                tokens.add(new Token(TokenType.START_DATA));
-            } else if(word.equals("}")) {
-                tokens.add(new Token(TokenType.END_DATA));
-            } else if(word.equals(";")) {
-                continue;
             } else if(ParserFlag.getFlag(word) != null) {
                 ParserFlag f = ParserFlag.getFlag(word);
                 if(!flags.contains(f)) {
@@ -115,6 +109,43 @@ public class Parser {
                     continue;
                 }else {
                     throw new ParserException("Redefined flag: " + f.name().toLowerCase(), parser);
+                }
+            } else {
+                try {
+                    tokens.add(new NumberToken(getInteger(word)));
+                    continue;
+                } catch(NumberFormatException ignored) {}
+
+                if(DataParser.operatorCharacters.matcher(word).matches()) {
+                    tokens.add(new OperatorToken(word));
+                    continue;
+                }
+                if(word.equals(";")) {
+                    tokens.add(new Token(TokenType.END_LINE));
+                    continue;
+                }else if(word.equals("(")) {
+                    tokens.add(new Token(TokenType.OPEN));
+                    continue;
+                }else if(word.equals(")")) {
+                    tokens.add(new Token(TokenType.CLOSE));
+                    continue;
+                }else if(word.equals(",")) {
+                    tokens.add(new Token(TokenType.COMMA));
+                    continue;
+                }else if(word.equals(".")) {
+                    tokens.add(new Token(TokenType.ACCESSOR));
+                    continue;
+                }else if(word.equals("\"")) {
+                    tokens.add(new StringToken(parser.nextStringStarted()));
+                    continue;
+                }else if(word.equals("{")) {
+                    tokens.add(new Token(TokenType.OPEN_SCOPE));
+                    continue;
+                }else if(word.equals("}")) {
+                    tokens.add(new Token(TokenType.CLOSE_SCOPE));
+                    continue;
+                }else {
+                    tokens.add(new WordToken(word));
                 }
             }
             flags.clear();
