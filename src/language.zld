@@ -1,0 +1,20 @@
+// Definitions of stuff in this language
+
+// Keywords
+keyword import
+keyword export
+keyword function
+keyword field
+keyword object
+keyword typedef
+keyword structure
+
+// Function Keywords
+keyword if
+keyword else
+keyword while
+
+// Flags
+keyword internal
+keyword static
+keyword final

@@ -5,6 +5,7 @@ import ga.epicpix.zprol.tokens.ExportToken;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.ImportToken;
+import ga.epicpix.zprol.tokens.KeywordToken;
 import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
@@ -20,7 +21,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.List;
 
 public class Parser {
 
@@ -37,7 +37,9 @@ public class Parser {
         ArrayList<ParserFlag> flags = new ArrayList<>();
         String word;
         while((word = parser.nextWord()) != null) {
-            if(word.equals("structure")) {
+            if(Language.KEYWORDS.contains(word)) {
+                tokens.add(new KeywordToken(word));
+            } else if(word.equals("structure")) {
                 tokens.add(parseStructure(parser));
             } else if(word.equals("object")) {
                 tokens.addAll(parseObject(parser));
@@ -114,8 +116,6 @@ public class Parser {
                 }else {
                     throw new ParserException("Redefined flag: " + f.name().toLowerCase(), parser);
                 }
-            } else {
-                throw new ParserException("Unknown word: " + word, parser);
             }
             flags.clear();
         }
@@ -125,7 +125,6 @@ public class Parser {
 
     public static StructureToken parseStructure(DataParser parser) {
         String name = parser.nextWord();
-        ParserLocation loc = parser.getLocation();
         if(!parser.nextWord().equals("{")) {
             throw new ParserException("Missing '{' after structure name", parser);
         }
@@ -138,7 +137,6 @@ public class Parser {
             String sType = parser.nextType();
             String sName = parser.nextWord();
             types.add(new StructureType(sType, sName));
-            loc = parser.getLocation();
             if(!(parser.nextWord()).equals(";")) {
                 throw new ParserException("Missing ';' after structure field definition", parser);
             }
@@ -150,7 +148,6 @@ public class Parser {
         String name = parser.nextWord();
         ArrayList<Token> tokens = new ArrayList<>();
 
-        ParserLocation loc = parser.getLocation();
         String w = parser.nextWord();
         if(!w.equals("{") && !w.equals("extends")) {
             throw new ParserException("Expected '{' or 'extends' after name of object", parser);
@@ -158,7 +155,6 @@ public class Parser {
         String extendsFrom = null;
         if(w.equals("extends")) {
             extendsFrom = parser.nextWord();
-            loc = parser.getLocation();
             if(!parser.nextWord().equals("{")) {
                 throw new ParserException("Expected '{' after name of extended object", parser);
             }
@@ -171,7 +167,6 @@ public class Parser {
                 parser.nextWord();
                 break;
             }
-            loc = parser.getLocation();
             String read = parser.nextWord();
             ArrayList<ParserFlag> flags = new ArrayList<>();
             while(true) {
@@ -195,7 +190,6 @@ public class Parser {
                 String fieldType = parser.nextType();
                 String fieldName = parser.nextWord();
                 ArrayList<Token> ops = new ArrayList<>();
-                loc = parser.getLocation();
                 String as = parser.nextWord();
                 if(as.equals("=")) {
                     Token c;
@@ -209,7 +203,6 @@ public class Parser {
                 tokens.add(new FieldToken(fieldType, fieldName, ops, flags));
             }else if(read.equals(name)) {
                 ArrayList<ParameterDataType> functionParameters = parser.readParameters();
-                loc = parser.getLocation();
                 String tmp = parser.nextWord();
                 if(tmp.equals(";")) {
                     throw new ParserException("Constructors must have implementation", parser);
@@ -223,7 +216,6 @@ public class Parser {
                 String functionReturn = parser.nextType();
                 String functionName = parser.nextWord();
                 ArrayList<ParameterDataType> functionParameters = parser.readParameters();
-                loc = parser.getLocation();
                 String tmp = parser.nextWord();
                 if(tmp.equals(";")) {
                     flags.add(ParserFlag.NO_IMPLEMENTATION);

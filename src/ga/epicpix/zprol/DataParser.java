@@ -45,14 +45,14 @@ public class DataParser {
     public void ignoreWhitespace() {
         char[] cdata = data.toCharArray();
         while(index + 1 < cdata.length) {
+            if(!Character.isWhitespace(cdata[index]) && cdata[index] != '\n') {
+                break;
+            }
+            lineRow++;
             if(cdata[index] == '\n') {
                 lineNumber++;
                 lineRow = 0;
             }
-            if(!Character.isWhitespace(cdata[index])) {
-                break;
-            }
-            lineRow++;
             index++;
         }
     }

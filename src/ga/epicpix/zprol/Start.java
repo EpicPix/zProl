@@ -20,6 +20,13 @@ import java.util.Iterator;
 public class Start {
 
     public static void main(String[] args) throws IOException, UnknownTypeException {
+        try {
+            Language.load("language.zld");
+        }catch(ParserException e) {
+            e.printError();
+            System.exit(1);
+            return;
+        }
 
         boolean generate_x86_64_linux = false;
         boolean generate_porth = false;
