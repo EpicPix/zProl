@@ -68,7 +68,7 @@ public class DataParser {
             if(Character.isWhitespace(cdata[index])) {
                 break;
             }
-            if(cdata[index] == '/') {
+            while(cdata[index] == '/') {
                 if(index + 1 < cdata.length) {
                     if(cdata[index + 1] == '/') {
                         index += 2;
@@ -123,7 +123,7 @@ public class DataParser {
             if(Character.isWhitespace(cdata[index])) {
                 break;
             }
-            if(cdata[index] == '/') {
+            while(cdata[index] == '/') {
                 if(index + 1 < cdata.length) {
                     if(cdata[index + 1] == '/') {
                         index += 2;
