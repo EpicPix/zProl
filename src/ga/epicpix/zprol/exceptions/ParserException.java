@@ -15,7 +15,7 @@ public class ParserException extends RuntimeException {
     }
 
     public void printError() {
-        System.err.println(getMessage() + ", error at " + (location.line + 1) + ":" + (location.row + 1));
+        System.err.println(getMessage() + ", error at " + parser.getFileName() + ":" + (location.line + 1) + ":" + (location.row + 1));
         System.err.println(parser.getLines()[location.line]);
         StringBuilder str = new StringBuilder();
         for(int i = 0; i<location.row; i++) {

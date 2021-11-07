@@ -30,7 +30,7 @@ public class Parser {
             throw new FileNotFoundException(fileName);
         }
 
-        DataParser parser = new DataParser(Files.readAllLines(file.toPath()).toArray(new String[0]));
+        DataParser parser = new DataParser(new File(fileName).getName(), Files.readAllLines(file.toPath()).toArray(new String[0]));
 
         ArrayList<Token> tokens = new ArrayList<>();
 

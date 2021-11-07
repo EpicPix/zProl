@@ -11,6 +11,7 @@ public class DataParser {
     public static final Pattern validLongWordCharacters = Pattern.compile("[a-zA-Z0-9_.+\\-]*");
 
     private String data;
+    private String fileName;
     private String[] lines;
     private int index;
 
@@ -19,7 +20,8 @@ public class DataParser {
 
     private ParserLocation lastLocation = new ParserLocation(0, 0);
 
-    public DataParser(String... lines) {
+    public DataParser(String fileName, String... lines) {
+        this.fileName = fileName;
         this.lines = lines;
         data = String.join("\n", lines);
     }
@@ -34,6 +36,10 @@ public class DataParser {
 
     public ParserLocation getLastLocation() {
         return lastLocation;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 
     public void ignoreWhitespace() {

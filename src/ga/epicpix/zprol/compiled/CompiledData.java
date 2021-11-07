@@ -281,7 +281,7 @@ public class CompiledData {
             return new TypeFutureStructure(type);
         }
 
-        DataParser parser = new DataParser(type);
+        DataParser parser = new DataParser("<internal>", type);
 
         String pre = parser.nextWord();
 
