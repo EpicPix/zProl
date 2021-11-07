@@ -79,7 +79,6 @@ public class Parser {
             } else if(word.equals("import")) {
                 String w = parser.nextLongWord();
                 String imported = w;
-                System.out.println(w);
                 if(parser.seekWord().equals(";")) {
                     if(!DataParser.nonSpecialCharacters.matcher(w).matches()) {
                         throw new ParserException("Invalid name \"" + w + "\" as a imported name, you need 'as' to import with this name", parser);
@@ -91,11 +90,16 @@ public class Parser {
                         throw new ParserException("Unexpected word '" + parser.nextWord() + "' after importing", parser);
                     }
                 }else {
-                    throw new ParserException("Unexpected word '" + parser.nextWord() + "'", parser);
+                    throw new ParserException("Unexpected word '" + parser.nextWord() + "' expected ';' or 'as'", parser);
                 }
-                tokens.add(new ImportToken());
+                tokens.add(new ImportToken(w, imported));
             } else if(word.equals("export")) {
-                tokens.add(new ExportToken());
+                String w = parser.nextLongWord();
+                if(!parser.seekWord().equals(";")) {
+                    throw new ParserException("Unexpected word '" + parser.nextWord() + "' expected ';'", parser);
+                }
+                parser.nextWord();
+                tokens.add(new ExportToken(w));
             } else if(word.equals("{")) {
                 tokens.add(new Token(TokenType.START_DATA));
             } else if(word.equals("}")) {
