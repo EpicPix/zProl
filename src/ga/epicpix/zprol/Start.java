@@ -1,6 +1,7 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
+import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.generators.GeneratorAssembly;
@@ -52,14 +53,63 @@ public class Start {
         if(files.size() == 0) {
             throw new IllegalArgumentException("Files to compile not specified");
         }
-        for(String file : files) {
-            CompiledData data = loadFile(file, outputFile, generate_x86_64_linux, generate_porth);
-            if(data == null) {
-                System.exit(1);
-                return;
+        if(outputFile != null) {
+            compileFiles(files, outputFile, generate_x86_64_linux, generate_porth);
+        }else {
+            for(String file : files) {
+                CompiledData data = loadFile(file, outputFile, generate_x86_64_linux, generate_porth);
+                if(data == null) {
+                    System.exit(1);
+                    return;
+                }
             }
         }
     }
+
+    public static void compileFiles(ArrayList<String> files, String output, boolean generate_x86_64_linux, boolean generate_porth) throws IOException {
+        ArrayList<CompiledData> compiled = new ArrayList<>();
+        for(String file : files) {
+            boolean load = false;
+            if(new File(file).exists()) {
+                DataInputStream in = new DataInputStream(new FileInputStream(file));
+                if(in.readInt() == 0x7a50524c) {
+                    load = true;
+                }
+                in.close();
+            }
+
+            if(load) {
+                long loadStart = System.currentTimeMillis();
+                compiled.add(CompiledData.load(new File(file)));
+                long loadEnd = System.currentTimeMillis();
+                System.out.printf("[%s] Took %d ms to load\n", file, loadEnd - loadStart);
+            }else {
+                try {
+                    long startToken = System.currentTimeMillis();
+                    ArrayList<Token> tokens = Parser.tokenize(file);
+                    long endToken = System.currentTimeMillis();
+                    System.out.printf("[%s] Took %d ms to tokenize\n", file, endToken - startToken);
+                    Compiler.preCompile(tokens);
+                    // compiled.add(Compiler.compile(???));
+                }catch(ParserException e) {
+                    e.printError();
+                    System.exit(1);
+                    return;
+                }
+            }
+        }
+
+        // BytecodeGenerator.joinFiles(compiled); ???
+
+        if(generate_x86_64_linux) {
+            throw new NotImplementedException("Generating x86-64 linux assembly from multiple compiled files is not supported yet!");
+        }
+
+        if(generate_porth) {
+            throw new NotImplementedException("Generating x86-64 linux assembly from multiple compiled files is not supported yet!");
+        }
+    }
+
     public static CompiledData loadFile(String file, String output, boolean generate_x86_64_linux, boolean generate_porth) throws IOException, UnknownTypeException {
         boolean load = false;
         if(new File(file).exists()) {

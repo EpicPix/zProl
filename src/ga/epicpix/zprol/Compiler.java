@@ -622,6 +622,10 @@ public class Compiler {
         return new Object(objectToken.getObjectName(), data.resolveType(objectToken.getExtendsFrom()), fields, functions);
     }
 
+    public static void preCompile(ArrayList<Token> tokens) {
+        throw new NotImplementedException("Precompiling is not supported yet!");
+    }
+
     public static CompiledData compile(ArrayList<Token> tokens) throws UnknownTypeException {
         CompiledData data = new CompiledData();
         for(Token token : tokens) {
