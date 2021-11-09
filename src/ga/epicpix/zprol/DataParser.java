@@ -8,7 +8,7 @@ public class DataParser {
 
     public static final Pattern nonSpecialCharacters = Pattern.compile("[a-zA-Z0-9_]");
     public static final Pattern operatorCharacters = Pattern.compile("[+=/*\\-%<>!&]*");
-    public static final Pattern validLongWordCharacters = Pattern.compile("[a-zA-Z0-9_.+\\-]*");
+    public static final Pattern validLongWordCharacters = Pattern.compile("[a-zA-Z0-9_.+\\-@]*");
 
     private String data;
     private String fileName;
@@ -24,6 +24,25 @@ public class DataParser {
         this.fileName = fileName;
         this.lines = lines;
         data = String.join("\n", lines);
+    }
+
+    private int savedStart;
+    private int savedCurrentLine;
+    private int savedCurrentLineRow;
+    private ParserLocation savedLast;
+
+    public void saveLocation() {
+        savedStart = index;
+        savedCurrentLine = lineNumber;
+        savedCurrentLineRow = lineRow;
+        savedLast = lastLocation;
+    }
+
+    public void loadLocation() {
+        index = savedStart;
+        lineNumber = savedCurrentLine;
+        lineRow = savedCurrentLineRow;
+        lastLocation = savedLast;
     }
 
     public String[] getLines() {
@@ -55,26 +74,6 @@ public class DataParser {
             }
             index++;
         }
-    }
-
-    public String nextLine() {
-        ignoreWhitespace();
-        lastLocation = getLocation();
-        if(index >= data.length()) return null;
-        StringBuilder word = new StringBuilder();
-        char[] cdata = data.toCharArray();
-        while(index < cdata.length) {
-            if(cdata[index] == '\n') {
-                lineNumber++;
-                lineRow = 0;
-                index++;
-                break;
-            }
-            word.append(cdata[index]);
-            lineRow++;
-            index++;
-        }
-        return word.toString();
     }
 
     public String nextWord() {
@@ -164,7 +163,11 @@ public class DataParser {
             }
             boolean matches = validLongWordCharacters.matcher(cdata[index] + "").matches();
             if(!matches) {
-                return word.toString();
+                if(word.length() == 0) {
+                    return word.append(cdata[index++]).toString();
+                }else {
+                    return word.toString();
+                }
             }
             lineRow++;
             word.append(cdata[index]);
@@ -174,15 +177,9 @@ public class DataParser {
     }
 
     public String seekWord() {
-        int start = index;
-        int currentLine = lineNumber;
-        int currentLineRow = lineRow;
-        ParserLocation last = lastLocation;
+        saveLocation();
         String str = nextWord();
-        index = start;
-        lineNumber = currentLine;
-        lineRow = currentLineRow;
-        lastLocation = last;
+        loadLocation();
         return str;
     }
 

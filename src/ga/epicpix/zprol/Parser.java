@@ -6,6 +6,7 @@ import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.ImportToken;
 import ga.epicpix.zprol.tokens.KeywordToken;
+import ga.epicpix.zprol.tokens.LongWordToken;
 import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Parser {
 
@@ -39,6 +41,75 @@ public class Parser {
         while((word = parser.nextWord()) != null) {
             if(Language.KEYWORDS.contains(word)) {
                 tokens.add(new KeywordToken(word));
+                ArrayList<String[]> tok = Language.TOKENS.get(word);
+                if(tok != null) {
+                    boolean valid = false;
+                    ArrayList<Token> tTokens = new ArrayList<>();
+                    int i = 0;
+                    for(String[] t : tok) {
+                        tTokens.clear();
+                        parser.saveLocation();
+                        boolean v = true;
+                        for(String s : t) {
+                            if(s.equals("@lword@")) {
+                                String w = parser.nextLongWord();
+                                if(w == null) {
+                                    v = false;
+                                    if(i + 1 == tok.size()) {
+                                        throw new ParserException("Expected lword", parser);
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                tTokens.add(new LongWordToken(w));
+                            }else if(s.equals("@word@")) {
+                                String w = parser.nextWord();
+                                if(w == null) {
+                                    v = false;
+                                    if(i + 1 == tok.size()) {
+                                        throw new ParserException("Expected word", parser);
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                tTokens.add(new WordToken(w));
+                            }else if(s.equals("@line@")) {
+                                String w = parser.nextWord();
+                                if(!";".equals(w)) {
+                                    v = false;
+                                    if(i + 1 == tok.size()) {
+                                        throw new ParserException("Expected ';'", parser);
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                tTokens.add(new Token(TokenType.END_LINE));
+                            }else {
+                                String w = parser.nextWord();
+                                if(!s.equals(w)) {
+                                    v = false;
+                                    if(i + 1 == tok.size()) {
+                                        throw new ParserException("Expected " + s, parser);
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                tTokens.add(new WordToken(w));
+                            }
+                        }
+                        if(v) {
+                            valid = true;
+                            tokens.addAll(tTokens);
+                            break;
+                        }
+                        parser.loadLocation();
+                        i++;
+                    }
+
+                    if(!valid) {
+                        throw new ParserException("Expression is invalid", parser);
+                    }
+                }
             } else if(word.equals("structure")) {
                 tokens.add(parseStructure(parser));
             } else if(word.equals("object")) {

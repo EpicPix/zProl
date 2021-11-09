@@ -19,5 +19,7 @@ keyword internal
 keyword static
 keyword final
 
-tok import <lword>;
-tok import <lword> as <word>;
+tok import @lword@ ; @end@
+tok import @lword@ as @word@ ; @end@
+
+tok export @lword@ ; @end@
