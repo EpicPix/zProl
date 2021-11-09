@@ -1,7 +1,6 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.exceptions.ParserException;
-import ga.epicpix.zprol.tokens.ExportToken;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.KeywordToken;
@@ -151,13 +150,6 @@ public class Parser {
                 }
                 ops.add(new Token(TokenType.END_LINE));
                 tokens.add(new FieldToken(type, name, ops, new ArrayList<>(flags)));
-            } else if(word.equals("export")) {
-                String w = parser.nextLongWord();
-                if(!parser.seekWord().equals(";")) {
-                    throw new ParserException("Unexpected word '" + parser.nextWord() + "' expected ';'", parser);
-                }
-                parser.nextWord();
-                tokens.add(new ExportToken(w));
             } else if(ParserFlag.getFlag(word) != null) {
                 ParserFlag f = ParserFlag.getFlag(word);
                 if(!flags.contains(f)) {

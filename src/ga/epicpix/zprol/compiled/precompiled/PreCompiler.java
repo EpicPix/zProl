@@ -40,6 +40,12 @@ public class PreCompiler {
                         String name = ((WordToken) tokens.next()).word;
                         pre.imported.put(imported, name);
                     }
+                }else if(keyword.equals("export")) {
+                    String export = ((LongWordToken) tokens.next()).word;
+                    if(pre.exportName != null) {
+                        throw new RuntimeException("Exported file multiple times");
+                    }
+                    pre.exportName = export;
                 }
             }
         }
