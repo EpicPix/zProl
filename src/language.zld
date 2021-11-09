@@ -23,3 +23,5 @@ tok import @lword@ ; @end@
 tok import @lword@ as @word@ ; @end@
 
 tok export @lword@ ; @end@
+
+tok typedef @type@ @word@ ; @end@

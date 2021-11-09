@@ -49,7 +49,6 @@ import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
-import ga.epicpix.zprol.tokens.TypedefToken;
 import ga.epicpix.zprol.tokens.WordToken;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -649,9 +648,6 @@ public class Compiler {
                 data.addFunction(compileFunction(scopes, data, (FunctionToken) token, tokenIter));
             }else if(token.getType() == TokenType.FIELD) {
                 data.addField(compileField(scopes, data, (FieldToken) token, true));
-            }else if(token.getType() == TokenType.TYPEDEF) {
-                TypedefToken typedefToken = (TypedefToken) token;
-                data.addTypeDefinition(typedefToken.getToType(), data.resolveType(typedefToken.getFromType()));
             }
         }
         data.finishFutures();

@@ -14,7 +14,6 @@ import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
-import ga.epicpix.zprol.tokens.TypedefToken;
 import ga.epicpix.zprol.tokens.WordToken;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -68,6 +67,17 @@ public class Parser {
                                     v = false;
                                     if(i + 1 == tok.size()) {
                                         throw new ParserException("Expected word", parser);
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                tTokens.add(new WordToken(w));
+                            }else if(s.equals("@type@")) {
+                                String w = parser.nextType();
+                                if(w == null) {
+                                    v = false;
+                                    if(i + 1 == tok.size()) {
+                                        throw new ParserException("Expected type", parser);
                                     } else {
                                         break;
                                     }
@@ -127,13 +137,6 @@ public class Parser {
 
                 tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, new ArrayList<>()));
                 tokens.addAll(readFunctionCode(parser));
-            } else if(word.equals("typedef")) {
-                String fromType = parser.nextType();
-                String toType = parser.nextWord();
-                tokens.add(new TypedefToken(fromType, toType));
-                if(!parser.nextWord().equals(";")) {
-                    throw new ParserException("Expected ';' after typedef definition", parser);
-                }
             } else if(word.equals("field")) {
                 String type = parser.nextType();
                 String name = parser.nextWord();
