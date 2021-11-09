@@ -2,6 +2,7 @@ package ga.epicpix.zprol.compiled.precompiled;
 
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.tokens.KeywordToken;
+import ga.epicpix.zprol.tokens.LongWordToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.WordToken;
@@ -27,6 +28,18 @@ public class PreCompiler {
                         throw new RuntimeException("Redefined typedef definition");
                     }
                     pre.typedef.put(name, type);
+                }else if(keyword.equals("import")) {
+                    String imported = ((LongWordToken) tokens.next()).word;
+                    if(pre.imported.get(imported) != null) {
+                        throw new RuntimeException("Imported '" + imported + "' multiple times");
+                    }
+                    Token t = tokens.next();
+                    if(t.getType() == TokenType.END_LINE) {
+                        pre.imported.put(imported, imported);
+                    }else {
+                        String name = ((WordToken) tokens.next()).word;
+                        pre.imported.put(imported, name);
+                    }
                 }
             }
         }

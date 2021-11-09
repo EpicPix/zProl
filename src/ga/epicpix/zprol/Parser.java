@@ -4,7 +4,6 @@ import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.tokens.ExportToken;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
-import ga.epicpix.zprol.tokens.ImportToken;
 import ga.epicpix.zprol.tokens.KeywordToken;
 import ga.epicpix.zprol.tokens.LongWordToken;
 import ga.epicpix.zprol.tokens.NumberToken;
@@ -152,23 +151,6 @@ public class Parser {
                 }
                 ops.add(new Token(TokenType.END_LINE));
                 tokens.add(new FieldToken(type, name, ops, new ArrayList<>(flags)));
-            } else if(word.equals("import")) {
-                String w = parser.nextLongWord();
-                String imported = w;
-                if(parser.seekWord().equals(";")) {
-                    if(!DataParser.nonSpecialCharacters.matcher(w).matches()) {
-                        throw new ParserException("Invalid name \"" + w + "\" as a imported name, you need 'as' to import with this name", parser);
-                    }
-                }else if(parser.seekWord().equals("as")) {
-                    parser.nextWord();
-                    imported = parser.nextWord();
-                    if(!parser.nextWord().equals(";")) {
-                        throw new ParserException("Unexpected word '" + parser.nextWord() + "' after importing", parser);
-                    }
-                }else {
-                    throw new ParserException("Unexpected word '" + parser.nextWord() + "' expected ';' or 'as'", parser);
-                }
-                tokens.add(new ImportToken(w, imported));
             } else if(word.equals("export")) {
                 String w = parser.nextLongWord();
                 if(!parser.seekWord().equals(";")) {
