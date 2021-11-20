@@ -1,5 +1,0 @@
-function void _start() {
-    uint64 fd = syscall(2, "name", 0102, 0666);
-    syscall(1, fd, "example\n", 8);
-    syscall(3, fd);
-}
