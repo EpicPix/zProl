@@ -7,7 +7,6 @@ import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.generators.GeneratorAssembly;
-import ga.epicpix.zprol.generators.GeneratorPorth;
 import ga.epicpix.zprol.tokens.Token;
 import java.io.DataInputStream;
 import java.io.File;
@@ -29,7 +28,6 @@ public class Start {
         }
 
         boolean generate_x86_64_linux = false;
-        boolean generate_porth = false;
         String outputFile = null;
 
         ArrayList<String> files = new ArrayList<>();
@@ -39,9 +37,6 @@ public class Start {
             if(s.startsWith("-")) {
                 if(s.equals("-glinux64")) {
                     generate_x86_64_linux = true;
-                    continue;
-                } else if(s.equals("-gporth")) {
-                    generate_porth = true;
                     continue;
                 } else if(s.equals("-o")) {
                     if(outputFile != null) {
@@ -63,10 +58,10 @@ public class Start {
             throw new IllegalArgumentException("Files to compile not specified");
         }
         if(outputFile != null) {
-            compileFiles(files, outputFile, generate_x86_64_linux, generate_porth);
+            compileFiles(files, outputFile, generate_x86_64_linux);
         }else {
             for(String file : files) {
-                CompiledData data = loadFile(file, outputFile, generate_x86_64_linux, generate_porth);
+                CompiledData data = loadFile(file, outputFile, generate_x86_64_linux);
                 if(data == null) {
                     System.exit(1);
                     return;
@@ -75,7 +70,7 @@ public class Start {
         }
     }
 
-    public static void compileFiles(ArrayList<String> files, String output, boolean generate_x86_64_linux, boolean generate_porth) throws IOException, UnknownTypeException {
+    public static void compileFiles(ArrayList<String> files, String output, boolean generate_x86_64_linux) throws IOException, UnknownTypeException {
         ArrayList<PreCompiledData> preCompiled = new ArrayList<>();
         for(String file : files) {
             boolean load = false;
@@ -130,13 +125,9 @@ public class Start {
         if(generate_x86_64_linux) {
             throw new NotImplementedException("Generating x86-64 linux assembly from multiple compiled files is not supported yet!");
         }
-
-        if(generate_porth) {
-            throw new NotImplementedException("Generating x86-64 linux assembly from multiple compiled files is not supported yet!");
-        }
     }
 
-    public static CompiledData loadFile(String file, String output, boolean generate_x86_64_linux, boolean generate_porth) throws IOException, UnknownTypeException {
+    public static CompiledData loadFile(String file, String output, boolean generate_x86_64_linux) throws IOException, UnknownTypeException {
         boolean load = false;
         if(new File(file).exists()) {
             DataInputStream in = new DataInputStream(new FileInputStream(file));
@@ -188,13 +179,6 @@ public class Start {
             GeneratorAssembly.generate_x86_64_linux_assembly(zpil, new File(normalName + "_64linux.asm"));
             long gen_x86_64_linux_asm_end = System.currentTimeMillis();
             System.out.printf("[%s] Took %d ms to generate x86-64 linux assembly\n", file, gen_x86_64_linux_asm_end - gen_x86_64_linux_asm_start);
-        }
-
-        if(generate_porth) {
-            long gen_porth_start = System.currentTimeMillis();
-            GeneratorPorth.generate_porth(zpil, new File(normalName + ".porth"));
-            long gen_porth_end = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to generate porth\n", file, gen_porth_end - gen_porth_start);
         }
         return zpil;
     }
