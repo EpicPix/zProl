@@ -24,6 +24,15 @@ public class Language {
             String d = parser.nextWord();
             if(d.equals("keyword")) {
                 KEYWORDS.add(parser.nextWord());
+            } else if(d.equals("type")) {
+                String name = parser.nextWord();
+                boolean unsigned = Boolean.parseBoolean(parser.nextWord());
+                int size = Integer.parseInt(parser.nextWord());
+                int sizeId = (int) (Math.log(size) / Math.log(2));
+                char id = 0;
+                id |= sizeId & 3;              // 0000000000000011
+                id |= (unsigned ? 1 : 0) << 2; // 0000000000000100
+                System.out.println(name + " = " + (int) id);
             } else if(d.equals("tok")) {
                 String keyword = parser.nextWord();
                 if(!KEYWORDS.contains(keyword)) {
@@ -41,7 +50,7 @@ public class Language {
                 TOKENS.computeIfAbsent(keyword, k -> new ArrayList<>());
                 TOKENS.get(keyword).add(tokens.toArray(new String[0]));
             } else {
-                throw new ParserException("Unknown language file word", parser);
+                throw new ParserException("Unknown language file word: " + d, parser);
             }
         }
     }
