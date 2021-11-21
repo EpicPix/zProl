@@ -1,5 +1,6 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.ParserException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +11,7 @@ public class Language {
 
     public static final ArrayList<String> KEYWORDS = new ArrayList<>();
     public static final HashMap<String, ArrayList<String[]>> TOKENS = new HashMap<>();
+    public static final HashMap<String, Type> TYPES = new HashMap<>();
 
     public static void load(String fileName) throws IOException {
         InputStream in = Language.class.getClassLoader().getResourceAsStream(fileName);
@@ -32,7 +34,7 @@ public class Language {
                 char id = 0;
                 id |= sizeId & 3;              // 0000000000000011
                 id |= (unsigned ? 1 : 0) << 2; // 0000000000000100
-                System.out.println(name + " = " + (int) id);
+                TYPES.put(name, new Type(id));
             } else if(d.equals("tok")) {
                 String keyword = parser.nextWord();
                 if(!KEYWORDS.contains(keyword)) {
