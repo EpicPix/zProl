@@ -28,7 +28,7 @@ public class Type {
     }
 
     public int getSize() {
-        return id & 0b0000000000000011;
+        return (int) Math.pow(id & 0b0000000000000011, 2);
     }
 
 }
