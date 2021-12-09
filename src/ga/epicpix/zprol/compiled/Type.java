@@ -4,15 +4,18 @@ public class Type {
 
     public Types type;
     public final char id;
+    public final String name;
 
     @Deprecated
     public Type(Types type) {
         this.type = type;
         id = 0xffff;
+        name = null;
     }
 
-    public Type(char type) {
+    public Type(char type, String name) {
         id = type;
+        this.name = name;
     }
 
     public String toString() {
@@ -23,12 +26,15 @@ public class Type {
         return type.isNumberType();
     }
 
-    public boolean isUnsigned() {
-        return ((id & 0b0000000000000100) >> 2) == 1;
-    }
-
     public int getSize() {
-        return (int) Math.pow(id & 0b0000000000000011, 2);
+        return (int) Math.pow(id & 0b0000000000000111, 2) / 2;
     }
 
+    public boolean isUnsigned() {
+        return ((id & 0b0000000000001000) >> 3) == 1;
+    }
+
+    public boolean isPointer() {
+        return ((id & 0b0000000000010000) << 4) == 1;
+    }
 }

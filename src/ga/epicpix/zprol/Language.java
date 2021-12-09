@@ -37,8 +37,7 @@ public class Language {
                 id |= sizeId & 7;              // 0000000000000111
                 id |= (unsigned ? 1 : 0) << 3; // 0000000000001000
                 id |= (pointer ? 1 : 0) << 4;  // 0000000000010000
-                System.out.println(name + " = " + Integer.toBinaryString(id));
-                TYPES.put(name, new Type(id));
+                TYPES.put(name, new Type(id, name));
             } else if(d.equals("tok")) {
                 String keyword = parser.nextWord();
                 if(!KEYWORDS.contains(keyword)) {

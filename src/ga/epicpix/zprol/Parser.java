@@ -1,5 +1,7 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.compiled.Type;
+import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
@@ -12,6 +14,7 @@ import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
+import ga.epicpix.zprol.tokens.TypeToken;
 import ga.epicpix.zprol.tokens.WordToken;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,7 +39,13 @@ public class Parser {
         ArrayList<ParserFlag> flags = new ArrayList<>();
         String word;
         while((word = parser.nextWord()) != null) {
-            if(Language.KEYWORDS.contains(word)) {
+            if(Language.TYPES.get(word) != null) {
+                Type type = Language.TYPES.get(word);
+                if(type.isPointer()) {
+                    throw new ParserException("Parsing pointers is not implemented", parser);
+                }
+                tokens.add(new TypeToken(type));
+            }else if(Language.KEYWORDS.contains(word)) {
                 tokens.add(new KeywordToken(word));
                 ArrayList<String[]> tok = Language.TOKENS.get(word);
                 if(tok != null) {
