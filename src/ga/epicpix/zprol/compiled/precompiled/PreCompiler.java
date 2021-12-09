@@ -1,10 +1,12 @@
 package ga.epicpix.zprol.compiled.precompiled;
 
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.tokens.KeywordToken;
 import ga.epicpix.zprol.tokens.LongWordToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
+import ga.epicpix.zprol.tokens.TypeToken;
 import ga.epicpix.zprol.tokens.WordToken;
 import java.util.ArrayList;
 
@@ -28,6 +30,7 @@ public class PreCompiler {
                         throw new RuntimeException("Redefined typedef definition");
                     }
                     pre.typedef.put(name, type);
+                    if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
                 }else if(keyword.equals("import")) {
                     String imported = ((LongWordToken) tokens.next()).word;
                     if(pre.imported.get(imported) != null) {
@@ -39,6 +42,7 @@ public class PreCompiler {
                     }else {
                         String name = ((WordToken) tokens.next()).word;
                         pre.imported.put(imported, name);
+                        if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
                     }
                 }else if(keyword.equals("export")) {
                     String export = ((LongWordToken) tokens.next()).word;
@@ -46,7 +50,16 @@ public class PreCompiler {
                         throw new RuntimeException("Exported file multiple times");
                     }
                     pre.exportName = export;
+                    if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
+                }else if(keyword.equals("function")) {
+                    Type type = ((TypeToken) tokens.next()).type();
+                    String name = ((WordToken) tokens.next()).word;
+
+                }else {
+                    System.out.println("keyword: " + keyword);
                 }
+            }else {
+                System.out.println("token: " + token);
             }
         }
 
