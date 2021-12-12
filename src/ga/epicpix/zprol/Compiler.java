@@ -38,6 +38,7 @@ import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
 import ga.epicpix.zprol.compiled.TypeNamed;
 import ga.epicpix.zprol.compiled.operation.Operation;
+import ga.epicpix.zprol.compiled.precompiled.PreCompiler;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
@@ -623,6 +624,8 @@ public class Compiler {
     }
 
     public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {
+        ArrayList<PreCompiledData> imported = new ArrayList<>();
+        for(PreCompiledData o : other) if(preCompiled.imported.containsKey(o.exportName)) imported.add(o);
         throw new NotImplementedException("Compiling using precompiled data is not yet supported!");
     }
 
