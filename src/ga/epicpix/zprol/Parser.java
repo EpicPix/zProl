@@ -1,5 +1,6 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.DataParser.SavedLocation;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.tokens.FieldToken;
@@ -52,6 +53,46 @@ public class Parser {
         return true;
     }
 
+    public static boolean check(String[] t, DataParser parser, boolean last, ArrayList<Token> tTokens) {
+        for(String s : t) {
+            if(s.equals("@lword@")) {if(!checkToken("long word", parser, DataParser::nextLongWord, LongWordToken::new, last, tTokens)) return false; }
+            else if(s.equals("@word@")) {if(!checkToken("word", parser, DataParser::nextWord, WordToken::new, last, tTokens)) return false; }
+            else if(s.equals("@type@")) {if(!checkToken("type", parser, DataParser::nextType, WordToken::new, last, tTokens)) return false; }
+            else if(s.equals("%;%")) {if(!checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), last, tTokens)) return false; }
+            else if(s.equals("%,%")) {if(!checkToken(",", parser, (data) -> new Token(TokenType.COMMA), last, tTokens)) return false; }
+            else if(s.equals("%(%")) {if(!checkToken("(", parser, (data) -> new Token(TokenType.OPEN), last, tTokens)) return false; }
+            else if(s.equals("%)%")) {if(!checkToken(")", parser, (data) -> new Token(TokenType.CLOSE), last, tTokens)) return false; }
+            else {
+                if(s.startsWith("^")) {
+                    String[] def = Language.DEFINES.get(s.substring(s.substring(1).startsWith("+") ? 2 : 1));
+                    if(s.substring(1).startsWith("+")) {
+                        if(!check(def, parser, last, tTokens)) {
+                            return false;
+                        }
+                        while(true) {
+                            SavedLocation location = parser.getSaveLocation();
+                            boolean success = false;
+                            try {
+                                if(!check(def, parser, last, tTokens)) success = false;
+                            } catch(ParserException e) {
+                                success = false;
+                            }
+                            if(!success) {
+                                parser.loadLocation(location);
+                                break;
+                            }
+                        }
+                    }else {
+                        if(!check(def, parser, last, tTokens)) {
+                            return false;
+                        }
+                    }
+                }else if(!checkToken(s, parser, WordToken::new, last, tTokens)) return false;
+            }
+        }
+        return true;
+    }
+
     public static ArrayList<Token> tokenize(String fileName) throws IOException {
         File file = new File(fileName);
         if(!file.exists()) {
@@ -81,17 +122,7 @@ public class Parser {
                     for(String[] t : tok) {
                         tTokens.clear();
                         parser.saveLocation();
-                        boolean v = true;
-                        for(String s : t) {
-                            if(s.equals("@lword@")) {if(!(v = checkToken("long word", parser, DataParser::nextLongWord, LongWordToken::new, i + 1 == tok.size(), tTokens))) break; }
-                            else if(s.equals("@word@")) {if(!(v = checkToken("word", parser, DataParser::nextWord, WordToken::new, i + 1 == tok.size(), tTokens))) break; }
-                            else if(s.equals("@type@")) {if(!(v = checkToken("type", parser, DataParser::nextType, WordToken::new, i + 1 == tok.size(), tTokens))) break; }
-                            else if(s.equals("%;%")) {if(!(v = checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), i + 1 == tok.size(), tTokens))) break; }
-                            else if(s.equals("%(%")) {if(!(v = checkToken("(", parser, (data) -> new Token(TokenType.OPEN), i + 1 == tok.size(), tTokens))) break; }
-                            else if(s.equals("%)%")) {if(!(v = checkToken(")", parser, (data) -> new Token(TokenType.CLOSE), i + 1 == tok.size(), tTokens))) break; }
-                            else if(!checkToken(s, parser, WordToken::new, i + 1 == tok.size(), tTokens)) break;
-                        }
-                        if(v) {
+                        if(check(t, parser, i + 1 == tok.size(), tTokens)) {
                             valid = true;
                             tokens.addAll(tTokens);
                             break;

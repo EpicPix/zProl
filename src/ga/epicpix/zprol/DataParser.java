@@ -2,6 +2,7 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.exceptions.ParserException;
 import java.util.ArrayList;
+import java.util.Stack;
 import java.util.regex.Pattern;
 
 public class DataParser {
@@ -26,23 +27,37 @@ public class DataParser {
         data = String.join("\n", lines);
     }
 
-    private int savedStart;
-    private int savedCurrentLine;
-    private int savedCurrentLineRow;
-    private ParserLocation savedLast;
+    public static class SavedLocation {
+        private int savedStart;
+        private int savedCurrentLine;
+        private int savedCurrentLineRow;
+        private ParserLocation savedLast;
+    }
+
+    private final Stack<SavedLocation> locationStack = new Stack<>();
+
+    public SavedLocation getSaveLocation() {
+        SavedLocation savedLocation = new SavedLocation();
+        savedLocation.savedStart = index;
+        savedLocation.savedCurrentLine = lineNumber;
+        savedLocation.savedCurrentLineRow = lineRow;
+        savedLocation.savedLast = lastLocation;
+        return savedLocation;
+    }
+
+    public void loadLocation(SavedLocation savedLocation) {
+        index = savedLocation.savedStart;
+        lineNumber = savedLocation.savedCurrentLine;
+        lineRow = savedLocation.savedCurrentLineRow;
+        lastLocation = savedLocation.savedLast;
+    }
 
     public void saveLocation() {
-        savedStart = index;
-        savedCurrentLine = lineNumber;
-        savedCurrentLineRow = lineRow;
-        savedLast = lastLocation;
+        locationStack.push(getSaveLocation());
     }
 
     public void loadLocation() {
-        index = savedStart;
-        lineNumber = savedCurrentLine;
-        lineRow = savedCurrentLineRow;
-        lastLocation = savedLast;
+        loadLocation(locationStack.pop());
     }
 
     public String[] getLines() {

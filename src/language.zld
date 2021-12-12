@@ -38,4 +38,9 @@ tok export @lword@ ; @end@
 
 tok typedef @type@ @word@ ; @end@
 
-tok function @type@ @word@ ( )
+define parameter @type@ @word@ @end@
+define parameterc @type@ @word@ , @end@
+
+tok function @type@ @word@ ( ) @end@
+tok function @type@ @word@ ( ^parameter ) @end@
+tok function @type@ @word@ ( ^+parameterc ^parameter ) @end@

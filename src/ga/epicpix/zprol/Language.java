@@ -10,8 +10,19 @@ import java.util.HashMap;
 public class Language {
 
     public static final ArrayList<String> KEYWORDS = new ArrayList<>();
+    public static final HashMap<String, String[]> DEFINES = new HashMap<>();
     public static final HashMap<String, ArrayList<String[]>> TOKENS = new HashMap<>();
     public static final HashMap<String, Type> TYPES = new HashMap<>();
+
+    private static String convert(String w, DataParser parser) {
+        if(w.startsWith("\\")) return w.substring(1);
+        else if(w.equals("^")) return "^" + parser.nextLongWord();
+        else if(w.equals(";")) return "%;%";
+        else if(w.equals(",")) return "%,%";
+        else if(w.equals("(")) return "%(%";
+        else if(w.equals(")")) return "%)%";
+        return w;
+    }
 
     public static void load(String fileName) throws IOException {
         InputStream in = Language.class.getClassLoader().getResourceAsStream(fileName);
@@ -46,11 +57,25 @@ public class Language {
                 ArrayList<String> tokens = new ArrayList<>();
                 String w;
                 while(!"@end@".equals(w = parser.nextLongWord()) && w != null) {
+                    tokens.add(convert(w, parser));
+                }
+                TOKENS.computeIfAbsent(keyword, k -> new ArrayList<>());
+                TOKENS.get(keyword).add(tokens.toArray(new String[0]));
+            } else if(d.equals("define")) {
+                String name = parser.nextWord();
+                if(DEFINES.get(name) != null) throw new ParserException("Define already defined: " + name, parser);
+                ArrayList<String> tokens = new ArrayList<>();
+                String w;
+                while(!"@end@".equals(w = parser.nextLongWord()) && w != null) {
                     if(w.startsWith("\\")) {
                         tokens.add(w.substring(1));
                     }else {
-                        if(w.equals(";")) {
+                        if(w.equals("^")) {
+                            tokens.add("^" + parser.nextLongWord());
+                        } else if(w.equals(";")) {
                             tokens.add("%;%");
+                        } else if(w.equals(",")) {
+                            tokens.add("%,%");
                         } else if(w.equals("(")) {
                             tokens.add("%(%");
                         } else if(w.equals(")")) {
@@ -60,8 +85,7 @@ public class Language {
                         }
                     }
                 }
-                TOKENS.computeIfAbsent(keyword, k -> new ArrayList<>());
-                TOKENS.get(keyword).add(tokens.toArray(new String[0]));
+                DEFINES.put(name, tokens.toArray(new String[0]));
             } else {
                 throw new ParserException("Unknown language file word: " + d, parser);
             }
