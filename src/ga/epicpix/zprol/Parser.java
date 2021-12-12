@@ -1,7 +1,6 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.Type;
-import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
@@ -22,9 +21,36 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Parser {
+
+    private interface TokenGenerator {
+        Token generate(String data);
+    }
+
+    private interface TokenReader {
+        String read(DataParser parser);
+    }
+
+    private static boolean checkToken(String friendlyName, DataParser parser, TokenReader reader, TokenGenerator generator, boolean last, ArrayList<Token> tTokens) {
+        String w = reader.read(parser);
+        if(w == null) {
+            if(last) throw new ParserException("Expected " + friendlyName, parser);
+            else return false;
+        }
+        tTokens.add(generator.generate(w));
+        return true;
+    }
+
+    private static boolean checkToken(String check, DataParser parser, TokenGenerator generator, boolean last, ArrayList<Token> tTokens) {
+        String w = parser.nextWord();
+        if(!check.equals(w)) {
+            if(last) throw new ParserException("Expected '" + check + "'", parser);
+            else return false;
+        }
+        tTokens.add(generator.generate(w));
+        return true;
+    }
 
     public static ArrayList<Token> tokenize(String fileName) throws IOException {
         File file = new File(fileName);
@@ -57,84 +83,13 @@ public class Parser {
                         parser.saveLocation();
                         boolean v = true;
                         for(String s : t) {
-                            if(s.equals("@lword@")) {
-                                String w = parser.nextLongWord();
-                                if(w == null) {
-                                    v = false;
-                                    if(i + 1 == tok.size()) {
-                                        throw new ParserException("Expected lword", parser);
-                                    } else {
-                                        break;
-                                    }
-                                }
-                                tTokens.add(new LongWordToken(w));
-                            }else if(s.equals("@word@")) {
-                                String w = parser.nextWord();
-                                if(w == null) {
-                                    v = false;
-                                    if(i + 1 == tok.size()) {
-                                        throw new ParserException("Expected word", parser);
-                                    } else {
-                                        break;
-                                    }
-                                }
-                                tTokens.add(new WordToken(w));
-                            }else if(s.equals("@type@")) {
-                                String w = parser.nextType();
-                                if(w == null) {
-                                    v = false;
-                                    if(i + 1 == tok.size()) {
-                                        throw new ParserException("Expected type", parser);
-                                    } else {
-                                        break;
-                                    }
-                                }
-                                tTokens.add(new WordToken(w));
-                            }else if(s.equals("%;%")) {
-                                String w = parser.nextWord();
-                                if(!";".equals(w)) {
-                                    v = false;
-                                    if(i + 1 == tok.size()) {
-                                        throw new ParserException("Expected ';'", parser);
-                                    } else {
-                                        break;
-                                    }
-                                }
-                                tTokens.add(new Token(TokenType.END_LINE));
-                            }else if(s.equals("%(%")) {
-                                String w = parser.nextWord();
-                                if(!"(".equals(w)) {
-                                    v = false;
-                                    if(i + 1 == tok.size()) {
-                                        throw new ParserException("Expected '('", parser);
-                                    } else {
-                                        break;
-                                    }
-                                }
-                                tTokens.add(new Token(TokenType.OPEN));
-                            }else if(s.equals("%)%")) {
-                                String w = parser.nextWord();
-                                if(!")".equals(w)) {
-                                    v = false;
-                                    if(i + 1 == tok.size()) {
-                                        throw new ParserException("Expected ')'", parser);
-                                    } else {
-                                        break;
-                                    }
-                                }
-                                tTokens.add(new Token(TokenType.CLOSE));
-                            }else {
-                                String w = parser.nextWord();
-                                if(!s.equals(w)) {
-                                    v = false;
-                                    if(i + 1 == tok.size()) {
-                                        throw new ParserException("Expected " + s, parser);
-                                    } else {
-                                        break;
-                                    }
-                                }
-                                tTokens.add(new WordToken(w));
-                            }
+                            if(s.equals("@lword@")) {if(!(v = checkToken("long word", parser, DataParser::nextLongWord, LongWordToken::new, i + 1 == tok.size(), tTokens))) break; }
+                            else if(s.equals("@word@")) {if(!(v = checkToken("word", parser, DataParser::nextWord, WordToken::new, i + 1 == tok.size(), tTokens))) break; }
+                            else if(s.equals("@type@")) {if(!(v = checkToken("type", parser, DataParser::nextType, WordToken::new, i + 1 == tok.size(), tTokens))) break; }
+                            else if(s.equals("%;%")) {if(!(v = checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), i + 1 == tok.size(), tTokens))) break; }
+                            else if(s.equals("%(%")) {if(!(v = checkToken("(", parser, (data) -> new Token(TokenType.OPEN), i + 1 == tok.size(), tTokens))) break; }
+                            else if(s.equals("%)%")) {if(!(v = checkToken(")", parser, (data) -> new Token(TokenType.CLOSE), i + 1 == tok.size(), tTokens))) break; }
+                            else if(!checkToken(s, parser, WordToken::new, i + 1 == tok.size(), tTokens)) break;
                         }
                         if(v) {
                             valid = true;
