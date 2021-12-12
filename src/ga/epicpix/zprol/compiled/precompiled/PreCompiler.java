@@ -52,9 +52,9 @@ public class PreCompiler {
                     pre.exportName = export;
                     if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
                 }else if(keyword.equals("function")) {
-                    Type type = ((TypeToken) tokens.next()).type();
+                    String type = ((WordToken) tokens.next()).word;
                     String name = ((WordToken) tokens.next()).word;
-
+                    System.out.println(tokens.next());
                 }else {
                     System.out.println("keyword: " + keyword);
                 }

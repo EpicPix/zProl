@@ -90,7 +90,7 @@ public class Parser {
                                     }
                                 }
                                 tTokens.add(new WordToken(w));
-                            }else if(s.equals("@line@")) {
+                            }else if(s.equals("%;%")) {
                                 String w = parser.nextWord();
                                 if(!";".equals(w)) {
                                     v = false;
@@ -101,6 +101,28 @@ public class Parser {
                                     }
                                 }
                                 tTokens.add(new Token(TokenType.END_LINE));
+                            }else if(s.equals("%(%")) {
+                                String w = parser.nextWord();
+                                if(!"(".equals(w)) {
+                                    v = false;
+                                    if(i + 1 == tok.size()) {
+                                        throw new ParserException("Expected '('", parser);
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                tTokens.add(new Token(TokenType.OPEN));
+                            }else if(s.equals("%)%")) {
+                                String w = parser.nextWord();
+                                if(!")".equals(w)) {
+                                    v = false;
+                                    if(i + 1 == tok.size()) {
+                                        throw new ParserException("Expected ')'", parser);
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                tTokens.add(new Token(TokenType.CLOSE));
                             }else {
                                 String w = parser.nextWord();
                                 if(!s.equals(w)) {

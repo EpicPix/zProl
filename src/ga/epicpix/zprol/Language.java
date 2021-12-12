@@ -46,10 +46,18 @@ public class Language {
                 ArrayList<String> tokens = new ArrayList<>();
                 String w;
                 while(!"@end@".equals(w = parser.nextLongWord()) && w != null) {
-                    if(w.equals(";")) {
-                        tokens.add("@line@");
+                    if(w.startsWith("\\")) {
+                        tokens.add(w.substring(1));
                     }else {
-                        tokens.add(w);
+                        if(w.equals(";")) {
+                            tokens.add("%;%");
+                        } else if(w.equals("(")) {
+                            tokens.add("%(%");
+                        } else if(w.equals(")")) {
+                            tokens.add("%)%");
+                        } else {
+                            tokens.add(w);
+                        }
                     }
                 }
                 TOKENS.computeIfAbsent(keyword, k -> new ArrayList<>());
