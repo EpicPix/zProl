@@ -92,6 +92,11 @@ public class Compiler {
                         else throw new RuntimeException("Size " + size + " is not supported");
                     } else throw new RuntimeException("Tried to return a value while the method is void");
                     break;
+                }else if(parsed.name.equals("Call")) {
+                    mathCompiler.reset();
+                    convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, new SeekIterator<>(parsed.tokens)), false, null);
+                }else {
+                    throw new RuntimeException("Not implemented language feature: " + parsed.name + " / " + parsed.tokens);
                 }
             }else if(token.getType() == TokenType.WORD) {
                 WordToken w = (WordToken) token;

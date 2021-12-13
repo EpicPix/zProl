@@ -46,7 +46,8 @@ public class OperationCompiler {
                 call = true;
                 if(tokens.seek().getType() != TokenType.CLOSE) {
                     ArrayList<Operation> op = new ArrayList<>();
-                    compile0(2, op, new Stack<>(), tokens, data);
+                    if(tokens.seek().getType() == TokenType.EQUATION) compile0(2, op, new Stack<>(), new SeekIterator<>(tokens.next().asEquationToken().tokens), data);
+                    else compile0(2, op, new Stack<>(), tokens, data);
                     params.add(op.get(0));
                 }else {
                     tokens.next();
@@ -54,7 +55,8 @@ public class OperationCompiler {
                 }
             }else if(token.getType() == TokenType.COMMA && call) {
                 ArrayList<Operation> op = new ArrayList<>();
-                compile0(2, op, new Stack<>(), tokens, data);
+                if(tokens.seek().getType() == TokenType.EQUATION) compile0(2, op, new Stack<>(), new SeekIterator<>(tokens.next().asEquationToken().tokens), data);
+                else compile0(2, op, new Stack<>(), tokens, data);
                 params.add(op.get(0));
             }else if(token.getType() == TokenType.COMMA) {
                 tokens.back();

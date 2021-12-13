@@ -53,6 +53,6 @@ tok ReturnValue return @equation@ ; @end@
 
 tok Structure structure @word@ { ^+structurein } @end@
 
-tok CallEmpty @word@ ( ) ; @end@
-tok CallParameters @word@ ( ^callparameter ) ; @end@
-tok CallParameters @word@ ( ^+callparameterc ^callparameter ) ; @end@
+tok Call @word@ ( ) ; @end@
+tok Call @word@ ( ^callparameter ) ; @end@
+tok Call @word@ ( ^+callparameterc ^callparameter ) ; @end@

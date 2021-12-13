@@ -296,7 +296,7 @@ public class Parser {
             SavedLocation loc = parser.getSaveLocation();
             current = nextToken(parser);
             if(current.getType() == TokenType.OPEN) open++;
-            if((current.getType() == TokenType.END_LINE || current.getType() == TokenType.CLOSE) && open <= 0) {
+            if(!(current.getType() == TokenType.WORD || current.getType() == TokenType.OPERATOR || current.getType() == TokenType.NUMBER || current.getType() == TokenType.STRING) && open <= 0) {
                 parser.loadLocation(loc);
                 break;
             }
