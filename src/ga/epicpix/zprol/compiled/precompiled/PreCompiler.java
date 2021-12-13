@@ -15,9 +15,9 @@ import java.util.ArrayList;
 public class PreCompiler {
 
     public static PreCompiledData preCompile(ArrayList<Token> pTokens) {
-        System.out.println(" *** Tokens *** ");
-        System.out.println(Token.toFriendlyString(pTokens));
-        System.out.println(" *** Tokens *** ");
+//        System.out.println(" *** Tokens *** ");
+//        System.out.println(Token.toFriendlyString(pTokens));
+//        System.out.println(" *** Tokens *** ");
         PreCompiledData pre = new PreCompiledData();
 
         SeekIterator<Token> tokens = new SeekIterator<>(pTokens);
@@ -58,9 +58,10 @@ public class PreCompiler {
                     func.returnType = ((WordToken) tokens.next()).word;
                     func.name = ((WordToken) tokens.next()).word;
                     if(tokens.next().getType() != TokenType.OPEN) throw new RuntimeException("A processing error has occurred");
-                    while(tokens.seek().getType() != TokenType.CLOSE) {
+                    Token tx;
+                    while((tx = tokens.next()).getType() != TokenType.CLOSE) {
                         PreParameter param = new PreParameter();
-                        param.type = ((WordToken) tokens.next()).word;
+                        param.type = ((WordToken) tx).word;
                         param.name = ((WordToken) tokens.next()).word;
                         if(tokens.seek().getType() == TokenType.COMMA) tokens.next();
                         func.parameters.add(param);

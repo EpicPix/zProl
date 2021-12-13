@@ -7,7 +7,7 @@ structure abc {
 }
 
 function void _start() {
-    hw.hello_world();
+    //hw.hello_world();
 }
 
 function void func0() {}

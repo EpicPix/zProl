@@ -13,6 +13,7 @@ import ga.epicpix.zprol.compiled.operation.Operation.OperationField;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationNumber;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationString;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.tokens.EquationToken;
 import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.StringToken;
@@ -76,7 +77,7 @@ public class OperationCompiler {
 
     public void compile0(int type, ArrayList<Operation> operations, Stack<ArrayList<Operation>> stackOperations, SeekIterator<Token> tokens, CompiledData data) {
         Token token;
-        while(true) {
+        while(tokens.hasNext()) {
             if((tokens.seek().getType() == TokenType.COMMA || tokens.seek().getType() == TokenType.CLOSE) && type == 2) {
                 return;
             }
@@ -161,10 +162,14 @@ public class OperationCompiler {
         }
     }
 
-    public Operation compile(CompiledData data, Bytecode bytecode, SeekIterator<Token> tokens) {
+    public Operation compile(CompiledData data, SeekIterator<Token> tokens) {
         ArrayList<Operation> operations = new ArrayList<>();
         Stack<ArrayList<Operation>> stackOperations = new Stack<>();
-        compile0(0, operations, stackOperations, tokens, data);
+        if(tokens.seek() instanceof EquationToken) {
+            compile0(0, operations, stackOperations, new SeekIterator<>(((EquationToken) tokens.next()).tokens), data);
+        }else {
+            compile0(0, operations, stackOperations, tokens, data);
+        }
         if(Boolean.parseBoolean(System.getProperty("DEBUG"))) {
             System.out.println(operations);
             printOperations(operations.get(0));

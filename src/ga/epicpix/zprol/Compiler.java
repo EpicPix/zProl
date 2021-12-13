@@ -38,6 +38,8 @@ import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
 import ga.epicpix.zprol.compiled.TypeNamed;
 import ga.epicpix.zprol.compiled.operation.Operation;
+import ga.epicpix.zprol.compiled.precompiled.PreFunction;
+import ga.epicpix.zprol.compiled.precompiled.PreParameter;
 import ga.epicpix.zprol.compiled.precompiled.PreStructure;
 import ga.epicpix.zprol.compiled.precompiled.PreStructureField;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
@@ -46,6 +48,7 @@ import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
+import ga.epicpix.zprol.tokens.KeywordToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.Token;
@@ -64,21 +67,21 @@ public class Compiler {
         for(TypeNamed param : sig.parameters) {
             bytecode.getCurrentScope().defineLocalVariable(param.name, param.type);
         }
+        bytecode.newScope();
         int opens = 0;
         Stack<CompileOperation> operations = new Stack<>();
         Token token;
-        while((token = tokens.next()).getType() != TokenType.END_FUNCTION || opens != 0) {
-            if(token.getType() == TokenType.WORD) {
-                WordToken w = (WordToken) token;
-                if(w.word.equals("return")) {
+        while(true) {
+            token = tokens.next();
+            if(token.getType() == TokenType.KEYWORD) {
+                String keyword = ((KeywordToken) token).keyword;
+                if("return".equals(keyword)) {
                     if(sig.returnType.type.memorySize == 0) {
-                        if(tokens.next().getType() != TokenType.END_LINE) {
-                            throw new RuntimeException("Missing ';'");
-                        }
+                        if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
                         bytecode.pushInstruction(BytecodeInstructions.RETURN);
                     }else {
                         mathCompiler.reset();
-                        convertOperationToBytecode(scopes, sig.returnType.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens), true, sig.returnType);
+                        convertOperationToBytecode(scopes, sig.returnType.type, bytecode, data, mathCompiler.compile(data, tokens), true, sig.returnType);
                         int size = sig.returnType.type.memorySize;
                         if(size == 1) bytecode.pushInstruction(BytecodeInstructions.RETURN8);
                         else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.RETURN16);
@@ -86,7 +89,13 @@ public class Compiler {
                         else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.RETURN64);
                         else throw new RuntimeException("Size " + size + " is not supported");
                     }
-                }else if(w.word.equals("if")) {
+                    break;
+                } else {
+                    throw new NotImplementedException("Unimplemented keyword: " + keyword);
+                }
+            }else if(token.getType() == TokenType.WORD) {
+                WordToken w = (WordToken) token;
+                if(w.word.equals("if")) {
                     if(tokens.next().getType() != TokenType.OPEN) {
                         throw new RuntimeException("Missing '('");
                     }
@@ -129,7 +138,7 @@ public class Compiler {
                             if(token.getType() == TokenType.OPERATOR) {
                                 if(((OperatorToken) token).operator.equals("=")) {
                                     mathCompiler.reset();
-                                    convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, bytecode, tokens), true, type);
+                                    convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, tokens), true, type);
                                     int size = type.type.memorySize;
                                     short index = (short) lVar.index;
                                     if(size == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
@@ -147,17 +156,21 @@ public class Compiler {
                     } catch (UnknownTypeException unkType) {
                         tokens.setIndex(startIndex);
                         mathCompiler.reset();
-                        convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, bytecode, tokens), false, null);
+                        convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, tokens), false, null);
                     }
                 }
             }else {
-                if(token.getType() == TokenType.OPEN) {
+                if(token.getType() == TokenType.OPEN_SCOPE) {
                     opens++;
                     bytecode.newScope();
                     continue;
-                }else if(token.getType() == TokenType.CLOSE) {
+                }else if(token.getType() == TokenType.CLOSE_SCOPE) {
                     opens--;
                     bytecode.leaveScope();
+                    if(opens == 0) {
+                        bytecode.leaveScope();
+                        break;
+                    }
                     if(operations.size() != 0) {
                         CompileOperation i = operations.pop();
                         short s = (short) i.instruction.data[0];
@@ -551,18 +564,18 @@ public class Compiler {
         return num.compareTo(lowest) >= 0 && highest.compareTo(num) >= 0;
     }
 
-    public static Function compileFunction(ArrayList<Scope> scopes, CompiledData data, FunctionToken functionToken, SeekIterator<Token> tokens) throws UnknownTypeException {
-        ArrayList<Flag> flags = convertFlags(functionToken.flags);
-        Type returnType = data.resolveType(functionToken.returnType);
+    public static void compileFunction(ArrayList<Scope> scopes, CompiledData data, PreFunction function) throws UnknownTypeException {
+//        ArrayList<Flag> flags = convertFlags(function.flags);
+        Type returnType = data.resolveType(function.returnType);
         ArrayList<TypeNamed> parameters = new ArrayList<>();
-        for(ParameterDataType param : functionToken.parameters) {
+        for(PreParameter param : function.parameters) {
             parameters.add(new TypeNamed(data.resolveType(param.type), param.name));
         }
         TypeFunctionSignatureNamed signature = new TypeFunctionSignatureNamed(returnType, parameters.toArray(new TypeNamed[0]));
-        if(flags.contains(Flag.NO_IMPLEMENTATION)) {
-            return new Function(functionToken.name, signature, flags, null);
-        }
-        return new Function(functionToken.name, signature, flags, parseFunctionCode(scopes, data, tokens, signature));
+//        if(flags.contains(Flag.NO_IMPLEMENTATION)) {
+//            data.addFunction(new Function(function.name, signature, flags, null));
+//        }
+        data.addFunction(new Function(function.name, signature, new ArrayList<>(), parseFunctionCode(scopes, data, new SeekIterator<>(function.code), signature)));
     }
 
     public static void compileStructure(CompiledData data, PreStructure structure) throws UnknownTypeException {
@@ -595,7 +608,7 @@ public class Compiler {
             Function func = data.getInitFunction();
             Bytecode bytecode = func.code;
             if(field.ops.size() != 1) {
-                Operation op = new OperationCompiler().compile(data, bytecode, new SeekIterator<>(field.ops));
+                Operation op = new OperationCompiler().compile(data, new SeekIterator<>(field.ops));
                 convertOperationToBytecode(scopes, type.type, bytecode, data, op, true, type);
                 int psize = type.type.memorySize;
                 if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD8, (short) data.getFields().size());
@@ -617,7 +630,7 @@ public class Compiler {
                 FieldToken fieldToken = (FieldToken) currentToken;
                 fields.add(compileField(scopes, data, fieldToken, false));
             }else if(currentToken.getType() == TokenType.FUNCTION) {
-                functions.add(compileFunction(scopes, data, (FunctionToken) currentToken, tokens));
+//                compileFunction(scopes, data, (FunctionToken) currentToken, tokens);
             }
         }
         return new Object(objectToken.getObjectName(), data.resolveType(objectToken.getExtendsFrom()), fields, functions);
@@ -630,6 +643,7 @@ public class Compiler {
         CompiledData data = new CompiledData();
 //        data.importData(imported); //TODO: Add  CompiledData.importData(PreCompiledData...)  method
         for(PreStructure structure : preCompiled.structures.values()) compileStructure(data, structure);
+        for(PreFunction function : preCompiled.functions) compileFunction(new ArrayList<>(), data, function);
         return data;
     }
 
@@ -643,7 +657,7 @@ public class Compiler {
             if(token.getType() == TokenType.OBJECT) {
                 data.addObject(compileObject(scopes, data, (ObjectToken) token, tokenIter));
             }else if(token.getType() == TokenType.FUNCTION) {
-                data.addFunction(compileFunction(scopes, data, (FunctionToken) token, tokenIter));
+//                compileFunction(scopes, data, (FunctionToken) token, tokenIter);
             }else if(token.getType() == TokenType.FIELD) {
                 data.addField(compileField(scopes, data, (FieldToken) token, true));
             }
