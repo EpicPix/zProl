@@ -2,6 +2,7 @@ package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.DataParser;
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.compiled.ConstantPoolEntry.FunctionEntry;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
@@ -29,6 +30,20 @@ public class CompiledData {
     private final ArrayList<Function> functions = new ArrayList<>();
     private final ArrayList<ObjectField> fields = new ArrayList<>();
     private final HashMap<String, Type> typedef = new HashMap<>();
+    private final ArrayList<ConstantPoolEntry> constantPool = new ArrayList<>();
+
+    public short getFunctionIndex(Function func) {
+        for(short i = 0; i<constantPool.size(); i++) {
+            if(constantPool.get(i) instanceof FunctionEntry) {
+                FunctionEntry e = (FunctionEntry) constantPool.get(i);
+                if(e.getName().equals(func.name) && e.getSignature().validateFunctionSignature(func.signature.getNormalSignature())) {
+                    return i;
+                }
+            }
+        }
+        constantPool.add(new FunctionEntry(func));
+        return (short) (constantPool.size() - 1);
+    }
 
     public ArrayList<Structure> getStructures() {
         return new ArrayList<>(structures);
@@ -248,8 +263,13 @@ public class CompiledData {
         DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
         if(input.readInt() != 0x7a50524c) throw new RuntimeException("Invalid file");
         CompiledData data = new CompiledData();
-        int packages = input.readInt();
-        for(int p = 0; p<packages; p++) {
+        int cpSize = input.readUnsignedShort();
+        for(int i = 0; i<cpSize; i++) {
+            data.constantPool.add(ConstantPoolEntry.read(input));
+        }
+
+        int namespaces = input.readInt();
+        for(int p = 0; p<namespaces; p++) {
             int structuresLength = input.readUnsignedShort();
             for(int i = 0; i < structuresLength; i++) {
                 String structName = input.readUTF();
@@ -316,7 +336,7 @@ public class CompiledData {
         return new TypeFunctionSignatureNamed(ret, parameters);
     }
 
-    private static TypeFunctionSignature readFunctionSignature(DataInputStream in) throws IOException {
+    public static TypeFunctionSignature readFunctionSignature(DataInputStream in) throws IOException {
         Type ret = readType(in);
         short paramsLength = in.readShort();
         Type[] params = new Type[paramsLength];
@@ -350,6 +370,9 @@ public class CompiledData {
     public void save(File file) throws IOException {
         DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         output.writeBytes("zPRL");
+
+        output.writeShort(constantPool.size());
+        for(ConstantPoolEntry e : constantPool) e.write(output);
 
         output.writeInt(1);
         output.writeShort(structures.size());

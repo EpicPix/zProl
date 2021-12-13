@@ -287,14 +287,7 @@ public class Compiler {
             TypeFunctionSignature ss = new TypeFunctionSignature(null, parameters.toArray(new Type[0]));
             if(v == null) {
                 Function func = data.getFunction(((WordToken) call.reference.get(0)).word, ss);
-                ArrayList<Function> functions = data.getFunctions();
-                short index = -1;
-                for(int i = 0; i < functions.size(); i++) {
-                    if(functions.get(i) == func) {
-                        index = (short) i;
-                        break;
-                    }
-                }
+                short index = data.getFunctionIndex(func);
                 for(int i = func.signature.parameters.length - 1; i >= 0; i--) {
                     convertOperationToBytecode(scopes, func.signature.parameters[i].type.type, bytecode, data, call.parameters.get(i), true, func.signature.parameters[i].type);
                 }

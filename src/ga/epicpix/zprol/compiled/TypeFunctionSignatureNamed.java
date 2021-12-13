@@ -11,4 +11,12 @@ public class TypeFunctionSignatureNamed extends Type {
         this.parameters = parameters;
     }
 
+    public TypeFunctionSignature getNormalSignature() {
+        Type[] parameters = new Type[this.parameters.length];
+        for(int i = 0; i<this.parameters.length; i++) {
+            parameters[i] = this.parameters[i].type;
+        }
+        return new TypeFunctionSignature(returnType, parameters);
+    }
+
 }
