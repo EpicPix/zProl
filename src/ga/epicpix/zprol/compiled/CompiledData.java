@@ -4,6 +4,7 @@ import ga.epicpix.zprol.DataParser;
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
+import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
 import ga.epicpix.zprol.tokens.OperatorToken;
@@ -448,6 +449,14 @@ public class CompiledData {
                 throw new RuntimeException("Unhandled additional data class: " + type.getClass());
             }
         }
+    }
+
+    public static CompiledData link(ArrayList<CompiledData> data) {
+        CompiledData compiled = new CompiledData();
+        for(CompiledData comp : data) {
+
+        }
+        throw new NotImplementedException("Linking is not implemented yet!");
     }
 
 }

@@ -120,10 +120,16 @@ public class Start {
             compiledData.add(zpil);
         }
 
-        // new CompiledData(compiledData).write(new File(output)); ???
+        long startLink = System.currentTimeMillis();
+        CompiledData linked = CompiledData.link(compiledData);
+        long stopLink = System.currentTimeMillis();
+        System.out.printf("Took %d ms to link\n", stopLink - startLink);
+
+//        linked.write(new File(output)); ???
+        String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
 
         if(generate_x86_64_linux) {
-            throw new NotImplementedException("Generating x86-64 linux assembly from multiple compiled files is not supported yet!");
+            GeneratorAssembly.generate_x86_64_linux_assembly(linked, new File(normalName + ".asm"));
         }
     }
 
