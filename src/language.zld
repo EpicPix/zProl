@@ -13,6 +13,7 @@ keyword structure
 keyword if
 keyword else
 keyword while
+keyword return
 
 // Flags
 keyword internal
@@ -44,3 +45,5 @@ define parameterc @type@ @word@ , @end@
 tok function @type@ @word@ ( ) @end@
 tok function @type@ @word@ ( ^parameter ) @end@
 tok function @type@ @word@ ( ^+parameterc ^parameter ) @end@
+
+tok return @equation@ ; @end@

@@ -1,6 +1,7 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.exceptions.ParserException;
+import ga.epicpix.zprol.tokens.EquationToken;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.regex.Pattern;

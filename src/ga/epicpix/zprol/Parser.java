@@ -3,6 +3,7 @@ package ga.epicpix.zprol;
 import ga.epicpix.zprol.DataParser.SavedLocation;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.ParserException;
+import ga.epicpix.zprol.tokens.EquationToken;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.KeywordToken;
@@ -25,16 +26,16 @@ import java.util.ArrayList;
 
 public class Parser {
 
-    private interface TokenGenerator {
-        Token generate(String data);
+    private interface TokenGenerator<T> {
+        Token generate(T data);
     }
 
-    private interface TokenReader {
-        String read(DataParser parser);
+    private interface TokenReader<T> {
+        T read(DataParser parser);
     }
 
-    private static boolean checkToken(String friendlyName, DataParser parser, TokenReader reader, TokenGenerator generator, boolean last, ArrayList<Token> tTokens) {
-        String w = reader.read(parser);
+    private static <T> boolean checkToken(String friendlyName, DataParser parser, TokenReader<T> reader, TokenGenerator<T> generator, boolean last, ArrayList<Token> tTokens) {
+        T w = reader.read(parser);
         if(w == null) {
             if(last) throw new ParserException("Expected " + friendlyName, parser);
             else return false;
@@ -43,7 +44,7 @@ public class Parser {
         return true;
     }
 
-    private static boolean checkToken(String check, DataParser parser, TokenGenerator generator, boolean last, ArrayList<Token> tTokens) {
+    private static boolean checkToken(String check, DataParser parser, TokenGenerator<String> generator, boolean last, ArrayList<Token> tTokens) {
         String w = parser.nextWord();
         if(!check.equals(w)) {
             if(last) throw new ParserException("Expected '" + check + "'", parser);
@@ -58,6 +59,7 @@ public class Parser {
             if(s.equals("@lword@")) {if(!checkToken("long word", parser, DataParser::nextLongWord, LongWordToken::new, last, tTokens)) return false; }
             else if(s.equals("@word@")) {if(!checkToken("word", parser, DataParser::nextWord, WordToken::new, last, tTokens)) return false; }
             else if(s.equals("@type@")) {if(!checkToken("type", parser, DataParser::nextType, WordToken::new, last, tTokens)) return false; }
+            else if(s.equals("@equation@")) {if(!checkToken("equation", parser, Parser::nextEquation, x -> x, last, tTokens)) return false; }
             else if(s.equals("%;%")) {if(!checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), last, tTokens)) return false; }
             else if(s.equals("%,%")) {if(!checkToken(",", parser, (data) -> new Token(TokenType.COMMA), last, tTokens)) return false; }
             else if(s.equals("%(%")) {if(!checkToken("(", parser, (data) -> new Token(TokenType.OPEN), last, tTokens)) return false; }
@@ -93,6 +95,36 @@ public class Parser {
         return true;
     }
 
+    public static Token nextToken(DataParser parser) {
+        return getToken(parser, parser.nextWord());
+    }
+
+    public static Token getToken(DataParser parser, String word) {
+        if(Language.TYPES.get(word) != null) {
+            Type type = Language.TYPES.get(word);
+            if(type.isPointer()) {
+                throw new ParserException("Parsing pointers is not implemented", parser);
+            }
+            return new TypeToken(type);
+        }
+        else if(Language.KEYWORDS.contains(word)) throw new ParserException("Keywords not allowed here", parser);
+        else if(DataParser.operatorCharacters.matcher(word).matches()) return new OperatorToken(word);
+        else if(word.equals(";")) return new Token(TokenType.END_LINE);
+        else if(word.equals("(")) return new Token(TokenType.OPEN);
+        else if(word.equals(")")) return new Token(TokenType.CLOSE);
+        else if(word.equals(",")) return new Token(TokenType.COMMA);
+        else if(word.equals(".")) return new Token(TokenType.ACCESSOR);
+        else if(word.equals("\"")) return new StringToken(parser.nextStringStarted());
+        else if(word.equals("{")) return new Token(TokenType.OPEN_SCOPE);
+        else if(word.equals("}")) return new Token(TokenType.CLOSE_SCOPE);
+
+        try {
+            return new NumberToken(getInteger(word));
+        } catch(NumberFormatException ignored) {}
+
+        return new WordToken(word);
+    }
+
     public static ArrayList<Token> tokenize(String fileName) throws IOException {
         File file = new File(fileName);
         if(!file.exists()) {
@@ -106,13 +138,7 @@ public class Parser {
         ArrayList<ParserFlag> flags = new ArrayList<>();
         String word;
         while((word = parser.nextWord()) != null) {
-            if(Language.TYPES.get(word) != null) {
-                Type type = Language.TYPES.get(word);
-                if(type.isPointer()) {
-                    throw new ParserException("Parsing pointers is not implemented", parser);
-                }
-                tokens.add(new TypeToken(type));
-            }else if(Language.KEYWORDS.contains(word)) {
+            if(Language.KEYWORDS.contains(word)) {
                 tokens.add(new KeywordToken(word));
                 ArrayList<String[]> tok = Language.TOKENS.get(word);
                 if(tok != null) {
@@ -159,7 +185,7 @@ public class Parser {
                 String as = parser.nextWord();
                 if(as.equals("=")) {
                     Token c;
-                    while((c = getToken(parser)).getType() != TokenType.END_LINE) {
+                    while((c = nextToken(parser)).getType() != TokenType.END_LINE) {
                         ops.add(c);
                     }
                 }else if(!as.equals(";")) {
@@ -176,42 +202,7 @@ public class Parser {
                     throw new ParserException("Redefined flag: " + f.name().toLowerCase(), parser);
                 }
             } else {
-                try {
-                    tokens.add(new NumberToken(getInteger(word)));
-                    continue;
-                } catch(NumberFormatException ignored) {}
-
-                if(DataParser.operatorCharacters.matcher(word).matches()) {
-                    tokens.add(new OperatorToken(word));
-                    continue;
-                }
-                if(word.equals(";")) {
-                    tokens.add(new Token(TokenType.END_LINE));
-                    continue;
-                }else if(word.equals("(")) {
-                    tokens.add(new Token(TokenType.OPEN));
-                    continue;
-                }else if(word.equals(")")) {
-                    tokens.add(new Token(TokenType.CLOSE));
-                    continue;
-                }else if(word.equals(",")) {
-                    tokens.add(new Token(TokenType.COMMA));
-                    continue;
-                }else if(word.equals(".")) {
-                    tokens.add(new Token(TokenType.ACCESSOR));
-                    continue;
-                }else if(word.equals("\"")) {
-                    tokens.add(new StringToken(parser.nextStringStarted()));
-                    continue;
-                }else if(word.equals("{")) {
-                    tokens.add(new Token(TokenType.OPEN_SCOPE));
-                    continue;
-                }else if(word.equals("}")) {
-                    tokens.add(new Token(TokenType.CLOSE_SCOPE));
-                    continue;
-                }else {
-                    tokens.add(new WordToken(word));
-                }
+                tokens.add(getToken(parser, word));
             }
             flags.clear();
         }
@@ -289,7 +280,7 @@ public class Parser {
                 String as = parser.nextWord();
                 if(as.equals("=")) {
                     Token c;
-                    while((c = getToken(parser)).getType() != TokenType.END_LINE) {
+                    while((c = nextToken(parser)).getType() != TokenType.END_LINE) {
                         ops.add(c);
                     }
                 }else if(!as.equals(";")) {
@@ -330,6 +321,24 @@ public class Parser {
             }
         }
         return tokens;
+    }
+
+    public static EquationToken nextEquation(DataParser parser) {
+        ArrayList<Token> tokens = new ArrayList<>();
+        Token current;
+        int open = 0;
+        while(true) {
+            SavedLocation loc = parser.getSaveLocation();
+            current = nextToken(parser);
+            if(current.getType() == TokenType.OPEN) open++;
+            if(current.getType() == TokenType.CLOSE) open--;
+            if((current.getType() == TokenType.END_LINE || current.getType() == TokenType.CLOSE) && open <= 0) {
+                parser.loadLocation(loc);
+                break;
+            }
+            tokens.add(current);
+        }
+        return new EquationToken(tokens);
     }
 
     public static BigInteger getInteger(String str) {
@@ -395,35 +404,6 @@ public class Parser {
             tokens.add(new WordToken(word));
         }
         return tokens;
-    }
-
-    public static Token getToken(DataParser parser) {
-        String word = parser.nextWord();
-        try {
-            return new NumberToken(getInteger(word));
-        } catch(NumberFormatException ignored) {}
-
-        if(DataParser.operatorCharacters.matcher(word).matches()) {
-            return new OperatorToken(word);
-        }
-        if(word.equals(";")) {
-            return new Token(TokenType.END_LINE);
-        }else if(word.equals("(")) {
-            return new Token(TokenType.OPEN);
-        }else if(word.equals(")")) {
-            return new Token(TokenType.CLOSE);
-        }else if(word.equals(",")) {
-            return new Token(TokenType.COMMA);
-        }else if(word.equals(".")) {
-            return new Token(TokenType.ACCESSOR);
-        }else if(word.equals("\"")) {
-            return new StringToken(parser.nextStringStarted());
-        }else if(word.equals("{")) {
-            return new Token(TokenType.OPEN);
-        }else if(word.equals("}")) {
-            return new Token(TokenType.CLOSE);
-        }
-        return new WordToken(word);
     }
 
 }

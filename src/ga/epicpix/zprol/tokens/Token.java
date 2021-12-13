@@ -52,6 +52,8 @@ public class Token {
                 continue;
             }else if(token.getType() == TokenType.NUMBER) {
                 builder.append(((NumberToken) token).number);
+            }else if(token.getType() == TokenType.EQUATION) {
+                builder.append(toFriendlyString(((EquationToken) token).tokens));
             }else {
                 builder.append("(").append(token.getType().name().toLowerCase()).append(")");
             }
