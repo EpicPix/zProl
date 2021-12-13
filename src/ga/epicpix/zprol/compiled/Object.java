@@ -10,7 +10,7 @@ public class Object {
     public ArrayList<Function> functions;
 
     public Object(String name, Type ext, ArrayList<ObjectField> fields, ArrayList<Function> functions) {
-        if(!(ext.type == Types.NONE || ext instanceof TypeFutureObject || ext instanceof TypeObject)) {
+        if(!(ext.type == Types.NONE || ext instanceof TypeObject)) {
             throw new IllegalArgumentException("Type is not instanceof an object");
         }
         this.name = name;
