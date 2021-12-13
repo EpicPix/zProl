@@ -25,6 +25,8 @@ public class Token {
                 builder.append(((WordToken) token).word);
             }else if(token.getType() == TokenType.LONG_WORD) {
                 builder.append(((LongWordToken) token).word);
+            }else if(token.getType() == TokenType.OPERATOR) {
+                builder.append(" ").append(((OperatorToken) token).operator).append(" ");
             }else if(token.getType() == TokenType.TYPE) {
                 builder.append(((TypeToken) token).type().name).append(" ");
             }else if(token.getType() == TokenType.STRING) {
