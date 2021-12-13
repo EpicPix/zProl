@@ -6,18 +6,18 @@ structure abc {
     uint8 a3;
 }
 
-function void _start() {
+void _start() {
     //hw.hello_world();
 }
 
-function void func0() {}
-function uint8 funcr0() {return 0;}
+void func0() {}
+uint8 funcr0() {return 0;}
 
-function void func1(uint8 a) {}
-function uint8 funcr1(uint8 a) {return 0;}
+void func1(uint8 a) {}
+uint8 funcr1(uint8 a) {return 0;}
 
-function void func2(uint8 a, uint8 b) {}
-function uint8 funcr2(uint8 a, uint8 b) return 0 + 5 * (1 + 5);
+void func2(uint8 a, uint8 b) {}
+uint8 funcr2(uint8 a, uint8 b) return 0 + 5 * (1 + 5);
 
-function void func3(uint8 a, uint8 b, uint8 c) {}
-function uint8 funcr3(uint8 a, uint8 b, uint8 c) return 0;
+void func3(uint8 a, uint8 b, uint8 c) {}
+uint8 funcr3(uint8 a, uint8 b, uint8 c) return 0;

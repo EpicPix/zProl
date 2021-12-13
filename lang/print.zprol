@@ -1,6 +1,6 @@
 typedef pointer<uint8> string;
 
-function void print_uint64_hex(uint64 fd, uint64 num) {
+void print_uint64_hex(uint64 fd, uint64 num) {
     uint8 i = 0;
     uint64 n;
     while(i != 16) {
@@ -12,6 +12,6 @@ function void print_uint64_hex(uint64 fd, uint64 num) {
     }
 }
 
-function void _start() {
+void _start() {
     print_uint64_hex(0, 0x69420);
 }

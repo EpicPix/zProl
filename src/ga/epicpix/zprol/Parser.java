@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Parser {
 
@@ -138,74 +139,45 @@ public class Parser {
 
         ArrayList<Token> tokens = new ArrayList<>();
 
-        ArrayList<ParserFlag> flags = new ArrayList<>();
         String word;
-        while((word = parser.nextWord()) != null) {
+        while(true) {
+            if((word = parser.seekWord()) == null) break;
+            boolean lateStart = false;
             if(Language.KEYWORDS.contains(word)) {
                 tokens.add(new KeywordToken(word));
-                ArrayList<String[]> tok = Language.TOKENS.get(word);
-                if(tok != null) {
-                    boolean valid = false;
-                    ArrayList<Token> tTokens = new ArrayList<>();
-                    int i = 0;
-                    for(String[] t : tok) {
-                        tTokens.clear();
-                        parser.saveLocation();
-                        if(check(t, parser, i + 1 == tok.size(), tTokens)) {
-                            valid = true;
-                            tokens.addAll(tTokens);
-                            break;
-                        }
-                        parser.loadLocation();
-                        i++;
-                    }
-
-                    if(!valid) {
-                        throw new ParserException("Expression is invalid", parser);
-                    }
-                }
-            } else if(word.equals("object")) {
-                tokens.addAll(parseObject(parser));
-            } else if(word.equals("function")) {
-                String functionReturn = parser.nextType();
-                String functionName = parser.nextWord();
-                ArrayList<ParameterDataType> functionParameters = parser.readParameters();
-                String tmp = parser.nextWord();
-                if(tmp.equals(";")) {
-                    throw new ParserException("Missing function implementation", parser);
-                }else if(!tmp.equals("{")) {
-                    throw new ParserException("Expected '{' after arguments of function", parser);
-                }
-
-                tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, new ArrayList<>()));
-                tokens.addAll(readFunctionCode(parser));
-            } else if(word.equals("field")) {
-                String type = parser.nextType();
-                String name = parser.nextWord();
-                ArrayList<Token> ops = new ArrayList<>();
-                String as = parser.nextWord();
-                if(as.equals("=")) {
-                    Token c;
-                    while((c = nextToken(parser)).getType() != TokenType.END_LINE) {
-                        ops.add(c);
-                    }
-                }else if(!as.equals(";")) {
-                    throw new ParserException("Expected ';' or '=' after field declaration", parser);
-                }
-                ops.add(new Token(TokenType.END_LINE));
-                tokens.add(new FieldToken(type, name, ops, new ArrayList<>(flags)));
-            } else if(ParserFlag.getFlag(word) != null) {
-                ParserFlag f = ParserFlag.getFlag(word);
-                if(!flags.contains(f)) {
-                    flags.add(f);
-                    continue;
-                }else {
-                    throw new ParserException("Redefined flag: " + f.name().toLowerCase(), parser);
-                }
-            } else {
-                tokens.add(getToken(parser, word));
+                lateStart = true;
             }
-            flags.clear();
+            ArrayList<String[]> validOptions = new ArrayList<>();
+            for(String[] tok : Language.TOKENS) {
+                parser.saveLocation();
+                if(check(new String[] {tok[0]}, parser, false, new ArrayList<>())) {
+                    validOptions.add(tok);
+                }
+                parser.loadLocation();
+            }
+            int index = 0;
+            ArrayList<Token> tTokens = new ArrayList<>();
+            boolean valid = false;
+            for(String[] tok : validOptions) {
+                tTokens.clear();
+                parser.saveLocation();
+                String[] used = tok;
+                if(lateStart) {
+                    parser.nextWord(); // Keyword is already added
+                    used = new String[tok.length - 1];
+                    System.arraycopy(tok, 1, used, 0, used.length);
+                }
+                if(check(used, parser, index + 1 == validOptions.size(), tTokens)) {
+                    valid = true;
+                    tokens.addAll(tTokens);
+                    break;
+                }
+                parser.loadLocation();
+                index++;
+            }
+            if(!valid) {
+                throw new ParserException("Expression is invalid", parser);
+            }
         }
         return tokens;
 

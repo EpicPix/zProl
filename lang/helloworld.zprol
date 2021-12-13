@@ -1,5 +1,5 @@
 export hello.world;
 
-function void hello_world() {
+void hello_world() {
     syscall(1, 0, "Hello, world!\n", 14);
 }

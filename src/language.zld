@@ -3,7 +3,6 @@
 // Keywords
 keyword import
 keyword export
-keyword function
 keyword field
 keyword object
 keyword typedef
@@ -42,9 +41,9 @@ tok typedef @type@ @word@ ; @end@
 define parameter @type@ @word@ @end@
 define parameterc @type@ @word@ , @end@
 
-tok function @type@ @word@ ( ) @end@
-tok function @type@ @word@ ( ^parameter ) @end@
-tok function @type@ @word@ ( ^+parameterc ^parameter ) @end@
+tok @type@ @word@ ( ) @end@
+tok @type@ @word@ ( ^parameter ) @end@
+tok @type@ @word@ ( ^+parameterc ^parameter ) @end@
 
 tok return @equation@ ; @end@
 

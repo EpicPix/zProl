@@ -11,7 +11,7 @@ public class Language {
 
     public static final ArrayList<String> KEYWORDS = new ArrayList<>();
     public static final HashMap<String, String[]> DEFINES = new HashMap<>();
-    public static final HashMap<String, ArrayList<String[]>> TOKENS = new HashMap<>();
+    public static final ArrayList<String[]> TOKENS = new ArrayList<>();
     public static final HashMap<String, Type> TYPES = new HashMap<>();
 
     private static String convert(String w, DataParser parser) {
@@ -52,17 +52,12 @@ public class Language {
                 id |= (pointer ? 1 : 0) << 4;  // 0000000000010000
                 TYPES.put(name, new Type(id, name));
             } else if(d.equals("tok")) {
-                String keyword = parser.nextWord();
-                if(!KEYWORDS.contains(keyword)) {
-                    throw new ParserException("Keyword not defined", parser);
-                }
                 ArrayList<String> tokens = new ArrayList<>();
                 String w;
                 while(!"@end@".equals(w = parser.nextLongWord()) && w != null) {
                     tokens.add(convert(w, parser));
                 }
-                TOKENS.computeIfAbsent(keyword, k -> new ArrayList<>());
-                TOKENS.get(keyword).add(tokens.toArray(new String[0]));
+                TOKENS.add(tokens.toArray(new String[0]));
             } else if(d.equals("define")) {
                 String name = parser.nextWord();
                 if(DEFINES.get(name) != null) throw new ParserException("Define already defined: " + name, parser);
