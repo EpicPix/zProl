@@ -47,3 +47,7 @@ tok function @type@ @word@ ( ^parameter ) @end@
 tok function @type@ @word@ ( ^+parameterc ^parameter ) @end@
 
 tok return @equation@ ; @end@
+
+define structurein @type@ @word@ ; @end@
+
+tok structure @word@ { ^+structurein } @end@
