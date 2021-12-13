@@ -73,7 +73,7 @@ public class Parser {
                         }
                         while(true) {
                             SavedLocation location = parser.getSaveLocation();
-                            boolean success = false;
+                            boolean success = true;
                             try {
                                 if(!check(def, parser, last, tTokens)) success = false;
                             } catch(ParserException e) {
