@@ -642,8 +642,8 @@ public class Compiler {
     }
 
     public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {
-        ArrayList<PreCompiledData> imported = new ArrayList<>();
-        for(PreCompiledData o : other) if(preCompiled.imported.containsKey(o.exportName)) imported.add(o);
+        ArrayList<PreCompiledData> used = new ArrayList<>();
+        for(PreCompiledData o : other) if(preCompiled.using.contains(o.namespace)) used.add(o);
 
         CompiledData data = new CompiledData();
 //        data.importData(imported); //TODO: Add  CompiledData.importData(PreCompiledData...)  method

@@ -14,6 +14,10 @@ public class Token {
         return (WordToken) this;
     }
 
+    public DotWordToken asDotWordToken() {
+        return (DotWordToken) this;
+    }
+
     public LongWordToken asLongWordToken() {
         return (LongWordToken) this;
     }

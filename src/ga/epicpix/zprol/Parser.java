@@ -3,6 +3,7 @@ package ga.epicpix.zprol;
 import ga.epicpix.zprol.DataParser.SavedLocation;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.ParserException;
+import ga.epicpix.zprol.tokens.DotWordToken;
 import ga.epicpix.zprol.tokens.EquationToken;
 import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
@@ -59,6 +60,7 @@ public class Parser {
         ArrayList<Token> added = new ArrayList<>();
         for(String s : t) {
             if(s.equals("@lword@")) {if(!checkToken("long word", parser, DataParser::nextLongWord, LongWordToken::new, last, added)) return false; }
+            else if(s.equals("@dword@")) {if(!checkToken("dot word", parser, DataParser::nextDotWord, DotWordToken::new, last, added)) return false; }
             else if(s.equals("@word@")) {if(!checkToken("word", parser, DataParser::nextWord, WordToken::new, last, added)) return false; }
             else if(s.equals("@type@")) {if(!checkToken("type", parser, DataParser::nextType, WordToken::new, last, added)) return false; }
             else if(s.equals("@equation@")) {if(!checkToken("equation", parser, Parser::nextEquation, x -> x, last, added)) return false; }

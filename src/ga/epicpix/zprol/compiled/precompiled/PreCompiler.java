@@ -22,8 +22,10 @@ public class PreCompiler {
         PreCompiledData pre = new PreCompiledData();
 
         SeekIterator<Token> tokens = new SeekIterator<>(pTokens);
+        boolean usedOther = false;
         while(tokens.hasNext()) {
             Token token = tokens.next();
+            if(!(token.getType() == TokenType.PARSED && ((ParsedToken) token).name.equals("Namespace"))) usedOther = true;
             if(token.getType() == TokenType.PARSED) {
                 ParsedToken parsed = (ParsedToken) token;
                 ArrayList<Token> ts = parsed.tokens;
@@ -32,19 +34,13 @@ public class PreCompiler {
                     String name = ts.get(2).asWordToken().word;
                     if(pre.typedef.get(name) != null) throw new RuntimeException("Redefined typedef definition");
                     pre.typedef.put(name, type);
-                }else if(parsed.name.equals("Import")) {
-                    String imported = ts.get(1).asLongWordToken().word;
-                    if(pre.imported.get(imported) != null) throw new RuntimeException("Imported '" + imported + "' multiple times");
-                    pre.imported.put(imported, imported);
-                }else if(parsed.name.equals("ImportAs")) {
-                    String imported = ts.get(1).asLongWordToken().word;
-                    if(pre.imported.get(imported) != null) throw new RuntimeException("Imported '" + imported + "' multiple times");
-                    String as = ts.get(3).asWordToken().word;
-                    pre.imported.put(imported, as);
-                }else if(parsed.name.equals("Export")) {
-                    String exported = ts.get(1).asLongWordToken().word;
-                    if(pre.exportName != null) throw new RuntimeException("Exported file multiple times");
-                    pre.exportName = exported;
+                }else if(parsed.name.equals("Using")) {
+                    pre.using.add(ts.get(1).asDotWordToken().word);
+                }else if(parsed.name.equals("Namespace")) {
+                    if(usedOther) throw new RuntimeException("Namespace not defined at the top of the file");
+                    String namespace = ts.get(1).asDotWordToken().word;
+                    if(pre.namespace != null) throw new RuntimeException("Defined namespace for a file multiple times");
+                    pre.namespace = namespace;
                 }else if(parsed.name.equals("FunctionEmpty")) {
                     PreFunction func = new PreFunction();
                     func.returnType = ts.get(0).asWordToken().word;
@@ -105,6 +101,8 @@ public class PreCompiler {
                 System.out.println("token: " + token);
             }
         }
+
+        if(pre.namespace == null) throw new RuntimeException("Namespace not defined");
 
         return pre;
     }

@@ -1,4 +1,6 @@
-import hello.world as hw;
+namespace test.Example;
+
+using hello.world.HelloWorld;
 
 structure abc {
     uint8 a1;
@@ -6,8 +8,13 @@ structure abc {
     uint8 a3;
 }
 
+void test() {
+    syscall(1, 0, "example\n", 8);
+}
+
 void _start() {
-    //hw.hello_world();
+    test();
+    //HelloWorld.hello_world();
 }
 
 void func0() {}

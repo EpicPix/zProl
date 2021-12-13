@@ -5,8 +5,8 @@ import java.util.HashMap;
 
 public class PreCompiledData {
 
-    public HashMap<String, String> imported = new HashMap<>();
-    public String exportName;
+    public ArrayList<String> using = new ArrayList<>();
+    public String namespace;
 
     public ArrayList<PreFunction> functions = new ArrayList<>();
     public HashMap<String, String> typedef = new HashMap<>();

@@ -37,11 +37,6 @@ define structurein @type@ @word@ ; @end@
 define callparameter @equation@ @end@
 define callparameterc @equation@ , @end@
 
-tok Import import @lword@ ; @end@
-tok ImportAs import @lword@ as @word@ ; @end@
-
-tok Export export @lword@ ; @end@
-
 tok Typedef typedef @type@ @word@ ; @end@
 
 tok FunctionEmpty @type@ @word@ ( ) @end@
@@ -56,3 +51,6 @@ tok Structure structure @word@ { ^+structurein } @end@
 tok Call @word@ ( ) ; @end@
 tok Call @word@ ( ^callparameter ) ; @end@
 tok Call @word@ ( ^+callparameterc ^callparameter ) ; @end@
+
+tok Using using @dword@ ; @end@
+tok Namespace namespace @dword@ ; @end@

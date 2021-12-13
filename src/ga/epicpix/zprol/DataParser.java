@@ -11,6 +11,7 @@ public class DataParser {
     public static final Pattern nonSpecialCharacters = Pattern.compile("[a-zA-Z0-9_]");
     public static final Pattern operatorCharacters = Pattern.compile("[+=/*\\-%<>!&]*");
     public static final Pattern validLongWordCharacters = Pattern.compile("[a-zA-Z0-9_.+\\-@]*");
+    public static final Pattern validDotWordCharacters = Pattern.compile("[a-zA-Z0-9_.]*");
 
     private String data;
     private String fileName;
@@ -182,6 +183,49 @@ public class DataParser {
                 }
             }
             boolean matches = validLongWordCharacters.matcher(cdata[index] + "").matches();
+            if(!matches) {
+                if(word.length() == 0) {
+                    return word.append(cdata[index++]).toString();
+                }else {
+                    return word.toString();
+                }
+            }
+            lineRow++;
+            word.append(cdata[index]);
+            index++;
+        }
+        return word.toString();
+    }
+
+    public String nextDotWord() {
+        ignoreWhitespace();
+        lastLocation = getLocation();
+        if(index >= data.length()) return null;
+        StringBuilder word = new StringBuilder();
+        char[] cdata = data.toCharArray();
+        while(index < cdata.length) {
+            if(Character.isWhitespace(cdata[index])) {
+                break;
+            }
+            while(cdata[index] == '/') {
+                if(index + 1 < cdata.length) {
+                    if(cdata[index + 1] == '/') {
+                        index += 2;
+                        lineRow += 2;
+                        while(index < cdata.length) {
+                            if(cdata[index] == '\n') {
+                                lineNumber++;
+                                lineRow = 0;
+                                break;
+                            }
+                            lineRow++;
+                            index++;
+                        }
+                        ignoreWhitespace();
+                    }
+                }
+            }
+            boolean matches = validDotWordCharacters.matcher(cdata[index] + "").matches();
             if(!matches) {
                 if(word.length() == 0) {
                     return word.append(cdata[index++]).toString();
