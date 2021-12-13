@@ -331,11 +331,11 @@ public class Parser {
             SavedLocation loc = parser.getSaveLocation();
             current = nextToken(parser);
             if(current.getType() == TokenType.OPEN) open++;
-            if(current.getType() == TokenType.CLOSE) open--;
             if((current.getType() == TokenType.END_LINE || current.getType() == TokenType.CLOSE) && open <= 0) {
                 parser.loadLocation(loc);
                 break;
             }
+            if(current.getType() == TokenType.CLOSE) open--;
             tokens.add(current);
         }
         return new EquationToken(tokens);
