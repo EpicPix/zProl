@@ -22,7 +22,7 @@ public class Token {
             for(int i = 0; i<pendingIndent; i++) builder.append("    ");
             pendingIndent = 0;
             if(token.getType() == TokenType.WORD) {
-                builder.append(((WordToken) token).word);
+                builder.append(((WordToken) token).word).append(" ");
             }else if(token.getType() == TokenType.LONG_WORD) {
                 builder.append(((LongWordToken) token).word);
             }else if(token.getType() == TokenType.OPERATOR) {

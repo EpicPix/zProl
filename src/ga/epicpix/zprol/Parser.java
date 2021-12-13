@@ -55,27 +55,30 @@ public class Parser {
     }
 
     public static boolean check(String[] t, DataParser parser, boolean last, ArrayList<Token> tTokens) {
+        ArrayList<Token> added = new ArrayList<>();
         for(String s : t) {
-            if(s.equals("@lword@")) {if(!checkToken("long word", parser, DataParser::nextLongWord, LongWordToken::new, last, tTokens)) return false; }
-            else if(s.equals("@word@")) {if(!checkToken("word", parser, DataParser::nextWord, WordToken::new, last, tTokens)) return false; }
-            else if(s.equals("@type@")) {if(!checkToken("type", parser, DataParser::nextType, WordToken::new, last, tTokens)) return false; }
-            else if(s.equals("@equation@")) {if(!checkToken("equation", parser, Parser::nextEquation, x -> x, last, tTokens)) return false; }
-            else if(s.equals("%;%")) {if(!checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), last, tTokens)) return false; }
-            else if(s.equals("%,%")) {if(!checkToken(",", parser, (data) -> new Token(TokenType.COMMA), last, tTokens)) return false; }
-            else if(s.equals("%(%")) {if(!checkToken("(", parser, (data) -> new Token(TokenType.OPEN), last, tTokens)) return false; }
-            else if(s.equals("%)%")) {if(!checkToken(")", parser, (data) -> new Token(TokenType.CLOSE), last, tTokens)) return false; }
+            if(s.equals("@lword@")) {if(!checkToken("long word", parser, DataParser::nextLongWord, LongWordToken::new, last, added)) return false; }
+            else if(s.equals("@word@")) {if(!checkToken("word", parser, DataParser::nextWord, WordToken::new, last, added)) return false; }
+            else if(s.equals("@type@")) {if(!checkToken("type", parser, DataParser::nextType, WordToken::new, last, added)) return false; }
+            else if(s.equals("@equation@")) {if(!checkToken("equation", parser, Parser::nextEquation, x -> x, last, added)) return false; }
+            else if(s.equals("%;%")) {if(!checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), last, added)) return false; }
+            else if(s.equals("%,%")) {if(!checkToken(",", parser, (data) -> new Token(TokenType.COMMA), last, added)) return false; }
+            else if(s.equals("%(%")) {if(!checkToken("(", parser, (data) -> new Token(TokenType.OPEN), last, added)) return false; }
+            else if(s.equals("%)%")) {if(!checkToken(")", parser, (data) -> new Token(TokenType.CLOSE), last, added)) return false; }
+            else if(s.equals("%{%")) {if(!checkToken("{", parser, (data) -> new Token(TokenType.OPEN_SCOPE), last, added)) return false; }
+            else if(s.equals("%}%")) {if(!checkToken("}", parser, (data) -> new Token(TokenType.CLOSE_SCOPE), last, added)) return false; }
             else {
                 if(s.startsWith("^")) {
                     String[] def = Language.DEFINES.get(s.substring(s.substring(1).startsWith("+") ? 2 : 1));
                     if(s.substring(1).startsWith("+")) {
-                        if(!check(def, parser, last, tTokens)) {
+                        if(!check(def, parser, last, added)) {
                             return false;
                         }
                         while(true) {
                             SavedLocation location = parser.getSaveLocation();
                             boolean success = true;
                             try {
-                                if(!check(def, parser, last, tTokens)) success = false;
+                                if(!check(def, parser, last, added)) success = false;
                             } catch(ParserException e) {
                                 success = false;
                             }
@@ -85,13 +88,14 @@ public class Parser {
                             }
                         }
                     }else {
-                        if(!check(def, parser, last, tTokens)) {
+                        if(!check(def, parser, last, added)) {
                             return false;
                         }
                     }
-                }else if(!checkToken(s, parser, WordToken::new, last, tTokens)) return false;
+                }else if(!checkToken(s, parser, WordToken::new, last, added)) return false;
             }
         }
+        tTokens.addAll(added);
         return true;
     }
 

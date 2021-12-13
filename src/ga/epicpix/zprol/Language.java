@@ -21,6 +21,8 @@ public class Language {
         else if(w.equals(",")) return "%,%";
         else if(w.equals("(")) return "%(%";
         else if(w.equals(")")) return "%)%";
+        else if(w.equals("{")) return "%{%";
+        else if(w.equals("}")) return "%}%";
         return w;
     }
 

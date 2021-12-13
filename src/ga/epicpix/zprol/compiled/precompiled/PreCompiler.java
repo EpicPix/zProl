@@ -78,6 +78,21 @@ public class PreCompiler {
                             if(opens == 0) break;
                         } else if(opens == 0 && t.getType() == TokenType.END_LINE) break;
                     }
+                    pre.functions.add(func);
+                }else if(keyword.equals("structure")) {
+                    PreStructure structure = new PreStructure();
+                    structure.name = ((WordToken) tokens.next()).word;
+                    if(pre.structures.get(structure.name) != null) throw new RuntimeException("Structure defined multiple times: " + structure.name);
+                    if(tokens.next().getType() != TokenType.OPEN_SCOPE) throw new RuntimeException("A processing error has occurred");
+                    Token t;
+                    while((t = tokens.next()).getType() != TokenType.CLOSE_SCOPE) {
+                        PreStructureField field = new PreStructureField();
+                        field.type = ((WordToken) t).word;
+                        field.name = ((WordToken) tokens.next()).word;
+                        structure.fields.add(field);
+                        if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
+                    }
+                    pre.structures.put(structure.name, structure);
                 }else {
                     System.out.println("keyword: " + keyword);
                 }
