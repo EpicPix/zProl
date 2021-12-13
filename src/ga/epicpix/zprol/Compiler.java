@@ -51,6 +51,7 @@ import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.KeywordToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
+import ga.epicpix.zprol.tokens.ParsedToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.WordToken;
@@ -73,25 +74,24 @@ public class Compiler {
         Token token;
         while(true) {
             token = tokens.next();
-            if(token.getType() == TokenType.KEYWORD) {
-                String keyword = ((KeywordToken) token).keyword;
-                if("return".equals(keyword)) {
-                    if(sig.returnType.type.memorySize == 0) {
-                        if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
-                        bytecode.pushInstruction(BytecodeInstructions.RETURN);
-                    }else {
+            if(token.getType() == TokenType.PARSED) {
+                ParsedToken parsed = (ParsedToken) token;
+                if(parsed.name.equals("Return")) {
+                    if(sig.returnType.type.memorySize == 0) bytecode.pushInstruction(BytecodeInstructions.RETURN);
+                    else throw new RuntimeException("Tried to return no value while the method is not void");
+                    break;
+                }else if(parsed.name.equals("ReturnValue")) {
+                    if(sig.returnType.type.memorySize != 0) {
                         mathCompiler.reset();
-                        convertOperationToBytecode(scopes, sig.returnType.type, bytecode, data, mathCompiler.compile(data, tokens), true, sig.returnType);
+                        convertOperationToBytecode(scopes, sig.returnType.type, bytecode, data, mathCompiler.compile(data, new SeekIterator<>(parsed.tokens.get(1).asEquationToken().tokens)), true, sig.returnType);
                         int size = sig.returnType.type.memorySize;
                         if(size == 1) bytecode.pushInstruction(BytecodeInstructions.RETURN8);
                         else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.RETURN16);
                         else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.RETURN32);
                         else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.RETURN64);
                         else throw new RuntimeException("Size " + size + " is not supported");
-                    }
+                    } else throw new RuntimeException("Tried to return a value while the method is void");
                     break;
-                } else {
-                    throw new NotImplementedException("Unimplemented keyword: " + keyword);
                 }
             }else if(token.getType() == TokenType.WORD) {
                 WordToken w = (WordToken) token;

@@ -31,22 +31,28 @@ type uint32 true 4 false
 type uint64 true 8 false
 type pointer true 8 true
 
-tok import @lword@ ; @end@
-tok import @lword@ as @word@ ; @end@
-
-tok export @lword@ ; @end@
-
-tok typedef @type@ @word@ ; @end@
-
 define parameter @type@ @word@ @end@
 define parameterc @type@ @word@ , @end@
-
-tok @type@ @word@ ( ) @end@
-tok @type@ @word@ ( ^parameter ) @end@
-tok @type@ @word@ ( ^+parameterc ^parameter ) @end@
-
-tok return @equation@ ; @end@
-
 define structurein @type@ @word@ ; @end@
+define callparameter @equation@ @end@
+define callparameterc @equation@ , @end@
 
-tok structure @word@ { ^+structurein } @end@
+tok Import import @lword@ ; @end@
+tok ImportAs import @lword@ as @word@ ; @end@
+
+tok Export export @lword@ ; @end@
+
+tok Typedef typedef @type@ @word@ ; @end@
+
+tok FunctionEmpty @type@ @word@ ( ) @end@
+tok FunctionParameters @type@ @word@ ( ^parameter ) @end@
+tok FunctionParameters @type@ @word@ ( ^+parameterc ^parameter ) @end@
+
+tok Return return ; @end@
+tok ReturnValue return @equation@ ; @end@
+
+tok Structure structure @word@ { ^+structurein } @end@
+
+tok CallEmpty @word@ ( ) ; @end@
+tok CallParameters @word@ ( ^callparameter ) ; @end@
+tok CallParameters @word@ ( ^+callparameterc ^callparameter ) ; @end@

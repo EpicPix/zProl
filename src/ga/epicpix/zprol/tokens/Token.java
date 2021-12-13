@@ -10,6 +10,18 @@ public class Token {
         this.type = type;
     }
 
+    public WordToken asWordToken() {
+        return (WordToken) this;
+    }
+
+    public LongWordToken asLongWordToken() {
+        return (LongWordToken) this;
+    }
+
+    public EquationToken asEquationToken() {
+        return (EquationToken) this;
+    }
+
     public static String toFriendlyString(ArrayList<Token> tokens) {
         StringBuilder builder = new StringBuilder();
         int indent = 0;

@@ -6,6 +6,7 @@ import ga.epicpix.zprol.exceptions.InvalidOperationException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.tokens.KeywordToken;
 import ga.epicpix.zprol.tokens.LongWordToken;
+import ga.epicpix.zprol.tokens.ParsedToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.TypeToken;
@@ -23,49 +24,31 @@ public class PreCompiler {
         SeekIterator<Token> tokens = new SeekIterator<>(pTokens);
         while(tokens.hasNext()) {
             Token token = tokens.next();
-            if(token.getType() == TokenType.KEYWORD) {
-                String keyword = ((KeywordToken) token).keyword;
-                if(keyword.equals("typedef")) {
-                    String type = ((WordToken) tokens.next()).word;
-                    String name = ((WordToken) tokens.next()).word;
-                    if(pre.typedef.get(name) != null) {
-                        throw new RuntimeException("Redefined typedef definition");
-                    }
+            if(token.getType() == TokenType.PARSED) {
+                ParsedToken parsed = (ParsedToken) token;
+                ArrayList<Token> ts = parsed.tokens;
+                if(parsed.name.equals("Typedef")) {
+                    String type = ts.get(1).asWordToken().word;
+                    String name = ts.get(2).asWordToken().word;
+                    if(pre.typedef.get(name) != null) throw new RuntimeException("Redefined typedef definition");
                     pre.typedef.put(name, type);
-                    if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
-                }else if(keyword.equals("import")) {
-                    String imported = ((LongWordToken) tokens.next()).word;
-                    if(pre.imported.get(imported) != null) {
-                        throw new RuntimeException("Imported '" + imported + "' multiple times");
-                    }
-                    Token t = tokens.next();
-                    if(t.getType() == TokenType.END_LINE) {
-                        pre.imported.put(imported, imported);
-                    }else {
-                        String name = ((WordToken) tokens.next()).word;
-                        pre.imported.put(imported, name);
-                        if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
-                    }
-                }else if(keyword.equals("export")) {
-                    String export = ((LongWordToken) tokens.next()).word;
-                    if(pre.exportName != null) {
-                        throw new RuntimeException("Exported file multiple times");
-                    }
-                    pre.exportName = export;
-                    if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
-                }else if(keyword.equals("function")) {
+                }else if(parsed.name.equals("Import")) {
+                    String imported = ts.get(1).asLongWordToken().word;
+                    if(pre.imported.get(imported) != null) throw new RuntimeException("Imported '" + imported + "' multiple times");
+                    pre.imported.put(imported, imported);
+                }else if(parsed.name.equals("ImportAs")) {
+                    String imported = ts.get(1).asLongWordToken().word;
+                    if(pre.imported.get(imported) != null) throw new RuntimeException("Imported '" + imported + "' multiple times");
+                    String as = ts.get(3).asWordToken().word;
+                    pre.imported.put(imported, as);
+                }else if(parsed.name.equals("Export")) {
+                    String exported = ts.get(1).asLongWordToken().word;
+                    if(pre.exportName != null) throw new RuntimeException("Exported file multiple times");
+                    pre.exportName = exported;
+                }else if(parsed.name.equals("FunctionEmpty")) {
                     PreFunction func = new PreFunction();
-                    func.returnType = ((WordToken) tokens.next()).word;
-                    func.name = ((WordToken) tokens.next()).word;
-                    if(tokens.next().getType() != TokenType.OPEN) throw new RuntimeException("A processing error has occurred");
-                    Token tx;
-                    while((tx = tokens.next()).getType() != TokenType.CLOSE) {
-                        PreParameter param = new PreParameter();
-                        param.type = ((WordToken) tx).word;
-                        param.name = ((WordToken) tokens.next()).word;
-                        if(tokens.seek().getType() == TokenType.COMMA) tokens.next();
-                        func.parameters.add(param);
-                    }
+                    func.returnType = ts.get(0).asWordToken().word;
+                    func.name = ts.get(1).asWordToken().word;
                     int opens = 0;
                     while(true) {
                         Token t = tokens.next();
@@ -80,22 +63,43 @@ public class PreCompiler {
                         } else if(opens == 0 && t.getType() == TokenType.END_LINE) break;
                     }
                     pre.functions.add(func);
-                }else if(keyword.equals("structure")) {
-                    PreStructure structure = new PreStructure();
-                    structure.name = ((WordToken) tokens.next()).word;
-                    if(pre.structures.get(structure.name) != null) throw new RuntimeException("Structure defined multiple times: " + structure.name);
-                    if(tokens.next().getType() != TokenType.OPEN_SCOPE) throw new RuntimeException("A processing error has occurred");
-                    Token t;
-                    while((t = tokens.next()).getType() != TokenType.CLOSE_SCOPE) {
-                        PreStructureField field = new PreStructureField();
-                        field.type = ((WordToken) t).word;
-                        field.name = ((WordToken) tokens.next()).word;
-                        structure.fields.add(field);
-                        if(tokens.next().getType() != TokenType.END_LINE) throw new RuntimeException("A processing error has occurred");
+                }else if(parsed.name.equals("FunctionParameters")) {
+                    PreFunction func = new PreFunction();
+                    func.returnType = ts.get(0).asWordToken().word;
+                    func.name = ts.get(1).asWordToken().word;
+                    int paramCount = (ts.size() - 3) / 3;
+                    for(int i = 0; i<paramCount; i++) {
+                        PreParameter param = new PreParameter();
+                        param.type = ts.get(i * 3 + 3).asWordToken().word;
+                        param.name = ts.get(i * 3 + 4).asWordToken().word;
+                        func.parameters.add(param);
                     }
-                    pre.structures.put(structure.name, structure);
+                    int opens = 0;
+                    while(true) {
+                        Token t = tokens.next();
+                        func.code.add(t);
+
+                        if(t.getType() == TokenType.OPEN_SCOPE) {
+                            opens++;
+                        } else if(t.getType() == TokenType.CLOSE_SCOPE) {
+                            if(opens == 0) throw new InvalidOperationException("Function closed too much");
+                            opens--;
+                            if(opens == 0) break;
+                        } else if(opens == 0 && t.getType() == TokenType.PARSED) break;
+                    }
+                    pre.functions.add(func);
+                }else if(parsed.name.equals("Structure")) {
+                    PreStructure structure = new PreStructure();
+                    structure.name = ts.get(1).asWordToken().word;
+                    int fields = (parsed.tokens.size() - 4) / 3;
+                    for(int i = 0; i<fields; i++) {
+                        PreStructureField field = new PreStructureField();
+                        field.type = parsed.tokens.get(i * 3 + 3).asWordToken().word;
+                        field.name = parsed.tokens.get(i * 3 + 4).asWordToken().word;
+                        structure.fields.add(field);
+                    }
                 }else {
-                    System.out.println("keyword: " + keyword);
+                    System.out.println("token: " + parsed);
                 }
             }else {
                 System.out.println("token: " + token);

@@ -57,6 +57,10 @@ public class DataParser {
         locationStack.push(getSaveLocation());
     }
 
+    public void discardLocation() {
+        locationStack.pop();
+    }
+
     public void loadLocation() {
         loadLocation(locationStack.pop());
     }

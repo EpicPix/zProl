@@ -11,6 +11,7 @@ import ga.epicpix.zprol.tokens.LongWordToken;
 import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
+import ga.epicpix.zprol.tokens.ParsedToken;
 import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
@@ -140,36 +141,48 @@ public class Parser {
         ArrayList<Token> tokens = new ArrayList<>();
 
         String word;
-        while(true) {
-            if((word = parser.seekWord()) == null) break;
-            boolean lateStart = false;
-            if(Language.KEYWORDS.contains(word)) {
-                tokens.add(new KeywordToken(word));
-                lateStart = true;
-            }
+        while((word = parser.seekWord()) != null) {
+            parser.saveLocation();
+            try {
+                Token tk = nextToken(parser);
+                if(!(tk instanceof WordToken || tk instanceof TypeToken || tk instanceof KeywordToken)) {
+                    tokens.add(tk);
+                    parser.discardLocation();
+                    continue;
+                }
+            }catch(ParserException ignored) {}
+            parser.loadLocation();
             ArrayList<String[]> validOptions = new ArrayList<>();
             for(String[] tok : Language.TOKENS) {
                 parser.saveLocation();
-                if(check(new String[] {tok[0]}, parser, false, new ArrayList<>())) {
+                if(check(new String[] {tok[1]}, parser, false, new ArrayList<>())) {
                     validOptions.add(tok);
                 }
                 parser.loadLocation();
             }
+            ArrayList<Token> preAdded = new ArrayList<>();
+            boolean lateStart = false;
+            if(Language.KEYWORDS.contains(word)) {
+                preAdded.add(new KeywordToken(word));
+                lateStart = true;
+            }
             int index = 0;
-            ArrayList<Token> tTokens = new ArrayList<>();
             boolean valid = false;
             for(String[] tok : validOptions) {
-                tTokens.clear();
                 parser.saveLocation();
-                String[] used = tok;
+                String[] used;
                 if(lateStart) {
-                    parser.nextWord(); // Keyword is already added
+                    parser.nextWord();
+                    used = new String[tok.length - 2];
+                    System.arraycopy(tok, 2, used, 0, used.length);
+                }else {
                     used = new String[tok.length - 1];
                     System.arraycopy(tok, 1, used, 0, used.length);
                 }
+                ArrayList<Token> tTokens = new ArrayList<>(preAdded);
                 if(check(used, parser, index + 1 == validOptions.size(), tTokens)) {
                     valid = true;
-                    tokens.addAll(tTokens);
+                    tokens.add(new ParsedToken(tok[0], tTokens));
                     break;
                 }
                 parser.loadLocation();
