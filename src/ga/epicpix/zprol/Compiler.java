@@ -565,12 +565,12 @@ public class Compiler {
         return new Function(functionToken.name, signature, flags, parseFunctionCode(scopes, data, tokens, signature));
     }
 
-    public static Structure compileStructure(CompiledData data, PreStructure structure) throws UnknownTypeException {
+    public static void compileStructure(CompiledData data, PreStructure structure) throws UnknownTypeException {
         ArrayList<StructureField> fields = new ArrayList<>();
         for(PreStructureField field : structure.fields) {
             fields.add(new StructureField(field.name, data.resolveType(field.type)));
         }
-        return new Structure(structure.name, fields);
+        data.addStructure(new Structure(structure.name, fields));
     }
 
     public static ArrayList<Flag> convertFlags(ArrayList<ParserFlag> pFlags) {
