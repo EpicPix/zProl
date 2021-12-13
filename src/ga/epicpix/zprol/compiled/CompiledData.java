@@ -5,7 +5,6 @@ import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry.FunctionEntry;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
-import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
 import ga.epicpix.zprol.tokens.OperatorToken;
@@ -21,9 +20,20 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 public class CompiledData {
+
+    public final String namespace;
+
+    public CompiledData() {
+        namespace = null;
+    }
+
+    public CompiledData(String namespace) {
+        this.namespace = namespace;
+    }
 
     private final ArrayList<Structure> structures = new ArrayList<>();
     private final ArrayList<Object> objects = new ArrayList<>();
@@ -259,58 +269,123 @@ public class CompiledData {
         return new TypeFunctionSignature(ret, parameters.toArray(new Type[0]));
     }
 
-    public static CompiledData load(File file) throws IOException {
-        DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-        if(input.readInt() != 0x7a50524c) throw new RuntimeException("Invalid file");
-        CompiledData data = new CompiledData();
-        int cpSize = input.readUnsignedShort();
-        for(int i = 0; i<cpSize; i++) {
-            data.constantPool.add(ConstantPoolEntry.read(input));
+    public static class LinkedData {
+        public final Collection<CompiledData> data;
+
+        public LinkedData(Collection<CompiledData> data) {
+            this.data = data;
         }
 
-        int namespaces = input.readInt();
-        for(int p = 0; p<namespaces; p++) {
-            int structuresLength = input.readUnsignedShort();
-            for(int i = 0; i < structuresLength; i++) {
-                String structName = input.readUTF();
-                int fieldsLength = input.readUnsignedShort();
-                ArrayList<StructureField> fields = new ArrayList<>();
-                for(int j = 0; j < fieldsLength; j++) {
-                    fields.add(new StructureField(input.readUTF(), readType(input)));
+        public static LinkedData load(File file) throws IOException {
+            DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+            if(input.readInt() != 0x7a50524c) throw new RuntimeException("Invalid file");
+            int d = input.readInt();
+
+            ArrayList<CompiledData> da = new ArrayList<>();
+            for(int a = 0; a<d; a++) {
+                String namespace = input.readUTF();
+
+                CompiledData data = new CompiledData(namespace);
+                int cpSize = input.readUnsignedShort();
+                for(int i = 0; i < cpSize; i++) {
+                    data.constantPool.add(ConstantPoolEntry.read(input));
                 }
-                data.addStructure(new Structure(structName, fields));
-            }
-            int objectsLength = input.readUnsignedShort();
-            for(int i = 0; i < objectsLength; i++) {
-                String objectName = input.readUTF();
-                Type ext = readType(input);
+
+                int structuresLength = input.readUnsignedShort();
+                for(int i = 0; i < structuresLength; i++) {
+                    String structName = input.readUTF();
+                    int fieldsLength = input.readUnsignedShort();
+                    ArrayList<StructureField> fields = new ArrayList<>();
+                    for(int j = 0; j < fieldsLength; j++) {
+                        fields.add(new StructureField(input.readUTF(), readType(input)));
+                    }
+                    data.addStructure(new Structure(structName, fields));
+                }
+                int objectsLength = input.readUnsignedShort();
+                for(int i = 0; i < objectsLength; i++) {
+                    String objectName = input.readUTF();
+                    Type ext = readType(input);
+                    int fieldsLength = input.readUnsignedShort();
+                    ArrayList<ObjectField> fields = new ArrayList<>();
+                    for(int j = 0; j < fieldsLength; j++) {
+                        String name = input.readUTF();
+                        Type type = readType(input);
+                        fields.add(new ObjectField(name, type, Flag.fromBits(input.readInt())));
+                    }
+
+                    int functionsLength = input.readUnsignedShort();
+                    ArrayList<Function> functions = new ArrayList<>();
+                    for(int j = 0; j < functionsLength; j++) {
+                        functions.add(readFunction(input));
+                    }
+                    data.addObject(new Object(objectName, ext, fields, functions));
+                }
+                int functionsLength = input.readUnsignedShort();
+                for(int j = 0; j < functionsLength; j++) {
+                    data.functions.add(readFunction(input));
+                }
                 int fieldsLength = input.readUnsignedShort();
-                ArrayList<ObjectField> fields = new ArrayList<>();
                 for(int j = 0; j < fieldsLength; j++) {
                     String name = input.readUTF();
                     Type type = readType(input);
-                    fields.add(new ObjectField(name, type, Flag.fromBits(input.readInt())));
+                    data.fields.add(new ObjectField(name, type, Flag.fromBits(input.readInt())));
+                }
+                da.add(data);
+            }
+            return new LinkedData(da);
+        }
+
+        public void save(File file) throws IOException {
+            DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+            output.writeBytes("zPRL");
+
+            output.writeInt(data.size());
+            for(CompiledData d : data) {
+                output.writeUTF(d.namespace);
+
+                output.writeShort(d.constantPool.size());
+                for(ConstantPoolEntry e : d.constantPool) e.write(output);
+
+                output.writeShort(d.structures.size());
+                for(Structure struct : d.structures) {
+                    output.writeUTF(struct.name);
+                    output.writeShort(struct.fields.size());
+                    for(StructureField field : struct.fields) {
+                        output.writeUTF(field.name);
+                        writeType(field.type, output);
+                    }
                 }
 
-                int functionsLength = input.readUnsignedShort();
-                ArrayList<Function> functions = new ArrayList<>();
-                for(int j = 0; j < functionsLength; j++) {
-                    functions.add(readFunction(input));
+                output.writeShort(d.objects.size());
+                for(Object obj : d.objects) {
+                    output.writeUTF(obj.name);
+                    writeType(obj.ext, output);
+                    output.writeShort(obj.fields.size());
+                    for(ObjectField field : obj.fields) {
+                        output.writeUTF(field.name);
+                        writeType(field.type, output);
+                        writeFlags(field.flags, output);
+                    }
+                    output.writeShort(obj.functions.size());
+                    for(Function func : obj.functions) {
+                        writeFunction(func, output);
+                    }
                 }
-                data.addObject(new Object(objectName, ext, fields, functions));
+
+                output.writeShort(d.functions.size());
+                for(Function func : d.functions) {
+                    writeFunction(func, output);
+                }
+
+                output.writeShort(d.fields.size());
+                for(ObjectField field : d.fields) {
+                    output.writeUTF(field.name);
+                    writeType(field.type, output);
+                    writeFlags(field.flags, output);
+                }
             }
-            int functionsLength = input.readUnsignedShort();
-            for(int j = 0; j < functionsLength; j++) {
-                data.functions.add(readFunction(input));
-            }
-            int fieldsLength = input.readUnsignedShort();
-            for(int j = 0; j < fieldsLength; j++) {
-                String name = input.readUTF();
-                Type type = readType(input);
-                data.fields.add(new ObjectField(name, type, Flag.fromBits(input.readInt())));
-            }
+            output.close();
         }
-        return data;
     }
 
     private static Function readFunction(DataInputStream in) throws IOException {
@@ -367,55 +442,6 @@ public class CompiledData {
         }
     }
 
-    public void save(File file) throws IOException {
-        DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-        output.writeBytes("zPRL");
-
-        output.writeShort(constantPool.size());
-        for(ConstantPoolEntry e : constantPool) e.write(output);
-
-        output.writeInt(1);
-        output.writeShort(structures.size());
-        for(Structure struct : structures) {
-            output.writeUTF(struct.name);
-            output.writeShort(struct.fields.size());
-            for(StructureField field : struct.fields) {
-                output.writeUTF(field.name);
-                writeType(field.type, output);
-            }
-        }
-
-        output.writeShort(objects.size());
-        for(Object obj : objects) {
-            output.writeUTF(obj.name);
-            writeType(obj.ext, output);
-            output.writeShort(obj.fields.size());
-            for(ObjectField field : obj.fields) {
-                output.writeUTF(field.name);
-                writeType(field.type, output);
-                writeFlags(field.flags, output);
-            }
-            output.writeShort(obj.functions.size());
-            for(Function func : obj.functions) {
-                writeFunction(func, output);
-            }
-        }
-
-        output.writeShort(functions.size());
-        for(Function func : functions) {
-            writeFunction(func, output);
-        }
-
-        output.writeShort(fields.size());
-        for(ObjectField field : fields) {
-            output.writeUTF(field.name);
-            writeType(field.type, output);
-            writeFlags(field.flags, output);
-        }
-
-        output.close();
-    }
-
     private static void writeFlags(ArrayList<Flag> flags, DataOutputStream out) throws IOException {
         int flagsOut = 0;
         for(Flag f : flags) {
@@ -455,6 +481,8 @@ public class CompiledData {
         if(type.type.additionalData) {
             if(type instanceof TypeFunctionSignature) {
                 writeFunctionSignatureType((TypeFunctionSignature) type, out);
+            }else if(type instanceof TypeFunctionSignatureNamed) {
+                writeFunctionSignatureTypeNamed((TypeFunctionSignatureNamed) type, out);
             }else if(type instanceof TypeStructure) {
                 TypeStructure sig = (TypeStructure) type;
                 out.writeUTF(sig.name);
@@ -474,12 +502,8 @@ public class CompiledData {
         }
     }
 
-    public static CompiledData link(ArrayList<CompiledData> data) {
-        CompiledData compiled = new CompiledData();
-        for(CompiledData comp : data) {
-
-        }
-        throw new NotImplementedException("Linking is not implemented yet!");
+    public static LinkedData link(Collection<CompiledData> data) {
+        return new LinkedData(data);
     }
 
 }

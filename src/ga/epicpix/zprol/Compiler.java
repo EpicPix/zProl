@@ -638,7 +638,7 @@ public class Compiler {
         ArrayList<PreCompiledData> used = new ArrayList<>();
         for(PreCompiledData o : other) if(preCompiled.using.contains(o.namespace)) used.add(o);
 
-        CompiledData data = new CompiledData();
+        CompiledData data = new CompiledData(preCompiled.namespace);
 //        data.importData(imported); //TODO: Add  CompiledData.importData(PreCompiledData...)  method
         for(PreStructure structure : preCompiled.structures.values()) compileStructure(data, structure);
         for(PreFunction function : preCompiled.functions) compileFunction(new ArrayList<>(), data, function);

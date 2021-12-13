@@ -1,6 +1,7 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
+import ga.epicpix.zprol.compiled.CompiledData.LinkedData;
 import ga.epicpix.zprol.compiled.precompiled.PreCompiledData;
 import ga.epicpix.zprol.compiled.precompiled.PreCompiler;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
@@ -14,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 
 public class Start {
@@ -61,7 +63,7 @@ public class Start {
             compileFiles(files, outputFile, generate_x86_64_linux);
         }else {
             for(String file : files) {
-                CompiledData data = loadFile(file, outputFile, generate_x86_64_linux);
+                LinkedData data = loadFile(file, outputFile, generate_x86_64_linux);
                 if(data == null) {
                     System.exit(1);
                     return;
@@ -120,20 +122,22 @@ public class Start {
             compiledData.add(zpil);
         }
 
-        long startLink = System.currentTimeMillis();
-        CompiledData linked = CompiledData.link(compiledData);
-        long stopLink = System.currentTimeMillis();
-        System.out.printf("Took %d ms to link\n", stopLink - startLink);
+        LinkedData linked = CompiledData.link(compiledData);
 
 //        linked.write(new File(output)); ???
         String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
+
+        long startSave = System.currentTimeMillis();
+        linked.save(new File(normalName + ".zpil"));
+        long stopSave = System.currentTimeMillis();
+        System.out.printf("[%s] Took %d ms to save\n", normalName + ".zpil", stopSave - startSave);
 
         if(generate_x86_64_linux) {
             GeneratorAssembly.generate_x86_64_linux_assembly(linked, new File(normalName + ".asm"));
         }
     }
 
-    public static CompiledData loadFile(String file, String output, boolean generate_x86_64_linux) throws IOException, UnknownTypeException {
+    public static LinkedData loadFile(String file, String output, boolean generate_x86_64_linux) throws IOException, UnknownTypeException {
         boolean load = false;
         if(new File(file).exists()) {
             DataInputStream in = new DataInputStream(new FileInputStream(file));
@@ -144,11 +148,11 @@ public class Start {
         }
         String normalName = output == null ? file.substring(0, file.lastIndexOf('.')) : output.substring(0, output.lastIndexOf('.'));
 
-        CompiledData zpil;
+        LinkedData zpil;
 
         if(load) {
             long loadStart = System.currentTimeMillis();
-            zpil = CompiledData.load(new File(file));
+            zpil = LinkedData.load(new File(file));
             long loadEnd = System.currentTimeMillis();
             System.out.printf("[%s] Took %d ms to load\n", file, loadEnd - loadStart);
         }else {
@@ -170,12 +174,12 @@ public class Start {
             System.out.printf("[%s] Took %d ms to precompile\n", file, stopPreCompile - startPreCompile);
 
             long startCompile = System.currentTimeMillis();
-            zpil = Compiler.compile(precompiled, new ArrayList<>());
+            CompiledData czpil = Compiler.compile(precompiled, new ArrayList<>());
             long stopCompile = System.currentTimeMillis();
             System.out.printf("[%s] Took %d ms to compile\n", file, stopCompile - startCompile);
 
             long startSave = System.currentTimeMillis();
-            zpil.save(new File(normalName + ".zpil"));
+            (zpil = CompiledData.link(Collections.singleton(czpil))).save(new File(normalName + ".zpil"));
             long stopSave = System.currentTimeMillis();
             System.out.printf("[%s] Took %d ms to save\n", file, stopSave - startSave);
         }
