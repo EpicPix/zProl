@@ -16,10 +16,8 @@ public class Token {
         int pendingIndent = 0;
         for(Token token : tokens) {
             if(token.getType() == TokenType.CLOSE_SCOPE) {
-                builder.append("}\n");
-                pendingIndent = indent;
                 indent--;
-                continue;
+                pendingIndent = indent;
             }
             for(int i = 0; i<pendingIndent; i++) builder.append("    ");
             pendingIndent = 0;
@@ -49,7 +47,8 @@ public class Token {
                 builder.append("{\n");
                 indent++;
                 pendingIndent = indent;
-                continue;
+            }else if(token.getType() == TokenType.CLOSE_SCOPE) {
+                builder.append("}\n");
             }else if(token.getType() == TokenType.NUMBER) {
                 builder.append(((NumberToken) token).number);
             }else if(token.getType() == TokenType.EQUATION) {
