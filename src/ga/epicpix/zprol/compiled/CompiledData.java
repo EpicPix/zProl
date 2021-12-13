@@ -86,9 +86,6 @@ public class CompiledData {
         throw new FunctionNotDefinedException(name);
     }
 
-    private final ArrayList<String> futureObjectDefinitions = new ArrayList<>();
-    private final ArrayList<String> futureStructureDefinitions = new ArrayList<>();
-
     public void addTypeDefinition(String typeName, Type type) {
         if(typedef.get(typeName) == null) {
             typedef.put(typeName, type);
@@ -113,14 +110,6 @@ public class CompiledData {
         fields.add(field);
     }
 
-    public void addFutureObjectDefinition(String name) {
-        futureObjectDefinitions.add(name);
-    }
-
-    public void addFutureStructureDefinition(String name) {
-        futureStructureDefinitions.add(name);
-    }
-
     public Function getInitFunction() {
         Function func;
         try {
@@ -130,55 +119,6 @@ public class CompiledData {
             addFunction(func);
         }
         return func;
-    }
-
-    private Type finish(Type type) throws UnknownTypeException {
-        if(type instanceof TypeFutureObject) {
-            type = resolveType(((TypeFutureObject) type).type);
-        }else if(type instanceof TypeFutureStructure) {
-            type = resolveType(((TypeFutureStructure) type).type);
-        }else if(type instanceof TypeFunctionSignature) {
-            TypeFunctionSignature sig = (TypeFunctionSignature) type;
-            sig.returnType = finish(sig.returnType);
-            for(int i = 0; i<sig.parameters.length; i++) {
-                sig.parameters[i] = finish(sig.parameters[i]);
-            }
-        }else if(type instanceof TypeFunctionSignatureNamed) {
-            TypeFunctionSignatureNamed sig = (TypeFunctionSignatureNamed) type;
-            sig.returnType = finish(sig.returnType);
-            for(int i = 0; i<sig.parameters.length; i++) {
-                sig.parameters[i] = (TypeNamed) finish(sig.parameters[i]);
-            }
-        }else if(type instanceof TypeNamed) {
-            TypeNamed named = (TypeNamed) type;
-            named.type = finish(named.type);
-        }
-        return type;
-    }
-
-    public void finishFutures() throws UnknownTypeException {
-        futureObjectDefinitions.clear();
-        futureStructureDefinitions.clear();
-
-        for(Structure structure : structures) {
-            for(StructureField field : structure.fields) {
-                field.type = finish(field.type);
-            }
-        }
-
-        for(Object object : objects) {
-            for(ObjectField field : object.fields) {
-                field.type = finish(field.type);
-            }
-
-            for(Function func : object.functions) {
-                func.signature = (TypeFunctionSignatureNamed) finish(func.signature);
-            }
-        }
-
-        for(Function func : functions) {
-            func.signature = (TypeFunctionSignatureNamed) finish(func.signature);
-        }
     }
 
     public Type resolveType(SeekIterator<Token> iter) throws UnknownTypeException {
@@ -238,13 +178,6 @@ public class CompiledData {
             }
         }
 
-        if(futureObjectDefinitions.contains(type)) {
-            return new TypeFutureObject(type);
-        }
-        if(futureStructureDefinitions.contains(type)) {
-            return new TypeFutureStructure(type);
-        }
-
         throw new UnknownTypeException("Unknown type: " + type);
     }
 
@@ -272,13 +205,6 @@ public class CompiledData {
             if(obj.name.equals(type)) {
                 return new TypeObject(obj.name);
             }
-        }
-
-        if(futureObjectDefinitions.contains(type)) {
-            return new TypeFutureObject(type);
-        }
-        if(futureStructureDefinitions.contains(type)) {
-            return new TypeFutureStructure(type);
         }
 
         DataParser parser = new DataParser("<internal>", type);

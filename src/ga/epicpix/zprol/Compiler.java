@@ -631,13 +631,6 @@ public class Compiler {
 
     public static CompiledData compile(ArrayList<Token> tokens) throws UnknownTypeException {
         CompiledData data = new CompiledData();
-        for(Token token : tokens) {
-            if(token.getType() == TokenType.STRUCTURE) {
-                data.addFutureStructureDefinition(((StructureToken) token).getStructureName());
-            }else if(token.getType() == TokenType.OBJECT) {
-                data.addFutureObjectDefinition(((ObjectToken) token).getObjectName());
-            }
-        }
         ArrayList<Scope> scopes = new ArrayList<>();
 
         SeekIterator<Token> tokenIter = new SeekIterator<>(tokens);
@@ -653,7 +646,6 @@ public class Compiler {
                 data.addField(compileField(scopes, data, (FieldToken) token, true));
             }
         }
-        data.finishFutures();
         return data;
     }
 
