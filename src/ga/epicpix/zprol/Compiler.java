@@ -38,7 +38,8 @@ import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
 import ga.epicpix.zprol.compiled.TypeNamed;
 import ga.epicpix.zprol.compiled.operation.Operation;
-import ga.epicpix.zprol.compiled.precompiled.PreCompiler;
+import ga.epicpix.zprol.compiled.precompiled.PreStructure;
+import ga.epicpix.zprol.compiled.precompiled.PreStructureField;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
@@ -47,7 +48,6 @@ import ga.epicpix.zprol.tokens.FieldToken;
 import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
-import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.WordToken;
@@ -565,12 +565,12 @@ public class Compiler {
         return new Function(functionToken.name, signature, flags, parseFunctionCode(scopes, data, tokens, signature));
     }
 
-    public static Structure compileStructure(ArrayList<Scope> scopes, CompiledData data, StructureToken structureToken, SeekIterator<Token> tokens) throws UnknownTypeException {
+    public static Structure compileStructure(CompiledData data, PreStructure structure) throws UnknownTypeException {
         ArrayList<StructureField> fields = new ArrayList<>();
-        for(StructureType field : structureToken.getTypes()) {
+        for(PreStructureField field : structure.fields) {
             fields.add(new StructureField(field.name, data.resolveType(field.type)));
         }
-        return new Structure(structureToken.getStructureName(), fields);
+        return new Structure(structure.name, fields);
     }
 
     public static ArrayList<Flag> convertFlags(ArrayList<ParserFlag> pFlags) {
@@ -626,7 +626,11 @@ public class Compiler {
     public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {
         ArrayList<PreCompiledData> imported = new ArrayList<>();
         for(PreCompiledData o : other) if(preCompiled.imported.containsKey(o.exportName)) imported.add(o);
-        throw new NotImplementedException("Compiling using precompiled data is not yet supported!");
+
+        CompiledData data = new CompiledData();
+//        data.importData(imported); //TODO: Add  CompiledData.importData(PreCompiledData...)  method
+        for(PreStructure structure : preCompiled.structures.values()) compileStructure(data, structure);
+        return data;
     }
 
     public static CompiledData compile(ArrayList<Token> tokens) throws UnknownTypeException {
@@ -636,9 +640,7 @@ public class Compiler {
         SeekIterator<Token> tokenIter = new SeekIterator<>(tokens);
         while(tokenIter.hasNext()) {
             Token token = tokenIter.next();
-            if(token.getType() == TokenType.STRUCTURE) {
-                data.addStructure(compileStructure(scopes, data, (StructureToken) token, tokenIter));
-            }else if(token.getType() == TokenType.OBJECT) {
+            if(token.getType() == TokenType.OBJECT) {
                 data.addObject(compileObject(scopes, data, (ObjectToken) token, tokenIter));
             }else if(token.getType() == TokenType.FUNCTION) {
                 data.addFunction(compileFunction(scopes, data, (FunctionToken) token, tokenIter));

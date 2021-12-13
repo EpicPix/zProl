@@ -12,7 +12,6 @@ import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.StringToken;
-import ga.epicpix.zprol.tokens.StructureToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
 import ga.epicpix.zprol.tokens.TypeToken;
@@ -165,8 +164,6 @@ public class Parser {
                         throw new ParserException("Expression is invalid", parser);
                     }
                 }
-            } else if(word.equals("structure")) {
-                tokens.add(parseStructure(parser));
             } else if(word.equals("object")) {
                 tokens.addAll(parseObject(parser));
             } else if(word.equals("function")) {
@@ -212,27 +209,6 @@ public class Parser {
         }
         return tokens;
 
-    }
-
-    public static StructureToken parseStructure(DataParser parser) {
-        String name = parser.nextWord();
-        if(!parser.nextWord().equals("{")) {
-            throw new ParserException("Missing '{' after structure name", parser);
-        }
-        ArrayList<StructureType> types = new ArrayList<>();
-        while(true) {
-            if(parser.seekWord().equals("}")) {
-                parser.nextWord();
-                break;
-            }
-            String sType = parser.nextType();
-            String sName = parser.nextWord();
-            types.add(new StructureType(sType, sName));
-            if(!(parser.nextWord()).equals(";")) {
-                throw new ParserException("Missing ';' after structure field definition", parser);
-            }
-        }
-        return new StructureToken(name, types);
     }
 
     public static ArrayList<Token> parseObject(DataParser parser) {
