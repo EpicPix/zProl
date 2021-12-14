@@ -10,7 +10,7 @@ public class Type {
     public Type(Types type) {
         this.type = type;
         id = 0xffff;
-        name = null;
+        name = type.name();
     }
 
     public Type(char type, String name) {
@@ -18,7 +18,12 @@ public class Type {
         this.name = name;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public String toString() {
+        if(id == 65535) return "Type(" + name + ")";
         return "Type(" + (int) id + ")";
     }
 

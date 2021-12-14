@@ -36,7 +36,7 @@ public class ConstantPoolEntry {
         public FunctionEntry(Function func) {
             super((byte) 1);
             name = func.name;
-            sig = new TypeFunctionSignature(func.signature);
+            sig = func.signature.getNormalSignature();
         }
 
         public FunctionEntry(String name, TypeFunctionSignature sig) {

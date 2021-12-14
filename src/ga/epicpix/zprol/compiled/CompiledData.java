@@ -55,6 +55,10 @@ public class CompiledData {
         return (short) (constantPool.size() - 1);
     }
 
+    public ArrayList<ConstantPoolEntry> getConstantPool() {
+        return new ArrayList<>(constantPool);
+    }
+
     public ArrayList<Structure> getStructures() {
         return new ArrayList<>(structures);
     }

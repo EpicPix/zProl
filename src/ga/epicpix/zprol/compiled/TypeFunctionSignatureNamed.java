@@ -1,5 +1,7 @@
 package ga.epicpix.zprol.compiled;
 
+import java.util.Arrays;
+
 public class TypeFunctionSignatureNamed extends Type {
 
     public Type returnType;
@@ -19,4 +21,7 @@ public class TypeFunctionSignatureNamed extends Type {
         return new TypeFunctionSignature(returnType, parameters);
     }
 
+    public String toString() {
+        return "FunctionSignatureNamed(" + "returnType=" + returnType + ", parameters=" + Arrays.toString(parameters) + ')';
+    }
 }

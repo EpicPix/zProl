@@ -2,6 +2,7 @@ package ga.epicpix.zprol.generators;
 
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.CompiledData.LinkedData;
+import ga.epicpix.zprol.compiled.ConstantPoolEntry.FunctionEntry;
 import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.ObjectField;
@@ -41,13 +42,8 @@ public class GeneratorAssembly {
             for(Function func : compiled.getFunctions()) {
                 if(!func.flags.contains(Flag.NO_IMPLEMENTATION)) {
                     boolean flipNot = false;
-                    StringBuilder funcName = new StringBuilder(func.name.replace('<', '@').replace('>', '@'));
-                    if(!func.name.equals("_start")) {
-                        funcName.append(".").append(compiled.namespace + "." + func.signature.returnType);
-                        for(TypeNamed param : func.signature.parameters) {
-                            funcName.append(".").append(param.type.type.toString().toLowerCase());
-                        }
-                    } else {
+                    String funcName = getFullFunctionName(compiled.namespace, func.name.replace('<', '@').replace('>', '@'), func.signature.getNormalSignature());
+                    if(func.name.equals("_start")) {
                         writer.write("global " + func.name + "\n");
                     }
                     writer.write(funcName + ":\n");
@@ -398,25 +394,28 @@ public class GeneratorAssembly {
                         } else if(instr.instruction == BytecodeInstructions.JUMP) {
                             writer.write("    jmp " + funcName + "@" + (instrIndex + (short) instr.data[0]) + "\n");
                         } else if(instr.instruction == BytecodeInstructions.PUSHFUNCTION) {
-                            Function f = compiled.getFunctions().get((short) instr.data[0]);
-                            StringBuilder zfuncName = new StringBuilder(f.name);
-                            if(!f.name.equals("_start")) {
-                                zfuncName.append(".").append(f.signature.returnType);
-                                for(TypeNamed param : f.signature.parameters) {
-                                    zfuncName.append(".").append(param.type.type.toString().toLowerCase());
+                            short idx = (short) instr.data[0];
+                            FunctionEntry e = (FunctionEntry) compiled.getConstantPool().get(idx);
+                            Function f = null;
+                            for(Function ff : compiled.getFunctions()) {
+                                if(e.getName().equals(ff.name) && e.getSignature().validateFunctionSignature(ff.signature.getNormalSignature())) {
+                                    f = ff;
+                                    break;
                                 }
                             }
                             writer.write("    sub rsp, 8\n");
-                            writer.write("    mov qword [rsp], " + zfuncName + "\n");
+                            writer.write("    mov qword [rsp], " + getFullFunctionName(compiled.namespace, f.name, f.signature.getNormalSignature()) + "\n");
                         } else if(instr.instruction == BytecodeInstructions.INVOKESTATIC) {
-                            Function f = compiled.getFunctions().get((short) instr.data[0]);
-                            StringBuilder zfuncName = new StringBuilder(f.name);
-                            if(!f.name.equals("_start")) {
-                                zfuncName.append(".").append(f.signature.returnType);
-                                for(TypeNamed param : f.signature.parameters) {
-                                    zfuncName.append(".").append(param.type.type.toString().toLowerCase());
+                            short idx = (short) instr.data[0];
+                            FunctionEntry e = (FunctionEntry) compiled.getConstantPool().get(idx);
+                            Function f = null;
+                            for(Function ff : compiled.getFunctions()) {
+                                if(e.getName().equals(ff.name) && e.getSignature().validateFunctionSignature(ff.signature.getNormalSignature())) {
+                                    f = ff;
+                                    break;
                                 }
                             }
+                            String zfuncName = getFullFunctionName(compiled.namespace, f.name, f.signature.getNormalSignature());
                             TypeFunctionSignatureNamed s = f.signature;
                             for(int i = 0; i < s.parameters.length; i++) {
                                 TypeNamed param = s.parameters[i];
@@ -638,6 +637,14 @@ public class GeneratorAssembly {
 //        writer.write();
 
         writer.close();
+    }
+
+    public static String getFullFunctionName(String namespace, String name, TypeFunctionSignature signature) {
+        if(name.equals("_start")) return "_start";
+        StringBuilder zfuncName = new StringBuilder();
+        zfuncName.append(namespace).append(".").append(name).append("$").append(signature.returnType.getName().toLowerCase());
+        for(Type param : signature.parameters) zfuncName.append(".").append(param.getName().toLowerCase());
+        return zfuncName.toString();
     }
 
 }
