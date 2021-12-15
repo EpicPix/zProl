@@ -118,7 +118,7 @@ public class Start {
             long startCompile = System.currentTimeMillis();
             CompiledData zpil = Compiler.compile(data, pre);
             long stopCompile = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to compile\n", "???", stopCompile - startCompile);
+            System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace, stopCompile - startCompile);
             compiledData.add(zpil);
         }
 
