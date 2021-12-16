@@ -5,12 +5,9 @@ import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.tokens.DotWordToken;
 import ga.epicpix.zprol.tokens.EquationToken;
-import ga.epicpix.zprol.tokens.FieldToken;
-import ga.epicpix.zprol.tokens.FunctionToken;
 import ga.epicpix.zprol.tokens.KeywordToken;
 import ga.epicpix.zprol.tokens.LongWordToken;
 import ga.epicpix.zprol.tokens.NumberToken;
-import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.ParsedToken;
 import ga.epicpix.zprol.tokens.StringToken;
@@ -24,7 +21,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Parser {
 
@@ -198,98 +194,6 @@ public class Parser {
 
     }
 
-    public static ArrayList<Token> parseObject(DataParser parser) {
-        String name = parser.nextWord();
-        ArrayList<Token> tokens = new ArrayList<>();
-
-        String w = parser.nextWord();
-        if(!w.equals("{") && !w.equals("extends")) {
-            throw new ParserException("Expected '{' or 'extends' after name of object", parser);
-        }
-        String extendsFrom = null;
-        if(w.equals("extends")) {
-            extendsFrom = parser.nextWord();
-            if(!parser.nextWord().equals("{")) {
-                throw new ParserException("Expected '{' after name of extended object", parser);
-            }
-        }
-        tokens.add(new ObjectToken(name, extendsFrom));
-
-        while(true) {
-            if(parser.seekWord().equals("}")) {
-                tokens.add(new Token(TokenType.END_OBJECT));
-                parser.nextWord();
-                break;
-            }
-            String read = parser.nextWord();
-            ArrayList<ParserFlag> flags = new ArrayList<>();
-            while(true) {
-                boolean found = false;
-                for(ParserFlag flag : ParserFlag.values()) {
-                    if(flag.isPublicFlag() && flag.name().toLowerCase().equals(read)) {
-                        flags.add(flag);
-                        read = parser.nextWord();
-                        found = true;
-                        break;
-                    }
-                }
-                if(!found) {
-                    break;
-                }
-            }
-
-            boolean readFunction = false;
-
-            if(read.equals("field")) {
-                String fieldType = parser.nextType();
-                String fieldName = parser.nextWord();
-                ArrayList<Token> ops = new ArrayList<>();
-                String as = parser.nextWord();
-                if(as.equals("=")) {
-                    Token c;
-                    while((c = nextToken(parser)).getType() != TokenType.END_LINE) {
-                        ops.add(c);
-                    }
-                }else if(!as.equals(";")) {
-                    throw new ParserException("Expected ';' or '=' after field declaration", parser);
-                }
-                ops.add(new Token(TokenType.END_LINE));
-                tokens.add(new FieldToken(fieldType, fieldName, ops, flags));
-            }else if(read.equals(name)) {
-                ArrayList<ParameterDataType> functionParameters = parser.readParameters();
-                String tmp = parser.nextWord();
-                if(tmp.equals(";")) {
-                    throw new ParserException("Constructors must have implementation", parser);
-                }else if(!tmp.equals("{")) {
-                    throw new ParserException("Expected '{' after arguments of constructor", parser);
-                }
-
-                tokens.add(new FunctionToken("void", "<init>", functionParameters, flags));
-                readFunction = true;
-            }else if(read.equals("function")) {
-                String functionReturn = parser.nextType();
-                String functionName = parser.nextWord();
-                ArrayList<ParameterDataType> functionParameters = parser.readParameters();
-                String tmp = parser.nextWord();
-                if(tmp.equals(";")) {
-                    flags.add(ParserFlag.NO_IMPLEMENTATION);
-                }else if(!tmp.equals("{")) {
-                    throw new ParserException("Expected '{' after arguments of function", parser);
-                }
-
-                tokens.add(new FunctionToken(functionReturn, functionName, functionParameters, flags));
-                if(!flags.contains(ParserFlag.NO_IMPLEMENTATION)) readFunction = true;
-            }else {
-                throw new ParserException("Unexpected keyword '" + read + "'", parser);
-            }
-
-            if(readFunction) {
-                tokens.addAll(readFunctionCode(parser));
-            }
-        }
-        return tokens;
-    }
-
     public static EquationToken nextEquation(DataParser parser) {
         ArrayList<Token> tokens = new ArrayList<>();
         Token current;
@@ -320,57 +224,6 @@ public class Parser {
             }
         }
         return new BigInteger(str, radix);
-    }
-
-    public static ArrayList<Token> readFunctionCode(DataParser parser) {
-        ArrayList<Token> tokens = new ArrayList<>();
-        int opens = 0;
-        while(true) {
-            if(parser.seekWord().equals("}") && opens == 0) {
-                parser.nextWord();
-                tokens.add(new Token(TokenType.END_FUNCTION));
-                break;
-            }
-            String word = parser.nextWord();
-            try {
-                tokens.add(new NumberToken(getInteger(word)));
-                continue;
-            } catch(NumberFormatException ignored) {}
-
-            if(DataParser.operatorCharacters.matcher(word).matches()) {
-                tokens.add(new OperatorToken(word));
-                continue;
-            }
-            if(word.equals(";")) {
-                tokens.add(new Token(TokenType.END_LINE));
-                continue;
-            }else if(word.equals("(")) {
-                tokens.add(new Token(TokenType.OPEN));
-                continue;
-            }else if(word.equals(")")) {
-                tokens.add(new Token(TokenType.CLOSE));
-                continue;
-            }else if(word.equals(",")) {
-                tokens.add(new Token(TokenType.COMMA));
-                continue;
-            }else if(word.equals(".")) {
-                tokens.add(new Token(TokenType.ACCESSOR));
-                continue;
-            }else if(word.equals("\"")) {
-                tokens.add(new StringToken(parser.nextStringStarted()));
-                continue;
-            }else if(word.equals("{")) {
-                opens++;
-                tokens.add(new Token(TokenType.OPEN));
-                continue;
-            }else if(word.equals("}")) {
-                opens--;
-                tokens.add(new Token(TokenType.CLOSE));
-                continue;
-            }
-            tokens.add(new WordToken(word));
-        }
-        return tokens;
     }
 
 }
