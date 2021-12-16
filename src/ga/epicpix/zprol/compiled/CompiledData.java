@@ -51,7 +51,7 @@ public class CompiledData {
                 }
             }
         }
-        constantPool.add(new FunctionEntry(func));
+        constantPool.add(new FunctionEntry(namespace, func));
         return (short) (constantPool.size() - 1);
     }
 

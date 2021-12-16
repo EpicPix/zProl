@@ -396,30 +396,16 @@ public class GeneratorAssembly {
                         } else if(instr.instruction == BytecodeInstructions.PUSHFUNCTION) {
                             short idx = (short) instr.data[0];
                             FunctionEntry e = (FunctionEntry) compiled.getConstantPool().get(idx);
-                            Function f = null;
-                            for(Function ff : compiled.getFunctions()) {
-                                if(e.getName().equals(ff.name) && e.getSignature().validateFunctionSignature(ff.signature.getNormalSignature())) {
-                                    f = ff;
-                                    break;
-                                }
-                            }
                             writer.write("    sub rsp, 8\n");
-                            writer.write("    mov qword [rsp], " + getFullFunctionName(compiled.namespace, f.name, f.signature.getNormalSignature()) + "\n");
+                            writer.write("    mov qword [rsp], " + getFullFunctionName(e.getNamespace(), e.getName(), e.getSignature()) + "\n");
                         } else if(instr.instruction == BytecodeInstructions.INVOKESTATIC) {
                             short idx = (short) instr.data[0];
                             FunctionEntry e = (FunctionEntry) compiled.getConstantPool().get(idx);
-                            Function f = null;
-                            for(Function ff : compiled.getFunctions()) {
-                                if(e.getName().equals(ff.name) && e.getSignature().validateFunctionSignature(ff.signature.getNormalSignature())) {
-                                    f = ff;
-                                    break;
-                                }
-                            }
-                            String zfuncName = getFullFunctionName(compiled.namespace, f.name, f.signature.getNormalSignature());
-                            TypeFunctionSignatureNamed s = f.signature;
+                            String zfuncName = getFullFunctionName(e.getNamespace(), e.getName(), e.getSignature());
+                            TypeFunctionSignature s = e.getSignature();
                             for(int i = 0; i < s.parameters.length; i++) {
-                                TypeNamed param = s.parameters[i];
-                                int size = param.type.type.memorySize;
+                                Type param = s.parameters[i];
+                                int size = param.type.memorySize;
                                 if(size == 1) {
                                     writer.write("    mov byte " + parameters[i][3] + ", [rsp]\n");
                                     writer.write("    inc rsp\n");

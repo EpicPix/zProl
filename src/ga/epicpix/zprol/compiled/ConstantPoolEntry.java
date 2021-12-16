@@ -30,19 +30,26 @@ public class ConstantPoolEntry {
 
     public static class FunctionEntry extends ConstantPoolEntry {
 
+        private final String namespace;
         private final String name;
         private final TypeFunctionSignature sig;
 
-        public FunctionEntry(Function func) {
+        public FunctionEntry(String namespace, Function func) {
             super((byte) 1);
+            this.namespace = namespace;
             name = func.name;
             sig = func.signature.getNormalSignature();
         }
 
-        public FunctionEntry(String name, TypeFunctionSignature sig) {
+        public FunctionEntry(String namespace, String name, TypeFunctionSignature sig) {
             super((byte) 1);
+            this.namespace = namespace;
             this.name = name;
             this.sig = sig;
+        }
+
+        public String getNamespace() {
+            return namespace;
         }
 
         public String getName() {
@@ -55,12 +62,13 @@ public class ConstantPoolEntry {
 
         public void write(DataOutputStream out) throws IOException {
             super.write(out);
+            out.writeUTF(namespace);
             out.writeUTF(name);
             CompiledData.writeFunctionSignatureType(sig, out);
         }
 
         public static FunctionEntry read(DataInputStream in) throws IOException {
-            return new FunctionEntry(in.readUTF(), CompiledData.readFunctionSignature(in));
+            return new FunctionEntry(in.readUTF(), in.readUTF(), CompiledData.readFunctionSignature(in));
         }
     }
 
