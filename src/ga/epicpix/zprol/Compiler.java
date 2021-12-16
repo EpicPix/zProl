@@ -30,7 +30,6 @@ import ga.epicpix.zprol.compiled.operation.Operation.OperationShiftRight;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationString;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationSubtract;
 import ga.epicpix.zprol.compiled.operation.OperationCompiler;
-import ga.epicpix.zprol.compiled.Object;
 import ga.epicpix.zprol.compiled.ObjectField;
 import ga.epicpix.zprol.compiled.Structure;
 import ga.epicpix.zprol.compiled.StructureField;
@@ -46,10 +45,6 @@ import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
-import ga.epicpix.zprol.tokens.FieldToken;
-import ga.epicpix.zprol.tokens.FunctionToken;
-import ga.epicpix.zprol.tokens.KeywordToken;
-import ga.epicpix.zprol.tokens.ObjectToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.ParsedToken;
 import ga.epicpix.zprol.tokens.Token;
@@ -586,56 +581,6 @@ public class Compiler {
         data.addStructure(new Structure(structure.name, fields));
     }
 
-    public static ArrayList<Flag> convertFlags(ArrayList<ParserFlag> pFlags) {
-        ArrayList<Flag> flags = new ArrayList<>();
-        for(ParserFlag parserFlag : pFlags) {
-            if(parserFlag == ParserFlag.INTERNAL) {
-                flags.add(Flag.INTERNAL);
-            }else if(parserFlag == ParserFlag.NO_IMPLEMENTATION) {
-                flags.add(Flag.NO_IMPLEMENTATION);
-            }else if(parserFlag == ParserFlag.STATIC) {
-                flags.add(Flag.STATIC);
-            }else if(parserFlag == ParserFlag.FINAL) {
-                flags.add(Flag.FINAL);
-            }
-        }
-        return flags;
-    }
-
-    public static ObjectField compileField(ArrayList<Scope> scopes, CompiledData data, FieldToken field, boolean primary) throws UnknownTypeException {
-        Type type = data.resolveType(field.type);
-        if(primary) {
-            Function func = data.getInitFunction();
-            Bytecode bytecode = func.code;
-            if(field.ops.size() != 1) {
-                Operation op = new OperationCompiler().compile(data, new SeekIterator<>(field.ops));
-                convertOperationToBytecode(scopes, type.type, bytecode, data, op, true, type);
-                int psize = type.type.memorySize;
-                if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD8, (short) data.getFields().size());
-                else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD16, (short) data.getFields().size());
-                else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD32, (short) data.getFields().size());
-                else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD64, (short) data.getFields().size());
-                else throw new NotImplementedException("Size " + psize + " is not supported");
-            }
-        }
-        return new ObjectField(field.name, type, convertFlags(field.flags));
-    }
-
-    public static Object compileObject(ArrayList<Scope> scopes, CompiledData data, ObjectToken objectToken, SeekIterator<Token> tokens) throws UnknownTypeException {
-        ArrayList<ObjectField> fields = new ArrayList<>();
-        ArrayList<Function> functions = new ArrayList<>();
-        Token currentToken;
-        while((currentToken = tokens.next()).getType() != TokenType.END_OBJECT) {
-            if(currentToken.getType() == TokenType.FIELD) {
-                FieldToken fieldToken = (FieldToken) currentToken;
-                fields.add(compileField(scopes, data, fieldToken, false));
-            }else if(currentToken.getType() == TokenType.FUNCTION) {
-//                compileFunction(scopes, data, (FunctionToken) currentToken, tokens);
-            }
-        }
-        return new Object(objectToken.getObjectName(), data.resolveType(objectToken.getExtendsFrom()), fields, functions);
-    }
-
     public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {
         ArrayList<PreCompiledData> used = new ArrayList<>();
         for(PreCompiledData o : other) if(preCompiled.using.contains(o.namespace)) used.add(o);
@@ -644,24 +589,6 @@ public class Compiler {
 //        data.importData(imported); //TODO: Add  CompiledData.importData(PreCompiledData...)  method
         for(PreStructure structure : preCompiled.structures.values()) compileStructure(data, structure);
         for(PreFunction function : preCompiled.functions) compileFunction(new ArrayList<>(), data, function);
-        return data;
-    }
-
-    public static CompiledData compile(ArrayList<Token> tokens) throws UnknownTypeException {
-        CompiledData data = new CompiledData();
-        ArrayList<Scope> scopes = new ArrayList<>();
-
-        SeekIterator<Token> tokenIter = new SeekIterator<>(tokens);
-        while(tokenIter.hasNext()) {
-            Token token = tokenIter.next();
-            if(token.getType() == TokenType.OBJECT) {
-                data.addObject(compileObject(scopes, data, (ObjectToken) token, tokenIter));
-            }else if(token.getType() == TokenType.FUNCTION) {
-//                compileFunction(scopes, data, (FunctionToken) token, tokenIter);
-            }else if(token.getType() == TokenType.FIELD) {
-                data.addField(compileField(scopes, data, (FieldToken) token, true));
-            }
-        }
         return data;
     }
 

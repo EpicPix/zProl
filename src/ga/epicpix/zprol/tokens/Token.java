@@ -18,10 +18,6 @@ public class Token {
         return (DotWordToken) this;
     }
 
-    public LongWordToken asLongWordToken() {
-        return (LongWordToken) this;
-    }
-
     public EquationToken asEquationToken() {
         return (EquationToken) this;
     }

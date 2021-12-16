@@ -1,7 +1,5 @@
 package ga.epicpix.zprol;
 
-import ga.epicpix.zprol.exceptions.ParserException;
-import java.util.ArrayList;
 import java.util.Stack;
 import java.util.regex.Pattern;
 
@@ -330,35 +328,4 @@ public class DataParser {
         return word.toString();
     }
 
-    public ArrayList<ParameterDataType> readParameters() {
-        ArrayList<ParameterDataType> parameters = new ArrayList<>();
-        lastLocation = getLocation();
-
-        if(!nextWord().equals("(")) {
-            throw new ParserException("Start of parameters doesn't have '('", this);
-        }
-
-        while(true) {
-            if(seekWord().equals(")")) {
-                nextWord();
-                break;
-            }
-            String parameterType = nextType();
-            String parameterName = nextWord();
-
-            parameters.add(new ParameterDataType(parameterType, parameterName));
-
-            String tmp = seekWord();
-            if(tmp.equals(",")) {
-                nextWord();
-            }else if(tmp.equals(")")) {
-                continue;
-            }else {
-                throw new ParserException("Cannot parse word: " + nextWord(), this);
-            }
-        }
-
-        return parameters;
-
-    }
 }

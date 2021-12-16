@@ -12,10 +12,6 @@ public class ConstantPoolEntry {
         this.tag = tag;
     }
 
-    public byte getTag() {
-        return tag;
-    }
-
     public void write(DataOutputStream out) throws IOException {
         out.writeByte(tag);
     }

@@ -11,11 +11,9 @@ public enum Flag {
 
     ;
 
-    public final int bit;
     public final int mask;
 
     Flag(int id) {
-        this.bit = id;
         this.mask = 1 << id;
     }
 

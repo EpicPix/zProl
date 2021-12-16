@@ -21,15 +21,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 public class CompiledData {
 
     public final String namespace;
-
-    public CompiledData() {
-        namespace = null;
-    }
 
     public CompiledData(String namespace) {
         this.namespace = namespace;
@@ -39,7 +34,6 @@ public class CompiledData {
     private final ArrayList<Object> objects = new ArrayList<>();
     private final ArrayList<Function> functions = new ArrayList<>();
     private final ArrayList<ObjectField> fields = new ArrayList<>();
-    private final HashMap<String, Type> typedef = new HashMap<>();
     private final ArrayList<ConstantPoolEntry> constantPool = new ArrayList<>();
 
     public short getFunctionIndex(Function func) {
@@ -57,14 +51,6 @@ public class CompiledData {
 
     public ArrayList<ConstantPoolEntry> getConstantPool() {
         return new ArrayList<>(constantPool);
-    }
-
-    public ArrayList<Structure> getStructures() {
-        return new ArrayList<>(structures);
-    }
-
-    public ArrayList<Object> getObjects() {
-        return new ArrayList<>(objects);
     }
 
     public ArrayList<Function> getFunctions() {
@@ -116,14 +102,6 @@ public class CompiledData {
         throw new FunctionNotDefinedException(name);
     }
 
-    public void addTypeDefinition(String typeName, Type type) {
-        if(typedef.get(typeName) == null) {
-            typedef.put(typeName, type);
-        }else {
-            throw new RuntimeException("Type definition for " + typeName + " is already defined");
-        }
-    }
-
     public void addStructure(Structure structure) {
         structures.add(structure);
     }
@@ -134,21 +112,6 @@ public class CompiledData {
 
     public void addFunction(Function function) {
         functions.add(function);
-    }
-
-    public void addField(ObjectField field) {
-        fields.add(field);
-    }
-
-    public Function getInitFunction() {
-        Function func;
-        try {
-            func = getFunction("<clinit>", new TypeFunctionSignature(new Type(Types.VOID)));
-        } catch(FunctionNotDefinedException e) {
-            func = new Function("<clinit>", new TypeFunctionSignatureNamed(new Type(Types.VOID)), new ArrayList<>(), new Bytecode());
-            addFunction(func);
-        }
-        return func;
     }
 
     public Type resolveType(SeekIterator<Token> iter) throws UnknownTypeException {
@@ -193,8 +156,6 @@ public class CompiledData {
                 return new TypePointer(null);
             }
         } else if(type.equals("void")) return new Type(Types.VOID);
-        Type t = typedef.get(type);
-        if(t != null) return t;
 
         for(Structure struct : structures) {
             if(struct.name.equals(type)) {
@@ -222,8 +183,6 @@ public class CompiledData {
         else if(type.equals("uint32")) return new Type(Types.UINT32);
         else if(type.equals("uint64")) return new Type(Types.UINT64);
         else if(type.equals("void")) return new Type(Types.VOID);
-        Type t = typedef.get(type);
-        if(t != null) return t;
 
         for(Structure struct : structures) {
             if(struct.name.equals(type)) {

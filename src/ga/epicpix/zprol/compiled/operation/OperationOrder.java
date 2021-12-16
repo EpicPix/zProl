@@ -5,6 +5,7 @@ import ga.epicpix.zprol.compiled.operation.Operation.OperationAnd;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationAssignment;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationComparison;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationComparisonNot;
+import ga.epicpix.zprol.compiled.operation.Operation.OperationDivide;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationMod;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationMultiply;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationShiftLeft;
@@ -47,7 +48,7 @@ public class OperationOrder {
         ORDER_TO_CLASS.put("*", OperationMultiply.class);
         ORDER_TO_NAME.put("*", "mul");
 
-        ORDER_TO_CLASS.put("/", OperationSubtract.class);
+        ORDER_TO_CLASS.put("/", OperationDivide.class);
         ORDER_TO_NAME.put("/", "div");
 
         ORDER_TO_CLASS.put("%", OperationMod.class);
