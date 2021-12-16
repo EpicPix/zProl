@@ -111,7 +111,7 @@ public class Parser {
             return new TypeToken(type);
         }
         else if(Language.KEYWORDS.contains(word)) throw new ParserException("Keywords not allowed here", parser);
-        else if(DataParser.operatorCharacters.matcher(word).matches()) return new OperatorToken(word);
+        else if(DataParser.matchesCharacters(DataParser.operatorCharacters, word)) return new OperatorToken(word);
         else if(word.equals(";")) return new Token(TokenType.END_LINE);
         else if(word.equals("(")) return new Token(TokenType.OPEN);
         else if(word.equals(")")) return new Token(TokenType.CLOSE);

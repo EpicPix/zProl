@@ -1,21 +1,45 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.exceptions.ParserException;
-import ga.epicpix.zprol.tokens.EquationToken;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.regex.Pattern;
 
 public class DataParser {
 
-    public static final Pattern nonSpecialCharacters = Pattern.compile("[a-zA-Z0-9_]");
-    public static final Pattern operatorCharacters = Pattern.compile("[+=/*\\-%<>!&]*");
+    public static char[] genCharacters(char from, char to) {
+        char[] out = new char[to-from+1];
+        for(char i = from; i <= to; i++) out[i-from] = i;
+        return out;
+    }
+
+    public static char[] joinCharacters(char[]... chars) {
+        int requiredSpace = 0;
+        for(char[] c : chars) requiredSpace += c.length;
+        char[] c = new char[requiredSpace];
+        int current = 0;
+        for(char[] a : chars) for(char b : a) c[current++] = b;
+        return c;
+    }
+
+    public static boolean matchesCharacters(char[] chars, char c) {
+        for(char t : chars) if(t == c) return true;
+        return false;
+    }
+
+    public static boolean matchesCharacters(char[] chars, String c) {
+        for(char t : c.toCharArray()) if(!matchesCharacters(chars, t)) return false;
+        return true;
+    }
+
+    public static final char[] nonSpecialCharacters = joinCharacters(genCharacters('a', 'z'), genCharacters('A', 'Z'), genCharacters('0', '9'), new char[] {'_'});
+    public static final char[] operatorCharacters = new char[] {'+', '=', '/', '*', '-', '%', '<', '>', '!', '&'};
     public static final Pattern validLongWordCharacters = Pattern.compile("[a-zA-Z0-9_.+\\-@]*");
     public static final Pattern validDotWordCharacters = Pattern.compile("[a-zA-Z0-9_.]*");
 
-    private String data;
-    private String fileName;
-    private String[] lines;
+    private final String data;
+    private final String fileName;
+    private final String[] lines;
     private int index;
 
     private int lineNumber;
@@ -97,6 +121,28 @@ public class DataParser {
         }
     }
 
+    private void checkComments(char[] cdata) {
+        while(cdata[index] == '/') {
+            if(index + 1 < cdata.length) {
+                if(cdata[index + 1] == '/') {
+                    index += 2;
+                    lineRow += 2;
+                    while(index < cdata.length) {
+                        if(cdata[index] == '\n') {
+                            lineNumber++;
+                            lineRow = 0;
+                            index++;
+                            break;
+                        }
+                        lineRow++;
+                        index++;
+                    }
+                    ignoreWhitespace();
+                }
+            }
+        }
+    }
+
     public String nextWord() {
         ignoreWhitespace();
         lastLocation = getLocation();
@@ -104,40 +150,15 @@ public class DataParser {
         StringBuilder word = new StringBuilder();
         char[] cdata = data.toCharArray();
         boolean startType = false;
-        while(index < cdata.length) {
-            if(Character.isWhitespace(cdata[index])) {
-                break;
-            }
-            while(cdata[index] == '/') {
-                if(index + 1 < cdata.length) {
-                    if(cdata[index + 1] == '/') {
-                        index += 2;
-                        lineRow += 2;
-                        while(index < cdata.length) {
-                            if(cdata[index] == '\n') {
-                                lineNumber++;
-                                lineRow = 0;
-                                index++;
-                                break;
-                            }
-                            lineRow++;
-                            index++;
-                        }
-                        ignoreWhitespace();
-                    }
-                }
-            }
-            boolean matches = nonSpecialCharacters.matcher(cdata[index] + "").matches();
-            boolean operatorMatches = operatorCharacters.matcher(word.toString() + cdata[index]).matches();
-            if(!operatorMatches && startType) {
-                return word.toString();
-            }
+        while(index < cdata.length && !Character.isWhitespace(cdata[index])) {
+            checkComments(cdata);
+            boolean matches = matchesCharacters(nonSpecialCharacters, cdata[index]);
+            boolean operatorMatches = matchesCharacters(operatorCharacters, word.toString() + cdata[index]);
+            if(!operatorMatches && startType) return word.toString();
             if(!matches) {
                 if(operatorMatches) {
-                    if(word.length() == 0) {
-                        startType = true;
-                    }
-                }else {
+                    if(word.length() == 0) startType = true;
+                } else {
                     if(word.length() == 0) {
                         word.append(cdata[index]);
                         lineRow++;
@@ -145,7 +166,6 @@ public class DataParser {
                     }
                     return word.toString();
                 }
-
             }
             lineRow++;
             word.append(cdata[index]);

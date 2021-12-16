@@ -17,10 +17,33 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Scanner;
 
 public class Start {
 
-    public static void main(String[] args) throws IOException, UnknownTypeException {
+    public static void main(String[] args) throws UnknownTypeException, IOException {
+        boolean p = false;
+        ArrayList<String> arguments = new ArrayList<>();
+        for(String arg : args) {
+            if(arg.equals("-test")) p = true;
+            else arguments.add(arg);
+        }
+        args = arguments.toArray(new String[0]);
+        if(p) {
+            Scanner sc = new Scanner(System.in);
+            while(!sc.nextLine().equals("break")) {
+                preMain(args);
+                Language.TYPES.clear();
+                Language.TOKENS.clear();
+                Language.DEFINES.clear();
+                Language.KEYWORDS.clear();
+            }
+        }else {
+            preMain(args);
+        }
+    }
+
+    public static void preMain(String[] args) throws IOException, UnknownTypeException {
         try {
             Language.load("language.zld");
         }catch(ParserException e) {
@@ -56,7 +79,7 @@ public class Start {
                 files.add(s);
             }
         }
-        if(files.size() == 0) {
+        if(files.isEmpty()) {
             throw new IllegalArgumentException("Files to compile not specified");
         }
         if(outputFile != null) {

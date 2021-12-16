@@ -565,8 +565,9 @@ public class Compiler {
     public static void compileFunction(ArrayList<Scope> scopes, CompiledData data, PreFunction function) throws UnknownTypeException {
 //        ArrayList<Flag> flags = convertFlags(function.flags);
         Type returnType = data.resolveType(function.returnType);
-        ArrayList<TypeNamed> parameters = new ArrayList<>();
-        for(PreParameter param : function.parameters) {
+        ArrayList<TypeNamed> parameters = new ArrayList<>(function.parameters.size());
+        for(int i = 0; i<function.parameters.size(); i++) {
+            PreParameter param = function.parameters.get(i);
             parameters.add(new TypeNamed(data.resolveType(param.type), param.name));
         }
         TypeFunctionSignatureNamed signature = new TypeFunctionSignatureNamed(returnType, parameters.toArray(new TypeNamed[0]));
@@ -577,8 +578,9 @@ public class Compiler {
     }
 
     public static void compileStructure(CompiledData data, PreStructure structure) throws UnknownTypeException {
-        ArrayList<StructureField> fields = new ArrayList<>();
-        for(PreStructureField field : structure.fields) {
+        ArrayList<StructureField> fields = new ArrayList<>(structure.fields.size());
+        for(int i = 0; i<structure.fields.size(); i++) {
+            PreStructureField field = structure.fields.get(i);
             fields.add(new StructureField(field.name, data.resolveType(field.type)));
         }
         data.addStructure(new Structure(structure.name, fields));
