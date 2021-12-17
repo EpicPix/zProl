@@ -77,7 +77,6 @@ public class Compiler {
                     break;
                 }else if(parsed.name.equals("ReturnValue")) {
                     if(sig.returnType.type.memorySize != 0) {
-                        mathCompiler.reset();
                         convertOperationToBytecode(scopes, sig.returnType.type, bytecode, data, mathCompiler.compile(data, new SeekIterator<>(parsed.tokens.get(1).asEquationToken().tokens)), true, sig.returnType);
                         int size = sig.returnType.type.memorySize;
                         if(size == 1) bytecode.pushInstruction(BytecodeInstructions.RETURN8);
@@ -88,7 +87,6 @@ public class Compiler {
                     } else throw new RuntimeException("Tried to return a value while the method is void");
                     break;
                 }else if(parsed.name.equals("Call")) {
-                    mathCompiler.reset();
                     convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, new SeekIterator<>(parsed.tokens)), false, null);
                 }else {
                     throw new RuntimeException("Not implemented language feature: " + parsed.name + " / " + parsed.tokens);
@@ -100,7 +98,6 @@ public class Compiler {
                         throw new RuntimeException("Missing '('");
                     }
                     ArrayList<Operation> op = new ArrayList<>();
-                    mathCompiler.reset();
                     mathCompiler.compile0(1, op, new Stack<>(), tokens, data);
                     convertOperationToBytecode(scopes, Types.BOOLEAN, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
                     if(tokens.seek().getType() == TokenType.OPEN) {
@@ -113,7 +110,6 @@ public class Compiler {
                         throw new RuntimeException("Missing '('");
                     }
                     ArrayList<Operation> op = new ArrayList<>();
-                    mathCompiler.reset();
                     mathCompiler.compile0(1, op, new Stack<>(), tokens, data);
                     int s = bytecode.getInstructions().size();
                     convertOperationToBytecode(scopes, Types.BOOLEAN, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
@@ -137,7 +133,6 @@ public class Compiler {
                         if(token.getType() != TokenType.END_LINE) {
                             if(token.getType() == TokenType.OPERATOR) {
                                 if(((OperatorToken) token).operator.equals("=")) {
-                                    mathCompiler.reset();
                                     convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, tokens), true, type);
                                     int size = type.type.memorySize;
                                     short index = (short) lVar.index;
@@ -155,7 +150,6 @@ public class Compiler {
                         }
                     } catch (UnknownTypeException unkType) {
                         tokens.setIndex(startIndex);
-                        mathCompiler.reset();
                         convertOperationToBytecode(scopes, null, bytecode, data, mathCompiler.compile(data, tokens), false, null);
                     }
                 }
@@ -185,7 +179,6 @@ public class Compiler {
                                         throw new RuntimeException("Missing '('");
                                     }
                                     ArrayList<Operation> op = new ArrayList<>();
-                                    mathCompiler.reset();
                                     mathCompiler.compile0(1, op, new Stack<>(), tokens, data);
                                     convertOperationToBytecode(scopes, Types.BOOLEAN, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
                                     if(tokens.seek().getType() == TokenType.OPEN) {

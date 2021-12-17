@@ -31,10 +31,6 @@ public class OperationCompiler {
 
     private int current = 0;
 
-    public void reset() {
-        current = 0;
-    }
-
     private Operation compileReference(Token token, SeekIterator<Token> tokens, CompiledData data) {
         ArrayList<Token> ref = new ArrayList<>();
         ref.add(token);
@@ -165,6 +161,7 @@ public class OperationCompiler {
     }
 
     public Operation compile(CompiledData data, SeekIterator<Token> tokens) {
+        current = 0;
         ArrayList<Operation> operations = new ArrayList<>();
         Stack<ArrayList<Operation>> stackOperations = new Stack<>();
         if(tokens.seek() instanceof EquationToken) {
