@@ -1,8 +1,5 @@
 namespace test.Example;
 
-
-yrd
-
 using hello.world.HelloWorld;
 
 structure abc {
