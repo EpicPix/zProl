@@ -14,10 +14,6 @@ public class Token {
         return (WordToken) this;
     }
 
-    public DotWordToken asDotWordToken() {
-        return (DotWordToken) this;
-    }
-
     public EquationToken asEquationToken() {
         return (EquationToken) this;
     }
@@ -35,8 +31,6 @@ public class Token {
             pendingIndent = 0;
             if(token.getType() == TokenType.WORD) {
                 builder.append(((WordToken) token).word).append(" ");
-            }else if(token.getType() == TokenType.LONG_WORD) {
-                builder.append(((LongWordToken) token).word);
             }else if(token.getType() == TokenType.OPERATOR) {
                 builder.append(" ").append(((OperatorToken) token).operator).append(" ");
             }else if(token.getType() == TokenType.TYPE) {

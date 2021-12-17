@@ -1,16 +1,10 @@
 package ga.epicpix.zprol.compiled.precompiled;
 
 import ga.epicpix.zprol.SeekIterator;
-import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.InvalidOperationException;
-import ga.epicpix.zprol.exceptions.ParserException;
-import ga.epicpix.zprol.tokens.KeywordToken;
-import ga.epicpix.zprol.tokens.LongWordToken;
 import ga.epicpix.zprol.tokens.ParsedToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
-import ga.epicpix.zprol.tokens.TypeToken;
-import ga.epicpix.zprol.tokens.WordToken;
 import java.util.ArrayList;
 
 public class PreCompiler {
@@ -35,10 +29,10 @@ public class PreCompiler {
                     if(pre.typedef.get(name) != null) throw new RuntimeException("Redefined typedef definition");
                     pre.typedef.put(name, type);
                 }else if(parsed.name.equals("Using")) {
-                    pre.using.add(ts.get(1).asDotWordToken().word);
+                    pre.using.add(ts.get(1).asWordToken().word);
                 }else if(parsed.name.equals("Namespace")) {
                     if(usedOther) throw new RuntimeException("Namespace not defined at the top of the file");
-                    String namespace = ts.get(1).asDotWordToken().word;
+                    String namespace = ts.get(1).asWordToken().word;
                     if(pre.namespace != null) throw new RuntimeException("Defined namespace for a file multiple times");
                     pre.namespace = namespace;
                 }else if(parsed.name.equals("FunctionEmpty")) {

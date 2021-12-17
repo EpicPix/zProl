@@ -3,10 +3,8 @@ package ga.epicpix.zprol;
 import ga.epicpix.zprol.DataParser.SavedLocation;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.ParserException;
-import ga.epicpix.zprol.tokens.DotWordToken;
 import ga.epicpix.zprol.tokens.EquationToken;
 import ga.epicpix.zprol.tokens.KeywordToken;
-import ga.epicpix.zprol.tokens.LongWordToken;
 import ga.epicpix.zprol.tokens.NumberToken;
 import ga.epicpix.zprol.tokens.OperatorToken;
 import ga.epicpix.zprol.tokens.ParsedToken;
@@ -55,8 +53,8 @@ public class Parser {
     public static boolean check(String[] t, DataParser parser, boolean last, ArrayList<Token> tTokens) {
         ArrayList<Token> added = new ArrayList<>();
         for(String s : t) {
-            if(s.equals("@lword@")) {if(!checkToken("long word", parser, DataParser::nextLongWord, LongWordToken::new, last, added)) return false; }
-            else if(s.equals("@dword@")) {if(!checkToken("dot word", parser, DataParser::nextDotWord, DotWordToken::new, last, added)) return false; }
+            if(s.equals("@lword@")) {if(!checkToken("long word", parser, DataParser::nextLongWord, WordToken::new, last, added)) return false; }
+            else if(s.equals("@dword@")) {if(!checkToken("dot word", parser, DataParser::nextDotWord, WordToken::new, last, added)) return false; }
             else if(s.equals("@word@")) {if(!checkToken("word", parser, DataParser::nextWord, WordToken::new, last, added)) return false; }
             else if(s.equals("@type@")) {if(!checkToken("type", parser, DataParser::nextType, WordToken::new, last, added)) return false; }
             else if(s.equals("@equation@")) {if(!checkToken("equation", parser, Parser::nextEquation, x -> x, last, added)) return false; }
