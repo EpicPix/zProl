@@ -30,66 +30,72 @@ public class Parser {
         T read(DataParser parser);
     }
 
-    private static <T> boolean checkToken(String friendlyName, DataParser parser, TokenReader<T> reader, TokenGenerator<T> generator, boolean last, ArrayList<Token> tTokens) {
+    private static String getLanguageDefinition(String[] f, String t) {
+        StringBuilder builder = new StringBuilder(t);
+        boolean h = false;
+        for(int i = 2; i<f.length; i++) {
+            String x = f[i];
+            if(x.startsWith("%") && x.endsWith("%") && x.length() >= 3) {
+                builder.append(x, 1, x.length() - 1);
+            }else if(x.startsWith("^")) {
+                if(h) builder.append(" ");
+                boolean s = x.startsWith("^+");
+                builder.append("<").append(x, 1 + (s ? 1 : 0), x.length()).append(s ? "+" : "").append(">");
+            }else {
+                builder.append(" ").append(x);
+            }
+            h = x.startsWith("^");
+        }
+        return builder.toString();
+    }
+
+    private static <T> boolean checkToken(DataParser parser, TokenReader<T> reader, TokenGenerator<T> generator, ArrayList<Token> tTokens) {
         T w = reader.read(parser);
-        if(w == null) {
-            if(last) throw new ParserException("Expected " + friendlyName, parser);
-            else return false;
-        }
+        if(w == null) return false;
         tTokens.add(generator.generate(w));
         return true;
     }
 
-    private static boolean checkToken(String check, DataParser parser, TokenGenerator<String> generator, boolean last, ArrayList<Token> tTokens) {
+    private static boolean checkToken(String check, DataParser parser, TokenGenerator<String> generator, ArrayList<Token> tTokens) {
         String w = parser.nextWord();
-        if(!check.equals(w)) {
-            if(last) throw new ParserException("Expected '" + check + "'", parser);
-            else return false;
-        }
+        if(!check.equals(w)) return false;
         tTokens.add(generator.generate(w));
         return true;
     }
 
-    public static boolean check(String[] t, DataParser parser, boolean last, ArrayList<Token> tTokens) {
+    public static boolean check(String[] t, DataParser parser, ArrayList<Token> tTokens) {
         ArrayList<Token> added = new ArrayList<>();
-        for(String s : t) {
-            if(s.equals("@lword@")) {if(!checkToken("long word", parser, DataParser::nextLongWord, WordToken::new, last, added)) return false; }
-            else if(s.equals("@dword@")) {if(!checkToken("dot word", parser, DataParser::nextDotWord, WordToken::new, last, added)) return false; }
-            else if(s.equals("@word@")) {if(!checkToken("word", parser, DataParser::nextWord, WordToken::new, last, added)) return false; }
-            else if(s.equals("@type@")) {if(!checkToken("type", parser, DataParser::nextType, WordToken::new, last, added)) return false; }
-            else if(s.equals("@equation@")) {if(!checkToken("equation", parser, Parser::nextEquation, x -> x, last, added)) return false; }
-            else if(s.equals("%;%")) {if(!checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), last, added)) return false; }
-            else if(s.equals("%,%")) {if(!checkToken(",", parser, (data) -> new Token(TokenType.COMMA), last, added)) return false; }
-            else if(s.equals("%(%")) {if(!checkToken("(", parser, (data) -> new Token(TokenType.OPEN), last, added)) return false; }
-            else if(s.equals("%)%")) {if(!checkToken(")", parser, (data) -> new Token(TokenType.CLOSE), last, added)) return false; }
-            else if(s.equals("%{%")) {if(!checkToken("{", parser, (data) -> new Token(TokenType.OPEN_SCOPE), last, added)) return false; }
-            else if(s.equals("%}%")) {if(!checkToken("}", parser, (data) -> new Token(TokenType.CLOSE_SCOPE), last, added)) return false; }
+        for(int i = 0; i<t.length; i++) {
+            String s = t[i];
+            if(s.equals("@lword@")) {if(!checkToken(parser, DataParser::nextLongWord, WordToken::new, added)) return false; }
+            else if(s.equals("@dword@")) {if(!checkToken(parser, DataParser::nextDotWord, WordToken::new, added)) return false; }
+            else if(s.equals("@word@")) {if(!checkToken(parser, DataParser::nextWord, WordToken::new, added)) return false; }
+            else if(s.equals("@type@")) {if(!checkToken(parser, DataParser::nextType, WordToken::new, added)) return false; }
+            else if(s.equals("@equation@")) {if(!checkToken(parser, Parser::nextEquation, x -> x, added)) return false; }
+            else if(s.equals("%;%")) {if(!checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), added)) return false; }
+            else if(s.equals("%,%")) {if(!checkToken(",", parser, (data) -> new Token(TokenType.COMMA), added)) return false; }
+            else if(s.equals("%(%")) {if(!checkToken("(", parser, (data) -> new Token(TokenType.OPEN), added)) return false; }
+            else if(s.equals("%)%")) {if(!checkToken(")", parser, (data) -> new Token(TokenType.CLOSE), added)) return false; }
+            else if(s.equals("%{%")) {if(!checkToken("{", parser, (data) -> new Token(TokenType.OPEN_SCOPE), added)) return false; }
+            else if(s.equals("%}%")) {if(!checkToken("}", parser, (data) -> new Token(TokenType.CLOSE_SCOPE), added)) return false; }
             else {
                 if(s.startsWith("^")) {
                     String[] def = Language.DEFINES.get(s.substring(s.substring(1).startsWith("+") ? 2 : 1));
                     if(s.substring(1).startsWith("+")) {
-                        if(!check(def, parser, last, added)) {
+                        if(!check(def, parser, added)) {
                             return false;
                         }
                         while(true) {
                             SavedLocation location = parser.getSaveLocation();
-                            boolean success = true;
-                            try {
-                                if(!check(def, parser, last, added)) success = false;
-                            } catch(ParserException e) {
-                                success = false;
-                            }
-                            if(!success) {
+                            if(!check(def, parser, added)) {
                                 parser.loadLocation(location);
                                 break;
                             }
                         }
-                    }else {
-                        if(!check(def, parser, last, added)) {
-                            return false;
-                        }
+                    }else if(!check(def, parser, added)) {
+                        return false;
                     }
-                }else if(!checkToken(s, parser, WordToken::new, last, added)) return false;
+                }else if(!checkToken(s, parser, WordToken::new, added)) return false;
             }
         }
         tTokens.addAll(added);
@@ -144,7 +150,7 @@ public class Parser {
             ArrayList<String[]> validOptions = new ArrayList<>();
             for(String[] tok : Language.TOKENS) {
                 parser.saveLocation();
-                if(check(new String[] {tok[1]}, parser, false, new ArrayList<>())) {
+                if(check(new String[] {tok[1]}, parser, new ArrayList<>())) {
                     validOptions.add(tok);
                 }
                 parser.loadLocation();
@@ -155,7 +161,6 @@ public class Parser {
                 preAdded.add(new KeywordToken(word));
                 lateStart = true;
             }
-            int index = 0;
             boolean valid = false;
             for(String[] tok : validOptions) {
                 parser.saveLocation();
@@ -169,16 +174,18 @@ public class Parser {
                     System.arraycopy(tok, 1, used, 0, used.length);
                 }
                 ArrayList<Token> tTokens = new ArrayList<>(preAdded);
-                if(check(used, parser, index + 1 == validOptions.size(), tTokens)) {
+                if(check(used, parser, tTokens)) {
                     valid = true;
                     tokens.add(new ParsedToken(tok[0], tTokens));
                     break;
                 }
                 parser.loadLocation();
-                index++;
             }
             if(!valid) {
-                throw new ParserException("Expression is invalid", parser);
+                String[] expressions = new String[validOptions.size()];
+                String l = parser.nextWord();
+                for(int j = 0; j<expressions.length; j++) expressions[j] = "Expected " + getLanguageDefinition(validOptions.get(j), l);
+                throw new ParserException(String.join("\n", expressions), parser);
             }
         }
         return tokens;
