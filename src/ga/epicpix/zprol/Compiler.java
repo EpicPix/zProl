@@ -242,9 +242,7 @@ public class Compiler {
             ArrayList<Type> parameters = new ArrayList<>();
             for(int i = 0; i<call.parameters.size(); i++) {
                 Operation param = call.parameters.get(i);
-                if(param instanceof OperationString) {
-                    parameters.add(new Type(Types.POINTER));
-                }else if(param instanceof OperationField) {
+                if(param instanceof OperationField) {
                     OperationField f = (OperationField) param;
                     if(f.reference.size() != 1) {
                         throw new NotImplementedException("Not implemented yet");

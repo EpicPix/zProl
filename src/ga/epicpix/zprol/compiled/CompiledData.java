@@ -143,19 +143,7 @@ public class CompiledData {
         else if(type.equals("uint16")) return new Type(Types.UINT16);
         else if(type.equals("uint32")) return new Type(Types.UINT32);
         else if(type.equals("uint64")) return new Type(Types.UINT64);
-        else if(type.equals("pointer")) {
-            if(iter.seek().getType() == TokenType.OPERATOR && ((OperatorToken) iter.seek()).operator.equals("<")) {
-                iter.next();
-                Type ret = resolveType(iter);
-                Token n = iter.next();
-                if(n.getType() != TokenType.OPERATOR && !((OperatorToken) n).operator.equals(">")) {
-                    throw new RuntimeException("Missing '>'");
-                }
-                return new TypePointer(ret);
-            }else {
-                return new TypePointer(null);
-            }
-        } else if(type.equals("void")) return new Type(Types.VOID);
+        else if(type.equals("void")) return new Type(Types.VOID);
 
         for(Structure struct : structures) {
             if(struct.name.equals(type)) {
@@ -172,6 +160,7 @@ public class CompiledData {
         throw new UnknownTypeException("Unknown type: " + type);
     }
 
+    @Deprecated // forRemoval
     public Type resolveType(String type) throws UnknownTypeException {
         if(type == null) return new Type(Types.NONE);
         if(type.equals("int8")) return new Type(Types.INT8);
@@ -199,18 +188,6 @@ public class CompiledData {
         DataParser parser = new DataParser("<internal>", type);
 
         String pre = parser.nextWord();
-
-        if(pre.equals("pointer")) {
-            Type t2 = null;
-            if(parser.seekWord().equals("<")) {
-                parser.nextWord();
-                t2 = resolveType(parser.nextType());
-                if(!parser.nextWord().equals(">")) {
-                    throw new RuntimeException("Missing '>'");
-                }
-            }
-            return new TypePointer(t2);
-        }
 
         if(parser.seekWord() == null || !parser.nextWord().equals("(")) {
             throw new UnknownTypeException("Unknown type: " + type);
@@ -382,8 +359,6 @@ public class CompiledData {
                 return new TypeStructure(in.readUTF());
             }else if(types == Types.OBJECT) {
                 return new TypeObject(in.readUTF());
-            }else if(types == Types.POINTER) {
-                return new TypePointer(readType(in));
             }
             throw new RuntimeException("TODO");
         }else {
@@ -425,9 +400,6 @@ public class CompiledData {
             }else if(type instanceof TypeObject) {
                 TypeObject obj = (TypeObject) type;
                 out.writeUTF(obj.name);
-            }else if(type instanceof TypePointer) {
-                TypePointer ptr = (TypePointer) type;
-                writeType(ptr.holding, out);
             }else {
                 throw new RuntimeException("Unhandled additional data class: " + type.getClass());
             }
