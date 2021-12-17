@@ -115,7 +115,7 @@ public class CompiledData {
     }
 
     public Type resolveType(SeekIterator<Token> iter) throws UnknownTypeException {
-        String type = ((WordToken) iter.next()).word;
+        String type = iter.next().asWordHolder().getWord();
         if(type == null) return new Type(Types.NONE);
         if(iter.seek().getType() == TokenType.OPEN) {
             iter.next();

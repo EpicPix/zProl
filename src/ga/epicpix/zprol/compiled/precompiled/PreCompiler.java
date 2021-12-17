@@ -24,21 +24,21 @@ public class PreCompiler {
                 ParsedToken parsed = (ParsedToken) token;
                 ArrayList<Token> ts = parsed.tokens;
                 if(parsed.name.equals("Typedef")) {
-                    String type = ts.get(1).asWordToken().word;
-                    String name = ts.get(2).asWordToken().word;
+                    String type = ts.get(1).asWordToken().getWord();
+                    String name = ts.get(2).asWordToken().getWord();
                     if(pre.typedef.get(name) != null) throw new RuntimeException("Redefined typedef definition");
                     pre.typedef.put(name, type);
                 }else if(parsed.name.equals("Using")) {
-                    pre.using.add(ts.get(1).asWordToken().word);
+                    pre.using.add(ts.get(1).asWordToken().getWord());
                 }else if(parsed.name.equals("Namespace")) {
                     if(usedOther) throw new RuntimeException("Namespace not defined at the top of the file");
-                    String namespace = ts.get(1).asWordToken().word;
+                    String namespace = ts.get(1).asWordToken().getWord();
                     if(pre.namespace != null) throw new RuntimeException("Defined namespace for a file multiple times");
                     pre.namespace = namespace;
                 }else if(parsed.name.equals("FunctionEmpty")) {
                     PreFunction func = new PreFunction();
-                    func.returnType = ts.get(0).asWordToken().word;
-                    func.name = ts.get(1).asWordToken().word;
+                    func.returnType = ts.get(0).asWordToken().getWord();
+                    func.name = ts.get(1).asWordToken().getWord();
                     int opens = 0;
                     while(true) {
                         Token t = tokens.next();
@@ -55,13 +55,13 @@ public class PreCompiler {
                     pre.functions.add(func);
                 }else if(parsed.name.equals("FunctionParameters")) {
                     PreFunction func = new PreFunction();
-                    func.returnType = ts.get(0).asWordToken().word;
-                    func.name = ts.get(1).asWordToken().word;
+                    func.returnType = ts.get(0).asWordToken().getWord();
+                    func.name = ts.get(1).asWordToken().getWord();
                     int paramCount = (ts.size() - 3) / 3;
                     for(int i = 0; i<paramCount; i++) {
                         PreParameter param = new PreParameter();
-                        param.type = ts.get(i * 3 + 3).asWordToken().word;
-                        param.name = ts.get(i * 3 + 4).asWordToken().word;
+                        param.type = ts.get(i * 3 + 3).asWordToken().getWord();
+                        param.name = ts.get(i * 3 + 4).asWordToken().getWord();
                         func.parameters.add(param);
                     }
                     int opens = 0;
@@ -80,12 +80,12 @@ public class PreCompiler {
                     pre.functions.add(func);
                 }else if(parsed.name.equals("Structure")) {
                     PreStructure structure = new PreStructure();
-                    structure.name = ts.get(1).asWordToken().word;
+                    structure.name = ts.get(1).asWordToken().getWord();
                     int fields = (parsed.tokens.size() - 4) / 3;
                     for(int i = 0; i<fields; i++) {
                         PreStructureField field = new PreStructureField();
-                        field.type = parsed.tokens.get(i * 3 + 3).asWordToken().word;
-                        field.name = parsed.tokens.get(i * 3 + 4).asWordToken().word;
+                        field.type = parsed.tokens.get(i * 3 + 3).asWordToken().getWord();
+                        field.name = parsed.tokens.get(i * 3 + 4).asWordToken().getWord();
                         structure.fields.add(field);
                     }
                 }else {

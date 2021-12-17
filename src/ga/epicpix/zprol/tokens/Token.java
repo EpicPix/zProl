@@ -18,6 +18,10 @@ public class Token {
         return (EquationToken) this;
     }
 
+    public WordHolder asWordHolder() {
+        return (WordHolder) this;
+    }
+
     public static String toFriendlyString(ArrayList<Token> tokens) {
         StringBuilder builder = new StringBuilder();
         int indent = 0;
@@ -30,7 +34,7 @@ public class Token {
             for(int i = 0; i<pendingIndent; i++) builder.append("    ");
             pendingIndent = 0;
             if(token.getType() == TokenType.WORD) {
-                builder.append(((WordToken) token).word).append(" ");
+                builder.append(token.asWordHolder().getWord()).append(" ");
             }else if(token.getType() == TokenType.OPERATOR) {
                 builder.append(" ").append(((OperatorToken) token).operator).append(" ");
             }else if(token.getType() == TokenType.TYPE) {
@@ -42,7 +46,7 @@ public class Token {
             }else if(token.getType() == TokenType.COMMA) {
                 builder.append(", ");
             }else if(token.getType() == TokenType.KEYWORD) {
-                builder.append(((KeywordToken) token).keyword).append(" ");
+                builder.append(token.asWordHolder().getWord()).append(" ");
             }else if(token.getType() == TokenType.END_LINE) {
                 builder.append(";\n");
                 pendingIndent = indent;

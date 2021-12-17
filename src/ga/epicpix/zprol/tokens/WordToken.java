@@ -1,12 +1,16 @@
 package ga.epicpix.zprol.tokens;
 
-public class WordToken extends Token {
+public class WordToken extends Token implements WordHolder {
 
-    public final String word;
+    private final String word;
 
     public WordToken(String word) {
         super(TokenType.WORD);
         this.word = word;
+    }
+
+    public String getWord() {
+        return word;
     }
 
     protected String getData() {

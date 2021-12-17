@@ -86,7 +86,7 @@ public class Compiler {
                 }
             }else if(token.getType() == TokenType.WORD) {
                 WordToken w = (WordToken) token;
-                if(w.word.equals("if")) {
+                if(w.getWord().equals("if")) {
                     if(tokens.next().getType() != TokenType.OPEN) {
                         throw new RuntimeException("Missing '('");
                     }
@@ -98,7 +98,7 @@ public class Compiler {
                     }else if(tokens.seek().getType() != TokenType.CLOSE) {
                         throw new RuntimeException("Unknown symbol: '" + tokens.seek() + "'");
                     }
-                }else if(w.word.equals("while")) {
+                }else if(w.getWord().equals("while")) {
                     if(tokens.next().getType() != TokenType.OPEN) {
                         throw new RuntimeException("Missing '('");
                     }
@@ -120,7 +120,7 @@ public class Compiler {
                         if(token.getType() != TokenType.WORD) {
                             throw new RuntimeException("Cannot handle this token: " + token);
                         }
-                        String name = ((WordToken) token).word;
+                        String name = token.asWordToken().getWord();
                         LocalVariable lVar = bytecode.getCurrentScope().defineLocalVariable(name, type);
                         token = tokens.next();
                         if(token.getType() != TokenType.END_LINE) {
@@ -157,10 +157,10 @@ public class Compiler {
                         short s = (short) i.instruction.data[0];
                         i.instruction.data[0] = (short) (bytecode.getInstructions().size() - s);
                         if(i.type == CompileOperationType.IF) {
-                            if(tokens.seek().getType() == TokenType.WORD && ((WordToken) tokens.seek()).word.equals("else")) {
+                            if(tokens.seek().getType() == TokenType.WORD && tokens.seek().asWordToken().getWord().equals("else")) {
                                 tokens.next();
                                 Token w = tokens.seek();
-                                if(w instanceof WordToken && ((WordToken) w).word.equals("if")) {
+                                if(w instanceof WordToken && w.asWordToken().getWord().equals("if")) {
                                     tokens.next();
                                     if(tokens.next().getType() != TokenType.OPEN) {
                                         throw new RuntimeException("Missing '('");
@@ -215,7 +215,7 @@ public class Compiler {
             convertOperationToBytecode(scopes, type, bytecode, data, op.left, true, t);
         }else if(op instanceof OperationCall) {
             OperationCall call = (OperationCall) op;
-            if(((WordToken) call.reference.get(0)).word.equals("syscall")) {
+            if(call.reference.get(0).asWordToken().getWord().equals("syscall")) {
                 int params = call.parameters.size();
                 if(params > 7 || params <= 0) {
                     throw new FunctionNotDefinedException("syscall" + params);
@@ -247,7 +247,7 @@ public class Compiler {
                     if(f.reference.size() != 1) {
                         throw new NotImplementedException("Not implemented yet");
                     }
-                    LocalVariable var = bytecode.getCurrentScope().getLocalVariable(((WordToken) f.reference.get(0)).word);
+                    LocalVariable var = bytecode.getCurrentScope().getLocalVariable(f.reference.get(0).asWordToken().getWord());
                     parameters.add(var.type);
                 }else {
                     parameters.add(new Type(Types.NUMBER));
@@ -256,10 +256,10 @@ public class Compiler {
             if(call.reference.size() != 1) {
                 throw new NotImplementedException("Not implemented yet");
             }
-            LocalVariable v = bytecode.getCurrentScope().findLocalVariable(((WordToken) call.reference.get(0)).word);
+            LocalVariable v = bytecode.getCurrentScope().findLocalVariable(call.reference.get(0).asWordToken().getWord());
             TypeFunctionSignature ss = new TypeFunctionSignature(null, parameters.toArray(new Type[0]));
             if(v == null) {
-                Function func = data.getFunction(((WordToken) call.reference.get(0)).word, ss);
+                Function func = data.getFunction(call.reference.get(0).asWordToken().getWord(), ss);
                 short index = data.getFunctionIndex(func);
                 for(int i = func.signature.parameters.length - 1; i >= 0; i--) {
                     convertOperationToBytecode(scopes, func.signature.parameters[i].type, bytecode, data, call.parameters.get(i), true, func.signature.parameters[i]);
@@ -306,7 +306,7 @@ public class Compiler {
             while(tokens.hasNext()) {
                 Token token = tokens.next();
                 if(token.getType() == TokenType.WORD) {
-                    LocalVariable var = bytecode.getCurrentScope().findLocalVariable(((WordToken) token).word);
+                    LocalVariable var = bytecode.getCurrentScope().findLocalVariable(token.asWordToken().getWord());
                     int psize = 0;
                     if(var != null) {
                         psize = var.type.type.memorySize;
@@ -318,7 +318,7 @@ public class Compiler {
                         else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
                     }else {
                         if(t.type == Types.FUNCTION_SIGNATURE) {
-                            Function func = data.getFunction(((WordToken) token).word, (TypeFunctionSignature) t);
+                            Function func = data.getFunction(token.asWordToken().getWord(), (TypeFunctionSignature) t);
                             ArrayList<Function> functions = data.getFunctions();
                             short index = -1;
                             for(int i = 0; i < functions.size(); i++) {
@@ -330,9 +330,9 @@ public class Compiler {
                             bytecode.pushInstruction(BytecodeInstructions.PUSHFUNCTION, index);
                             continue;
                         }else {
-                            ObjectField ovar = data.getField(((WordToken) token).word);
+                            ObjectField ovar = data.getField(token.asWordToken().getWord());
                             psize = ovar.type.type.memorySize;
-                            short index = data.getFieldIndex(((WordToken) token).word);
+                            short index = data.getFieldIndex(token.asWordToken().getWord());
 
                             if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.GETSTATICFIELD8, index);
                             else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.GETSTATICFIELD16, index);
@@ -418,7 +418,7 @@ public class Compiler {
                 LocalVariable lVar;
 
                 if(tokens.size() == 1) {
-                    lVar = bytecode.getCurrentScope().getLocalVariable(((WordToken) tokens.get(0)).word);
+                    lVar = bytecode.getCurrentScope().getLocalVariable(tokens.get(0).asWordToken().getWord());
                 } else {
                     throw new NotImplementedException("TODO");
                 }
@@ -435,7 +435,7 @@ public class Compiler {
                 ObjectField var;
 
                 if(tokens.size() == 1) {
-                    var = data.getField(((WordToken) tokens.get(0)).word);
+                    var = data.getField(tokens.get(0).asWordToken().getWord());
                     if(var.flags.contains(Flag.FINAL)) {
                         throw new RuntimeException("Cannot change contents of a final variable: " + var.name);
                     }
@@ -444,7 +444,7 @@ public class Compiler {
                 }
                 convertOperationToBytecode(scopes, var.type.type, bytecode, data, op.right, true, var.type);
 
-                bytecode.pushSizedInstruction("SETSTATICFIELD", var.type.type.memorySize, data.getFieldIndex(((WordToken) tokens.get(0)).word));
+                bytecode.pushSizedInstruction("SETSTATICFIELD", var.type.type.memorySize, data.getFieldIndex(tokens.get(0).asWordToken().getWord()));
             }
 
         }else if(op instanceof OperationComparison) {
