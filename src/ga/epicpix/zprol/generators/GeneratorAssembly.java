@@ -8,8 +8,6 @@ import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.ObjectField;
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.compiled.TypeFunctionSignature;
-import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
-import ga.epicpix.zprol.compiled.TypeNamed;
 import ga.epicpix.zprol.compiled.Types;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstruction;
@@ -42,17 +40,17 @@ public class GeneratorAssembly {
             for(Function func : compiled.getFunctions()) {
                 if(!func.flags.contains(Flag.NO_IMPLEMENTATION)) {
                     boolean flipNot = false;
-                    String funcName = getFullFunctionName(compiled.namespace, func.name.replace('<', '@').replace('>', '@'), func.signature.getNormalSignature());
+                    String funcName = getFullFunctionName(compiled.namespace, func.name.replace('<', '@').replace('>', '@'), func.signature);
                     if(func.name.equals("_start")) {
                         writer.write("global " + func.name + "\n");
                     }
                     writer.write(funcName + ":\n");
                     Bytecode bc = func.code;
                     writer.write("    enter " + bc.getLocalVariablesSize() + ", 0\n");
-                    TypeFunctionSignatureNamed sig = func.signature;
+                    TypeFunctionSignature sig = func.signature;
                     int current = 0;
                     for(int i = 0; i < sig.parameters.length; i++) {
-                        Types type = sig.parameters[i].type.type;
+                        Types type = sig.parameters[i].type;
                         int size = type.memorySize;
                         current += size;
                         if(size == 1) writer.write("    mov byte [rbp-" + current + "], " + parameters[i][3] + "\n");

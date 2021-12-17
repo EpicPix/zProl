@@ -40,7 +40,7 @@ public class CompiledData {
         for(short i = 0; i<constantPool.size(); i++) {
             if(constantPool.get(i) instanceof FunctionEntry) {
                 FunctionEntry e = (FunctionEntry) constantPool.get(i);
-                if(e.getName().equals(func.name) && e.getSignature().validateFunctionSignature(func.signature.getNormalSignature())) {
+                if(e.getName().equals(func.name) && e.getSignature().validateFunctionSignature(func.signature)) {
                     return i;
                 }
             }
@@ -87,7 +87,7 @@ public class CompiledData {
                     if(func.signature.parameters.length == sig.parameters.length) {
                         boolean success = true;
                         for(int i = 0; i<func.signature.parameters.length; i++) {
-                            if((func.signature.parameters[i].type.type != sig.parameters[i].type) && !(func.signature.parameters[i].type.type.isNumberType() && sig.parameters[i].type == Types.NUMBER)) {
+                            if((func.signature.parameters[i].type != sig.parameters[i].type) && !(func.signature.parameters[i].type.isNumberType() && sig.parameters[i].type == Types.NUMBER)) {
                                 success = false;
                                 break;
                             }
@@ -327,7 +327,7 @@ public class CompiledData {
                     for(ObjectField field : obj.fields) {
                         output.writeUTF(field.name);
                         writeType(field.type, output);
-                        writeFlags(field.flags, output);
+                        writeMask(field.flags, output);
                     }
                     output.writeShort(obj.functions.size());
                     for(Function func : obj.functions) {
@@ -344,7 +344,7 @@ public class CompiledData {
                 for(ObjectField field : d.fields) {
                     output.writeUTF(field.name);
                     writeType(field.type, output);
-                    writeFlags(field.flags, output);
+                    writeMask(field.flags, output);
                 }
             }
             output.close();
@@ -354,24 +354,13 @@ public class CompiledData {
     private static Function readFunction(DataInputStream in) throws IOException {
         String name = in.readUTF();
         ArrayList<Flag> flags = Flag.fromBits(in.readInt());
-        TypeFunctionSignatureNamed sig = readFunctionSignatureTypeNamed(in);
+        TypeFunctionSignature sig = readFunctionSignature(in);
         Bytecode bytecode = null;
         if(!flags.contains(Flag.NO_IMPLEMENTATION)) {
             bytecode = new Bytecode();
             bytecode.load(in);
         }
         return new Function(name, sig, flags, bytecode);
-    }
-
-    private static TypeFunctionSignatureNamed readFunctionSignatureTypeNamed(DataInputStream in) throws IOException {
-        Type ret = readType(in);
-        int parametersLength = in.readUnsignedShort();
-        TypeNamed[] parameters = new TypeNamed[parametersLength];
-        for(int i = 0; i<parametersLength; i++) {
-            String name = in.readUTF();
-            parameters[i] = new TypeNamed(readType(in), name);
-        }
-        return new TypeFunctionSignatureNamed(ret, parameters);
     }
 
     public static TypeFunctionSignature readFunctionSignature(DataInputStream in) throws IOException {
@@ -393,9 +382,6 @@ public class CompiledData {
                 return new TypeStructure(in.readUTF());
             }else if(types == Types.OBJECT) {
                 return new TypeObject(in.readUTF());
-            }else if(types == Types.NAMED) {
-                String name = in.readUTF();
-                return new TypeNamed(readType(in), name);
             }else if(types == Types.POINTER) {
                 return new TypePointer(readType(in));
             }
@@ -405,29 +391,18 @@ public class CompiledData {
         }
     }
 
-    private static void writeFlags(ArrayList<Flag> flags, DataOutputStream out) throws IOException {
+    private static void writeMask(ArrayList<Flag> flags, DataOutputStream out) throws IOException {
         int flagsOut = 0;
-        for(Flag f : flags) {
-            flagsOut |= f.mask;
-        }
+        for(int i = 0; i<flags.size(); i++) flagsOut |= flags.get(i).mask;
         out.writeInt(flagsOut);
     }
 
     private static void writeFunction(Function func, DataOutputStream out) throws IOException {
         out.writeUTF(func.name);
-        writeFlags(func.flags, out);
-        writeFunctionSignatureTypeNamed(func.signature, out);
+        writeMask(func.flags, out);
+        writeFunctionSignatureType(func.signature, out);
         if(!func.flags.contains(Flag.NO_IMPLEMENTATION)) {
             func.code.write(out);
-        }
-    }
-
-    private static void writeFunctionSignatureTypeNamed(TypeFunctionSignatureNamed sig, DataOutputStream out) throws IOException {
-        writeType(sig.returnType, out);
-        out.writeShort(sig.parameters.length);
-        for(TypeNamed param : sig.parameters) {
-            out.writeUTF(param.name);
-            writeType(param.type, out);
         }
     }
 
@@ -444,18 +419,12 @@ public class CompiledData {
         if(type.type.additionalData) {
             if(type instanceof TypeFunctionSignature) {
                 writeFunctionSignatureType((TypeFunctionSignature) type, out);
-            }else if(type instanceof TypeFunctionSignatureNamed) {
-                writeFunctionSignatureTypeNamed((TypeFunctionSignatureNamed) type, out);
             }else if(type instanceof TypeStructure) {
                 TypeStructure sig = (TypeStructure) type;
                 out.writeUTF(sig.name);
             }else if(type instanceof TypeObject) {
                 TypeObject obj = (TypeObject) type;
                 out.writeUTF(obj.name);
-            }else if(type instanceof TypeNamed) {
-                TypeNamed named = (TypeNamed) type;
-                out.writeUTF(named.name);
-                writeType(named.type, out);
             }else if(type instanceof TypePointer) {
                 TypePointer ptr = (TypePointer) type;
                 writeType(ptr.holding, out);

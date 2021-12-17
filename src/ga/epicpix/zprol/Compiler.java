@@ -34,8 +34,6 @@ import ga.epicpix.zprol.compiled.ObjectField;
 import ga.epicpix.zprol.compiled.Structure;
 import ga.epicpix.zprol.compiled.StructureField;
 import ga.epicpix.zprol.compiled.Type;
-import ga.epicpix.zprol.compiled.TypeFunctionSignatureNamed;
-import ga.epicpix.zprol.compiled.TypeNamed;
 import ga.epicpix.zprol.compiled.operation.Operation;
 import ga.epicpix.zprol.compiled.precompiled.PreFunction;
 import ga.epicpix.zprol.compiled.precompiled.PreParameter;
@@ -57,11 +55,11 @@ import java.util.Stack;
 
 public class Compiler {
 
-    public static Bytecode parseFunctionCode(ArrayList<Scope> scopes, CompiledData data, SeekIterator<Token> tokens, TypeFunctionSignatureNamed sig) {
+    public static Bytecode parseFunctionCode(ArrayList<Scope> scopes, CompiledData data, SeekIterator<Token> tokens, TypeFunctionSignature sig, String[] names) {
         OperationCompiler mathCompiler = new OperationCompiler();
         Bytecode bytecode = new Bytecode();
-        for(TypeNamed param : sig.parameters) {
-            bytecode.getCurrentScope().defineLocalVariable(param.name, param.type);
+        for(int i = 0; i<names.length; i++) {
+            bytecode.getCurrentScope().defineLocalVariable(names[i], sig.parameters[i]);
         }
         bytecode.newScope();
         int opens = 0;
@@ -266,7 +264,7 @@ public class Compiler {
                 Function func = data.getFunction(((WordToken) call.reference.get(0)).word, ss);
                 short index = data.getFunctionIndex(func);
                 for(int i = func.signature.parameters.length - 1; i >= 0; i--) {
-                    convertOperationToBytecode(scopes, func.signature.parameters[i].type.type, bytecode, data, call.parameters.get(i), true, func.signature.parameters[i].type);
+                    convertOperationToBytecode(scopes, func.signature.parameters[i].type, bytecode, data, call.parameters.get(i), true, func.signature.parameters[i]);
                 }
                 bytecode.pushInstruction(BytecodeInstructions.INVOKESTATIC, index);
 
@@ -494,16 +492,18 @@ public class Compiler {
     public static void compileFunction(ArrayList<Scope> scopes, CompiledData data, PreFunction function) throws UnknownTypeException {
 //        ArrayList<Flag> flags = convertFlags(function.flags);
         Type returnType = data.resolveType(function.returnType);
-        ArrayList<TypeNamed> parameters = new ArrayList<>(function.parameters.size());
+        Type[] parameters = new Type[function.parameters.size()];
+        String[] names = new String[function.parameters.size()];
         for(int i = 0; i<function.parameters.size(); i++) {
             PreParameter param = function.parameters.get(i);
-            parameters.add(new TypeNamed(data.resolveType(param.type), param.name));
+            parameters[i] = data.resolveType(param.type);
+            names[i] = param.name;
         }
-        TypeFunctionSignatureNamed signature = new TypeFunctionSignatureNamed(returnType, parameters.toArray(new TypeNamed[0]));
+        TypeFunctionSignature signature = new TypeFunctionSignature(returnType, parameters);
 //        if(flags.contains(Flag.NO_IMPLEMENTATION)) {
 //            data.addFunction(new Function(function.name, signature, flags, null));
 //        }
-        data.addFunction(new Function(function.name, signature, new ArrayList<>(), parseFunctionCode(scopes, data, new SeekIterator<>(function.code), signature)));
+        data.addFunction(new Function(function.name, signature, new ArrayList<>(), parseFunctionCode(scopes, data, new SeekIterator<>(function.code), signature, names)));
     }
 
     public static void compileStructure(CompiledData data, PreStructure structure) throws UnknownTypeException {

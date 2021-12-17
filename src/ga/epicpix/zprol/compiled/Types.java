@@ -6,7 +6,7 @@ public enum Types {
     UINT8(4, 1), UINT16(5, 2), UINT32(6, 4), UINT64(7, 8),
 
     NONE(14, 0), VOID(15, 0), NUMBER(17, 0), BOOLEAN(18, 1),
-    POINTER(8, 8, true), NAMED(16, 0, true),
+    POINTER(8, 8, true),
     OBJECT(9, 8, true),
     STRUCTURE(10, 8, true),
     FUNCTION_SIGNATURE(11, 8, true),
