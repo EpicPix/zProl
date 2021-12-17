@@ -1,5 +1,7 @@
 package ga.epicpix.zprol.compiled.bytecode;
 
+import java.util.HashMap;
+
 public enum BytecodeInstructions {
 
     ADD8(0x00, 0),  // Add 8 bits
@@ -140,6 +142,7 @@ public enum BytecodeInstructions {
     BytecodeInstructions(int id, int operandSize) {
         this.id = id;
         this.operandSize = operandSize;
+        BytecodeInstruction.instructionMapping.put(name(), this);
     }
 
     public static BytecodeInstructions fromOpcode(int opcode) {

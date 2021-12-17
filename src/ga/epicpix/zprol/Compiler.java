@@ -78,12 +78,7 @@ public class Compiler {
                 }else if(parsed.name.equals("ReturnValue")) {
                     if(sig.returnType.type.memorySize != 0) {
                         convertOperationToBytecode(scopes, sig.returnType.type, bytecode, data, mathCompiler.compile(data, new SeekIterator<>(parsed.tokens.get(1).asEquationToken().tokens)), true, sig.returnType);
-                        int size = sig.returnType.type.memorySize;
-                        if(size == 1) bytecode.pushInstruction(BytecodeInstructions.RETURN8);
-                        else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.RETURN16);
-                        else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.RETURN32);
-                        else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.RETURN64);
-                        else throw new RuntimeException("Size " + size + " is not supported");
+                        bytecode.pushSizedInstruction("RETURN", sig.returnType.type.memorySize);
                     } else throw new RuntimeException("Tried to return a value while the method is void");
                     break;
                 }else if(parsed.name.equals("Call")) {
@@ -134,13 +129,7 @@ public class Compiler {
                             if(token.getType() == TokenType.OPERATOR) {
                                 if(((OperatorToken) token).operator.equals("=")) {
                                     convertOperationToBytecode(scopes, type.type, bytecode, data, mathCompiler.compile(data, tokens), true, type);
-                                    int size = type.type.memorySize;
-                                    short index = (short) lVar.index;
-                                    if(size == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
-                                    else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, index);
-                                    else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.STORE32, index);
-                                    else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, index);
-                                    else throw new RuntimeException("Size " + size + " is not supported");
+                                    bytecode.pushSizedInstruction("STORE", type.type.memorySize, (short) lVar.index);
                                 }else {
                                     throw new RuntimeException("Cannot handle this token: " + token);
                                 }
@@ -459,14 +448,7 @@ public class Compiler {
                 }
                 convertOperationToBytecode(scopes, var.type.type, bytecode, data, op.right, true, var.type);
 
-
-                short index = data.getFieldIndex(((WordToken) tokens.get(0)).word);
-                int psize = var.type.type.memorySize;
-                if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD8, index);
-                else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD16, index);
-                else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD32, index);
-                else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.SETSTATICFIELD64, index);
-                else throw new NotImplementedException("Size " + psize + " is not supported");
+                bytecode.pushSizedInstruction("SETSTATICFIELD", var.type.type.memorySize, data.getFieldIndex(((WordToken) tokens.get(0)).word));
             }
 
         }else if(op instanceof OperationComparison) {
@@ -481,65 +463,24 @@ public class Compiler {
             convertOperationToBytecode(scopes, type, bytecode, data, op.left, true, t);
             convertOperationToBytecode(scopes, type, bytecode, data, op.right, true, t);
             if(op instanceof OperationAdd) {
-                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.ADD8);
-                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.ADD16);
-                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.ADD32);
-                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.ADD64);
-                else throw new NotImplementedException("Size " + size + " is not supported");
+                bytecode.pushSizedInstruction("ADD", size);
             }else if(op instanceof OperationSubtract) {
-                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SUB8);
-                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SUB16);
-                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SUB32);
-                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SUB64);
-                else throw new NotImplementedException("Size " + size + " is not supported");
+                bytecode.pushSizedInstruction("SUB", size);
             }else if(op instanceof OperationDivide) {
-                if(size == 1 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU8);
-                else if(size == 2 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU16);
-                else if(size == 4 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU32);
-                else if(size == 8 && unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVU64);
-                else if(size == 1 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVS8);
-                else if(size == 2 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVS16);
-                else if(size == 4 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVS32);
-                else if(size == 8 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.DIVS64);
-                else throw new NotImplementedException("Size " + size + " is not supported");
+                if(unsigned) bytecode.pushSizedInstruction("DIVU", size);
+                else bytecode.pushSizedInstruction("DIVS", size);
             }else if(op instanceof OperationMultiply) {
-                if(size == 1 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU8);
-                else if(size == 2 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU16);
-                else if(size == 4 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU32);
-                else if(size == 8 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MULU64);
-                else if(size == 1 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MULS8);
-                else if(size == 2 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MULS16);
-                else if(size == 4 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MULS32);
-                else if(size == 8 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MULS64);
-                else throw new NotImplementedException("Size " + size + " is not supported");
+                if(unsigned) bytecode.pushSizedInstruction("MULU", size);
+                else bytecode.pushSizedInstruction("MULS", size);
             }else if(op instanceof OperationMod) {
-                if(size == 1 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU8);
-                else if(size == 2 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU16);
-                else if(size == 4 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU32);
-                else if(size == 8 && unsigned) bytecode.pushInstruction(BytecodeInstructions.MODU64);
-                else if(size == 1 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MODS8);
-                else if(size == 2 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MODS16);
-                else if(size == 4 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MODS32);
-                else if(size == 8 && !unsigned) bytecode.pushInstruction(BytecodeInstructions.MODS64);
-                else throw new NotImplementedException("Size " + size + " is not supported");
+                if(unsigned) bytecode.pushSizedInstruction("MUDU", size);
+                else bytecode.pushSizedInstruction("MUDS", size);
             }else if(op instanceof OperationAnd) {
-                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.AND8);
-                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.AND16);
-                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.AND32);
-                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.AND64);
-                else throw new NotImplementedException("Size " + size + " is not supported");
+                bytecode.pushSizedInstruction("AND", size);
             }else if(op instanceof OperationShiftLeft) {
-                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SHL8);
-                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SHL16);
-                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SHL32);
-                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SHL64);
-                else throw new NotImplementedException("Size " + size + " is not supported");
+                bytecode.pushSizedInstruction("SHL", size);
             }else if(op instanceof OperationShiftRight) {
-                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.SHR8);
-                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.SHR16);
-                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.SHR32);
-                else if(size == 8) bytecode.pushInstruction(BytecodeInstructions.SHR64);
-                else throw new NotImplementedException("Size " + size + " is not supported");
+                bytecode.pushSizedInstruction("SHR", size);
             }else {
                 throw new NotImplementedException(op.getClass().getSimpleName() + " is not implemented!");
             }

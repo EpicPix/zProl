@@ -4,8 +4,11 @@ import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.TypeFunctionSignature;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 
 public class BytecodeInstruction {
+
+    public static final HashMap<String, BytecodeInstructions> instructionMapping = new HashMap<>();
 
     public final BytecodeInstructions instruction;
     public Object[] data;

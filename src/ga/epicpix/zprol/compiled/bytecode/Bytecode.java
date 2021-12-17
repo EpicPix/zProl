@@ -39,6 +39,13 @@ public class Bytecode {
         instructions.add(in);
         return in;
     }
+
+    public BytecodeInstruction pushSizedInstruction(String instruction, int size, Object... data) {
+        BytecodeInstruction in = new BytecodeInstruction(BytecodeInstruction.instructionMapping.get(instruction + (size * 8)), data);
+        instructions.add(in);
+        return in;
+    }
+
     public int getLocalVariablesSize() {
         return currentScope.getLocalVariablesSize();
     }
