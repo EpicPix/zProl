@@ -11,7 +11,7 @@ import ga.epicpix.zprol.tokens.ParsedToken;
 import ga.epicpix.zprol.tokens.StringToken;
 import ga.epicpix.zprol.tokens.Token;
 import ga.epicpix.zprol.tokens.TokenType;
-import ga.epicpix.zprol.tokens.TypeToken;
+import ga.epicpix.zprol.tokens.WordHolder;
 import ga.epicpix.zprol.tokens.WordToken;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -101,14 +101,7 @@ public class Parser {
     }
 
     public static Token getToken(DataParser parser, String word) {
-        if(Language.TYPES.get(word) != null) {
-            Type type = Language.TYPES.get(word);
-            if(type.isPointer()) {
-                throw new ParserException("Parsing pointers is not implemented", parser);
-            }
-            return new TypeToken(type);
-        }
-        else if(Language.KEYWORDS.contains(word)) throw new ParserException("Keywords not allowed here", parser);
+        if(Language.KEYWORDS.contains(word)) throw new ParserException("Keywords not allowed here", parser);
         else if(DataParser.matchesCharacters(DataParser.operatorCharacters, word)) return new OperatorToken(word);
         else if(word.equals(";")) return new Token(TokenType.END_LINE);
         else if(word.equals("(")) return new Token(TokenType.OPEN);
@@ -141,7 +134,7 @@ public class Parser {
             parser.saveLocation();
             try {
                 Token tk = nextToken(parser);
-                if(!(tk instanceof WordToken || tk instanceof TypeToken || tk instanceof KeywordToken)) {
+                if(!(tk instanceof WordHolder)) {
                     tokens.add(tk);
                     parser.discardLocation();
                     continue;

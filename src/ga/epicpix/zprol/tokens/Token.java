@@ -37,8 +37,6 @@ public class Token {
                 builder.append(token.asWordHolder().getWord()).append(" ");
             }else if(token.getType() == TokenType.OPERATOR) {
                 builder.append(" ").append(((OperatorToken) token).operator).append(" ");
-            }else if(token.getType() == TokenType.TYPE) {
-                builder.append(((TypeToken) token).type().name).append(" ");
             }else if(token.getType() == TokenType.STRING) {
                 builder.append("\"").append(((StringToken) token).getString().replace("\n", "\\n")).append("\"");
             }else if(token.getType() == TokenType.ACCESSOR) {
