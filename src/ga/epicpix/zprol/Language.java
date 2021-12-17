@@ -51,6 +51,7 @@ public class Language {
                 id |= (unsigned ? 1 : 0) << 3; // 0000000000001000
                 id |= (pointer ? 1 : 0) << 4;  // 0000000000010000
                 TYPES.put(name, new Type(id, name));
+                KEYWORDS.add(name);
             } else if(d.equals("tok")) {
                 ArrayList<String> tokens = new ArrayList<>();
                 String w;

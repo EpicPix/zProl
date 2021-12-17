@@ -28,7 +28,7 @@ public class ConstantPoolEntry {
 
         private final String namespace;
         private final String name;
-        private final TypeFunctionSignature sig;
+        private final FunctionSignature sig;
 
         public FunctionEntry(String namespace, Function func) {
             super((byte) 1);
@@ -37,7 +37,7 @@ public class ConstantPoolEntry {
             sig = func.signature;
         }
 
-        public FunctionEntry(String namespace, String name, TypeFunctionSignature sig) {
+        public FunctionEntry(String namespace, String name, FunctionSignature sig) {
             super((byte) 1);
             this.namespace = namespace;
             this.name = name;
@@ -52,7 +52,7 @@ public class ConstantPoolEntry {
             return name;
         }
 
-        public TypeFunctionSignature getSignature() {
+        public FunctionSignature getSignature() {
             return sig;
         }
 

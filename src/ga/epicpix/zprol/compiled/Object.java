@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiled;
 
+import ga.epicpix.zprol.exceptions.NotImplementedException;
 import java.util.ArrayList;
 
 public class Object {
@@ -10,13 +11,11 @@ public class Object {
     public ArrayList<Function> functions;
 
     public Object(String name, Type ext, ArrayList<ObjectField> fields, ArrayList<Function> functions) {
-        if(!(ext.type == Types.NONE || ext instanceof TypeObject)) {
-            throw new IllegalArgumentException("Type is not instanceof an object");
-        }
         this.name = name;
         this.ext = ext;
         this.fields = fields;
         this.functions = functions;
+        throw new NotImplementedException("Not implemented yet");
     }
 
 }

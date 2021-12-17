@@ -24,7 +24,7 @@ public class PreCompiler {
                 ParsedToken parsed = (ParsedToken) token;
                 ArrayList<Token> ts = parsed.tokens;
                 if(parsed.name.equals("Typedef")) {
-                    String type = ts.get(1).asWordToken().getWord();
+                    String type = ts.get(1).asWordHolder().getWord();
                     String name = ts.get(2).asWordToken().getWord();
                     if(pre.typedef.get(name) != null) throw new RuntimeException("Redefined typedef definition");
                     pre.typedef.put(name, type);
@@ -37,7 +37,7 @@ public class PreCompiler {
                     pre.namespace = namespace;
                 }else if(parsed.name.equals("FunctionEmpty")) {
                     PreFunction func = new PreFunction();
-                    func.returnType = ts.get(0).asWordToken().getWord();
+                    func.returnType = ts.get(0).asWordHolder().getWord();
                     func.name = ts.get(1).asWordToken().getWord();
                     int opens = 0;
                     while(true) {
@@ -55,12 +55,12 @@ public class PreCompiler {
                     pre.functions.add(func);
                 }else if(parsed.name.equals("FunctionParameters")) {
                     PreFunction func = new PreFunction();
-                    func.returnType = ts.get(0).asWordToken().getWord();
+                    func.returnType = ts.get(0).asWordHolder().getWord();
                     func.name = ts.get(1).asWordToken().getWord();
                     int paramCount = (ts.size() - 3) / 3;
                     for(int i = 0; i<paramCount; i++) {
                         PreParameter param = new PreParameter();
-                        param.type = ts.get(i * 3 + 3).asWordToken().getWord();
+                        param.type = ts.get(i * 3 + 3).asWordHolder().getWord();
                         param.name = ts.get(i * 3 + 4).asWordToken().getWord();
                         func.parameters.add(param);
                     }
@@ -84,7 +84,7 @@ public class PreCompiler {
                     int fields = (parsed.tokens.size() - 4) / 3;
                     for(int i = 0; i<fields; i++) {
                         PreStructureField field = new PreStructureField();
-                        field.type = parsed.tokens.get(i * 3 + 3).asWordToken().getWord();
+                        field.type = parsed.tokens.get(i * 3 + 3).asWordHolder().getWord();
                         field.name = parsed.tokens.get(i * 3 + 4).asWordToken().getWord();
                         structure.fields.add(field);
                     }

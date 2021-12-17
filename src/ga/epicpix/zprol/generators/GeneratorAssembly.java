@@ -7,8 +7,7 @@ import ga.epicpix.zprol.compiled.Flag;
 import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.ObjectField;
 import ga.epicpix.zprol.compiled.Type;
-import ga.epicpix.zprol.compiled.TypeFunctionSignature;
-import ga.epicpix.zprol.compiled.Types;
+import ga.epicpix.zprol.compiled.FunctionSignature;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstruction;
 import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
@@ -16,7 +15,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 public class GeneratorAssembly {
@@ -47,11 +45,10 @@ public class GeneratorAssembly {
                     writer.write(funcName + ":\n");
                     Bytecode bc = func.code;
                     writer.write("    enter " + bc.getLocalVariablesSize() + ", 0\n");
-                    TypeFunctionSignature sig = func.signature;
+                    FunctionSignature sig = func.signature;
                     int current = 0;
                     for(int i = 0; i < sig.parameters.length; i++) {
-                        Types type = sig.parameters[i].type;
-                        int size = type.memorySize;
+                        int size = sig.parameters[i].getSize();
                         current += size;
                         if(size == 1) writer.write("    mov byte [rbp-" + current + "], " + parameters[i][3] + "\n");
                         else if(size == 2) writer.write("    mov word [rbp-" + current + "], " + parameters[i][2] + "\n");
@@ -400,10 +397,9 @@ public class GeneratorAssembly {
                             short idx = (short) instr.data[0];
                             FunctionEntry e = (FunctionEntry) compiled.getConstantPool().get(idx);
                             String zfuncName = getFullFunctionName(e.getNamespace(), e.getName(), e.getSignature());
-                            TypeFunctionSignature s = e.getSignature();
+                            FunctionSignature s = e.getSignature();
                             for(int i = 0; i < s.parameters.length; i++) {
-                                Type param = s.parameters[i];
-                                int size = param.type.memorySize;
+                                int size = s.parameters[i].getSize();
                                 if(size == 1) {
                                     writer.write("    mov byte " + parameters[i][3] + ", [rsp]\n");
                                     writer.write("    inc rsp\n");
@@ -419,7 +415,7 @@ public class GeneratorAssembly {
                                 }
                             }
                             writer.write("    call " + zfuncName + "\n");
-                            int retSize = s.returnType.type.memorySize;
+                            int retSize = s.returnType.getSize();
                             if(retSize == 1) {
                                 writer.write("    dec rsp\n");
                                 writer.write("    mov byte [rsp], " + parameters[0][3] + "\n");
@@ -434,12 +430,12 @@ public class GeneratorAssembly {
                                 writer.write("    mov qword [rsp], " + parameters[0][0] + "\n");
                             }
                         } else if(instr.instruction == BytecodeInstructions.INVOKESIGNATURE) {
-                            TypeFunctionSignature fsig = (TypeFunctionSignature) instr.data[0];
+                            FunctionSignature fsig = (FunctionSignature) instr.data[0];
                             writer.write("    mov qword r15, [rsp]\n");
                             writer.write("    add rsp, 8\n");
                             for(int i = 0; i < fsig.parameters.length; i++) {
                                 Type param = fsig.parameters[i];
-                                int size = param.type.memorySize;
+                                int size = param.getSize();
                                 if(size == 1) {
                                     writer.write("    mov byte " + parameters[i][3] + ", [rsp]\n");
                                     writer.write("    inc rsp\n");
@@ -455,7 +451,7 @@ public class GeneratorAssembly {
                                 }
                             }
                             writer.write("    call r15\n");
-                            int retSize = fsig.returnType.type.memorySize;
+                            int retSize = fsig.returnType.getSize();
                             if(retSize == 1) {
                                 writer.write("    dec rsp\n");
                                 writer.write("    mov byte [rsp], " + parameters[0][3] + "\n");
@@ -614,7 +610,7 @@ public class GeneratorAssembly {
 
             writer.write(".bss:\n");
             for(ObjectField field : compiled.getFields()) {
-                writer.write(field.name + ": resb " + field.type.type.memorySize + "\n");
+                writer.write(field.name + ": resb " + field.type.getSize() + "\n");
             }
         }
 
@@ -623,7 +619,7 @@ public class GeneratorAssembly {
         writer.close();
     }
 
-    public static String getFullFunctionName(String namespace, String name, TypeFunctionSignature signature) {
+    public static String getFullFunctionName(String namespace, String name, FunctionSignature signature) {
         if(name.equals("_start")) return "_start";
         StringBuilder zfuncName = new StringBuilder();
         zfuncName.append(namespace).append(".").append(name).append("$").append(signature.returnType.getName().toLowerCase());

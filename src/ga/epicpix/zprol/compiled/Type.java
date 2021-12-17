@@ -2,16 +2,8 @@ package ga.epicpix.zprol.compiled;
 
 public class Type {
 
-    public Types type;
     public final char id;
     public final String name;
-
-    @Deprecated
-    public Type(Types type) {
-        this.type = type;
-        id = 0xffff;
-        name = type.name();
-    }
 
     public Type(char type, String name) {
         id = type;
@@ -23,16 +15,15 @@ public class Type {
     }
 
     public String toString() {
-        if(id == 65535) return "Type(" + name + ")";
-        return "Type(" + (int) id + ")";
+        return "Type(" + (int) id + " [" + name + "])";
     }
 
     public boolean isNumberType() {
-        return type.isNumberType();
+        return true;
     }
 
     public int getSize() {
-        return (int) Math.pow(id & 0b0000000000000111, 2) / 2;
+        return (int) Math.pow(2,  id & 0b0000000000000111) / 2;
     }
 
     public boolean isUnsigned() {

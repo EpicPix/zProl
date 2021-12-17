@@ -1,16 +1,13 @@
 package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.DataParser;
-import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.Language;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry.FunctionEntry;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
+import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
-import ga.epicpix.zprol.tokens.OperatorToken;
-import ga.epicpix.zprol.tokens.Token;
-import ga.epicpix.zprol.tokens.TokenType;
-import ga.epicpix.zprol.tokens.WordToken;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -80,14 +77,14 @@ public class CompiledData {
         throw new VariableNotDefinedException(name);
     }
 
-    public Function getFunction(String name, TypeFunctionSignature sig) {
+    public Function getFunction(String name, FunctionSignature sig) {
         for(Function func : functions) {
             if(func.name.equals(name)) {
-                if(sig.returnType == null || func.signature.returnType.type == sig.returnType.type) {
+                if(sig.returnType == null || func.signature.returnType == sig.returnType) {
                     if(func.signature.parameters.length == sig.parameters.length) {
                         boolean success = true;
                         for(int i = 0; i<func.signature.parameters.length; i++) {
-                            if((func.signature.parameters[i].type != sig.parameters[i].type) && !(func.signature.parameters[i].type.isNumberType() && sig.parameters[i].type == Types.NUMBER)) {
+                            if(func.signature.parameters[i] != sig.parameters[i]) {
                                 success = false;
                                 break;
                             }
@@ -114,99 +111,10 @@ public class CompiledData {
         functions.add(function);
     }
 
-    public Type resolveType(SeekIterator<Token> iter) throws UnknownTypeException {
-        String type = iter.next().asWordHolder().getWord();
-        if(type == null) return new Type(Types.NONE);
-        if(iter.seek().getType() == TokenType.OPEN) {
-            iter.next();
-            Type ret = resolveType(type);
-            ArrayList<Type> parameters = new ArrayList<>();
-            while(true) {
-                if(iter.seek().getType() == TokenType.CLOSE) {
-                    iter.next();
-                    break;
-                }
-                Type param = resolveType(iter);
-                parameters.add(param);
-
-                if(iter.seek().getType() == TokenType.COMMA) {
-                    iter.next();
-                }
-            }
-            return new TypeFunctionSignature(ret, parameters.toArray(new Type[0]));
-        }
-        if(type.equals("int8")) return new Type(Types.INT8);
-        else if(type.equals("int16")) return new Type(Types.INT16);
-        else if(type.equals("int32")) return new Type(Types.INT32);
-        else if(type.equals("int64")) return new Type(Types.INT64);
-        else if(type.equals("uint8")) return new Type(Types.UINT8);
-        else if(type.equals("uint16")) return new Type(Types.UINT16);
-        else if(type.equals("uint32")) return new Type(Types.UINT32);
-        else if(type.equals("uint64")) return new Type(Types.UINT64);
-        else if(type.equals("void")) return new Type(Types.VOID);
-
-        for(Structure struct : structures) {
-            if(struct.name.equals(type)) {
-                return new TypeStructure(struct.name);
-            }
-        }
-
-        for(Object obj : objects) {
-            if(obj.name.equals(type)) {
-                return new TypeObject(obj.name);
-            }
-        }
-
-        throw new UnknownTypeException("Unknown type: " + type);
-    }
-
-    @Deprecated // forRemoval
     public Type resolveType(String type) throws UnknownTypeException {
-        if(type == null) return new Type(Types.NONE);
-        if(type.equals("int8")) return new Type(Types.INT8);
-        else if(type.equals("int16")) return new Type(Types.INT16);
-        else if(type.equals("int32")) return new Type(Types.INT32);
-        else if(type.equals("int64")) return new Type(Types.INT64);
-        else if(type.equals("uint8")) return new Type(Types.UINT8);
-        else if(type.equals("uint16")) return new Type(Types.UINT16);
-        else if(type.equals("uint32")) return new Type(Types.UINT32);
-        else if(type.equals("uint64")) return new Type(Types.UINT64);
-        else if(type.equals("void")) return new Type(Types.VOID);
-
-        for(Structure struct : structures) {
-            if(struct.name.equals(type)) {
-                return new TypeStructure(struct.name);
-            }
-        }
-
-        for(Object obj : objects) {
-            if(obj.name.equals(type)) {
-                return new TypeObject(obj.name);
-            }
-        }
-
-        DataParser parser = new DataParser("<internal>", type);
-
-        String pre = parser.nextWord();
-
-        if(parser.seekWord() == null || !parser.nextWord().equals("(")) {
-            throw new UnknownTypeException("Unknown type: " + type);
-        }
-        Type ret = resolveType(pre);
-        ArrayList<Type> parameters = new ArrayList<>();
-        while(true) {
-            if(parser.seekWord().equals(")")) {
-                parser.nextWord();
-                break;
-            }
-            Type param = resolveType(parser.nextType());
-            parameters.add(param);
-
-            if(parser.seekWord().equals(",")) {
-                parser.nextWord();
-            }
-        }
-        return new TypeFunctionSignature(ret, parameters.toArray(new Type[0]));
+        Type t = Language.TYPES.get(type);
+        if(t != null) return t;
+        throw new NotImplementedException("Not implemented yet");
     }
 
     public static class LinkedData {
@@ -331,7 +239,7 @@ public class CompiledData {
     private static Function readFunction(DataInputStream in) throws IOException {
         String name = in.readUTF();
         ArrayList<Flag> flags = Flag.fromBits(in.readInt());
-        TypeFunctionSignature sig = readFunctionSignature(in);
+        FunctionSignature sig = readFunctionSignature(in);
         Bytecode bytecode = null;
         if(!flags.contains(Flag.NO_IMPLEMENTATION)) {
             bytecode = new Bytecode();
@@ -340,30 +248,18 @@ public class CompiledData {
         return new Function(name, sig, flags, bytecode);
     }
 
-    public static TypeFunctionSignature readFunctionSignature(DataInputStream in) throws IOException {
+    public static FunctionSignature readFunctionSignature(DataInputStream in) throws IOException {
         Type ret = readType(in);
         short paramsLength = in.readShort();
         Type[] params = new Type[paramsLength];
         for(int i = 0; i<params.length; i++) {
             params[i] = readType(in);
         }
-        return new TypeFunctionSignature(ret, params);
+        return new FunctionSignature(ret, params);
     }
 
     private static Type readType(DataInputStream in) throws IOException {
-        Types types = Types.fromId(in.readUnsignedByte());
-        if(types.additionalData) {
-            if(types == Types.FUNCTION_SIGNATURE) {
-                return readFunctionSignature(in);
-            }else if(types == Types.STRUCTURE) {
-                return new TypeStructure(in.readUTF());
-            }else if(types == Types.OBJECT) {
-                return new TypeObject(in.readUTF());
-            }
-            throw new RuntimeException("TODO");
-        }else {
-            return new Type(types);
-        }
+        throw new NotImplementedException("Not implemented yet");
     }
 
     private static void writeMask(ArrayList<Flag> flags, DataOutputStream out) throws IOException {
@@ -381,7 +277,7 @@ public class CompiledData {
         }
     }
 
-    public static void writeFunctionSignatureType(TypeFunctionSignature sig, DataOutputStream out) throws IOException {
+    public static void writeFunctionSignatureType(FunctionSignature sig, DataOutputStream out) throws IOException {
         writeType(sig.returnType, out);
         out.writeShort(sig.parameters.length);
         for(Type param : sig.parameters) {
@@ -390,20 +286,7 @@ public class CompiledData {
     }
 
     private static void writeType(Type type, DataOutputStream out) throws IOException {
-        out.writeByte(type.type.id);
-        if(type.type.additionalData) {
-            if(type instanceof TypeFunctionSignature) {
-                writeFunctionSignatureType((TypeFunctionSignature) type, out);
-            }else if(type instanceof TypeStructure) {
-                TypeStructure sig = (TypeStructure) type;
-                out.writeUTF(sig.name);
-            }else if(type instanceof TypeObject) {
-                TypeObject obj = (TypeObject) type;
-                out.writeUTF(obj.name);
-            }else {
-                throw new RuntimeException("Unhandled additional data class: " + type.getClass());
-            }
-        }
+        throw new NotImplementedException("Not implemented yet");
     }
 
     public static LinkedData link(Collection<CompiledData> data) {

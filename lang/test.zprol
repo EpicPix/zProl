@@ -21,10 +21,10 @@ void func0() {}
 uint8 funcr0() {return 0;}
 
 void func1(uint8 a) {}
-uint8 funcr1(uint8 a) {return 0;}
+uint8 funcr1(uint8 a) {return 1;}
 
 void func2(uint8 a, uint8 b) {}
 uint8 funcr2(uint8 a, uint8 b) return 0 + 5 * (1 + 5);
 
 void func3(uint8 a, uint8 b, uint8 c) {}
-uint8 funcr3(uint8 a, uint8 b, uint8 c) return 0;
+uint8 funcr3(uint8 a, uint8 b, uint8 c) return 3;

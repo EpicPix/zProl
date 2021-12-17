@@ -3,7 +3,6 @@ package ga.epicpix.zprol.compiled.operation;
 import ga.epicpix.zprol.Reflection;
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.Type;
-import ga.epicpix.zprol.compiled.Types;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.operation.Operation.OperationBrackets;
@@ -137,7 +136,7 @@ public class OperationCompiler {
             }else if(token.getType() == TokenType.OPEN) {
                 int current = tokens.currentIndex();
                 try {
-                    Type t = data.resolveType(tokens);
+                    Type t = data.resolveType(tokens.next().asWordHolder().getWord());
                     operations.add(new OperationCast(t));
                     if(tokens.next().getType() != TokenType.CLOSE) {
                         throw new RuntimeException("Missing ')'");

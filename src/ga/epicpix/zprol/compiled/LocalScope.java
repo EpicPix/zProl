@@ -24,7 +24,7 @@ public class LocalScope {
         if(findLocalVariable(name) != null) {
             throw new VariableAlreadyDefinedException(name);
         }
-        localVariableSizeIndex += type.type.memorySize;
+        localVariableSizeIndex += type.getSize();
         LocalVariable localVar = new LocalVariable(name, type, localVariableSizeIndex);
         localVariables.add(localVar);
         return localVar;

@@ -150,10 +150,15 @@ public class Start {
 //        linked.write(new File(output)); ???
         String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
 
-        long startSave = System.currentTimeMillis();
-        linked.save(new File(normalName + ".zpil"));
-        long stopSave = System.currentTimeMillis();
-        System.out.printf("[%s] Took %d ms to save\n", normalName + ".zpil", stopSave - startSave);
+        try {
+            long startSave = System.currentTimeMillis();
+            linked.save(new File(normalName + ".zpil"));
+            long stopSave = System.currentTimeMillis();
+            System.out.printf("[%s] Took %d ms to save\n", normalName + ".zpil", stopSave - startSave);
+        } catch(NotImplementedException e) {
+            System.err.println("Saving is not fully implemented.");
+            if(Boolean.parseBoolean(System.getProperty("DEBUG"))) e.printStackTrace();
+        }
 
         if(generate_x86_64_linux) {
             GeneratorAssembly.generate_x86_64_linux_assembly(linked, new File(normalName + ".asm"));
@@ -201,10 +206,16 @@ public class Start {
             long stopCompile = System.currentTimeMillis();
             System.out.printf("[%s] Took %d ms to compile\n", file, stopCompile - startCompile);
 
-            long startSave = System.currentTimeMillis();
-            (zpil = CompiledData.link(Collections.singleton(czpil))).save(new File(normalName + ".zpil"));
-            long stopSave = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to save\n", file, stopSave - startSave);
+            try {
+                long startSave = System.currentTimeMillis();
+                (zpil = CompiledData.link(Collections.singleton(czpil))).save(new File(normalName + ".zpil"));
+                long stopSave = System.currentTimeMillis();
+                System.out.printf("[%s] Took %d ms to save\n", file, stopSave - startSave);
+            } catch(NotImplementedException e) {
+                zpil = null;
+                System.err.println("Saving is not fully implemented.");
+                if(Boolean.parseBoolean(System.getProperty("DEBUG"))) e.printStackTrace();
+            }
         }
 
         if(generate_x86_64_linux) {

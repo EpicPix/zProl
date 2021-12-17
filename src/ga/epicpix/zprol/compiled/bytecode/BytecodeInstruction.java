@@ -1,7 +1,7 @@
 package ga.epicpix.zprol.compiled.bytecode;
 
 import ga.epicpix.zprol.compiled.CompiledData;
-import ga.epicpix.zprol.compiled.TypeFunctionSignature;
+import ga.epicpix.zprol.compiled.FunctionSignature;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -34,9 +34,9 @@ public class BytecodeInstruction {
             }else if(obj instanceof Long) {
                 out.writeLong((long) obj);
                 wrote+=8;
-            }else if(obj instanceof TypeFunctionSignature) {
+            }else if(obj instanceof FunctionSignature) {
                 if(instruction.getOperandSize() == -1) {
-                    CompiledData.writeFunctionSignatureType((TypeFunctionSignature) obj, out);
+                    CompiledData.writeFunctionSignatureType((FunctionSignature) obj, out);
                 }else {
                     throw new RuntimeException("Tried to write function signature without the size being variable sized");
                 }
