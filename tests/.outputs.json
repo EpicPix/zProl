@@ -1,0 +1,11 @@
+{
+  "NamespaceCorrect": {
+    "exit": 0
+  },
+  "NamespaceEmpty": {
+    "exit": 1
+  },
+  "NamespaceKeyword":{
+    "exit": 1
+  }
+}
