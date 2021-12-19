@@ -21,19 +21,22 @@ public class DataParser {
     }
 
     public static boolean matchesCharacters(char[] chars, char c) {
+        if(chars == null) return false;
         for(char t : chars) if(t == c) return true;
         return false;
     }
 
     public static boolean matchesCharacters(char[] chars, String c) {
+        if(chars == null) return false;
         for(char t : c.toCharArray()) if(!matchesCharacters(chars, t)) return false;
         return true;
     }
 
     public static final char[] nonSpecialCharacters = joinCharacters(genCharacters('a', 'z'), genCharacters('A', 'Z'), genCharacters('0', '9'), new char[] {'_'});
+    public static final char[] validDotWordCharacters = joinCharacters(nonSpecialCharacters, new char[] {'.'});
+    public static final char[] validLongWordCharacters = joinCharacters(validDotWordCharacters, new char[] {'+', '-', '@'});
+
     public static final char[] operatorCharacters = new char[] {'+', '=', '/', '*', '-', '%', '<', '>', '!', '&'};
-    public static final Pattern validLongWordCharacters = Pattern.compile("[a-zA-Z0-9_.+\\-@]*");
-    public static final Pattern validDotWordCharacters = Pattern.compile("[a-zA-Z0-9_.]*");
 
     private final String data;
     private final String fileName;
@@ -104,6 +107,10 @@ public class DataParser {
         return fileName;
     }
 
+    public boolean hasNext() {
+        return index < data.length();
+    }
+
     public void ignoreWhitespace() {
         char[] cdata = data.toCharArray();
         while(index + 1 < cdata.length) {
@@ -141,121 +148,51 @@ public class DataParser {
         }
     }
 
-    public String nextWord() {
+    public String nextTemplateWord(char[] allowedCharacters) {
+        return nextTemplateWord(allowedCharacters, null);
+    }
+
+    public String nextTemplateWord(char[] allowedCharacters, char[] operatorCharacters) {
         ignoreWhitespace();
         lastLocation = getLocation();
-        if(index >= data.length()) return null;
+        if(!hasNext()) return null;
         StringBuilder word = new StringBuilder();
         char[] cdata = data.toCharArray();
-        boolean startType = false;
-        while(index < cdata.length && !Character.isWhitespace(cdata[index])) {
+        while(hasNext() && !Character.isWhitespace(cdata[index])) {
             checkComments(cdata);
-            boolean matches = matchesCharacters(nonSpecialCharacters, cdata[index]);
-            boolean operatorMatches = matchesCharacters(operatorCharacters, word.toString() + cdata[index]);
-            if(!operatorMatches && startType) return word.toString();
-            if(!matches) {
-                if(operatorMatches) {
-                    if(word.length() == 0) startType = true;
-                } else {
-                    if(word.length() == 0) {
-                        word.append(cdata[index]);
-                        lineRow++;
-                        index++;
-                    }
+            boolean matches = matchesCharacters(allowedCharacters, cdata[index]);
+            boolean opMatches = matchesCharacters(operatorCharacters, cdata[index]);
+            if(opMatches) {
+                if(!matchesCharacters(operatorCharacters, word.toString())) {
+                    return word.toString();
+                }
+            }else if(!matches) {
+                if(word.length() == 0) {
+                    lineRow++;
+                    word.append(cdata[index++]);
+                }
+                return word.toString();
+            }else if(matches) {
+                if(!matchesCharacters(allowedCharacters, word.toString())) {
                     return word.toString();
                 }
             }
             lineRow++;
-            word.append(cdata[index]);
-            index++;
+            word.append(cdata[index++]);
         }
         return word.toString();
+    }
+
+    public String nextWord() {
+        return nextTemplateWord(nonSpecialCharacters, operatorCharacters);
     }
 
     public String nextLongWord() {
-        ignoreWhitespace();
-        lastLocation = getLocation();
-        if(index >= data.length()) return null;
-        StringBuilder word = new StringBuilder();
-        char[] cdata = data.toCharArray();
-        while(index < cdata.length) {
-            if(Character.isWhitespace(cdata[index])) {
-                break;
-            }
-            while(cdata[index] == '/') {
-                if(index + 1 < cdata.length) {
-                    if(cdata[index + 1] == '/') {
-                        index += 2;
-                        lineRow += 2;
-                        while(index < cdata.length) {
-                            if(cdata[index] == '\n') {
-                                lineNumber++;
-                                lineRow = 0;
-                                break;
-                            }
-                            lineRow++;
-                            index++;
-                        }
-                        ignoreWhitespace();
-                    }
-                }
-            }
-            boolean matches = validLongWordCharacters.matcher(cdata[index] + "").matches();
-            if(!matches) {
-                if(word.length() == 0) {
-                    return word.append(cdata[index++]).toString();
-                }else {
-                    return word.toString();
-                }
-            }
-            lineRow++;
-            word.append(cdata[index]);
-            index++;
-        }
-        return word.toString();
+        return nextTemplateWord(validLongWordCharacters);
     }
 
     public String nextDotWord() {
-        ignoreWhitespace();
-        lastLocation = getLocation();
-        if(index >= data.length()) return null;
-        StringBuilder word = new StringBuilder();
-        char[] cdata = data.toCharArray();
-        while(index < cdata.length) {
-            if(Character.isWhitespace(cdata[index])) {
-                break;
-            }
-            while(cdata[index] == '/') {
-                if(index + 1 < cdata.length) {
-                    if(cdata[index + 1] == '/') {
-                        index += 2;
-                        lineRow += 2;
-                        while(index < cdata.length) {
-                            if(cdata[index] == '\n') {
-                                lineNumber++;
-                                lineRow = 0;
-                                break;
-                            }
-                            lineRow++;
-                            index++;
-                        }
-                        ignoreWhitespace();
-                    }
-                }
-            }
-            boolean matches = validDotWordCharacters.matcher(cdata[index] + "").matches();
-            if(!matches) {
-                if(word.length() == 0) {
-                    return word.append(cdata[index++]).toString();
-                }else {
-                    return word.toString();
-                }
-            }
-            lineRow++;
-            word.append(cdata[index]);
-            index++;
-        }
-        return word.toString();
+        return nextTemplateWord(validDotWordCharacters);
     }
 
     public String seekWord() {

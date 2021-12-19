@@ -50,7 +50,7 @@ public class PreCompiler {
                             if(opens == 0) throw new InvalidOperationException("Function closed too much");
                             opens--;
                             if(opens == 0) break;
-                        } else if(opens == 0 && t.getType() == TokenType.END_LINE) break;
+                        } else if(opens == 0 && (t.getType() == TokenType.END_LINE || (t.getType() == TokenType.PARSED && t.asParsedToken().tokens.get(t.asParsedToken().tokens.size() - 1).getType() == TokenType.END_LINE))) break;
                     }
                     pre.functions.add(func);
                 }else if(parsed.name.equals("FunctionParameters")) {

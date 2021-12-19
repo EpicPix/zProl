@@ -18,6 +18,10 @@ public class Token {
         return (EquationToken) this;
     }
 
+    public ParsedToken asParsedToken() {
+        return (ParsedToken) this;
+    }
+
     public WordHolder asWordHolder() {
         return (WordHolder) this;
     }

@@ -35,7 +35,7 @@ public class Language {
         }
 
         DataParser parser = new DataParser(fileName, data.toString().split("(\r|\n|\r\n|\n\r)"));
-        while(parser.seekWord() != null) {
+        while(parser.hasNext()) {
             String d = parser.nextWord();
             if(d.equals("keyword")) {
                 KEYWORDS.add(parser.nextWord());
