@@ -37,6 +37,7 @@ public class DataParser {
     public static final char[] validLongWordCharacters = joinCharacters(validDotWordCharacters, new char[] {'+', '-', '@'});
 
     public static final char[] operatorCharacters = new char[] {'+', '=', '/', '*', '-', '%', '<', '>', '!', '&'};
+    public static final char[] typeCharacters = joinCharacters(nonSpecialCharacters, new char[] {'.', '(', ')', '<', '>'});
 
     private final String data;
     private final String fileName;
@@ -203,28 +204,7 @@ public class DataParser {
     }
 
     public String nextType() {
-        ignoreWhitespace();
-        lastLocation = getLocation();
-        StringBuilder type = new StringBuilder(nextWord());
-        String x = seekWord();
-        if(x.equals("(")) {
-            while(true) {
-                String word = nextWord();
-                type.append(word);
-                if(word.equals(")")) {
-                    break;
-                }
-            }
-        }else if(x.equals("<")) {
-            while(true) {
-                String word = nextWord();
-                type.append(word);
-                if(word.equals(">")) {
-                    break;
-                }
-            }
-        }
-        return type.toString();
+        return nextTemplateWord(typeCharacters);
     }
 
     public String nextStringStarted() {
