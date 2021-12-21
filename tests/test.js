@@ -27,7 +27,7 @@ async function main() {
             }
         }
     }
-    if(fails) {
+    if(fails.length) {
         console.log(fails.map((file) => `Test failed for ${file}`).join("\n"));
         process.exit(1);
     }
