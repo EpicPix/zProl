@@ -150,8 +150,7 @@ public class OperationCompiler {
             }
             if(operations.size() >= 2) {
                 Operation o = operations.get(operations.size() - 2);
-                if(o instanceof OperationCast) {
-                    OperationCast c = (OperationCast) o;
+                if(o instanceof OperationCast c) {
                     c.left = operations.get(operations.size() - 1);
                     operations.remove(operations.size() - 1);
                 }
@@ -202,12 +201,10 @@ public class OperationCompiler {
             printOperations(operation.left);
             System.out.println("cast " + ((OperationCast) operation).type);
             return;
-        }else if(operation instanceof OperationField) {
-            OperationField ref = (OperationField) operation;
+        }else if(operation instanceof OperationField ref) {
             System.out.println("push field " + Token.toFriendlyString(ref.reference));
             return;
-        }else if(operation instanceof OperationCall) {
-            OperationCall call = (OperationCall) operation;
+        }else if(operation instanceof OperationCall call) {
             for(Operation op : call.parameters) {
                 printOperations(op);
             }
@@ -233,13 +230,11 @@ public class OperationCompiler {
             writer.write("    op" + current + " [label=\"" + string.getData().replace("\\", "\\\\").replace("\"", "\\\"") + "\"]\n");
             current++;
             return;
-        }else if(operation instanceof OperationField) {
-            OperationField field = (OperationField) operation;
+        }else if(operation instanceof OperationField field) {
             writer.write("    op" + current + " [label=\"" + Token.toFriendlyString(field.reference) + "\"]\n");
             current++;
             return;
-        }else if(operation instanceof OperationCall) {
-            OperationCall call = (OperationCall) operation;
+        }else if(operation instanceof OperationCall call) {
             int c = current;
             writer.write("    op" + current + " [label=\"" + Token.toFriendlyString(call.reference) + "()\"]\n");
             current++;

@@ -35,8 +35,7 @@ public class CompiledData {
 
     public short getFunctionIndex(Function func) {
         for(short i = 0; i<constantPool.size(); i++) {
-            if(constantPool.get(i) instanceof FunctionEntry) {
-                FunctionEntry e = (FunctionEntry) constantPool.get(i);
+            if(constantPool.get(i) instanceof FunctionEntry e) {
                 if(e.getName().equals(func.name) && e.getSignature().validateFunctionSignature(func.signature)) {
                     return i;
                 }

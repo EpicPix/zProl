@@ -212,8 +212,7 @@ public class Compiler {
 
         if(op instanceof OperationBrackets) {
             convertOperationToBytecode(scopes, bytecode, data, op.left, true, t);
-        }else if(op instanceof OperationCall) {
-            OperationCall call = (OperationCall) op;
+        }else if(op instanceof OperationCall call) {
             if(call.reference.get(0).asWordToken().getWord().equals("syscall")) {
                 int params = call.parameters.size();
                 if(params > 7 || params <= 0) {
@@ -241,8 +240,7 @@ public class Compiler {
             ArrayList<Type> parameters = new ArrayList<>();
             for(int i = 0; i<call.parameters.size(); i++) {
                 Operation param = call.parameters.get(i);
-                if(param instanceof OperationField) {
-                    OperationField f = (OperationField) param;
+                if(param instanceof OperationField f) {
                     if(f.reference.size() != 1) {
                         throw new NotImplementedException("Not implemented yet");
                     }

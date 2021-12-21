@@ -35,7 +35,7 @@ public class Token {
                 indent--;
                 pendingIndent = indent;
             }
-            for(int i = 0; i<pendingIndent; i++) builder.append("    ");
+            builder.append("    ".repeat(Math.max(0, pendingIndent)));
             pendingIndent = 0;
             if(token.getType() == TokenType.WORD) {
                 builder.append(token.asWordHolder().getWord()).append(" ");
