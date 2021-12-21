@@ -50,7 +50,6 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: zProL.jar
-          path: zProL.jar
 
       - name: Run Tests
         working-directory: tests
