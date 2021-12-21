@@ -22,7 +22,7 @@ jobs:
       - name: Generate Jar
         shell: bash
         working-directory: src
-        run: jar cf zProL.jar language.zld META-INF/MANIFEST.MF $(find * -name "*.class")
+        run: jar cmf META-INF/MANIFEST.MF zProL.jar language.zld $(find * -name "*.class")
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@master

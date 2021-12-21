@@ -19,8 +19,8 @@ async function main() {
             const finish = await new Promise((resolve) => process.on('close', resolve));
             const out = outputs[nfile];
             if(out.exit != finish) {
-                console.error(data);
-                console.error(`Test failed`);
+                console.log(data);
+                console.log(`Test failed`);
                 fails.push(file);
             }else {
                 console.log(`Test succeeded`);
@@ -28,7 +28,7 @@ async function main() {
         }
     }
     if(fails) {
-        console.error(fails.map((file) => `Test failed for ${file}`).join("\n"));
+        console.log(fails.map((file) => `Test failed for ${file}`).join("\n"));
         process.exit(1);
     }
 }
