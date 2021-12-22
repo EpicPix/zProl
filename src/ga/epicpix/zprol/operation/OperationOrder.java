@@ -1,16 +1,16 @@
-package ga.epicpix.zprol.compiled.operation;
+package ga.epicpix.zprol.operation;
 
-import ga.epicpix.zprol.compiled.operation.Operation.OperationAdd;
-import ga.epicpix.zprol.compiled.operation.Operation.OperationAnd;
-import ga.epicpix.zprol.compiled.operation.Operation.OperationAssignment;
-import ga.epicpix.zprol.compiled.operation.Operation.OperationComparison;
-import ga.epicpix.zprol.compiled.operation.Operation.OperationComparisonNot;
-import ga.epicpix.zprol.compiled.operation.Operation.OperationDivide;
-import ga.epicpix.zprol.compiled.operation.Operation.OperationMod;
-import ga.epicpix.zprol.compiled.operation.Operation.OperationMultiply;
-import ga.epicpix.zprol.compiled.operation.Operation.OperationShiftLeft;
-import ga.epicpix.zprol.compiled.operation.Operation.OperationShiftRight;
-import ga.epicpix.zprol.compiled.operation.Operation.OperationSubtract;
+import ga.epicpix.zprol.operation.Operation.OperationAdd;
+import ga.epicpix.zprol.operation.Operation.OperationAnd;
+import ga.epicpix.zprol.operation.Operation.OperationAssignment;
+import ga.epicpix.zprol.operation.Operation.OperationComparison;
+import ga.epicpix.zprol.operation.Operation.OperationComparisonNot;
+import ga.epicpix.zprol.operation.Operation.OperationDivide;
+import ga.epicpix.zprol.operation.Operation.OperationMod;
+import ga.epicpix.zprol.operation.Operation.OperationMultiply;
+import ga.epicpix.zprol.operation.Operation.OperationShiftLeft;
+import ga.epicpix.zprol.operation.Operation.OperationShiftRight;
+import ga.epicpix.zprol.operation.Operation.OperationSubtract;
 import java.util.HashMap;
 import java.util.Map.Entry;
 

@@ -1,4 +1,4 @@
-package ga.epicpix.zprol.compiled.precompiled;
+package ga.epicpix.zprol.precompiled;
 
 import java.util.ArrayList;
 import java.util.HashMap;

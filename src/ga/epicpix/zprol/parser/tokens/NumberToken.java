@@ -1,4 +1,4 @@
-package ga.epicpix.zprol.tokens;
+package ga.epicpix.zprol.parser.tokens;
 
 import java.math.BigInteger;
 

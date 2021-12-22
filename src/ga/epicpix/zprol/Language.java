@@ -2,6 +2,7 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.ParserException;
+import ga.epicpix.zprol.parser.DataParser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;

@@ -1,10 +1,10 @@
-package ga.epicpix.zprol.compiled.precompiled;
+package ga.epicpix.zprol.precompiled;
 
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.exceptions.InvalidOperationException;
-import ga.epicpix.zprol.tokens.ParsedToken;
-import ga.epicpix.zprol.tokens.Token;
-import ga.epicpix.zprol.tokens.TokenType;
+import ga.epicpix.zprol.parser.tokens.ParsedToken;
+import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.parser.tokens.TokenType;
 import java.util.ArrayList;
 
 public class PreCompiler {

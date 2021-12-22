@@ -2,13 +2,14 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.CompiledData.LinkedData;
-import ga.epicpix.zprol.compiled.precompiled.PreCompiledData;
-import ga.epicpix.zprol.compiled.precompiled.PreCompiler;
+import ga.epicpix.zprol.precompiled.PreCompiledData;
+import ga.epicpix.zprol.precompiled.PreCompiler;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.generators.GeneratorAssembly;
-import ga.epicpix.zprol.tokens.Token;
+import ga.epicpix.zprol.parser.Parser;
+import ga.epicpix.zprol.parser.tokens.Token;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;

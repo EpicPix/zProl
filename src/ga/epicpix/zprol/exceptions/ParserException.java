@@ -1,7 +1,7 @@
 package ga.epicpix.zprol.exceptions;
 
-import ga.epicpix.zprol.DataParser;
-import ga.epicpix.zprol.ParserLocation;
+import ga.epicpix.zprol.parser.DataParser;
+import ga.epicpix.zprol.parser.ParserLocation;
 
 public class ParserException extends RuntimeException {
 

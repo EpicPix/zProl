@@ -1,6 +1,5 @@
 package ga.epicpix.zprol.compiled;
 
-import ga.epicpix.zprol.DataParser;
 import ga.epicpix.zprol.Language;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry.FunctionEntry;
 import ga.epicpix.zprol.compiled.bytecode.Bytecode;

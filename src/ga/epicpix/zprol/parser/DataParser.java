@@ -1,4 +1,4 @@
-package ga.epicpix.zprol;
+package ga.epicpix.zprol.parser;
 
 import java.util.Stack;
 import java.util.regex.Pattern;

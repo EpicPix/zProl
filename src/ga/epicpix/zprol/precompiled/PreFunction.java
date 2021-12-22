@@ -1,6 +1,6 @@
-package ga.epicpix.zprol.compiled.precompiled;
+package ga.epicpix.zprol.precompiled;
 
-import ga.epicpix.zprol.tokens.Token;
+import ga.epicpix.zprol.parser.tokens.Token;
 import java.util.ArrayList;
 
 public class PreFunction {

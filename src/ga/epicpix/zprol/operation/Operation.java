@@ -1,9 +1,9 @@
-package ga.epicpix.zprol.compiled.operation;
+package ga.epicpix.zprol.operation;
 
 import ga.epicpix.zprol.compiled.Type;
-import ga.epicpix.zprol.tokens.NumberToken;
-import ga.epicpix.zprol.tokens.StringToken;
-import ga.epicpix.zprol.tokens.Token;
+import ga.epicpix.zprol.parser.tokens.NumberToken;
+import ga.epicpix.zprol.parser.tokens.StringToken;
+import ga.epicpix.zprol.parser.tokens.Token;
 import java.util.ArrayList;
 
 public class Operation {
