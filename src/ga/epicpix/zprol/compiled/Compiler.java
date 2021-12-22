@@ -1,5 +1,7 @@
-package ga.epicpix.zprol;
+package ga.epicpix.zprol.compiled;
 
+import ga.epicpix.zprol.Language;
+import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.CompileOperation;
 import ga.epicpix.zprol.compiled.CompileOperationType;
 import ga.epicpix.zprol.compiled.CompiledData;
