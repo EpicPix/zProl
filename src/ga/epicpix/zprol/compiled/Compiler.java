@@ -2,9 +2,8 @@ package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.Language;
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.compiled.bytecode.IBytecodeStorage;
 import ga.epicpix.zprol.precompiled.PreCompiledData;
-import ga.epicpix.zprol.compiled.bytecode.Bytecode;
-import ga.epicpix.zprol.compiled.bytecode.BytecodeInstructions;
 import ga.epicpix.zprol.operation.Operation.OperationAdd;
 import ga.epicpix.zprol.operation.Operation.OperationAnd;
 import ga.epicpix.zprol.operation.Operation.OperationAssignment;
@@ -40,66 +39,49 @@ import ga.epicpix.zprol.parser.tokens.WordToken;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Stack;
+
+import static ga.epicpix.zprol.StaticImports.createStorage;
+import static ga.epicpix.zprol.StaticImports.getConstructedInstruction;
+import static ga.epicpix.zprol.StaticImports.getInstruction;
+import static ga.epicpix.zprol.StaticImports.getInstructionPrefix;
 
 public class Compiler {
 
-    public static Bytecode parseFunctionCode(ArrayList<Scope> scopes, CompiledData data, SeekIterator<Token> tokens, FunctionSignature sig, String[] names) {
+    public static IBytecodeStorage parseFunctionCode(ArrayList<Scope> scopes, CompiledData data, SeekIterator<Token> tokens, FunctionSignature sig, String[] names) {
         OperationCompiler mathCompiler = new OperationCompiler();
-        Bytecode bytecode = new Bytecode();
+        IBytecodeStorage storage = createStorage();
+        LocalScopeManager localsManager = new LocalScopeManager();
         for(int i = 0; i<names.length; i++) {
-            bytecode.getCurrentScope().defineLocalVariable(names[i], sig.parameters[i]);
+            localsManager.getCurrentScope().defineLocalVariable(names[i], sig.parameters[i]);
         }
-        bytecode.newScope();
+        localsManager.newScope();
         int opens = 0;
-        Stack<CompileOperation> operations = new Stack<>();
         Token token;
         while(true) {
             token = tokens.next();
             if(token.getType() == TokenType.PARSED) {
                 ParsedToken parsed = (ParsedToken) token;
                 if(parsed.name.equals("Return")) {
-                    if(sig.returnType.getSize() == 0) bytecode.pushInstruction(BytecodeInstructions.RETURN);
+                    if(sig.returnType.getSize() == 0) storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(0) + "return"));
                     else throw new RuntimeException("Tried to return no value while the method is not void");
                     break;
                 }else if(parsed.name.equals("ReturnValue")) {
                     if(sig.returnType.getSize() != 0) {
-                        convertOperationToBytecode(scopes, bytecode, data, mathCompiler.compile(data, new SeekIterator<>(parsed.tokens.get(1).asEquationToken().tokens)), true, sig.returnType);
-                        bytecode.pushSizedInstruction("RETURN", sig.returnType.getSize());
+                        convertOperationToBytecode(scopes, storage, localsManager, data, mathCompiler.compile(data, new SeekIterator<>(parsed.tokens.get(1).asEquationToken().tokens)), true, sig.returnType);
+                        storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(sig.returnType.getSize()) + "return"));
                     } else throw new RuntimeException("Tried to return a value while the method is void");
                     break;
                 }else if(parsed.name.equals("Call")) {
-                    convertOperationToBytecode(scopes, bytecode, data, mathCompiler.compile(data, new SeekIterator<>(parsed.tokens)), false, null);
+                    convertOperationToBytecode(scopes, storage, localsManager, data, mathCompiler.compile(data, new SeekIterator<>(parsed.tokens)), false, null);
                 }else {
                     throw new RuntimeException("Not implemented language feature: " + parsed.name + " / " + parsed.tokens);
                 }
             }else if(token.getType() == TokenType.WORD) {
                 WordToken w = (WordToken) token;
                 if(w.getWord().equals("if")) {
-                    if(tokens.next().getType() != TokenType.OPEN) {
-                        throw new RuntimeException("Missing '('");
-                    }
-                    ArrayList<Operation> op = new ArrayList<>();
-                    mathCompiler.compile0(1, op, new Stack<>(), tokens, data);
-                    convertOperationToBytecode(scopes, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
-                    if(tokens.seek().getType() == TokenType.OPEN) {
-                        operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMPNE, (short) bytecode.getInstructions().size()), CompileOperationType.IF));
-                    }else if(tokens.seek().getType() != TokenType.CLOSE) {
-                        throw new RuntimeException("Unknown symbol: '" + tokens.seek() + "'");
-                    }
+                    throw new NotImplementedException("Keyword 'if' is not implemented");
                 }else if(w.getWord().equals("while")) {
-                    if(tokens.next().getType() != TokenType.OPEN) {
-                        throw new RuntimeException("Missing '('");
-                    }
-                    ArrayList<Operation> op = new ArrayList<>();
-                    mathCompiler.compile0(1, op, new Stack<>(), tokens, data);
-                    int s = bytecode.getInstructions().size();
-                    convertOperationToBytecode(scopes, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
-                    if(tokens.seek().getType() == TokenType.OPEN) {
-                        operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMPNE, (short) s, (short) bytecode.getInstructions().size()), CompileOperationType.WHILE));
-                    }else if(tokens.seek().getType() != TokenType.CLOSE) {
-                        throw new RuntimeException("Unknown symbol: '" + tokens.seek() + "'");
-                    }
+                    throw new NotImplementedException("Keyword 'while' is not implemented");
                 }else {
                     int startIndex = tokens.currentIndex() - 1;
                     try {
@@ -110,13 +92,13 @@ public class Compiler {
                             throw new RuntimeException("Cannot handle this token: " + token);
                         }
                         String name = token.asWordToken().getWord();
-                        LocalVariable lVar = bytecode.getCurrentScope().defineLocalVariable(name, type);
+                        LocalVariable lVar = localsManager.defineLocalVariable(name, type);
                         token = tokens.next();
                         if(token.getType() != TokenType.END_LINE) {
                             if(token.getType() == TokenType.OPERATOR) {
                                 if(((OperatorToken) token).operator.equals("=")) {
-                                    convertOperationToBytecode(scopes, bytecode, data, mathCompiler.compile(data, tokens), true, type);
-                                    bytecode.pushSizedInstruction("STORE", type.getSize(), (short) lVar.index);
+                                    convertOperationToBytecode(scopes, storage, localsManager, data, mathCompiler.compile(data, tokens), true, type);
+                                    storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(type.getSize()) + "store_local", lVar.index));
                                 }else {
                                     throw new RuntimeException("Cannot handle this token: " + token);
                                 }
@@ -126,53 +108,20 @@ public class Compiler {
                         }
                     } catch (UnknownTypeException unkType) {
                         tokens.setIndex(startIndex);
-                        convertOperationToBytecode(scopes, bytecode, data, mathCompiler.compile(data, tokens), false, null);
+                        convertOperationToBytecode(scopes, storage, localsManager, data, mathCompiler.compile(data, tokens), false, null);
                     }
                 }
             }else {
                 if(token.getType() == TokenType.OPEN_SCOPE) {
                     opens++;
-                    bytecode.newScope();
+                    localsManager.newScope();
                     continue;
                 }else if(token.getType() == TokenType.CLOSE_SCOPE) {
                     opens--;
-                    bytecode.leaveScope();
+                    localsManager.leaveScope();
                     if(opens == 0) {
-                        bytecode.leaveScope();
+                        localsManager.leaveScope();
                         break;
-                    }
-                    if(operations.size() != 0) {
-                        CompileOperation i = operations.pop();
-                        short s = (short) i.instruction.data[0];
-                        i.instruction.data[0] = (short) (bytecode.getInstructions().size() - s);
-                        if(i.type == CompileOperationType.IF) {
-                            if(tokens.seek().getType() == TokenType.WORD && tokens.seek().asWordToken().getWord().equals("else")) {
-                                tokens.next();
-                                Token w = tokens.seek();
-                                if(w instanceof WordToken && w.asWordToken().getWord().equals("if")) {
-                                    tokens.next();
-                                    if(tokens.next().getType() != TokenType.OPEN) {
-                                        throw new RuntimeException("Missing '('");
-                                    }
-                                    ArrayList<Operation> op = new ArrayList<>();
-                                    mathCompiler.compile0(1, op, new Stack<>(), tokens, data);
-                                    convertOperationToBytecode(scopes, bytecode, data, op.get(0), tokens.seek().getType() == TokenType.OPEN, null);
-                                    if(tokens.seek().getType() == TokenType.OPEN) {
-                                        operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMPNE, (short) bytecode.getInstructions().size()), CompileOperationType.IF));
-                                    }else if(tokens.seek().getType() != TokenType.CLOSE) {
-                                        throw new RuntimeException("Unknown symbol: '" + tokens.seek() + "'");
-                                    }
-                                }else {
-                                    i.instruction.data[0] = (short) ((short) i.instruction.data[0] + 1);
-                                    operations.push(new CompileOperation(bytecode.pushInstruction(BytecodeInstructions.JUMP, (short) bytecode.getInstructions().size()), CompileOperationType.ELSE));
-                                }
-                            }
-                        }else if(i.type == CompileOperationType.WHILE) {
-                            short pos = (short) i.instruction.data[1];
-                            i.instruction.data = new java.lang.Object[] {i.instruction.data[0]};
-                            bytecode.pushInstruction(BytecodeInstructions.JUMP, (short) (s - bytecode.getInstructions().size()));
-                            i.instruction.data[0] = (short) (bytecode.getInstructions().size() - pos);
-                        }
                     }
                     continue;
                 }
@@ -180,10 +129,11 @@ public class Compiler {
                 throw new RuntimeException("Cannot handle this token: " + token);
             }
         }
-        return bytecode;
+        storage.setLocalsSize(localsManager.getLocalVariablesSize());
+        return storage;
     }
 
-    public static void convertOperationToBytecode(ArrayList<Scope> scopes, Bytecode bytecode, CompiledData data, Operation op, boolean returnRequired, Type t) {
+    public static void convertOperationToBytecode(ArrayList<Scope> scopes, IBytecodeStorage storage, LocalScopeManager localsManager, CompiledData data, Operation op, boolean returnRequired, Type t) {
         int size = 0;
         boolean unsigned = false;
         BigInteger biggestNumber = BigInteger.ZERO;
@@ -201,7 +151,7 @@ public class Compiler {
         }
 
         if(op instanceof OperationBrackets) {
-            convertOperationToBytecode(scopes, bytecode, data, op.left, true, t);
+            convertOperationToBytecode(scopes, storage, localsManager, data, op.left, true, t);
         }else if(op instanceof OperationCall call) {
             if(call.reference.get(0).asWordToken().getWord().equals("syscall")) {
                 int params = call.parameters.size();
@@ -210,19 +160,19 @@ public class Compiler {
                 }
 
                 for(int i = 0; i<call.parameters.size(); i++) {
-                    convertOperationToBytecode(scopes, bytecode, data, call.parameters.get(i), true, Language.TYPES.get("uint64"));
+                    convertOperationToBytecode(scopes, storage, localsManager, data, call.parameters.get(i), true, Language.TYPES.get("uint64"));
                 }
 
-                if(params == 1) bytecode.pushInstruction(BytecodeInstructions.SYSCALL1);
-                else if(params == 2) bytecode.pushInstruction(BytecodeInstructions.SYSCALL2);
-                else if(params == 3) bytecode.pushInstruction(BytecodeInstructions.SYSCALL3);
-                else if(params == 4) bytecode.pushInstruction(BytecodeInstructions.SYSCALL4);
-                else if(params == 5) bytecode.pushInstruction(BytecodeInstructions.SYSCALL5);
-                else if(params == 6) bytecode.pushInstruction(BytecodeInstructions.SYSCALL6);
-                else if(params == 7) bytecode.pushInstruction(BytecodeInstructions.SYSCALL7);
+                if(params == 1) storage.pushInstruction(getConstructedInstruction("syscall1"));
+                else if(params == 2) storage.pushInstruction(getConstructedInstruction("syscall2"));
+                else if(params == 3) storage.pushInstruction(getConstructedInstruction("syscall3"));
+                else if(params == 4) storage.pushInstruction(getConstructedInstruction("syscall4"));
+                else if(params == 5) storage.pushInstruction(getConstructedInstruction("syscall5"));
+                else if(params == 6) storage.pushInstruction(getConstructedInstruction("syscall6"));
+                else storage.pushInstruction(getConstructedInstruction("syscall7"));
 
                 if(!returnRequired) {
-                    bytecode.pushInstruction(BytecodeInstructions.POP64);
+                    storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(8) + "pop"));
                 }
 
                 return;
@@ -234,7 +184,7 @@ public class Compiler {
                     if(f.reference.size() != 1) {
                         throw new NotImplementedException("Not implemented yet");
                     }
-                    LocalVariable var = bytecode.getCurrentScope().getLocalVariable(f.reference.get(0).asWordToken().getWord());
+                    LocalVariable var = localsManager.getLocalVariable(f.reference.get(0).asWordToken().getWord());
                     parameters.add(var.type);
                 }else {
                     throw new NotImplementedException("Not implemented yet");
@@ -243,25 +193,19 @@ public class Compiler {
             if(call.reference.size() != 1) {
                 throw new NotImplementedException("Not implemented yet");
             }
-            LocalVariable v = bytecode.getCurrentScope().findLocalVariable(call.reference.get(0).asWordToken().getWord());
+            LocalVariable v = localsManager.findLocalVariable(call.reference.get(0).asWordToken().getWord());
             FunctionSignature ss = new FunctionSignature(null, parameters.toArray(new Type[0]));
             if(v == null) {
                 Function func = data.getFunction(call.reference.get(0).asWordToken().getWord(), ss);
-                short index = data.getFunctionIndex(func);
                 for(int i = func.signature.parameters.length - 1; i >= 0; i--) {
-                    convertOperationToBytecode(scopes, bytecode, data, call.parameters.get(i), true, func.signature.parameters[i]);
+                    convertOperationToBytecode(scopes, storage, localsManager, data, call.parameters.get(i), true, func.signature.parameters[i]);
                 }
-                bytecode.pushInstruction(BytecodeInstructions.INVOKESTATIC, index);
+                throw new NotImplementedException("Not implemented yet");
 
-                if(!returnRequired) {
-                    int retSize = func.signature.returnType.getSize();
-                    if(retSize == 0) ;
-                    else if(retSize == 1) bytecode.pushInstruction(BytecodeInstructions.POP8);
-                    else if(retSize == 2) bytecode.pushInstruction(BytecodeInstructions.POP16);
-                    else if(retSize == 4) bytecode.pushInstruction(BytecodeInstructions.POP32);
-                    else if(retSize == 8) bytecode.pushInstruction(BytecodeInstructions.POP64);
-                    else throw new NotImplementedException("Size " + size + " is not supported");
-                }
+//                if(!returnRequired) {
+//                    int retSize = func.signature.returnType.getSize();
+//                    if(retSize != 0) storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(retSize) + "pop"));
+//                }
             }else {
                 throw new NotImplementedException("Not implemented yet");
             }
@@ -270,37 +214,16 @@ public class Compiler {
             while(tokens.hasNext()) {
                 Token token = tokens.next();
                 if(token.getType() == TokenType.WORD) {
-                    LocalVariable var = bytecode.getCurrentScope().findLocalVariable(token.asWordToken().getWord());
+                    LocalVariable var = localsManager.findLocalVariable(token.asWordToken().getWord());
                     int psize = 0;
                     if(var != null) {
                         psize = var.type.getSize();
-                        short index = (short) var.index;
-
-                        if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.LOAD8, index);
-                        else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.LOAD16, index);
-                        else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.LOAD32, index);
-                        else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.LOAD64, index);
+                        storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(psize) + "load_local", var.index));
                     }else {
                         throw new NotImplementedException("Not implemented yet");
                     }
 
-                    if(psize == 1) {
-                        if(t.getSize() == 2) bytecode.pushInstruction(BytecodeInstructions.EX8T16);
-                        else if(t.getSize() == 4) bytecode.pushInstruction(BytecodeInstructions.EX8T32);
-                        else if(t.getSize() == 8) bytecode.pushInstruction(BytecodeInstructions.EX8T64);
-                    } else if(psize == 2) {
-                        if(t.getSize() == 1) bytecode.pushInstruction(BytecodeInstructions.EX16T8);
-                        else if(t.getSize() == 4) bytecode.pushInstruction(BytecodeInstructions.EX16T32);
-                        else if(t.getSize() == 8) bytecode.pushInstruction(BytecodeInstructions.EX16T64);
-                    } else if(psize == 4) {
-                        if(t.getSize() == 1) bytecode.pushInstruction(BytecodeInstructions.EX32T8);
-                        else if(t.getSize() == 2) bytecode.pushInstruction(BytecodeInstructions.EX32T16);
-                        else if(t.getSize() == 8) bytecode.pushInstruction(BytecodeInstructions.EX32T64);
-                    } else if(psize == 8) {
-                        if(t.getSize() == 1) bytecode.pushInstruction(BytecodeInstructions.EX64T8);
-                        else if(t.getSize() == 2) bytecode.pushInstruction(BytecodeInstructions.EX64T16);
-                        else if(t.getSize() == 4) bytecode.pushInstruction(BytecodeInstructions.EX64T32);
-                    }
+                    storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(psize) + "cast" + getInstructionPrefix(t.getSize())));
 
                 }else if(token.getType() == TokenType.ACCESSOR) {
                     throw new NotImplementedException("Dereferencing is not implemented yet");
@@ -311,49 +234,19 @@ public class Compiler {
         }else if(op instanceof OperationNumber) {
             BigInteger num = (((OperationNumber) op).number).number;
             if(numberInBounds(smallestNumber, biggestNumber, num)) {
-                if(size == 1) bytecode.pushInstruction(BytecodeInstructions.PUSHI8, num.byteValue());
-                else if(size == 2) bytecode.pushInstruction(BytecodeInstructions.PUSHI16, num.shortValue());
-                else if(size == 4) bytecode.pushInstruction(BytecodeInstructions.PUSHI32, num.intValue());
-                else if(size == 8) {
-                    if(numberInBounds(BigInteger.ZERO, BigInteger.valueOf(0xff), num)) {
-                        bytecode.pushInstruction(BytecodeInstructions.PUSHI64F8, num.byteValue());
-                    }else {
-                        bytecode.pushInstruction(BytecodeInstructions.PUSHI64, num.longValue());
-                    }
-                }
-                else throw new NotImplementedException("Size " + size + " is not supported");
+                storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "push", num));
             }else {
                 throw new RuntimeException("Number " + num + " is not in range of the type (" + smallestNumber + " to " + biggestNumber + ")");
             }
         }else if(op instanceof OperationString) {
-            String str = ((OperationString) op).string.getString();
-            short index = bytecode.addString(str);
-            bytecode.pushInstruction(BytecodeInstructions.PUSHSTR, index);
+            //TODO
         }else if(op instanceof OperationCast) {
             if(t == null) throw new NotImplementedException("Not supported cast");
             if(((OperationCast) op).type == null) throw new NotImplementedException("Not supported cast");
-            convertOperationToBytecode(scopes, bytecode, data, op.left, true, ((OperationCast) op).type);
+            convertOperationToBytecode(scopes, storage, localsManager, data, op.left, true, ((OperationCast) op).type);
 
             Type t2 = ((OperationCast) op).type;
-            int s1 = t2.getSize();
-            int s2 = t.getSize();
-            if(s1 == 1) {
-                if(s2 == 2) bytecode.pushInstruction(BytecodeInstructions.EX8T16);
-                else if(s2 == 4) bytecode.pushInstruction(BytecodeInstructions.EX8T32);
-                else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX8T64);
-            }else if(s1 == 2) {
-                if(s2 == 1) bytecode.pushInstruction(BytecodeInstructions.EX16T8);
-                else if(s2 == 4) bytecode.pushInstruction(BytecodeInstructions.EX16T32);
-                else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX16T64);
-            }else if(s1 == 4) {
-                if(s2 == 1) bytecode.pushInstruction(BytecodeInstructions.EX32T8);
-                else if(s2 == 2) bytecode.pushInstruction(BytecodeInstructions.EX32T16);
-                else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX32T64);
-            }else if(s1 == 8) {
-                if(s2 == 1) bytecode.pushInstruction(BytecodeInstructions.EX64T8);
-                else if(s2 == 2) bytecode.pushInstruction(BytecodeInstructions.EX64T16);
-                else if(s2 == 8) bytecode.pushInstruction(BytecodeInstructions.EX64T32);
-            }else throw new NotImplementedException("Not supported cast");
+            storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(t2.getSize()) + "cast" + getInstructionPrefix(t.getSize())));
         }else if(op instanceof OperationAssignment) {
             ArrayList<Token> tokens = ((OperationField) op.left).reference;
 
@@ -361,65 +254,46 @@ public class Compiler {
                 LocalVariable lVar;
 
                 if(tokens.size() == 1) {
-                    lVar = bytecode.getCurrentScope().getLocalVariable(tokens.get(0).asWordToken().getWord());
+                    lVar = localsManager.getLocalVariable(tokens.get(0).asWordToken().getWord());
                 } else {
                     throw new NotImplementedException("TODO");
                 }
-                convertOperationToBytecode(scopes, bytecode, data, op.right, true, lVar.type);
-
-                short index = (short) lVar.index;
-                int psize = lVar.type.getSize();
-                if(psize == 1) bytecode.pushInstruction(BytecodeInstructions.STORE8, index);
-                else if(psize == 2) bytecode.pushInstruction(BytecodeInstructions.STORE16, index);
-                else if(psize == 4) bytecode.pushInstruction(BytecodeInstructions.STORE32, index);
-                else if(psize == 8) bytecode.pushInstruction(BytecodeInstructions.STORE64, index);
-                else throw new NotImplementedException("Size " + psize + " is not supported");
+                convertOperationToBytecode(scopes, storage, localsManager, data, op.right, true, lVar.type);
+                storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(lVar.type.getSize()) + "store_local", lVar.index));
             }catch(VariableNotDefinedException e) {
-                ObjectField var;
-
-                if(tokens.size() == 1) {
-                    var = data.getField(tokens.get(0).asWordToken().getWord());
-                    if(var.flags.contains(Flag.FINAL)) {
-                        throw new RuntimeException("Cannot change contents of a final variable: " + var.name);
-                    }
-                } else {
-                    throw new NotImplementedException("TODO");
-                }
-                convertOperationToBytecode(scopes, bytecode, data, op.right, true, var.type);
-
-                bytecode.pushSizedInstruction("SETSTATICFIELD", var.type.getSize(), data.getFieldIndex(tokens.get(0).asWordToken().getWord()));
+                e.printStackTrace();
             }
 
         }else if(op instanceof OperationComparison) {
-            convertOperationToBytecode(scopes, bytecode, data, op.left, true, Language.TYPES.get("uint64"));
-            convertOperationToBytecode(scopes, bytecode, data, op.right, true, Language.TYPES.get("uint64"));
-            bytecode.pushInstruction(BytecodeInstructions.COMPARE64);
+            convertOperationToBytecode(scopes, storage, localsManager, data, op.left, true, Language.TYPES.get("uint64"));
+            convertOperationToBytecode(scopes, storage, localsManager, data, op.right, true, Language.TYPES.get("uint64"));
+            storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(8) + "compare"));
         }else if(op instanceof OperationComparisonNot) {
-            convertOperationToBytecode(scopes, bytecode, data, op.left, true, Language.TYPES.get("uint64"));
-            convertOperationToBytecode(scopes, bytecode, data, op.right, true, Language.TYPES.get("uint64"));
-            bytecode.pushInstruction(BytecodeInstructions.COMPAREN64);
+            convertOperationToBytecode(scopes, storage, localsManager, data, op.left, true, Language.TYPES.get("uint64"));
+            convertOperationToBytecode(scopes, storage, localsManager, data, op.right, true, Language.TYPES.get("uint64"));
+            storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(8) + "compare_not"));
         }else {
-            convertOperationToBytecode(scopes, bytecode, data, op.left, true, t);
-            convertOperationToBytecode(scopes, bytecode, data, op.right, true, t);
+            convertOperationToBytecode(scopes, storage, localsManager, data, op.left, true, t);
+            convertOperationToBytecode(scopes, storage, localsManager, data, op.right, true, t);
             if(op instanceof OperationAdd) {
-                bytecode.pushSizedInstruction("ADD", size);
+                storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "add"));
             }else if(op instanceof OperationSubtract) {
-                bytecode.pushSizedInstruction("SUB", size);
-            }else if(op instanceof OperationDivide) {
-                if(unsigned) bytecode.pushSizedInstruction("DIVU", size);
-                else bytecode.pushSizedInstruction("DIVS", size);
+                storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "sub"));
             }else if(op instanceof OperationMultiply) {
-                if(unsigned) bytecode.pushSizedInstruction("MULU", size);
-                else bytecode.pushSizedInstruction("MULS", size);
+                if(unsigned) storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "mulu"));
+                else storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "mul"));
+            }else if(op instanceof OperationDivide) {
+                if(unsigned) storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "divu"));
+                else storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "div"));
             }else if(op instanceof OperationMod) {
-                if(unsigned) bytecode.pushSizedInstruction("MUDU", size);
-                else bytecode.pushSizedInstruction("MUDS", size);
+                if(unsigned) storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "modu"));
+                else storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "mod"));
             }else if(op instanceof OperationAnd) {
-                bytecode.pushSizedInstruction("AND", size);
+                storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "and"));
             }else if(op instanceof OperationShiftLeft) {
-                bytecode.pushSizedInstruction("SHL", size);
+                storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "shift_left"));
             }else if(op instanceof OperationShiftRight) {
-                bytecode.pushSizedInstruction("SHR", size);
+                storage.pushInstruction(getConstructedInstruction(getInstructionPrefix(size) + "shift_right"));
             }else {
                 throw new NotImplementedException(op.getClass().getSimpleName() + " is not implemented!");
             }

@@ -8,9 +8,9 @@ public class LocalScope {
 
     public final LocalScope parent;
 
+    private final ArrayList<LocalVariable> localVariables = new ArrayList<>();
     private int localVariableSizeIndex = 0;
-    private int min = 0;
-    private ArrayList<LocalVariable> localVariables = new ArrayList<>();
+    private int used = 0;
 
     public LocalScope() {
         this.parent = null;
@@ -50,18 +50,18 @@ public class LocalScope {
         return null;
     }
 
-    public int getScopeLocalVariableScope() {
+    public int getLocalUsed() {
         return localVariableSizeIndex;
     }
 
     public int getLocalVariablesSize() {
-        if(parent != null) return parent.getLocalVariablesSize() + localVariableSizeIndex + min;
-        return localVariableSizeIndex + min;
+        if(parent != null) return parent.getLocalVariablesSize() + localVariableSizeIndex + used;
+        return localVariableSizeIndex + used;
     }
 
-    public void addMin(int min) {
-        if(this.min < min) {
-            this.min = min;
+    public void setParentUsed(int used) {
+        if(this.used < used) {
+            this.used = used;
         }
     }
 }

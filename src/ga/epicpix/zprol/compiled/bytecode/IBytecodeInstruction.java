@@ -6,6 +6,7 @@ import java.io.IOException;
 public interface IBytecodeInstruction {
 
     public int getId();
+    public String getName();
     public byte[] write();
 
     public default void write(DataOutput out) throws IOException {

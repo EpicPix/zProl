@@ -6,8 +6,16 @@ import ga.epicpix.zprol.compiled.bytecode.impl.Bytecode.BytecodeInstructionData;
 
 record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implements IBytecodeInstruction {
 
+    public String toString() {
+        return "BytecodeInstruction[id=" + getId() + ", name=" + getName() + "]";
+    }
+
     public int getId() {
         return data.id();
+    }
+
+    public String getName() {
+        return data.name();
     }
 
     public byte[] write() {
@@ -21,31 +29,38 @@ record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implemen
             switch (type.getSize()) {
                 case 1 -> {
                     byte b;
-                    if(args[i] instanceof Byte) b = (Byte) args[i];
-                    else if(args[i] instanceof Short) b = ((Short) args[i]).byteValue();
-                    else if(args[i] instanceof Integer) b = ((Integer) args[i]).byteValue();
+                    if(args[i] instanceof Number v) b = v.byteValue();
                     else throw new IllegalArgumentException(args[i].toString().getClass().getName());
                     bytes[index++] = b;
                 }
                 case 2 -> {
                     short s;
-                    if(args[i] instanceof Byte) s = ((Byte) args[i]).shortValue();
-                    else if(args[i] instanceof Short) s = (Short) args[i];
-                    else if(args[i] instanceof Integer) s = ((Integer) args[i]).shortValue();
+                    if(args[i] instanceof Number v) s = v.shortValue();
                     else throw new IllegalArgumentException(args[i].toString().getClass().getName());
                     bytes[index++] = (byte) (s & 0xff);
                     bytes[index++] = (byte) ((s >> 8) & 0xff);
                 }
                 case 4 -> {
                     int n;
-                    if(args[i] instanceof Byte) n = ((Byte) args[i]).intValue();
-                    else if(args[i] instanceof Short) n = ((Short) args[i]).intValue();
-                    else if(args[i] instanceof Integer) n = (Integer) args[i];
+                    if(args[i] instanceof Number v) n = v.intValue();
                     else throw new IllegalArgumentException(args[i].toString().getClass().getName());
                     bytes[index++] = (byte) (n & 0xff);
                     bytes[index++] = (byte) ((n >> 8) & 0xff);
                     bytes[index++] = (byte) ((n >> 16) & 0xff);
                     bytes[index++] = (byte) ((n >> 24) & 0xff);
+                }
+                case 8 -> {
+                    long l;
+                    if(args[i] instanceof Number v) l = v.longValue();
+                    else throw new IllegalArgumentException(args[i].toString().getClass().getName());
+                    bytes[index++] = (byte) (l & 0xff);
+                    bytes[index++] = (byte) ((l >> 8) & 0xff);
+                    bytes[index++] = (byte) ((l >> 16) & 0xff);
+                    bytes[index++] = (byte) ((l >> 24) & 0xff);
+                    bytes[index++] = (byte) ((l >> 32) & 0xff);
+                    bytes[index++] = (byte) ((l >> 40) & 0xff);
+                    bytes[index++] = (byte) ((l >> 48) & 0xff);
+                    bytes[index++] = (byte) ((l >> 56) & 0xff);
                 }
             }
         }

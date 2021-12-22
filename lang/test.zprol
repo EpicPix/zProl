@@ -8,12 +8,8 @@ structure abc {
     uint8 a3;
 }
 
-void test() {
-    syscall(1, 0, "example\n", 8);
-}
-
 void _start() {
-    test();
+    syscall(1, 0, "example\n", 8);
     //HelloWorld.hello_world();
 }
 

@@ -2,7 +2,6 @@ package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.Language;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry.FunctionEntry;
-import ga.epicpix.zprol.compiled.bytecode.Bytecode;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
@@ -238,12 +237,10 @@ public class CompiledData {
         String name = in.readUTF();
         ArrayList<Flag> flags = Flag.fromBits(in.readInt());
         FunctionSignature sig = readFunctionSignature(in);
-        Bytecode bytecode = null;
         if(!flags.contains(Flag.NO_IMPLEMENTATION)) {
-            bytecode = new Bytecode();
-            bytecode.load(in);
+            throw new NotImplementedException("Reading functions is not implemented yet");
         }
-        return new Function(name, sig, flags, bytecode);
+        return new Function(name, sig, flags, null);
     }
 
     public static FunctionSignature readFunctionSignature(DataInputStream in) throws IOException {
@@ -271,7 +268,7 @@ public class CompiledData {
         writeMask(func.flags, out);
         writeFunctionSignatureType(func.signature, out);
         if(!func.flags.contains(Flag.NO_IMPLEMENTATION)) {
-            func.code.write(out);
+            throw new NotImplementedException("Writing functions is not implemented yet");
         }
     }
 
