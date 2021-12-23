@@ -238,8 +238,8 @@ public class Compiler {
             }else {
                 throw new RuntimeException("Number " + num + " is not in range of the type (" + smallestNumber + " to " + biggestNumber + ")");
             }
-        }else if(op instanceof OperationString) {
-            //TODO
+        }else if(op instanceof OperationString s) {
+            storage.pushInstruction(getConstructedInstruction("push_constant", data.getOrCreateStringIndex(s.string.getString())));
         }else if(op instanceof OperationCast) {
             if(t == null) throw new NotImplementedException("Not supported cast");
             if(((OperationCast) op).type == null) throw new NotImplementedException("Not supported cast");

@@ -2,6 +2,7 @@ package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.Language;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry.FunctionEntry;
+import ga.epicpix.zprol.compiled.ConstantPoolEntry.StringEntry;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
@@ -31,7 +32,7 @@ public class CompiledData {
     private final ArrayList<ObjectField> fields = new ArrayList<>();
     private final ArrayList<ConstantPoolEntry> constantPool = new ArrayList<>();
 
-    public short getFunctionIndex(Function func) {
+    public short getOrCreateFunctionIndex(Function func) {
         for(short i = 0; i<constantPool.size(); i++) {
             if(constantPool.get(i) instanceof FunctionEntry e) {
                 if(e.getName().equals(func.name) && e.getSignature().validateFunctionSignature(func.signature)) {
@@ -40,6 +41,18 @@ public class CompiledData {
             }
         }
         constantPool.add(new FunctionEntry(namespace, func));
+        return (short) (constantPool.size() - 1);
+    }
+
+    public short getOrCreateStringIndex(String str) {
+        for(short i = 0; i<constantPool.size(); i++) {
+            if(constantPool.get(i) instanceof StringEntry e) {
+                if(e.getString().equals(str)) {
+                    return i;
+                }
+            }
+        }
+        constantPool.add(new StringEntry(str));
         return (short) (constantPool.size() - 1);
     }
 

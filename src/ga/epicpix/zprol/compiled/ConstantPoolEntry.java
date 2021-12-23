@@ -20,6 +20,8 @@ public class ConstantPoolEntry {
         byte t = in.readByte();
         if(t == 1) {
             return FunctionEntry.read(in);
+        }else if(t == 2) {
+            return StringEntry.read(in);
         }
         throw new RuntimeException("Unknown tag: " + t);
     }
@@ -65,6 +67,29 @@ public class ConstantPoolEntry {
 
         public static FunctionEntry read(DataInputStream in) throws IOException {
             return new FunctionEntry(in.readUTF(), in.readUTF(), CompiledData.readFunctionSignature(in));
+        }
+    }
+
+    public static class StringEntry extends ConstantPoolEntry {
+
+        private final String str;
+
+        public StringEntry(String str) {
+            super((byte) 2);
+            this.str = str;
+        }
+
+        public String getString() {
+            return str;
+        }
+
+        public void write(DataOutputStream out) throws IOException {
+            super.write(out);
+            out.writeUTF(str);
+        }
+
+        public static StringEntry read(DataInputStream in) throws IOException {
+            return new StringEntry(in.readUTF());
         }
     }
 
