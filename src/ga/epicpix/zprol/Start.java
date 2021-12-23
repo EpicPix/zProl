@@ -1,7 +1,6 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
-import ga.epicpix.zprol.compiled.CompiledData.LinkedData;
 import ga.epicpix.zprol.compiled.Compiler;
 import ga.epicpix.zprol.precompiled.PreCompiledData;
 import ga.epicpix.zprol.precompiled.PreCompiler;
@@ -87,13 +86,7 @@ public class Start {
         if(outputFile != null) {
             compileFiles(files, outputFile, generate_x86_64_linux);
         }else {
-            for(String file : files) {
-                LinkedData data = loadFile(file, outputFile, generate_x86_64_linux);
-                if(data == null) {
-                    System.exit(1);
-                    return;
-                }
-            }
+            throw new NotImplementedException("Not implemented yet");
         }
     }
 
@@ -147,86 +140,15 @@ public class Start {
             compiledData.add(zpil);
         }
 
-        LinkedData linked = CompiledData.link(compiledData);
 
-//        linked.write(new File(output)); ???
         String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
 
-        try {
-            long startSave = System.currentTimeMillis();
-            linked.save(new File(normalName + ".zpil"));
-            long stopSave = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to save\n", normalName + ".zpil", stopSave - startSave);
-        } catch(NotImplementedException e) {
-            System.err.println("Saving is not fully implemented.");
-            if(Boolean.parseBoolean(System.getProperty("DEBUG"))) e.printStackTrace();
-        }
+        System.err.println("Saving is not fully implemented.");
 
         if(generate_x86_64_linux) {
-            GeneratorAssembly.generate_x86_64_linux_assembly(linked, new File(normalName + ".asm"));
+            throw new NotImplementedException("Not implemented yet");
+//            GeneratorAssembly.generate_x86_64_linux_assembly(linked, new File(normalName + ".asm"));
         }
-    }
-
-    public static LinkedData loadFile(String file, String output, boolean generate_x86_64_linux) throws IOException, UnknownTypeException {
-        boolean load = false;
-        if(new File(file).exists()) {
-            DataInputStream in = new DataInputStream(new FileInputStream(file));
-            if(in.readInt() == 0x7a50524c) {
-                load = true;
-            }
-            in.close();
-        }
-        String normalName = output == null ? file.substring(0, file.lastIndexOf('.')) : output.substring(0, output.lastIndexOf('.'));
-
-        LinkedData zpil;
-
-        if(load) {
-            long loadStart = System.currentTimeMillis();
-            zpil = LinkedData.load(new File(file));
-            long loadEnd = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to load\n", file, loadEnd - loadStart);
-        }else {
-            ArrayList<Token> tokens;
-            try {
-                long startToken = System.currentTimeMillis();
-                tokens = Parser.tokenize(file);
-                long endToken = System.currentTimeMillis();
-                System.out.printf("[%s] Took %d ms to tokenize\n", file, endToken - startToken);
-            }catch(ParserException e) {
-                e.printError();
-                System.exit(1);
-                return null;
-            }
-
-            long startPreCompile = System.currentTimeMillis();
-            PreCompiledData precompiled = PreCompiler.preCompile(tokens);
-            long stopPreCompile = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to precompile\n", file, stopPreCompile - startPreCompile);
-
-            long startCompile = System.currentTimeMillis();
-            CompiledData czpil = Compiler.compile(precompiled, new ArrayList<>());
-            long stopCompile = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to compile\n", file, stopCompile - startCompile);
-
-            try {
-                long startSave = System.currentTimeMillis();
-                (zpil = CompiledData.link(Collections.singleton(czpil))).save(new File(normalName + ".zpil"));
-                long stopSave = System.currentTimeMillis();
-                System.out.printf("[%s] Took %d ms to save\n", file, stopSave - startSave);
-            } catch(NotImplementedException e) {
-                zpil = null;
-                System.err.println("Saving is not fully implemented.");
-                if(Boolean.parseBoolean(System.getProperty("DEBUG"))) e.printStackTrace();
-            }
-        }
-
-        if(generate_x86_64_linux) {
-            long gen_x86_64_linux_asm_start = System.currentTimeMillis();
-            GeneratorAssembly.generate_x86_64_linux_assembly(zpil, new File(normalName + "_64linux.asm"));
-            long gen_x86_64_linux_asm_end = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to generate x86-64 linux assembly\n", file, gen_x86_64_linux_asm_end - gen_x86_64_linux_asm_start);
-        }
-        return zpil;
     }
 
 }

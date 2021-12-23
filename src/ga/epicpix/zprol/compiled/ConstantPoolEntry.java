@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiled;
 
+import ga.epicpix.zprol.exceptions.NotImplementedException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -60,13 +61,11 @@ public class ConstantPoolEntry {
 
         public void write(DataOutputStream out) throws IOException {
             super.write(out);
-            out.writeUTF(namespace);
-            out.writeUTF(name);
-            CompiledData.writeFunctionSignatureType(sig, out);
+            throw new NotImplementedException("Writing function entries is not implemented yet");
         }
 
         public static FunctionEntry read(DataInputStream in) throws IOException {
-            return new FunctionEntry(in.readUTF(), in.readUTF(), CompiledData.readFunctionSignature(in));
+            throw new NotImplementedException("Reading function entries is not implemented yet");
         }
     }
 
