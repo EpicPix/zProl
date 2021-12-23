@@ -2,12 +2,12 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Compiler;
+import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.precompiled.PreCompiledData;
 import ga.epicpix.zprol.precompiled.PreCompiler;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
-import ga.epicpix.zprol.generators.GeneratorAssembly;
 import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.tokens.Token;
 import java.io.DataInputStream;
@@ -16,7 +16,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Scanner;
@@ -24,6 +23,15 @@ import java.util.Scanner;
 public class Start {
 
     public static void main(String[] args) throws UnknownTypeException, IOException {
+        try {
+            Language.load("language.zld");
+        }catch(ParserException e) {
+            e.printError();
+            System.exit(1);
+            return;
+        }
+        Generator.initGenerators();
+
         boolean p = false;
         ArrayList<String> arguments = new ArrayList<>();
         for(String arg : args) {
@@ -35,10 +43,6 @@ public class Start {
             Scanner sc = new Scanner(System.in);
             while(!sc.nextLine().equals("break")) {
                 preMain(args);
-                Language.TYPES.clear();
-                Language.TOKENS.clear();
-                Language.DEFINES.clear();
-                Language.KEYWORDS.clear();
             }
         }else {
             preMain(args);
@@ -46,15 +50,7 @@ public class Start {
     }
 
     public static void preMain(String[] args) throws IOException, UnknownTypeException {
-        try {
-            Language.load("language.zld");
-        }catch(ParserException e) {
-            e.printError();
-            System.exit(1);
-            return;
-        }
-
-        boolean generate_x86_64_linux = false;
+        ArrayList<Generator> generators = new ArrayList<>();
         String outputFile = null;
 
         ArrayList<String> files = new ArrayList<>();
@@ -62,8 +58,14 @@ public class Start {
         while(argsIterator.hasNext()) {
             String s = argsIterator.next();
             if(s.startsWith("-")) {
-                if(s.equals("-glinux64")) {
-                    generate_x86_64_linux = true;
+                if(s.startsWith("-g")) {
+                    String gen = s.substring(2);
+                    for(Generator generator : Generator.GENERATORS) {
+                        if(gen.equals(generator.getGeneratorCommandLine())) {
+                            generators.add(generator);
+                            break;
+                        }
+                    }
                     continue;
                 } else if(s.equals("-o")) {
                     if(outputFile != null) {
@@ -84,10 +86,10 @@ public class Start {
         if(files.isEmpty()) {
             throw new IllegalArgumentException("Files to compile not specified");
         }
-        compileFiles(files, Objects.requireNonNullElse(outputFile, "output.out"), generate_x86_64_linux);
+        compileFiles(files, Objects.requireNonNullElse(outputFile, "output.out"), generators);
     }
 
-    public static void compileFiles(ArrayList<String> files, String output, boolean generate_x86_64_linux) throws IOException, UnknownTypeException {
+    public static void compileFiles(ArrayList<String> files, String output, ArrayList<Generator> generators) throws IOException, UnknownTypeException {
         ArrayList<PreCompiledData> preCompiled = new ArrayList<>();
         for(String file : files) {
             boolean load = false;
@@ -142,9 +144,11 @@ public class Start {
 
         System.err.println("Saving is not fully implemented.");
 
-        if(generate_x86_64_linux) {
-            throw new NotImplementedException("Not implemented yet");
-//            GeneratorAssembly.generate_x86_64_linux_assembly(linked, new File(normalName + ".asm"));
+        for(Generator gen : generators) {
+            long startGenerator = System.currentTimeMillis();
+            gen.generate(new File(normalName + gen.getFileExtension()), null);
+            long stopGenerator = System.currentTimeMillis();
+            System.out.printf("Took %d ms to generate %s\n", stopGenerator - startGenerator, gen.getGeneratorName());
         }
     }
 
