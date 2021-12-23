@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Scanner;
 
 public class Start {
@@ -83,11 +84,7 @@ public class Start {
         if(files.isEmpty()) {
             throw new IllegalArgumentException("Files to compile not specified");
         }
-        if(outputFile != null) {
-            compileFiles(files, outputFile, generate_x86_64_linux);
-        }else {
-            throw new NotImplementedException("Not implemented yet");
-        }
+        compileFiles(files, Objects.requireNonNullElse(outputFile, "output.out"), generate_x86_64_linux);
     }
 
     public static void compileFiles(ArrayList<String> files, String output, boolean generate_x86_64_linux) throws IOException, UnknownTypeException {
