@@ -37,20 +37,26 @@ define structurein @type@ @word@ ; @end@
 define callparameter @equation@ @end@
 define callparameterc @equation@ , @end@
 
-tok Typedef typedef @type@ @word@ ; @end@
+ghost Open {
+ghost Close }
 
-tok FunctionEmpty @type@ @word@ ( ) @end@
-tok FunctionParameters @type@ @word@ ( ^parameter ) @end@
-tok FunctionParameters @type@ @word@ ( ^+parameterc ^parameter ) @end@
+tok !InDefinition Typedef typedef @type@ @word@ ; @end@
 
-tok Return return ; @end@
-tok ReturnValue return @equation@ ; @end@
+tok !InDefinition FunctionEmpty @type@ @word@ ( ) @end@
+tok !InDefinition FunctionParameters @type@ @word@ ( ^parameter ) @end@
+tok !InDefinition FunctionParameters @type@ @word@ ( ^+parameterc ^parameter ) @end@
 
-tok Structure structure @word@ { ^+structurein } @end@
+tok !InDefinition Structure structure @word@ { ^+structurein } @end@
 
-tok Call @word@ ( ) ; @end@
-tok Call @word@ ( ^callparameter ) ; @end@
-tok Call @word@ ( ^+callparameterc ^callparameter ) ; @end@
+tok !InDefinition Using using @dword@ ; @end@
+tok !InDefinition Namespace namespace @dword@ ; @end@
 
-tok Using using @dword@ ; @end@
-tok Namespace namespace @dword@ ; @end@
+tok InDefinition Return return ; @end@
+tok InDefinition ReturnValue return @equation@ ; @end@
+
+tok InDefinition Call @word@ ( ) ; @end@
+tok InDefinition Call @word@ ( ^callparameter ) ; @end@
+tok InDefinition Call @word@ ( ^+callparameterc ^callparameter ) ; @end@
+
+context on Open push InDefinition
+context on Close pop InDefinition

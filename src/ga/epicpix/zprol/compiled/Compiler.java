@@ -1,6 +1,6 @@
 package ga.epicpix.zprol.compiled;
 
-import ga.epicpix.zprol.Language;
+import ga.epicpix.zprol.zld.Language;
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.bytecode.IBytecodeStorage;
 import ga.epicpix.zprol.precompiled.PreCompiledData;
@@ -57,7 +57,7 @@ public class Compiler {
         localsManager.newScope();
         int opens = 0;
         Token token;
-        while(true) {
+        while(tokens.hasNext()) {
             token = tokens.next();
             if(token.getType() == TokenType.PARSED) {
                 ParsedToken parsed = (ParsedToken) token;

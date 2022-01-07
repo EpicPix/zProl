@@ -1,4 +1,4 @@
-package ga.epicpix.zprol;
+package ga.epicpix.zprol.zld;
 
 import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.ParserException;
@@ -8,12 +8,16 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static ga.epicpix.zprol.zld.LanguageContextEvent.ContextManipulationOperation;
+
 public class Language {
 
     public static final ArrayList<String> KEYWORDS = new ArrayList<>();
     public static final HashMap<String, String[]> DEFINES = new HashMap<>();
-    public static final ArrayList<String[]> TOKENS = new ArrayList<>();
+    public static final ArrayList<LanguageToken> TOKENS = new ArrayList<>();
     public static final HashMap<String, Type> TYPES = new HashMap<>();
+    public static final HashMap<String, LanguageToken> GHOST_TOKENS = new HashMap<>();
+    public static final ArrayList<LanguageContextEvent> CONTEXT_EVENTS = new ArrayList<>();
 
     private static String convert(String w, DataParser parser) {
         if(w.startsWith("\\")) return w.substring(1);
@@ -53,13 +57,25 @@ public class Language {
                 id |= (pointer ? 1 : 0) << 4;  // 0000000000010000
                 TYPES.put(name, new Type(id, name));
                 KEYWORDS.add(name);
+            } else if(d.equals("ghost")) {
+                String name = parser.nextWord();
+                String w = parser.nextWord();
+                GHOST_TOKENS.put(w, new LanguageToken("*", name, w));
             } else if(d.equals("tok")) {
                 ArrayList<String> tokens = new ArrayList<>();
+                String requirement = parser.nextLongWord();
+                String name = parser.nextWord();
                 String w;
                 while(!"@end@".equals(w = parser.nextLongWord()) && w != null) {
                     tokens.add(convert(w, parser));
                 }
-                TOKENS.add(tokens.toArray(new String[0]));
+                TOKENS.add(new LanguageToken(requirement, name, tokens.toArray(new String[0])));
+            } else if(d.equals("context")) {
+                if(!parser.nextWord().equals("on")) throw new ParserException("Unknown word after 'context' keyword", parser);
+                String on = parser.nextLongWord();
+                ContextManipulationOperation manipulation = ContextManipulationOperation.valueOf(parser.nextWord().toUpperCase());
+                String context = parser.nextLongWord();
+                CONTEXT_EVENTS.add(new LanguageContextEvent(on, manipulation, context));
             } else if(d.equals("define")) {
                 String name = parser.nextWord();
                 if(DEFINES.get(name) != null) throw new ParserException("Define already defined: " + name, parser);

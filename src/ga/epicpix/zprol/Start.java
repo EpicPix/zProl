@@ -10,6 +10,8 @@ import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.zld.Language;
+
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;

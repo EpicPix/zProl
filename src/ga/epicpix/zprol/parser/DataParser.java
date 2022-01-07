@@ -33,7 +33,7 @@ public class DataParser {
 
     public static final char[] nonSpecialCharacters = joinCharacters(genCharacters('a', 'z'), genCharacters('A', 'Z'), genCharacters('0', '9'), new char[] {'_'});
     public static final char[] validDotWordCharacters = joinCharacters(nonSpecialCharacters, new char[] {'.'});
-    public static final char[] validLongWordCharacters = joinCharacters(validDotWordCharacters, new char[] {'+', '-', '@'});
+    public static final char[] validLongWordCharacters = joinCharacters(validDotWordCharacters, new char[] {'+', '-', '@', '!'});
 
     public static final char[] operatorCharacters = new char[] {'+', '=', '/', '*', '-', '%', '<', '>', '!', '&'};
     public static final char[] typeCharacters = joinCharacters(nonSpecialCharacters, new char[] {'.', '(', ')', '<', '>'});

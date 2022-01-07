@@ -1,6 +1,6 @@
 package ga.epicpix.zprol.compiled;
 
-import ga.epicpix.zprol.Language;
+import ga.epicpix.zprol.zld.Language;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry.FunctionEntry;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry.StringEntry;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
