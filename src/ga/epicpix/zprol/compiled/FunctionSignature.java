@@ -4,10 +4,10 @@ import java.util.Arrays;
 
 public class FunctionSignature {
 
-    public Type returnType;
-    public Type[] parameters;
+    public PrimitiveType returnType;
+    public PrimitiveType[] parameters;
 
-    public FunctionSignature(Type returnType, Type... parameters) {
+    public FunctionSignature(PrimitiveType returnType, PrimitiveType... parameters) {
         this.returnType = returnType;
         this.parameters = parameters;
     }

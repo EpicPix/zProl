@@ -108,8 +108,8 @@ public class CompiledData {
         functions.add(function);
     }
 
-    public Type resolveType(String type) throws UnknownTypeException {
-        Type t = Language.TYPES.get(type);
+    public PrimitiveType resolveType(String type) throws UnknownTypeException {
+        PrimitiveType t = Language.TYPES.get(type);
         if(t != null) return t;
         throw new NotImplementedException("Not implemented yet");
     }

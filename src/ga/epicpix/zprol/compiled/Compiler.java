@@ -50,8 +50,8 @@ public class Compiler {
     }
 
     public static void compileFunction(CompiledData data, PreFunction function) throws UnknownTypeException {
-        Type returnType = data.resolveType(function.returnType);
-        Type[] parameters = new Type[function.parameters.size()];
+        PrimitiveType returnType = data.resolveType(function.returnType);
+        PrimitiveType[] parameters = new PrimitiveType[function.parameters.size()];
         String[] names = new String[function.parameters.size()];
         for(int i = 0; i<function.parameters.size(); i++) {
             PreParameter param = function.parameters.get(i);

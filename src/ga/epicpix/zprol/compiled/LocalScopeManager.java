@@ -4,7 +4,7 @@ public class LocalScopeManager {
 
     private LocalScope currentScope = new LocalScope();
 
-    public LocalVariable defineLocalVariable(String name, Type type) {
+    public LocalVariable defineLocalVariable(String name, PrimitiveType type) {
         return currentScope.defineLocalVariable(name, type);
     }
 

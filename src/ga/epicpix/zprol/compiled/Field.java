@@ -3,9 +3,9 @@ package ga.epicpix.zprol.compiled;
 public class Field {
 
     public String name;
-    public Type type;
+    public PrimitiveType type;
 
-    public Field(String name, Type type) {
+    public Field(String name, PrimitiveType type) {
         this.name = name;
         this.type = type;
     }

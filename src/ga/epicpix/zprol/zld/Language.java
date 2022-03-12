@@ -1,6 +1,6 @@
 package ga.epicpix.zprol.zld;
 
-import ga.epicpix.zprol.compiled.Type;
+import ga.epicpix.zprol.compiled.PrimitiveType;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
 import java.io.IOException;
@@ -15,7 +15,7 @@ public class Language {
     public static final ArrayList<String> KEYWORDS = new ArrayList<>();
     public static final HashMap<String, String[]> DEFINES = new HashMap<>();
     public static final ArrayList<LanguageToken> TOKENS = new ArrayList<>();
-    public static final HashMap<String, Type> TYPES = new HashMap<>();
+    public static final HashMap<String, PrimitiveType> TYPES = new HashMap<>();
     public static final HashMap<String, LanguageToken> GHOST_TOKENS = new HashMap<>();
     public static final ArrayList<LanguageContextEvent> CONTEXT_EVENTS = new ArrayList<>();
 
@@ -55,7 +55,7 @@ public class Language {
                 id |= sizeId & 7;              // 0000000000000111
                 id |= (unsigned ? 1 : 0) << 3; // 0000000000001000
                 id |= (pointer ? 1 : 0) << 4;  // 0000000000010000
-                TYPES.put(name, new Type(id, name));
+                TYPES.put(name, new PrimitiveType(id, name));
                 KEYWORDS.add(name);
             } else if(d.equals("ghost")) {
                 String name = parser.nextWord();

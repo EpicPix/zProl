@@ -20,7 +20,7 @@ public class LocalScope {
         this.parent = parent;
     }
 
-    public LocalVariable defineLocalVariable(String name, Type type) {
+    public LocalVariable defineLocalVariable(String name, PrimitiveType type) {
         if(findLocalVariable(name) != null) {
             throw new VariableAlreadyDefinedException(name);
         }

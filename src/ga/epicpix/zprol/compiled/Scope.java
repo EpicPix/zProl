@@ -8,7 +8,7 @@ public class Scope {
 
     private final ArrayList<Variable> variables = new ArrayList<>();
 
-    public Variable addVariable(String name, Type type) {
+    public Variable addVariable(String name, PrimitiveType type) {
         for(Variable var : variables) {
             if(var.name.equals(name)) {
                 throw new VariableAlreadyDefinedException(name);

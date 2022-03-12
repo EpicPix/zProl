@@ -1,6 +1,6 @@
 package ga.epicpix.zprol.operation;
 
-import ga.epicpix.zprol.compiled.Type;
+import ga.epicpix.zprol.compiled.PrimitiveType;
 import ga.epicpix.zprol.parser.tokens.NumberToken;
 import ga.epicpix.zprol.parser.tokens.StringToken;
 import ga.epicpix.zprol.parser.tokens.Token;
@@ -80,9 +80,9 @@ public class Operation {
 
     public static class OperationCast extends Operation {
 
-        public Type type;
+        public PrimitiveType type;
 
-        public OperationCast(Type type) {
+        public OperationCast(PrimitiveType type) {
             this.type = type;
             this.right = this;
         }
