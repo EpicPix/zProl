@@ -5,7 +5,7 @@ import java.util.ListIterator;
 
 public class SeekIterator<T> implements ListIterator<T> {
 
-    private T[] elements;
+    private final T[] elements;
     private int index;
 
     public SeekIterator(ArrayList<T> elements) {

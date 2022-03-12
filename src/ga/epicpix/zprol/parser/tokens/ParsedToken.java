@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 public class ParsedToken extends Token {
 
-    public String name;
-    public ArrayList<Token> tokens;
+    public final String name;
+    public final ArrayList<Token> tokens;
 
     public ParsedToken(String name, ArrayList<Token> tokens) {
         super(TokenType.PARSED);

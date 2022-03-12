@@ -20,7 +20,7 @@ public class Compiler {
         IBytecodeStorage storage = createStorage();
         LocalScopeManager localsManager = new LocalScopeManager();
         for(int i = 0; i<names.length; i++) {
-            localsManager.getCurrentScope().defineLocalVariable(names[i], sig.parameters[i]);
+            localsManager.getCurrentScope().defineLocalVariable(names[i], sig.parameters()[i]);
         }
         localsManager.newScope();
         int opens = 0;

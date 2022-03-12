@@ -63,8 +63,8 @@ public class Operation {
 
     public static class OperationCall extends Operation {
 
-        public ArrayList<Token> reference;
-        public ArrayList<Operation> parameters;
+        public final ArrayList<Token> reference;
+        public final ArrayList<Operation> parameters;
 
         public OperationCall(ArrayList<Token> reference, ArrayList<Operation> parameters) {
             this.reference = reference;
@@ -80,7 +80,7 @@ public class Operation {
 
     public static class OperationCast extends Operation {
 
-        public PrimitiveType type;
+        public final PrimitiveType type;
 
         public OperationCast(PrimitiveType type) {
             this.type = type;
@@ -130,7 +130,7 @@ public class Operation {
 
     public static class OperationField extends Operation {
 
-        public ArrayList<Token> reference;
+        public final ArrayList<Token> reference;
 
         public OperationField(ArrayList<Token> reference) {
             this.reference = reference;
@@ -168,7 +168,7 @@ public class Operation {
 
     public static class OperationNumber extends Operation {
 
-        public NumberToken number;
+        public final NumberToken number;
 
         public OperationNumber(NumberToken token) {
             number = token;
@@ -206,7 +206,7 @@ public class Operation {
 
     public static class OperationString extends Operation {
 
-        public StringToken string;
+        public final StringToken string;
 
         public OperationString(StringToken token) {
             string = token;

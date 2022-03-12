@@ -7,7 +7,7 @@ public class PreFunction {
 
     public String name;
     public String returnType;
-    public ArrayList<PreParameter> parameters = new ArrayList<>();
-    public ArrayList<Token> code = new ArrayList<>();
+    public final ArrayList<PreParameter> parameters = new ArrayList<>();
+    public final ArrayList<Token> code = new ArrayList<>();
 
 }

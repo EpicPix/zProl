@@ -32,7 +32,7 @@ public class LocalScope {
 
     public LocalVariable getLocalVariable(String name) {
         for(LocalVariable lVar : localVariables) {
-            if(lVar.name.equals(name)) {
+            if(lVar.name().equals(name)) {
                 return lVar;
             }
         }
@@ -42,7 +42,7 @@ public class LocalScope {
 
     public LocalVariable findLocalVariable(String name) {
         for(LocalVariable lVar : localVariables) {
-            if(lVar.name.equals(name)) {
+            if(lVar.name().equals(name)) {
                 return lVar;
             }
         }

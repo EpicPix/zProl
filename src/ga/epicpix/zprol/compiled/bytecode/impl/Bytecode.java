@@ -11,7 +11,7 @@ public final class Bytecode implements IBytecode {
 
     public static final IBytecode BYTECODE = new Bytecode();
 
-    static record BytecodeInstructionData(int id, String name, BytecodeValueType[] values, IBytecodeInstructionGenerator generator) {}
+    /* package-private */ record BytecodeInstructionData(int id, String name, BytecodeValueType[] values, IBytecodeInstructionGenerator generator) {}
 
     private final ArrayList<BytecodeInstructionData> data = new ArrayList<>();
 

@@ -172,7 +172,7 @@ public class DataParser {
                     word.append(cdata[index++]);
                 }
                 return word.toString();
-            }else if(matches) {
+            }else {
                 if(!matchesCharacters(allowedCharacters, word.toString())) {
                     return word.toString();
                 }

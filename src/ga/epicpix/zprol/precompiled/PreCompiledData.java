@@ -7,11 +7,11 @@ public class PreCompiledData {
 
     public String sourceFile;
 
-    public ArrayList<String> using = new ArrayList<>();
+    public final ArrayList<String> using = new ArrayList<>();
     public String namespace;
 
-    public ArrayList<PreFunction> functions = new ArrayList<>();
-    public HashMap<String, String> typedef = new HashMap<>();
+    public final ArrayList<PreFunction> functions = new ArrayList<>();
+    public final HashMap<String, String> typedef = new HashMap<>();
 
 
 }

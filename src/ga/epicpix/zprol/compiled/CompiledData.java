@@ -29,7 +29,7 @@ public class CompiledData {
     public short getOrCreateFunctionIndex(Function func) {
         for(short i = 0; i<constantPool.size(); i++) {
             if(constantPool.get(i) instanceof FunctionEntry e) {
-                if(e.getName().equals(func.name) && e.getSignature().validateFunctionSignature(func.signature)) {
+                if(e.getName().equals(func.name()) && e.getSignature().validateFunctionSignature(func.signature())) {
                     return i;
                 }
             }
@@ -60,20 +60,21 @@ public class CompiledData {
 
     public Function getFunction(String name, FunctionSignature sig) {
         for(Function func : functions) {
-            if(func.name.equals(name)) {
-                if(sig.returnType == null || func.signature.returnType == sig.returnType) {
-                    if(func.signature.parameters.length == sig.parameters.length) {
-                        boolean success = true;
-                        for(int i = 0; i<func.signature.parameters.length; i++) {
-                            if(func.signature.parameters[i] != sig.parameters[i]) {
-                                success = false;
-                                break;
-                            }
-                        }
-                        if(success) {
-                            return func;
-                        }
+            if(func.name().equals(name)) {
+                var signature = func.signature();
+                if(sig.returnType() != null && signature.returnType() != sig.returnType()) continue;
+                var sigParams = sig.parameters();
+                if(signature.parameters().length != sigParams.length) continue;
+
+                boolean success = true;
+                for(int i = 0; i<signature.parameters().length; i++) {
+                    if(signature.parameters()[i] != sigParams[i]) {
+                        success = false;
+                        break;
                     }
+                }
+                if(success) {
+                    return func;
                 }
             }
         }
@@ -87,7 +88,7 @@ public class CompiledData {
     public PrimitiveType resolveType(String type) throws UnknownTypeException {
         PrimitiveType t = Language.TYPES.get(type);
         if(t != null) return t;
-        throw new NotImplementedException("Not implemented yet");
+        throw new UnknownTypeException(type);
     }
 
 }

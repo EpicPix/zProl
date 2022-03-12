@@ -10,7 +10,7 @@ public class Scope {
 
     public Variable addVariable(String name, PrimitiveType type) {
         for(Variable var : variables) {
-            if(var.name.equals(name)) {
+            if(var.name().equals(name)) {
                 throw new VariableAlreadyDefinedException(name);
             }
         }
@@ -21,7 +21,7 @@ public class Scope {
 
     public Variable getVariable(String name) {
         for(Variable var : variables) {
-            if(var.name.equals(name)) {
+            if(var.name().equals(name)) {
                 return var;
             }
         }
@@ -31,7 +31,7 @@ public class Scope {
     public static Variable getVariable(ArrayList<Scope> scopes, String name) {
         for(Scope scope : scopes) {
             for(Variable var : scope.variables) {
-                if(var.name.equals(name)) {
+                if(var.name().equals(name)) {
                     return var;
                 }
             }

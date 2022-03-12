@@ -36,8 +36,8 @@ public class ConstantPoolEntry {
         public FunctionEntry(String namespace, Function func) {
             super((byte) 1);
             this.namespace = namespace;
-            name = func.name;
-            sig = func.signature;
+            name = func.name();
+            sig = func.signature();
         }
 
         public FunctionEntry(String namespace, String name, FunctionSignature sig) {
