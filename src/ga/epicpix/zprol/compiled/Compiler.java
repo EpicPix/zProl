@@ -59,15 +59,14 @@ public class Compiler {
             names[i] = param.name;
         }
         FunctionSignature signature = new FunctionSignature(returnType, parameters);
-        data.addFunction(new Function(function.name, signature, new ArrayList<>(), parseFunctionCode(data, new SeekIterator<>(function.code), signature, names)));
+        data.addFunction(new Function(function.name, signature, parseFunctionCode(data, new SeekIterator<>(function.code), signature, names)));
     }
 
     public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {
-        ArrayList<PreCompiledData> using = new ArrayList<>();
-        for(PreCompiledData o : other) if(preCompiled.using.contains(o.namespace)) using.add(o);
-
         CompiledData data = new CompiledData(preCompiled.namespace);
-//        data.using(imported); //TODO: Add  CompiledData.using(PreCompiledData...) method
+
+        for(PreCompiledData o : other) if(preCompiled.using.contains(o.namespace)) data.using(o);
+
         for(PreFunction function : preCompiled.functions) compileFunction(data, function);
         return data;
     }

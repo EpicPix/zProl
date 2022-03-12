@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiled;
 
+import ga.epicpix.zprol.precompiled.PreCompiledData;
 import ga.epicpix.zprol.zld.Language;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry.FunctionEntry;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry.StringEntry;
@@ -12,9 +13,14 @@ import java.util.ArrayList;
 public class CompiledData {
 
     public final String namespace;
+    private final ArrayList<PreCompiledData> using = new ArrayList<>();
 
     public CompiledData(String namespace) {
         this.namespace = namespace;
+    }
+
+    public void using(PreCompiledData using) {
+        this.using.add(using);
     }
 
     private final ArrayList<Function> functions = new ArrayList<>();
