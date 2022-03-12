@@ -24,7 +24,6 @@ public class CompiledData {
     }
 
     private final ArrayList<Function> functions = new ArrayList<>();
-    private final ArrayList<Field> fields = new ArrayList<>();
     private final ArrayList<ConstantPoolEntry> constantPool = new ArrayList<>();
 
     public short getOrCreateFunctionIndex(Function func) {
@@ -57,29 +56,6 @@ public class CompiledData {
 
     public ArrayList<Function> getFunctions() {
         return new ArrayList<>(functions);
-    }
-
-    public ArrayList<Field> getFields() {
-        return new ArrayList<>(fields);
-    }
-    public Field getField(String name) {
-        for(Field field : fields) {
-            if(field.name.equals(name)) {
-                return field;
-            }
-        }
-        throw new VariableNotDefinedException(name);
-    }
-
-    public short getFieldIndex(String name) {
-        short index = 0;
-        for(Field field : fields) {
-            if(field.name.equals(name)) {
-                return index;
-            }
-            index++;
-        }
-        throw new VariableNotDefinedException(name);
     }
 
     public Function getFunction(String name, FunctionSignature sig) {

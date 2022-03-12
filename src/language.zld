@@ -1,21 +1,9 @@
 // Definitions of stuff in this language
 
 // Keywords
-keyword import
-keyword export
-keyword field
+keyword using
+keyword namespace
 keyword typedef
-
-// Function Keywords
-keyword if
-keyword else
-keyword while
-keyword return
-
-// Flags
-keyword internal
-keyword static
-keyword final
 
 // Types
 type void false 0 false
