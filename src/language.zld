@@ -4,9 +4,7 @@
 keyword import
 keyword export
 keyword field
-keyword object
 keyword typedef
-keyword structure
 
 // Function Keywords
 keyword if
@@ -33,7 +31,6 @@ type pointer true 8 true
 
 define parameter @type@ @word@ @end@
 define parameterc @type@ @word@ , @end@
-define structurein @type@ @word@ ; @end@
 define callparameter @equation@ @end@
 define callparameterc @equation@ , @end@
 
@@ -45,8 +42,6 @@ tok !InDefinition Typedef typedef @type@ @word@ ; @end@
 tok !InDefinition FunctionEmpty @type@ @word@ ( ) @end@
 tok !InDefinition FunctionParameters @type@ @word@ ( ^parameter ) @end@
 tok !InDefinition FunctionParameters @type@ @word@ ( ^+parameterc ^parameter ) @end@
-
-tok !InDefinition Structure structure @word@ { ^+structurein } @end@
 
 tok !InDefinition Using using @dword@ ; @end@
 tok !InDefinition Namespace namespace @dword@ ; @end@

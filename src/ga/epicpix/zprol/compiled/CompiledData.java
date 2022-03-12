@@ -17,10 +17,8 @@ public class CompiledData {
         this.namespace = namespace;
     }
 
-    private final ArrayList<Structure> structures = new ArrayList<>();
-    private final ArrayList<Object> objects = new ArrayList<>();
     private final ArrayList<Function> functions = new ArrayList<>();
-    private final ArrayList<ObjectField> fields = new ArrayList<>();
+    private final ArrayList<Field> fields = new ArrayList<>();
     private final ArrayList<ConstantPoolEntry> constantPool = new ArrayList<>();
 
     public short getOrCreateFunctionIndex(Function func) {
@@ -55,11 +53,11 @@ public class CompiledData {
         return new ArrayList<>(functions);
     }
 
-    public ArrayList<ObjectField> getFields() {
+    public ArrayList<Field> getFields() {
         return new ArrayList<>(fields);
     }
-    public ObjectField getField(String name) {
-        for(ObjectField field : fields) {
+    public Field getField(String name) {
+        for(Field field : fields) {
             if(field.name.equals(name)) {
                 return field;
             }
@@ -69,7 +67,7 @@ public class CompiledData {
 
     public short getFieldIndex(String name) {
         short index = 0;
-        for(ObjectField field : fields) {
+        for(Field field : fields) {
             if(field.name.equals(name)) {
                 return index;
             }
@@ -98,14 +96,6 @@ public class CompiledData {
             }
         }
         throw new FunctionNotDefinedException(name);
-    }
-
-    public void addStructure(Structure structure) {
-        structures.add(structure);
-    }
-
-    public void addObject(Object object) {
-        objects.add(object);
     }
 
     public void addFunction(Function function) {

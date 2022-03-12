@@ -9,11 +9,9 @@ import java.util.ArrayList;
 
 public class PreCompiler {
 
-    public static PreCompiledData preCompile(ArrayList<Token> pTokens) {
-//        System.out.println(" *** Tokens *** ");
-//        System.out.println(Token.toFriendlyString(pTokens));
-//        System.out.println(" *** Tokens *** ");
+    public static PreCompiledData preCompile(String sourceFile, ArrayList<Token> pTokens) {
         PreCompiledData pre = new PreCompiledData();
+        pre.sourceFile = sourceFile;
 
         SeekIterator<Token> tokens = new SeekIterator<>(pTokens);
         boolean usedOther = false;
@@ -78,16 +76,6 @@ public class PreCompiler {
                         } else if(opens == 0 && t.getType() == TokenType.PARSED) break;
                     }
                     pre.functions.add(func);
-                }else if(parsed.name.equals("Structure")) {
-                    PreStructure structure = new PreStructure();
-                    structure.name = ts.get(1).asWordToken().getWord();
-                    int fields = (parsed.tokens.size() - 4) / 3;
-                    for(int i = 0; i<fields; i++) {
-                        PreStructureField field = new PreStructureField();
-                        field.type = parsed.tokens.get(i * 3 + 3).asWordHolder().getWord();
-                        field.name = parsed.tokens.get(i * 3 + 4).asWordToken().getWord();
-                        structure.fields.add(field);
-                    }
                 }else {
                     System.out.println("token: " + parsed);
                 }
@@ -95,8 +83,6 @@ public class PreCompiler {
                 System.out.println("token: " + token);
             }
         }
-
-        if(pre.namespace == null) throw new RuntimeException("Namespace not defined");
 
         return pre;
     }

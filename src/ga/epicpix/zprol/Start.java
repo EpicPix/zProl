@@ -16,6 +16,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -95,7 +96,7 @@ public class Start {
         ArrayList<PreCompiledData> preCompiled = new ArrayList<>();
         for(String file : files) {
             boolean load = false;
-            if(new File(file).exists()) {
+            if(new File(file).exists() && Files.size(new File(file).toPath()) >= 4) {
                 DataInputStream in = new DataInputStream(new FileInputStream(file));
                 if(in.readInt() == 0x7a50524c) {
                     load = true;
@@ -104,22 +105,18 @@ public class Start {
             }
 
             if(load) {
-//                long loadStart = System.currentTimeMillis();
-//                compiled.add(CompiledData.load(new File(file)));
-//                long loadEnd = System.currentTimeMillis();
-//                System.out.printf("[%s] Took %d ms to load\n", file, loadEnd - loadStart);
                 throw new NotImplementedException("Cannot load compiled files yet!");
             }else {
                 try {
                     long startToken = System.currentTimeMillis();
                     ArrayList<Token> tokens = Parser.tokenize(file);
                     long endToken = System.currentTimeMillis();
-                    System.out.printf("[%s] Took %d ms to tokenize\n", file, endToken - startToken);
+                    System.out.printf("[%s] Took %d ms to tokenize\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 
                     long startPreCompile = System.currentTimeMillis();
-                    PreCompiledData data = PreCompiler.preCompile(tokens);
+                    PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tokens);
                     long stopPreCompile = System.currentTimeMillis();
-                    System.out.printf("[%s] Took %d ms to precompile\n", file, stopPreCompile - startPreCompile);
+                    System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
                     preCompiled.add(data);
                 }catch(ParserException e) {
                     e.printError();
@@ -137,7 +134,7 @@ public class Start {
             long startCompile = System.currentTimeMillis();
             CompiledData zpil = Compiler.compile(data, pre);
             long stopCompile = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace, stopCompile - startCompile);
+            System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
             compiledData.add(zpil);
         }
 
