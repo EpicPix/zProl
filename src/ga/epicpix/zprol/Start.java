@@ -2,6 +2,7 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.compiled.Compiler;
+import ga.epicpix.zprol.compiled.GeneratedData;
 import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.precompiled.PreCompiledData;
 import ga.epicpix.zprol.precompiled.PreCompiler;
@@ -12,10 +13,7 @@ import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.zld.Language;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -143,16 +141,26 @@ public class Start {
             compiledData.add(zpil);
         }
 
+        GeneratedData linked = new GeneratedData();
+        long startLink = System.currentTimeMillis();
+        linked.addCompiled(compiledData.toArray(new CompiledData[0]));
+        long stopLink = System.currentTimeMillis();
+        System.out.printf("Took %d ms to link everything\n", stopLink - startLink);
 
         String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
-
-        System.err.println("Saving is not fully implemented.");
+        {
+            DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".zpil"));
+            GeneratedData.save(linked);
+            out.close();
+        }
 
         for(Generator gen : generators) {
             long startGenerator = System.currentTimeMillis();
-            gen.generate(new File(normalName + gen.getFileExtension()), null);
+            DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + gen.getFileExtension()));
+            gen.generate(out, linked);
+            out.close();
             long stopGenerator = System.currentTimeMillis();
-            System.out.printf("Took %d ms to generate %s\n", stopGenerator - startGenerator, gen.getGeneratorName());
+            System.out.printf("Took %d ms to generate %s code\n", stopGenerator - startGenerator, gen.getGeneratorName());
         }
     }
 

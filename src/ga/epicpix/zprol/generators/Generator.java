@@ -1,8 +1,10 @@
 package ga.epicpix.zprol.generators;
 
-import ga.epicpix.zprol.compiled.CompiledData;
+import ga.epicpix.zprol.compiled.GeneratedData;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
-import java.io.File;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public abstract class Generator {
@@ -19,7 +21,7 @@ public abstract class Generator {
     public abstract String getGeneratorName();
     public abstract String getFileExtension();
 
-    public void generate(File outputFile, CompiledData compiled) {
+    public void generate(DataOutputStream out, GeneratedData generated) throws IOException {
         throw new NotImplementedException("Generating " + getGeneratorName() + " is not implemented yet");
     }
 
