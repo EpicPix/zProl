@@ -41,6 +41,8 @@ public class Compiler {
                         localsManager.leaveScope();
                         break;
                     }
+                }else {
+                    throw new RuntimeException("Not implemented token type: " + token);
                 }
                 //TODO: ++x or --x
             }

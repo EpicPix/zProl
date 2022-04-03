@@ -111,6 +111,11 @@ public class DataParser {
         return index < data.length();
     }
 
+    public boolean checkNewLine() {
+        if(!hasNext()) return false;
+        return data.charAt(index) == '\n';
+    }
+
     public void ignoreWhitespace() {
         char[] cdata = data.toCharArray();
         while(index + 1 < cdata.length) {
@@ -160,13 +165,11 @@ public class DataParser {
         char[] cdata = data.toCharArray();
         while(hasNext() && !Character.isWhitespace(cdata[index])) {
             checkComments(cdata);
-            boolean matches = matchesCharacters(allowedCharacters, cdata[index]);
-            boolean opMatches = matchesCharacters(operatorCharacters, cdata[index]);
-            if(opMatches) {
+            if(matchesCharacters(operatorCharacters, cdata[index])) {
                 if(!matchesCharacters(operatorCharacters, word.toString())) {
                     return word.toString();
                 }
-            }else if(!matches) {
+            }else if(!matchesCharacters(allowedCharacters, cdata[index])) {
                 if(word.length() == 0) {
                     lineRow++;
                     word.append(cdata[index++]);

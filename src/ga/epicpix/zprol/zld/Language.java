@@ -65,9 +65,8 @@ public class Language {
                 ArrayList<String> tokens = new ArrayList<>();
                 String requirement = parser.nextLongWord();
                 String name = parser.nextWord();
-                String w;
-                while(!"@end@".equals(w = parser.nextLongWord()) && w != null) {
-                    tokens.add(convert(w, parser));
+                while(!parser.checkNewLine()) {
+                    tokens.add(convert(parser.nextLongWord(), parser));
                 }
                 TOKENS.add(new LanguageToken(requirement, name, tokens.toArray(new String[0])));
             } else if(d.equals("context")) {
@@ -81,8 +80,8 @@ public class Language {
                 if(DEFINES.get(name) != null) throw new ParserException("Define already defined: " + name, parser);
                 ArrayList<String> tokens = new ArrayList<>();
                 String w;
-                while(!"@end@".equals(w = parser.nextLongWord()) && w != null) {
-                    tokens.add(convert(w, parser));
+                while(!parser.checkNewLine()) {
+                    tokens.add(convert(parser.nextLongWord(), parser));
                 }
                 DEFINES.put(name, tokens.toArray(new String[0]));
             } else {
