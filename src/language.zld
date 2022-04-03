@@ -7,15 +7,27 @@ keyword typedef
 
 // Types
 type void size=0 V
+
 type int8 size=1 B
+type byte size=1 B
 type int16 size=2 S
+type short size=2 S
 type int32 size=4 I
+type int size=4 I
 type int64 size=8 L
+type long size=8 L
+
 type uint8 unsigned,size=1 uB
+type ubyte unsigned,size=1 uB
 type uint16 unsigned,size=2 uS
+type ushort unsigned,size=2 uS
 type uint32 unsigned,size=4 uI
+type uint unsigned,size=4 uI
 type uint64 unsigned,size=8 uL
+type ulong unsigned,size=8 uL
+
 type pointer unsigned,size=8,pointer P
+
 
 define parameter @type@ @word@
 define parameterc @type@ @word@ ,
