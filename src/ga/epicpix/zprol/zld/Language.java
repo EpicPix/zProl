@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static ga.epicpix.zprol.parser.DataParser.joinCharacters;
+import static ga.epicpix.zprol.parser.DataParser.nonSpecialCharacters;
 import static ga.epicpix.zprol.zld.LanguageContextEvent.ContextManipulationOperation;
 
 public class Language {
@@ -39,6 +41,8 @@ public class Language {
             data.append((char) temp);
         }
 
+        char[] propertiesCharacters = joinCharacters(nonSpecialCharacters, new char[] {',', '='});
+
         DataParser parser = new DataParser(fileName, data.toString().split("(\r|\n|\r\n|\n\r)"));
         while(parser.hasNext()) {
             String d = parser.nextWord();
@@ -46,16 +50,31 @@ public class Language {
                 KEYWORDS.add(parser.nextWord());
             } else if(d.equals("type")) {
                 String name = parser.nextWord();
-                boolean unsigned = Boolean.parseBoolean(parser.nextWord());
-                int size = Integer.parseInt(parser.nextWord());
-                boolean pointer = Boolean.parseBoolean(parser.nextWord());
+                String properties = parser.nextTemplateWord(propertiesCharacters);
+                String descriptor = parser.nextWord();
+                char type = 0x8000;
+                for(String property : properties.split(",")) {
+                    if(!property.contains("=")) property += "=true";
+                    String key = property.split("=")[0];
+                    String value = property.split("=")[1];
 
-                int sizeId = (int) (Math.log(size * 2) / Math.log(2));
-                char id = 0;
-                id |= sizeId & 7;              // 0000000000000111
-                id |= (unsigned ? 1 : 0) << 3; // 0000000000001000
-                id |= (pointer ? 1 : 0) << 4;  // 0000000000010000
-                TYPES.put(name, new PrimitiveType(id, name));
+                    switch (key) {
+                        case "size" -> {
+                            type &= ~0x000f;
+                            type |= (int) (Math.log(Integer.parseInt(value) * 2) / Math.log(2));
+                        }
+                        case "unsigned" -> {
+                            type &= ~0x0010;
+                            type |= Boolean.parseBoolean(value) ? 0x0010 : 0x0000;
+                        }
+                        case "pointer" -> {
+                            type &= ~0x0020;
+                            type |= Boolean.parseBoolean(value) ? 0x0020 : 0x0000;
+                        }
+                        default -> System.out.println("Unknown key '" + key + "' with value '" + value + "'");
+                    }
+                }
+                TYPES.put(name, new PrimitiveType(type, descriptor, name));
                 KEYWORDS.add(name);
             } else if(d.equals("ghost")) {
                 String name = parser.nextWord();
