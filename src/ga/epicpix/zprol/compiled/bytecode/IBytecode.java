@@ -7,6 +7,7 @@ public interface IBytecode {
     public String getInstructionPrefix(int size);
 
     public IBytecodeInstructionGenerator getInstruction(int id);
+    public BytecodeValueType[] getInstructionValueTypesRequirements(int id);
     public IBytecodeInstructionGenerator getInstruction(String name);
 
     public default IBytecodeInstruction getConstructedInstruction(int id, Object... args) {

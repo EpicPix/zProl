@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.zld;
 
 import ga.epicpix.zprol.compiled.PrimitiveType;
+import ga.epicpix.zprol.exceptions.InvalidDataException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
 import java.io.IOException;
@@ -31,6 +32,15 @@ public class Language {
         else if(w.equals("{")) return "%{%";
         else if(w.equals("}")) return "%}%";
         return w;
+    }
+
+    public static PrimitiveType getTypeFromDescriptor(String descriptor) {
+        for(PrimitiveType type : TYPES.values()) {
+            if(type.descriptor.equals(descriptor)) {
+                return type;
+            }
+        }
+        return null;
     }
 
     public static void load(String fileName) throws IOException {

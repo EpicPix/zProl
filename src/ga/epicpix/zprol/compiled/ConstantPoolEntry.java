@@ -1,6 +1,5 @@
 package ga.epicpix.zprol.compiled;
 
-import ga.epicpix.zprol.exceptions.NotImplementedException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -29,43 +28,38 @@ public class ConstantPoolEntry {
 
     public static class FunctionEntry extends ConstantPoolEntry {
 
-        private final String namespace;
-        private final String name;
-        private final FunctionSignature sig;
+        private final int namespace;
+        private final int name;
+        private final int sig;
 
-        public FunctionEntry(String namespace, Function func) {
-            super((byte) 1);
-            this.namespace = namespace;
-            name = func.name();
-            sig = func.signature();
-        }
-
-        public FunctionEntry(String namespace, String name, FunctionSignature sig) {
+        public FunctionEntry(int namespace, int name, int sig) {
             super((byte) 1);
             this.namespace = namespace;
             this.name = name;
             this.sig = sig;
         }
 
-        public String getNamespace() {
+        public int getNamespace() {
             return namespace;
         }
 
-        public String getName() {
+        public int getName() {
             return name;
         }
 
-        public FunctionSignature getSignature() {
+        public int getSignature() {
             return sig;
         }
 
         public void write(DataOutputStream out) throws IOException {
             super.write(out);
-            throw new NotImplementedException("Writing function entries is not implemented yet");
+            out.writeInt(namespace);
+            out.writeInt(name);
+            out.writeInt(sig);
         }
 
         public static FunctionEntry read(DataInputStream in) throws IOException {
-            throw new NotImplementedException("Reading function entries is not implemented yet");
+            return new FunctionEntry(in.readInt(), in.readInt(), in.readInt());
         }
     }
 

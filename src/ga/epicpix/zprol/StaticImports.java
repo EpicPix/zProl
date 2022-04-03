@@ -23,6 +23,10 @@ public class StaticImports {
         return bytecodeImplementation.getInstruction(id);
     }
 
+    public static BytecodeValueType[] getInstructionValueTypesRequirements(int id) {
+        return bytecodeImplementation.getInstructionValueTypesRequirements(id);
+    }
+
     public static IBytecodeInstructionGenerator getInstruction(String name) {
         return bytecodeImplementation.getInstruction(name);
     }

@@ -4,6 +4,9 @@ import ga.epicpix.zprol.compiled.bytecode.BytecodeValueType;
 import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstruction;
 import ga.epicpix.zprol.compiled.bytecode.impl.Bytecode.BytecodeInstructionData;
 
+import java.io.DataInput;
+import java.io.IOException;
+
 record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implements IBytecodeInstruction {
 
     public String toString() {
@@ -37,30 +40,30 @@ record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implemen
                     short s;
                     if(args[i] instanceof Number v) s = v.shortValue();
                     else throw new IllegalArgumentException(args[i].toString().getClass().getName());
-                    bytes[index++] = (byte) (s & 0xff);
                     bytes[index++] = (byte) ((s >> 8) & 0xff);
+                    bytes[index++] = (byte) (s & 0xff);
                 }
                 case 4 -> {
                     int n;
                     if(args[i] instanceof Number v) n = v.intValue();
                     else throw new IllegalArgumentException(args[i].toString().getClass().getName());
-                    bytes[index++] = (byte) (n & 0xff);
-                    bytes[index++] = (byte) ((n >> 8) & 0xff);
-                    bytes[index++] = (byte) ((n >> 16) & 0xff);
                     bytes[index++] = (byte) ((n >> 24) & 0xff);
+                    bytes[index++] = (byte) ((n >> 16) & 0xff);
+                    bytes[index++] = (byte) ((n >> 8) & 0xff);
+                    bytes[index++] = (byte) (n & 0xff);
                 }
                 case 8 -> {
                     long l;
                     if(args[i] instanceof Number v) l = v.longValue();
                     else throw new IllegalArgumentException(args[i].toString().getClass().getName());
-                    bytes[index++] = (byte) (l & 0xff);
-                    bytes[index++] = (byte) ((l >> 8) & 0xff);
-                    bytes[index++] = (byte) ((l >> 16) & 0xff);
-                    bytes[index++] = (byte) ((l >> 24) & 0xff);
-                    bytes[index++] = (byte) ((l >> 32) & 0xff);
-                    bytes[index++] = (byte) ((l >> 40) & 0xff);
-                    bytes[index++] = (byte) ((l >> 48) & 0xff);
                     bytes[index++] = (byte) ((l >> 56) & 0xff);
+                    bytes[index++] = (byte) ((l >> 48) & 0xff);
+                    bytes[index++] = (byte) ((l >> 40) & 0xff);
+                    bytes[index++] = (byte) ((l >> 32) & 0xff);
+                    bytes[index++] = (byte) ((l >> 24) & 0xff);
+                    bytes[index++] = (byte) ((l >> 16) & 0xff);
+                    bytes[index++] = (byte) ((l >> 8) & 0xff);
+                    bytes[index++] = (byte) (l & 0xff);
                 }
             }
         }

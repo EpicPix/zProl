@@ -98,6 +98,17 @@ public final class Bytecode implements IBytecode {
         throw new IllegalArgumentException("Instruction with id '" + id + "' not found");
     }
 
+    public BytecodeValueType[] getInstructionValueTypesRequirements(int id) {
+        for(BytecodeInstructionData d : data) {
+            if(d.id == id) {
+                var clone = new BytecodeValueType[d.values.length];
+                System.arraycopy(d.values, 0, clone, 0, d.values.length);
+                return clone;
+            }
+        }
+        throw new IllegalArgumentException("Instruction with id '" + id + "' not found");
+    }
+
     public IBytecodeInstructionGenerator getInstruction(String name) {
         for(BytecodeInstructionData d : data) {
             if(d.name.equals(name)) {

@@ -101,7 +101,7 @@ public class Start {
             boolean load = false;
             if(new File(file).exists() && Files.size(new File(file).toPath()) >= 4) {
                 DataInputStream in = new DataInputStream(new FileInputStream(file));
-                if(in.readInt() == 0x7a50524c) {
+                if(new String(in.readNBytes(4)).equals("zPrl")) {
                     load = true;
                 }
                 in.close();
@@ -150,7 +150,7 @@ public class Start {
         String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
         {
             DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".zpil"));
-            GeneratedData.save(linked);
+            out.write(GeneratedData.save(linked));
             out.close();
         }
 

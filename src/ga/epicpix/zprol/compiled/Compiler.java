@@ -61,7 +61,7 @@ public class Compiler {
             names[i] = param.name;
         }
         FunctionSignature signature = new FunctionSignature(returnType, parameters);
-        data.addFunction(new Function(function.name, signature, parseFunctionCode(data, new SeekIterator<>(function.code), signature, names)));
+        data.addFunction(new Function(data.namespace, function.name, signature, parseFunctionCode(data, new SeekIterator<>(function.code), signature, names)));
     }
 
     public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {
