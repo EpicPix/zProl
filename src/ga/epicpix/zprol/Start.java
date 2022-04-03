@@ -63,11 +63,16 @@ public class Start {
             if(s.startsWith("-")) {
                 if(s.startsWith("-g")) {
                     String gen = s.substring(2);
+                    boolean found = false;
                     for(Generator generator : Generator.GENERATORS) {
                         if(gen.equals(generator.getGeneratorCommandLine())) {
                             generators.add(generator);
+                            found = true;
                             break;
                         }
+                    }
+                    if(!found) {
+                        throw new IllegalArgumentException("Unable to find generator: " + gen);
                     }
                     continue;
                 } else if(s.equals("-o")) {

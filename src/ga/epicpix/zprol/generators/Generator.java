@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.generators;
 
+import ga.epicpix.zprol.compiled.CompiledData;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import java.io.File;
 import java.util.ArrayList;
@@ -18,8 +19,7 @@ public abstract class Generator {
     public abstract String getGeneratorName();
     public abstract String getFileExtension();
 
-    // LinkedData was removed to be re-added, Object will be changed to a different object in the version when linking is added back
-    public void generate(File outputFile, Object linked) {
+    public void generate(File outputFile, CompiledData compiled) {
         throw new NotImplementedException("Generating " + getGeneratorName() + " is not implemented yet");
     }
 
