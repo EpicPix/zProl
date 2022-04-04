@@ -11,8 +11,8 @@ import static ga.epicpix.zprol.StaticImports.createStorage;
 
 public class GeneratedData {
 
-    private final ArrayList<Function> functions = new ArrayList<>();
-    private final ConstantPool constantPool = new ConstantPool();
+    public final ArrayList<Function> functions = new ArrayList<>();
+    public final ConstantPool constantPool = new ConstantPool();
 
     public GeneratedData addCompiled(CompiledData data) {
         for(Function f : data.getFunctions()) {

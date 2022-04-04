@@ -12,7 +12,7 @@ public abstract class Generator {
     public static final ArrayList<Generator> GENERATORS = new ArrayList<>();
 
     public static void initGenerators() {
-        GENERATORS.add(new GeneratorAssembly());
+        GENERATORS.add(new GeneratorAssemblyLinux64());
     }
 
     protected Generator() {}
