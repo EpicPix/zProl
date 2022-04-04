@@ -19,15 +19,15 @@ public class DataParser {
         return c;
     }
 
-    public static boolean matchesCharacters(char[] chars, char c) {
+    public static boolean matchesCharacters(char[] chars, int c) {
         if(chars == null) return false;
-        for(char t : chars) if(t == c) return true;
+        for(int t : chars) if(t == c) return true;
         return false;
     }
 
     public static boolean matchesCharacters(char[] chars, String c) {
         if(chars == null) return false;
-        for(char t : c.toCharArray()) if(!matchesCharacters(chars, t)) return false;
+        for(int i = 0; i<c.length(); i++) if(!matchesCharacters(chars, c.codePointAt(i))) return false;
         return true;
     }
 
@@ -113,17 +113,16 @@ public class DataParser {
 
     public boolean checkNewLine() {
         if(!hasNext()) return false;
-        return data.charAt(index) == '\n';
+        return data.codePointAt(index) == '\n';
     }
 
     public void ignoreWhitespace() {
-        char[] cdata = data.toCharArray();
-        while(index + 1 < cdata.length) {
-            if(!Character.isWhitespace(cdata[index]) && cdata[index] != '\n') {
+        while(index + 1 < data.length()) {
+            if(!Character.isWhitespace(data.codePointAt(index)) && data.codePointAt(index) != '\n') {
                 break;
             }
             lineRow++;
-            if(cdata[index] == '\n') {
+            if(data.codePointAt(index) == '\n') {
                 lineNumber++;
                 lineRow = 0;
             }
@@ -131,14 +130,14 @@ public class DataParser {
         }
     }
 
-    private void checkComments(char[] cdata) {
-        while(cdata[index] == '/') {
-            if(index + 1 < cdata.length) {
-                if(cdata[index + 1] == '/') {
+    private void checkComments() {
+        while(data.codePointAt(index) == '/') {
+            if(index + 1 < data.length()) {
+                if(data.codePointAt(index + 1) == '/') {
                     index += 2;
                     lineRow += 2;
-                    while(index < cdata.length) {
-                        if(cdata[index] == '\n') {
+                    while(index < data.length()) {
+                        if(data.codePointAt(index) == '\n') {
                             lineNumber++;
                             lineRow = 0;
                             index++;
@@ -162,17 +161,16 @@ public class DataParser {
         lastLocation = getLocation();
         if(!hasNext()) return null;
         StringBuilder word = new StringBuilder();
-        char[] cdata = data.toCharArray();
-        while(hasNext() && !Character.isWhitespace(cdata[index])) {
-            checkComments(cdata);
-            if(matchesCharacters(operatorCharacters, cdata[index])) {
+        while(hasNext() && !Character.isWhitespace(data.codePointAt(index))) {
+            checkComments();
+            if(matchesCharacters(operatorCharacters, data.codePointAt(index))) {
                 if(!matchesCharacters(operatorCharacters, word.toString())) {
                     return word.toString();
                 }
-            }else if(!matchesCharacters(allowedCharacters, cdata[index])) {
+            }else if(!matchesCharacters(allowedCharacters, data.codePointAt(index))) {
                 if(word.length() == 0) {
                     lineRow++;
-                    word.append(cdata[index++]);
+                    word.appendCodePoint(data.codePointAt(index++));
                 }
                 return word.toString();
             }else {
@@ -181,7 +179,7 @@ public class DataParser {
                 }
             }
             lineRow++;
-            word.append(cdata[index++]);
+            word.appendCodePoint(data.codePointAt(index++));
         }
         return word.toString();
     }
@@ -213,33 +211,34 @@ public class DataParser {
         lastLocation = getLocation();
         if(index + 1 >= data.length()) return null;
         StringBuilder word = new StringBuilder();
-        char[] cdata = data.toCharArray();
-        while(index + 1 < cdata.length) {
-            if(cdata[index] == '\\') {
+        while(index + 1 < data.length()) {
+            var character = data.codePointAt(index);
+            if(data.codePointAt(index) == '\\') {
                 lineRow++;
                 index++;
-                if(cdata[index] == '\"') {
+                character = data.codePointAt(index);
+                if(character == '\"') {
                     lineRow++;
                     index++;
                     word.append("\"");
-                }else if(cdata[index] == 'n') {
+                }else if(character == 'n') {
                     lineRow++;
                     index++;
                     word.append('\n');
                 }else {
-                    System.err.println("Unknown escape code: \\" + cdata[index]);
+                    System.err.println("Unknown escape code: \\" + character);
                 }
                 continue;
-            }else if(cdata[index] == '\"') {
+            }else if(character == '\"') {
                 lineRow++;
                 index++;
                 break;
             }else {
-                if(cdata[index] == '\n') {
+                if(character == '\n') {
                     lineNumber++;
                     lineRow = 0;
                 }
-                word.append(cdata[index]);
+                word.append(data.codePointAt(index));
             }
             lineRow++;
             index++;

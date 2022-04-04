@@ -26,6 +26,7 @@ public class GeneratedData {
             }
             functions.add(f);
             constantPool.getOrCreateFunctionIndex(f);
+            f.prepareConstantPool(constantPool);
         }
         return this;
     }
