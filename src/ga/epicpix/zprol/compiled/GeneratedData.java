@@ -52,7 +52,7 @@ public class GeneratedData {
             var instructions = func.code().getInstructions();
             out.writeInt(instructions.size());
             for(var instruction : instructions) {
-                instruction.write(out);
+                instruction.write(out, data.constantPool);
             }
         }
 
@@ -82,7 +82,7 @@ public class GeneratedData {
             function.code().setLocalsSize(in.readInt());
             int instructionsLength = in.readInt();
             for(int j = 0; j<instructionsLength; j++) {
-                function.code().pushInstruction(IBytecodeInstruction.read(in));
+                function.code().pushInstruction(IBytecodeInstruction.read(in, data.constantPool));
             }
         }
 

@@ -6,7 +6,7 @@ public enum BytecodeValueType {
     SHORT(2),
     INT(4),
     LONG(8),
-    CONSTANT_POOL_INDEX(4);
+    STRING(4);
 
     private final int size;
 

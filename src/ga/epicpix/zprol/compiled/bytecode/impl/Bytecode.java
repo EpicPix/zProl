@@ -48,7 +48,7 @@ public final class Bytecode implements IBytecode {
         registerSizedInstruction(80, "and", new int[] {1, 2, 4, 8});
         registerSizedInstruction(84, "shift_left", new int[] {1, 2, 4, 8});
         registerSizedInstruction(88, "shift_right", new int[] {1, 2, 4, 8});
-        registerInstruction(92, "push_constant", BytecodeValueType.CONSTANT_POOL_INDEX);
+        registerInstruction(92, "push_string", BytecodeValueType.STRING);
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {
