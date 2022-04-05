@@ -2,6 +2,9 @@ package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.bytecode.IBytecodeStorage;
+import ga.epicpix.zprol.exceptions.CompileException;
+import ga.epicpix.zprol.exceptions.NotImplementedException;
+import ga.epicpix.zprol.exceptions.UndefinedOperationException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.parser.tokens.ParsedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
@@ -12,7 +15,7 @@ import ga.epicpix.zprol.precompiled.PreParameter;
 
 import java.util.ArrayList;
 
-import static ga.epicpix.zprol.StaticImports.createStorage;
+import static ga.epicpix.zprol.StaticImports.*;
 
 public class Compiler {
 
@@ -29,7 +32,12 @@ public class Compiler {
             token = tokens.next();
             if(token.getType() == TokenType.PARSED) {
                 ParsedToken parsed = (ParsedToken) token;
-                throw new RuntimeException("Not implemented language feature: " + parsed.name + " / " + parsed.tokens);
+                if("Return".equals(parsed.name)) {
+                    if(!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) throw new CompileException("Expected value in return");
+                    storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
+                } else {
+                    throw new NotImplementedException("Not implemented language feature: " + parsed.name + " / " + parsed.tokens);
+                }
             }else {
                 if(token.getType() == TokenType.OPEN_SCOPE) {
                     opens++;

@@ -28,7 +28,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     private static final HashMap<String, InstructionGenerator> instructionGenerators = new HashMap<>();
 
     static {
-
+        instructionGenerators.put("vreturn", (i, s) -> "ret\n");
     }
 
     private interface InstructionGenerator {

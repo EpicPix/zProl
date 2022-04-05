@@ -39,6 +39,10 @@ public class StaticImports {
         return bytecodeImplementation.getConstructedInstruction(name, args);
     }
 
+    public static IBytecodeInstruction getConstructedSizeInstruction(int size, String name, Object... args) {
+        return getConstructedInstruction(getInstructionPrefix(size) + name, args);
+    }
+
     public static IBytecodeStorage createStorage() {
         return bytecodeImplementation.createStorage();
     }
