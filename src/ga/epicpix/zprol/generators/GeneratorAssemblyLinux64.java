@@ -1,11 +1,15 @@
 package ga.epicpix.zprol.generators;
 
+import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.FunctionSignature;
 import ga.epicpix.zprol.compiled.GeneratedData;
+import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstruction;
+import ga.epicpix.zprol.exceptions.UndefinedOperationException;
 import ga.epicpix.zprol.zld.Language;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 
 public final class GeneratorAssemblyLinux64 extends Generator {
 
@@ -21,6 +25,16 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         return ".asm";
     }
 
+    private static final HashMap<String, InstructionGenerator> instructionGenerators = new HashMap<>();
+
+    static {
+
+    }
+
+    private interface InstructionGenerator {
+        public String generateInstruction(IBytecodeInstruction i, SeekIterator<IBytecodeInstruction> s);
+    }
+
     public void generate(DataOutputStream outStream, GeneratedData generated) throws IOException {
         outStream.writeBytes("global _entry\n");
         outStream.writeBytes("_entry:\n");
@@ -31,7 +45,16 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         for(var function : generated.functions) {
             String functionName = getMangledName(function.namespace(), function.name(), function.signature());
             outStream.writeBytes(functionName + ":\n");
-            outStream.writeBytes("  ret\n");
+            SeekIterator<IBytecodeInstruction> instructions = new SeekIterator<>(function.code().getInstructions());
+            while(instructions.hasNext()) {
+                var instruction = instructions.next();
+                var generator = instructionGenerators.get(instruction.getName());
+                if(generator != null) {
+                    outStream.writeBytes(generator.generateInstruction(instruction, instructions));
+                }else {
+                    throw new UndefinedOperationException("Unable to generate instructions for the " + instruction.getName() + " instruction");
+                }
+            }
         }
     }
 

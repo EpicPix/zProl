@@ -1,6 +1,6 @@
 package ga.epicpix.zprol;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.ListIterator;
 
 public class SeekIterator<T> implements ListIterator<T> {
@@ -8,7 +8,7 @@ public class SeekIterator<T> implements ListIterator<T> {
     private final T[] elements;
     private int index;
 
-    public SeekIterator(ArrayList<T> elements) {
+    public SeekIterator(List<T> elements) {
         this.elements = (T[]) elements.toArray(new Object[0]);
     }
 

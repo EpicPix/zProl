@@ -4,7 +4,10 @@ import ga.epicpix.zprol.compiled.bytecode.BytecodeValueType;
 import ga.epicpix.zprol.compiled.bytecode.IBytecode;
 import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstructionGenerator;
 import ga.epicpix.zprol.compiled.bytecode.IBytecodeStorage;
-import ga.epicpix.zprol.exceptions.NotImplementedException;
+import ga.epicpix.zprol.exceptions.RedefinedInstructionException;
+import ga.epicpix.zprol.exceptions.UndefinedOperationException;
+import ga.epicpix.zprol.exceptions.UnknownInstructionException;
+
 import java.util.ArrayList;
 
 public final class Bytecode implements IBytecode {
@@ -60,9 +63,9 @@ public final class Bytecode implements IBytecode {
     public void registerInstruction(int id, String name, BytecodeValueType... values) {
         for(BytecodeInstructionData d : data) {
             if(d.id == id) {
-                throw new IllegalArgumentException("Instruction with id '" + d.id + "' already registered with name '" + d.name + "'");
+                throw new RedefinedInstructionException("Instruction with id '" + d.id + "' already registered with name '" + d.name + "'");
             }else if(d.name.equals(name)) {
-                throw new IllegalArgumentException("Instruction with name '" + d.name + "' already registered with id '" + d.id + "'");
+                throw new RedefinedInstructionException("Instruction with name '" + d.name + "' already registered with id '" + d.id + "'");
             }
         }
         data.add(new BytecodeInstructionData(id, name, values, (args) -> {
@@ -73,7 +76,7 @@ public final class Bytecode implements IBytecode {
                     return new BytecodeInstruction(d, args);
                 }
             }
-            throw new IllegalStateException("Data about instruction not found (" + id + ")");
+            throw new UnknownInstructionException("Data about instruction not found (" + id + ")");
         }));
     }
 
@@ -85,7 +88,7 @@ public final class Bytecode implements IBytecode {
             case 4 -> "i";
             case 8 -> "l";
             case 16 -> "h";
-            default -> throw new NotImplementedException("Instruction prefix with size " + size + " is not supported");
+            default -> throw new UndefinedOperationException("Instruction prefix with size " + size + " is not supported");
         };
     }
 
@@ -95,7 +98,7 @@ public final class Bytecode implements IBytecode {
                 return d.generator;
             }
         }
-        throw new IllegalArgumentException("Instruction with id '" + id + "' not found");
+        throw new UnknownInstructionException("Instruction with id '" + id + "' not found");
     }
 
     public BytecodeValueType[] getInstructionValueTypesRequirements(int id) {
@@ -106,7 +109,7 @@ public final class Bytecode implements IBytecode {
                 return clone;
             }
         }
-        throw new IllegalArgumentException("Instruction with id '" + id + "' not found");
+        throw new UnknownInstructionException("Instruction with id '" + id + "' not found");
     }
 
     public IBytecodeInstructionGenerator getInstruction(String name) {
@@ -115,7 +118,7 @@ public final class Bytecode implements IBytecode {
                 return d.generator;
             }
         }
-        throw new IllegalArgumentException("Instruction with name '" + name + "' not found");
+        throw new UnknownInstructionException("Instruction with name '" + name + "' not found");
     }
 
     public IBytecodeStorage createStorage() {
