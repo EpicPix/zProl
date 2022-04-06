@@ -3,7 +3,6 @@
 // Keywords
 keyword definition using
 keyword definition namespace
-keyword definition typedef
 keyword control return
 
 // Types, also defined as keywords
@@ -37,8 +36,6 @@ define callparameterc @equation@ ,
 
 ghost Open {
 ghost Close }
-
-tok !InDefinition Typedef typedef @type@ @word@ ;
 
 tok !InDefinition FunctionEmpty @type@ @word@ ( )
 tok !InDefinition FunctionParameters @type@ @word@ ( ^parameter )

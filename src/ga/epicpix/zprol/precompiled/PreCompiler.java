@@ -21,12 +21,7 @@ public class PreCompiler {
             if(token.getType() == TokenType.PARSED) {
                 ParsedToken parsed = (ParsedToken) token;
                 ArrayList<Token> ts = parsed.tokens;
-                if(parsed.name.equals("Typedef")) {
-                    String type = ts.get(1).asWordHolder().getWord();
-                    String name = ts.get(2).asWordToken().getWord();
-                    if(pre.typedef.get(name) != null) throw new RuntimeException("Redefined typedef definition");
-                    pre.typedef.put(name, type);
-                }else if(parsed.name.equals("Using")) {
+                if(parsed.name.equals("Using")) {
                     pre.using.add(ts.get(1).asWordToken().getWord());
                 }else if(parsed.name.equals("Namespace")) {
                     if(usedOther) throw new RuntimeException("Namespace not defined at the top of the file");

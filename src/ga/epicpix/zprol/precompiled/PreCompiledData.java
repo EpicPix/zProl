@@ -11,7 +11,5 @@ public class PreCompiledData {
     public String namespace;
 
     public final ArrayList<PreFunction> functions = new ArrayList<>();
-    public final HashMap<String, String> typedef = new HashMap<>();
-
 
 }
