@@ -168,17 +168,6 @@ public class OperationCompiler {
         if(Boolean.parseBoolean(System.getProperty("DEBUG"))) {
             System.out.println(operations);
             printOperations(operations.get(0));
-            File dot = new File("math.dot");
-            try {
-                BufferedWriter out = new BufferedWriter(new FileWriter(dot));
-                out.write("digraph Math {\n");
-                out.write("    root -> op" + current + "\n");
-                generateDotFile(operations.get(0), out);
-                out.write("}");
-                out.close();
-            } catch(IOException e) {
-                e.printStackTrace();
-            }
         }
         return operations.get(0);
     }
@@ -217,54 +206,4 @@ public class OperationCompiler {
         }
     }
 
-    private void generateDotFile(Operation operation, BufferedWriter writer) throws IOException {
-        if(operation instanceof OperationNumber) {
-            NumberToken number = ((OperationNumber) operation).number;
-            writer.write("    op" + current + " [label=" + number.number + "]\n");
-            current++;
-            return;
-        }else if(operation instanceof OperationString) {
-            StringToken string = ((OperationString) operation).string;
-            writer.write("    op" + current + " [label=\"" + string.getData().replace("\\", "\\\\").replace("\"", "\\\"") + "\"]\n");
-            current++;
-            return;
-        }else if(operation instanceof OperationField field) {
-            writer.write("    op" + current + " [label=\"" + Token.toFriendlyString(field.reference) + "\"]\n");
-            current++;
-            return;
-        }else if(operation instanceof OperationCall call) {
-            int c = current;
-            writer.write("    op" + current + " [label=\"" + Token.toFriendlyString(call.reference) + "()\"]\n");
-            current++;
-            for(Operation op : call.parameters) {
-                writer.write("    op" + c + " -> op" + current + "\n");
-                generateDotFile(op, writer);
-                current++;
-            }
-            return;
-        }else if(operation instanceof OperationBrackets) {
-            writer.write("    op" + current + " [label=\"()\"]\n");
-            int c = current;
-            current++;
-            writer.write("    op" + c + " -> op" + current + "\n");
-            generateDotFile(operation.left, writer);
-            return;
-        }else if(operation instanceof OperationCast) {
-            writer.write("    op" + current + " [label=\"(" + ((OperationCast) operation).type + ")\"]\n");
-            int c = current;
-            current++;
-            writer.write("    op" + c + " -> op" + current + "\n");
-            generateDotFile(operation.left, writer);
-            return;
-        }else {
-            writer.write("    op" + current + " [label=\"" + OperationOrder.classToOperation(operation.getClass()) + "\"]\n");
-        }
-        int c = current;
-        current++;
-        writer.write("    op" + c + " -> op" + current + "\n");
-        generateDotFile(operation.left, writer);
-        current++;
-        writer.write("    op" + c + " -> op" + current + "\n");
-        generateDotFile(operation.right, writer);
-    }
 }

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Stack;
 
 import static ga.epicpix.zprol.zld.LanguageContextEvent.ContextManipulationOperation;
@@ -37,11 +38,15 @@ public class Parser {
         T read(DataParser parser);
     }
 
+    private interface TokenValidator<T> {
+        boolean validate(T data);
+    }
+
     private static String getLanguageDefinition(LanguageToken f, String t) {
         StringBuilder builder = new StringBuilder(t);
         boolean h = false;
         String[] args = f.args();
-        for(int i = 2; i<args.length; i++) {
+        for(int i = 1; i<args.length; i++) {
             String x = args[i];
             if(x.startsWith("%") && x.endsWith("%") && x.length() >= 3) {
                 builder.append(x, 1, x.length() - 1);
@@ -58,8 +63,13 @@ public class Parser {
     }
 
     private static <T> boolean checkToken(DataParser parser, TokenReader<T> reader, TokenGenerator<T> generator, ArrayList<Token> tTokens) {
+        return checkToken(parser, reader, generator, x -> true, tTokens);
+    }
+
+    private static <T> boolean checkToken(DataParser parser, TokenReader<T> reader, TokenGenerator<T> generator, TokenValidator<T> validator, ArrayList<Token> tTokens) {
         T w = reader.read(parser);
         if(w == null) return false;
+        if(!validator.validate(w)) return false;
         tTokens.add(generator.generate(w));
         return true;
     }
@@ -76,9 +86,9 @@ public class Parser {
         for(int i = 0; i<t.length; i++) {
             String s = t[i];
             if(s.equals("@lword@")) {if(!checkToken(parser, DataParser::nextLongWord, WordToken::new, added)) return false; }
-            else if(s.equals("@dword@")) {if(!checkToken(parser, DataParser::nextDotWord, WordToken::new, added)) return false; }
-            else if(s.equals("@word@")) {if(!checkToken(parser, DataParser::nextWord, WordToken::new, added)) return false; }
-            else if(s.equals("@type@")) {if(!checkToken(parser, DataParser::nextType, WordToken::new, added)) return false; }
+            else if(s.equals("@dword@")) {if(!checkToken(parser, DataParser::nextDotWord, WordToken::new, data -> Language.KEYWORDS.get(data) == null, added)) return false; }
+            else if(s.equals("@word@")) {if(!checkToken(parser, DataParser::nextWord, WordToken::new, data -> Language.KEYWORDS.get(data) == null, added)) return false; }
+            else if(s.equals("@type@")) {if(!checkToken(parser, DataParser::nextType, WordToken::new, data -> Language.hasKeywordTag(data, "type", true), added)) return false; }
             else if(s.equals("@equation@")) {if(!checkToken(parser, Parser::nextEquation, x -> x, added)) return false; }
             else if(s.equals("%;%")) {if(!checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), added)) return false; }
             else if(s.equals("%,%")) {if(!checkToken(",", parser, (data) -> new Token(TokenType.COMMA), added)) return false; }
@@ -115,7 +125,7 @@ public class Parser {
     }
 
     public static Token getToken(DataParser parser, String word) {
-        if(Language.KEYWORDS.contains(word)) throw new ParserException("Keywords not allowed here", parser);
+        if(Language.KEYWORDS.get(word) != null) throw new ParserException("Keywords not allowed here", parser);
         else if(DataParser.matchesCharacters(DataParser.operatorCharacters, word)) return new OperatorToken(word);
         else if(word.equals(";")) return new Token(TokenType.END_LINE);
         else if(word.equals("(")) return new Token(TokenType.OPEN);
@@ -172,8 +182,9 @@ public class Parser {
                 }
                 ArrayList<Token> preAdded = new ArrayList<>();
                 boolean lateStart = false;
-                if(Language.KEYWORDS.contains(word)) {
-                    preAdded.add(new KeywordToken(word));
+                var k = Language.KEYWORDS.get(word);
+                if(k != null) {
+                    preAdded.add(new KeywordToken(k));
                     lateStart = true;
                 }
                 for (LanguageToken tok : validOptions) {
@@ -196,7 +207,7 @@ public class Parser {
                     String[] expressions = new String[validOptions.size()];
                     String l = parser.nextWord();
                     for(int j = 0; j<expressions.length; j++) expressions[j] = "Expected " + getLanguageDefinition(validOptions.get(j), l);
-                    throw new ParserException(String.join("\n", expressions), parser);
+                    throw new ParserException(expressions.length != 0 ? String.join("\n", expressions) : "Invalid expression", parser);
                 }
             }
 
@@ -227,7 +238,7 @@ public class Parser {
             SavedLocation loc = parser.getSaveLocation();
             current = nextToken(parser);
             if(current.getType() == TokenType.OPEN) open++;
-            if(!(current.getType() == TokenType.WORD || current.getType() == TokenType.OPERATOR || current.getType() == TokenType.NUMBER || current.getType() == TokenType.STRING) && open <= 0) {
+            if(!(current.getType() == TokenType.WORD || current.getType() == TokenType.OPERATOR || current.getType() == TokenType.NUMBER || current.getType() == TokenType.STRING || current.getType() == TokenType.ACCESSOR) && open <= 0) {
                 parser.loadLocation(loc);
                 break;
             }

@@ -1,9 +1,10 @@
 // Definitions of stuff in this language
 
 // Keywords
-keyword using
-keyword namespace
-keyword typedef
+keyword definition using
+keyword definition namespace
+keyword definition typedef
+keyword control return
 
 // Types, also defined as keywords
 type void size=0 V

@@ -131,23 +131,17 @@ public class DataParser {
     }
 
     private void checkComments() {
-        while(data.codePointAt(index) == '/') {
-            if(index + 1 < data.length()) {
-                if(data.codePointAt(index + 1) == '/') {
-                    index += 2;
-                    lineRow += 2;
-                    while(index < data.length()) {
-                        if(data.codePointAt(index) == '\n') {
-                            lineNumber++;
-                            lineRow = 0;
-                            index++;
-                            break;
-                        }
-                        lineRow++;
-                        index++;
-                    }
+        while(index + 1 < data.length() && data.codePointAt(index) == '/' && data.codePointAt(index + 1) == '/') {
+            index += 2;
+            lineRow += 2;
+            while(index < data.length()) {
+                if(data.codePointAt(index++) == '\n') {
+                    lineNumber++;
+                    lineRow = 0;
                     ignoreWhitespace();
+                    break;
                 }
+                lineRow++;
             }
         }
     }

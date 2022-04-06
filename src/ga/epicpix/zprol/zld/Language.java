@@ -15,7 +15,7 @@ import static ga.epicpix.zprol.zld.LanguageContextEvent.ContextManipulationOpera
 
 public class Language {
 
-    public static final ArrayList<String> KEYWORDS = new ArrayList<>();
+    public static final HashMap<String, LanguageKeyword> KEYWORDS = new HashMap<>();
     public static final HashMap<String, String[]> DEFINES = new HashMap<>();
     public static final ArrayList<LanguageToken> TOKENS = new ArrayList<>();
     public static final HashMap<String, PrimitiveType> TYPES = new HashMap<>();
@@ -43,6 +43,11 @@ public class Language {
         return null;
     }
 
+    public static boolean hasKeywordTag(String keyword, String tag, boolean def) {
+        var k = KEYWORDS.get(keyword);
+        return k != null ? k.hasTag(tag) : def;
+    }
+
     public static void load(String fileName) throws IOException {
         InputStream in = Language.class.getClassLoader().getResourceAsStream(fileName);
         StringBuilder data = new StringBuilder();
@@ -51,13 +56,16 @@ public class Language {
             data.append((char) temp);
         }
 
+        char[] tagsCharacters = joinCharacters(nonSpecialCharacters, new char[] {','});
         char[] propertiesCharacters = joinCharacters(nonSpecialCharacters, new char[] {',', '='});
 
         DataParser parser = new DataParser(fileName, data.toString().split("(\r|\n|\r\n|\n\r)"));
         while(parser.hasNext()) {
             String d = parser.nextWord();
             if(d.equals("keyword")) {
-                KEYWORDS.add(parser.nextWord());
+                String[] tags = parser.nextTemplateWord(tagsCharacters).split("\\.");
+                String name = parser.nextWord();
+                KEYWORDS.put(name, new LanguageKeyword(name, tags));
             } else if(d.equals("type")) {
                 String name = parser.nextWord();
                 String properties = parser.nextTemplateWord(propertiesCharacters);
@@ -85,7 +93,7 @@ public class Language {
                     }
                 }
                 TYPES.put(name, new PrimitiveType(type, descriptor, name));
-                KEYWORDS.add(name);
+                KEYWORDS.put(name, new LanguageKeyword(name, "type"));
             } else if(d.equals("ghost")) {
                 String name = parser.nextWord();
                 String w = parser.nextWord();

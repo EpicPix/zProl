@@ -27,6 +27,7 @@ public class Compiler {
         }
         localsManager.newScope();
         int opens = 0;
+        boolean hasReturned = false;
         Token token;
         while(tokens.hasNext()) {
             token = tokens.next();
@@ -35,6 +36,10 @@ public class Compiler {
                 if("Return".equals(parsed.name)) {
                     if(!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) throw new CompileException("Expected value in return");
                     storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
+                    if(opens == 0) {
+                        hasReturned = true;
+                        break;
+                    }
                 } else {
                     throw new NotImplementedException("Not implemented language feature: " + parsed.name + " / " + parsed.tokens);
                 }
@@ -54,6 +59,10 @@ public class Compiler {
                 }
                 //TODO: ++x or --x
             }
+        }
+        if(!hasReturned) {
+            if(!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) throw new CompileException("Missing return statement");
+            storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
         }
         storage.setLocalsSize(localsManager.getLocalVariablesSize());
         return storage;
