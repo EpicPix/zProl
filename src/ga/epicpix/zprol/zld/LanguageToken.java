@@ -2,7 +2,7 @@ package ga.epicpix.zprol.zld;
 
 import java.util.Stack;
 
-public record LanguageToken(String contextRequirement, String name, String... args) {
+public record LanguageToken(String contextRequirement, String name, LanguageTokenFragment... args) {
 
     public static boolean checkContextRequirement(String contextRequirement, Stack<String> contexts) {
         if(contextRequirement.equals("*")) return true;

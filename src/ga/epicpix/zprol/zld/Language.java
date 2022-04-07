@@ -4,34 +4,109 @@ import ga.epicpix.zprol.compiled.PrimitiveType;
 import ga.epicpix.zprol.exceptions.InvalidDataException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
+import ga.epicpix.zprol.parser.Parser;
+import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.parser.tokens.TokenType;
+import ga.epicpix.zprol.parser.tokens.WordToken;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
-import static ga.epicpix.zprol.parser.DataParser.joinCharacters;
-import static ga.epicpix.zprol.parser.DataParser.nonSpecialCharacters;
+import static ga.epicpix.zprol.parser.DataParser.*;
 import static ga.epicpix.zprol.zld.LanguageContextEvent.ContextManipulationOperation;
+import static ga.epicpix.zprol.zld.LanguageTokenFragment.*;
 
 public class Language {
 
     public static final HashMap<String, LanguageKeyword> KEYWORDS = new HashMap<>();
-    public static final HashMap<String, String[]> DEFINES = new HashMap<>();
     public static final ArrayList<LanguageToken> TOKENS = new ArrayList<>();
     public static final HashMap<String, PrimitiveType> TYPES = new HashMap<>();
     public static final HashMap<String, LanguageToken> GHOST_TOKENS = new HashMap<>();
     public static final ArrayList<LanguageContextEvent> CONTEXT_EVENTS = new ArrayList<>();
 
-    private static String convert(String w, DataParser parser) {
-        if(w.startsWith("\\")) return w.substring(1);
-        else if(w.equals("^")) return "^" + parser.nextLongWord();
-        else if(w.equals(";")) return "%;%";
-        else if(w.equals(",")) return "%,%";
-        else if(w.equals("(")) return "%(%";
-        else if(w.equals(")")) return "%)%";
-        else if(w.equals("{")) return "%{%";
-        else if(w.equals("}")) return "%}%";
-        return w;
+    private static final char[] tagsCharacters = joinCharacters(nonSpecialCharacters, new char[] {','});
+    private static final char[] propertiesCharacters = joinCharacters(nonSpecialCharacters, new char[] {',', '='});
+    private static final char[] tokenCharacters = joinCharacters(nonSpecialCharacters, new char[] {'@', '%'});
+
+    private static LanguageTokenFragment convert(String w, DataParser parser) {
+        if(w.startsWith("\\"))
+            return createExactFragment(w.substring(1));
+
+        if(w.equals("^")) {
+            String next = parser.nextTemplateWord(tokenCharacters);
+            boolean multi = false;
+            if(next.equals("+")) {
+                multi = true;
+                next = parser.nextTemplateWord(tokenCharacters);
+            }
+            if(next.equals("{")) {
+                ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
+                while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
+                    fragmentsList.add(convert(next, parser));
+                }
+                LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
+                String debugName = "^" + (multi ? "+" : "") + "{" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "}";
+                final boolean isMulti = multi;
+                return createMulti(p -> {
+                    ArrayList<Token> tokens = new ArrayList<>();
+                    boolean successful = false;
+
+                    fLoop: do {
+                        p.saveLocation();
+                        ArrayList<Token> iterTokens = new ArrayList<>();
+                        for (var frag : fragments) {
+                            var r = frag.getTokenReader().apply(p);
+                            if (r == null) {
+                                p.loadLocation();
+                                if (successful) {
+                                    break fLoop;
+                                } else {
+                                    return null;
+                                }
+                            }
+                            Collections.addAll(iterTokens, r);
+                        }
+                        p.discardLocation();
+                        successful = true;
+                        tokens.addAll(iterTokens);
+                    } while(isMulti);
+
+                    return tokens.toArray(new Token[0]);
+                }, debugName);
+            }
+        }
+
+        return switch (w) {
+            case ";" -> createExactFragment(";");
+            case "," -> createExactFragment(",");
+            case "(" -> createExactFragment("(");
+            case ")" -> createExactFragment(")");
+            case "{" -> createExactFragment("{");
+            case "}" -> createExactFragment("}");
+            case "@word@" -> createSingle(p -> {
+                String x = p.nextWord();
+                return Language.KEYWORDS.get(x) == null ? new WordToken(x) : null;
+            }, "<word>");
+            case "@dword@" -> createSingle(p -> {
+                String x = p.nextDotWord();
+                return Language.KEYWORDS.get(x) == null ? new WordToken(x) : null;
+            }, "<dword>");
+            case "@lword@" -> createSingle(p -> {
+                String x = p.nextLongWord();
+                return Language.KEYWORDS.get(x) == null ? new WordToken(x) : null;
+            }, "<lword>");
+            case "@type@" -> createSingle(p -> {
+                String x = p.nextWord();
+                return Language.hasKeywordTag(x, "type", true) ? new WordToken(x) : null;
+            }, "<type>");
+            case "@equation@" -> createSingle(Parser::nextEquation, "<equation>");
+            default -> createExactFragment(w);
+        };
+
     }
 
     public static PrimitiveType getTypeFromDescriptor(String descriptor) {
@@ -55,9 +130,6 @@ public class Language {
         while((temp = in.read()) != -1) {
             data.append((char) temp);
         }
-
-        char[] tagsCharacters = joinCharacters(nonSpecialCharacters, new char[] {','});
-        char[] propertiesCharacters = joinCharacters(nonSpecialCharacters, new char[] {',', '='});
 
         DataParser parser = new DataParser(fileName, data.toString().split("(\r|\n|\r\n|\n\r)"));
         while(parser.hasNext()) {
@@ -89,7 +161,7 @@ public class Language {
                             type &= ~0x0020;
                             type |= Boolean.parseBoolean(value) ? 0x0020 : 0x0000;
                         }
-                        default -> System.out.println("Unknown key '" + key + "' with value '" + value + "'");
+                        default -> System.err.println("Unknown type key '" + key + "' with value '" + value + "'");
                     }
                 }
                 TYPES.put(name, new PrimitiveType(type, descriptor, name));
@@ -97,30 +169,21 @@ public class Language {
             } else if(d.equals("ghost")) {
                 String name = parser.nextWord();
                 String w = parser.nextWord();
-                GHOST_TOKENS.put(w, new LanguageToken("*", name, w));
+                GHOST_TOKENS.put(w, new LanguageToken("*", name, createExactFragment(w)));
             } else if(d.equals("tok")) {
-                ArrayList<String> tokens = new ArrayList<>();
+                ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();
                 String requirement = parser.nextLongWord();
                 String name = parser.nextWord();
                 while(!parser.checkNewLine()) {
-                    tokens.add(convert(parser.nextLongWord(), parser));
+                    tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
                 }
-                TOKENS.add(new LanguageToken(requirement, name, tokens.toArray(new String[0])));
+                TOKENS.add(new LanguageToken(requirement, name, tokens.toArray(new LanguageTokenFragment[0])));
             } else if(d.equals("context")) {
                 if(!parser.nextWord().equals("on")) throw new ParserException("Unknown word after 'context' keyword", parser);
                 String on = parser.nextLongWord();
                 ContextManipulationOperation manipulation = ContextManipulationOperation.valueOf(parser.nextWord().toUpperCase());
                 String context = parser.nextLongWord();
                 CONTEXT_EVENTS.add(new LanguageContextEvent(on, manipulation, context));
-            } else if(d.equals("define")) {
-                String name = parser.nextWord();
-                if(DEFINES.get(name) != null) throw new ParserException("Define already defined: " + name, parser);
-                ArrayList<String> tokens = new ArrayList<>();
-                String w;
-                while(!parser.checkNewLine()) {
-                    tokens.add(convert(parser.nextLongWord(), parser));
-                }
-                DEFINES.put(name, tokens.toArray(new String[0]));
             } else {
                 throw new ParserException("Unknown language file word: " + d, parser);
             }

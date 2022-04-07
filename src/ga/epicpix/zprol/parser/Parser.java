@@ -15,6 +15,7 @@ import ga.epicpix.zprol.parser.tokens.WordHolder;
 import ga.epicpix.zprol.parser.tokens.WordToken;
 import ga.epicpix.zprol.zld.LanguageContextEvent;
 import ga.epicpix.zprol.zld.LanguageToken;
+import ga.epicpix.zprol.zld.LanguageTokenFragment;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,6 +24,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Stack;
 
 import static ga.epicpix.zprol.zld.LanguageContextEvent.ContextManipulationOperation;
@@ -43,23 +45,13 @@ public class Parser {
     }
 
     private static String getLanguageDefinition(LanguageToken f, String t) {
-        StringBuilder builder = new StringBuilder(t);
+        StringBuilder builder = new StringBuilder(t + " ");
         boolean h = false;
-        String[] args = f.args();
+        var args = f.args();
         for(int i = 1; i<args.length; i++) {
-            String x = args[i];
-            if(x.startsWith("%") && x.endsWith("%") && x.length() >= 3) {
-                builder.append(x, 1, x.length() - 1);
-            }else if(x.startsWith("^")) {
-                if(h) builder.append(" ");
-                boolean s = x.startsWith("^+");
-                builder.append("<").append(x, 1 + (s ? 1 : 0), x.length()).append(s ? "+" : "").append(">");
-            }else {
-                builder.append(" ").append(x);
-            }
-            h = x.startsWith("^");
+            builder.append(args[i].getDebugName()).append(" ");
         }
-        return builder.toString();
+        return builder.toString().trim();
     }
 
     private static <T> boolean checkToken(DataParser parser, TokenReader<T> reader, TokenGenerator<T> generator, ArrayList<Token> tTokens) {
@@ -81,40 +73,29 @@ public class Parser {
         return true;
     }
 
-    public static boolean check(ArrayList<Token> tTokens, DataParser parser, String... t) {
+    public static boolean check(ArrayList<Token> tTokens, DataParser parser, LanguageTokenFragment... t) {
         ArrayList<Token> added = new ArrayList<>();
         for(int i = 0; i<t.length; i++) {
-            String s = t[i];
-            if(s.equals("@lword@")) {if(!checkToken(parser, DataParser::nextLongWord, WordToken::new, added)) return false; }
-            else if(s.equals("@dword@")) {if(!checkToken(parser, DataParser::nextDotWord, WordToken::new, data -> Language.KEYWORDS.get(data) == null, added)) return false; }
-            else if(s.equals("@word@")) {if(!checkToken(parser, DataParser::nextWord, WordToken::new, data -> Language.KEYWORDS.get(data) == null, added)) return false; }
-            else if(s.equals("@type@")) {if(!checkToken(parser, DataParser::nextType, WordToken::new, data -> Language.hasKeywordTag(data, "type", true), added)) return false; }
-            else if(s.equals("@equation@")) {if(!checkToken(parser, Parser::nextEquation, x -> x, added)) return false; }
-            else if(s.equals("%;%")) {if(!checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), added)) return false; }
-            else if(s.equals("%,%")) {if(!checkToken(",", parser, (data) -> new Token(TokenType.COMMA), added)) return false; }
-            else if(s.equals("%(%")) {if(!checkToken("(", parser, (data) -> new Token(TokenType.OPEN), added)) return false; }
-            else if(s.equals("%)%")) {if(!checkToken(")", parser, (data) -> new Token(TokenType.CLOSE), added)) return false; }
-            else if(s.equals("%{%")) {if(!checkToken("{", parser, (data) -> new Token(TokenType.OPEN_SCOPE), added)) return false; }
-            else if(s.equals("%}%")) {if(!checkToken("}", parser, (data) -> new Token(TokenType.CLOSE_SCOPE), added)) return false; }
-            else {
-                if(s.startsWith("^")) {
-                    String[] def = Language.DEFINES.get(s.substring(s.substring(1).startsWith("+") ? 2 : 1));
-                    if(s.substring(1).startsWith("+")) {
-                        if(!check(added, parser, def)) {
-                            return false;
-                        }
-                        while(true) {
-                            SavedLocation location = parser.getSaveLocation();
-                            if(!check(added, parser, def)) {
-                                parser.loadLocation(location);
-                                break;
-                            }
-                        }
-                    }else if(!check(added, parser, def)) {
-                        return false;
-                    }
-                }else if(!checkToken(s, parser, WordToken::new, added)) return false;
+            var read = t[i].getTokenReader().apply(parser);
+            if(read == null) {
+                return false;
             }
+            Collections.addAll(added, read);
+//            var s = t[i].getDebugName();
+//            if(s.equals("@lword@")) {if(!checkToken(parser, DataParser::nextLongWord, WordToken::new, added)) return false; }
+//            else if(s.equals("@dword@")) {if(!checkToken(parser, DataParser::nextDotWord, WordToken::new, data -> Language.KEYWORDS.get(data) == null, added)) return false; }
+//            else if(s.equals("@word@")) {if(!checkToken(parser, DataParser::nextWord, WordToken::new, data -> Language.KEYWORDS.get(data) == null, added)) return false; }
+//            else if(s.equals("@type@")) {if(!checkToken(parser, DataParser::nextType, WordToken::new, data -> Language.hasKeywordTag(data, "type", true), added)) return false; }
+//            else if(s.equals("@equation@")) {if(!checkToken(parser, Parser::nextEquation, x -> x, added)) return false; }
+//            else if(s.equals("%;%")) {if(!checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), added)) return false; }
+//            else if(s.equals("%,%")) {if(!checkToken(",", parser, (data) -> new Token(TokenType.COMMA), added)) return false; }
+//            else if(s.equals("%(%")) {if(!checkToken("(", parser, (data) -> new Token(TokenType.OPEN), added)) return false; }
+//            else if(s.equals("%)%")) {if(!checkToken(")", parser, (data) -> new Token(TokenType.CLOSE), added)) return false; }
+//            else if(s.equals("%{%")) {if(!checkToken("{", parser, (data) -> new Token(TokenType.OPEN_SCOPE), added)) return false; }
+//            else if(s.equals("%}%")) {if(!checkToken("}", parser, (data) -> new Token(TokenType.CLOSE_SCOPE), added)) return false; }
+//            else {
+//                if(!checkToken(s, parser, WordToken::new, added)) return false;
+//            }
         }
         tTokens.addAll(added);
         return true;
@@ -189,10 +170,10 @@ public class Parser {
                 }
                 for (LanguageToken tok : validOptions) {
                     parser.saveLocation();
-                    String[] used = tok.args();
+                    var used = tok.args();
                     if (lateStart) {
                         parser.nextWord();
-                        used = new String[tok.args().length - 1];
+                        used = new LanguageTokenFragment[tok.args().length - 1];
                         System.arraycopy(tok.args(), 1, used, 0, used.length);
                     }
                     ArrayList<Token> tTokens = new ArrayList<>(preAdded);

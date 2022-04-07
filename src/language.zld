@@ -28,28 +28,22 @@ type ulong unsigned,size=8 uL
 
 type pointer unsigned,size=8,pointer P
 
-
-define parameter @type@ @word@
-define parameterc @type@ @word@ ,
-define callparameter @equation@
-define callparameterc @equation@ ,
-
 ghost Open {
 ghost Close }
 
-tok !InDefinition FunctionEmpty @type@ @word@ ( )
-tok !InDefinition FunctionParameters @type@ @word@ ( ^parameter )
-tok !InDefinition FunctionParameters @type@ @word@ ( ^+parameterc ^parameter )
+tok !InDefinition Using using @dword@;
+tok !InDefinition Namespace namespace @dword@;
 
-tok !InDefinition Using using @dword@ ;
-tok !InDefinition Namespace namespace @dword@ ;
+tok InDefinition Return return;
+tok InDefinition ReturnValue return @equation@;
 
-tok InDefinition Return return ;
-tok InDefinition ReturnValue return @equation@ ;
+tok !InDefinition FunctionEmpty @type@ @word@()
+tok !InDefinition FunctionParameters @type@ @word@(^{@type@ @word@})
+tok !InDefinition FunctionParameters @type@ @word@(^+{@type@ @word@,}^{@type@ @word@})
 
-tok InDefinition Call @word@ ( ) ;
-tok InDefinition Call @word@ ( ^callparameter ) ;
-tok InDefinition Call @word@ ( ^+callparameterc ^callparameter ) ;
+tok InDefinition Call @word@();
+tok InDefinition Call @word@(^{@equation@});
+tok InDefinition Call @word@(^+{@equation@,}^{@equation@});
 
 context on Open push InDefinition
 context on Close pop InDefinition
