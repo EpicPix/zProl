@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Stack;
 
@@ -32,21 +31,8 @@ import static ga.epicpix.zprol.zld.LanguageContextEvent.ContextManipulationOpera
 
 public class Parser {
 
-    private interface TokenGenerator<T> {
-        Token generate(T data);
-    }
-
-    private interface TokenReader<T> {
-        T read(DataParser parser);
-    }
-
-    private interface TokenValidator<T> {
-        boolean validate(T data);
-    }
-
     private static String getLanguageDefinition(LanguageToken f, String t) {
         StringBuilder builder = new StringBuilder(t + " ");
-        boolean h = false;
         var args = f.args();
         for(int i = 1; i<args.length; i++) {
             builder.append(args[i].getDebugName()).append(" ");
@@ -54,48 +40,14 @@ public class Parser {
         return builder.toString().trim();
     }
 
-    private static <T> boolean checkToken(DataParser parser, TokenReader<T> reader, TokenGenerator<T> generator, ArrayList<Token> tTokens) {
-        return checkToken(parser, reader, generator, x -> true, tTokens);
-    }
-
-    private static <T> boolean checkToken(DataParser parser, TokenReader<T> reader, TokenGenerator<T> generator, TokenValidator<T> validator, ArrayList<Token> tTokens) {
-        T w = reader.read(parser);
-        if(w == null) return false;
-        if(!validator.validate(w)) return false;
-        tTokens.add(generator.generate(w));
-        return true;
-    }
-
-    private static boolean checkToken(String check, DataParser parser, TokenGenerator<String> generator, ArrayList<Token> tTokens) {
-        String w = parser.nextWord();
-        if(!check.equals(w)) return false;
-        tTokens.add(generator.generate(w));
-        return true;
-    }
-
     public static boolean check(ArrayList<Token> tTokens, DataParser parser, LanguageTokenFragment... t) {
         ArrayList<Token> added = new ArrayList<>();
-        for(int i = 0; i<t.length; i++) {
-            var read = t[i].getTokenReader().apply(parser);
-            if(read == null) {
+        for(LanguageTokenFragment languageTokenFragment : t) {
+            var read = languageTokenFragment.getTokenReader().apply(parser);
+            if (read == null) {
                 return false;
             }
             Collections.addAll(added, read);
-//            var s = t[i].getDebugName();
-//            if(s.equals("@lword@")) {if(!checkToken(parser, DataParser::nextLongWord, WordToken::new, added)) return false; }
-//            else if(s.equals("@dword@")) {if(!checkToken(parser, DataParser::nextDotWord, WordToken::new, data -> Language.KEYWORDS.get(data) == null, added)) return false; }
-//            else if(s.equals("@word@")) {if(!checkToken(parser, DataParser::nextWord, WordToken::new, data -> Language.KEYWORDS.get(data) == null, added)) return false; }
-//            else if(s.equals("@type@")) {if(!checkToken(parser, DataParser::nextType, WordToken::new, data -> Language.hasKeywordTag(data, "type", true), added)) return false; }
-//            else if(s.equals("@equation@")) {if(!checkToken(parser, Parser::nextEquation, x -> x, added)) return false; }
-//            else if(s.equals("%;%")) {if(!checkToken(";", parser, (data) -> new Token(TokenType.END_LINE), added)) return false; }
-//            else if(s.equals("%,%")) {if(!checkToken(",", parser, (data) -> new Token(TokenType.COMMA), added)) return false; }
-//            else if(s.equals("%(%")) {if(!checkToken("(", parser, (data) -> new Token(TokenType.OPEN), added)) return false; }
-//            else if(s.equals("%)%")) {if(!checkToken(")", parser, (data) -> new Token(TokenType.CLOSE), added)) return false; }
-//            else if(s.equals("%{%")) {if(!checkToken("{", parser, (data) -> new Token(TokenType.OPEN_SCOPE), added)) return false; }
-//            else if(s.equals("%}%")) {if(!checkToken("}", parser, (data) -> new Token(TokenType.CLOSE_SCOPE), added)) return false; }
-//            else {
-//                if(!checkToken(s, parser, WordToken::new, added)) return false;
-//            }
         }
         tTokens.addAll(added);
         return true;
