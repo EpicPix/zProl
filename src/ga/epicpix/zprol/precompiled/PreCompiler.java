@@ -28,25 +28,7 @@ public class PreCompiler {
                     String namespace = ts.get(1).asWordToken().getWord();
                     if(pre.namespace != null) throw new RuntimeException("Defined namespace for a file multiple times");
                     pre.namespace = namespace;
-                }else if(parsed.name.equals("FunctionEmpty")) {
-                    PreFunction func = new PreFunction();
-                    func.returnType = ts.get(0).asWordHolder().getWord();
-                    func.name = ts.get(1).asWordToken().getWord();
-                    int opens = 0;
-                    while(true) {
-                        Token t = tokens.next();
-                        func.code.add(t);
-
-                        if(t.getType() == TokenType.OPEN_SCOPE) {
-                            opens++;
-                        } else if(t.getType() == TokenType.CLOSE_SCOPE) {
-                            if(opens == 0) throw new InvalidOperationException("Function closed too much");
-                            opens--;
-                            if(opens == 0) break;
-                        } else if(opens == 0 && (t.getType() == TokenType.END_LINE || (t.getType() == TokenType.PARSED && t.asParsedToken().tokens.get(t.asParsedToken().tokens.size() - 1).getType() == TokenType.END_LINE))) break;
-                    }
-                    pre.functions.add(func);
-                }else if(parsed.name.equals("FunctionParameters")) {
+                }else if(parsed.name.equals("Function")) {
                     PreFunction func = new PreFunction();
                     func.returnType = ts.get(0).asWordHolder().getWord();
                     func.name = ts.get(1).asWordToken().getWord();

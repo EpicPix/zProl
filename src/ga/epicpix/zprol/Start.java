@@ -25,7 +25,10 @@ public class Start {
 
     public static void main(String[] args) throws UnknownTypeException, IOException {
         try {
+            long startLoad = System.currentTimeMillis();
             Language.load("language.zld");
+            long endLoad = System.currentTimeMillis();
+            System.out.printf("Took %d ms load language definition\n", endLoad - startLoad);
         }catch(ParserException e) {
             e.printError();
             System.exit(1);

@@ -17,6 +17,13 @@ public class LanguageTokenFragment {
         return new WordToken(got);
     }
 
+    public static String validateWord(String w) {
+        return switch(w) {
+            case ";", ",", "(", ")", "{", "}" -> null;
+            default -> w;
+        };
+    }
+
     private LanguageTokenFragment(Function<DataParser, Token[]> tokenReader, String debugName) {
         this.tokenReader = tokenReader;
         this.debugName = debugName;

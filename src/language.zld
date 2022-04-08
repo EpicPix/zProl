@@ -37,13 +37,9 @@ tok !InDefinition Namespace namespace @dword@;
 tok InDefinition Return return;
 tok InDefinition ReturnValue return @equation@;
 
-tok !InDefinition FunctionEmpty @type@ @word@()
-tok !InDefinition FunctionParameters @type@ @word@(^{@type@ @word@})
-tok !InDefinition FunctionParameters @type@ @word@(^+{@type@ @word@,}^{@type@ @word@})
+tok !InDefinition Function @type@ @word@(^?{^*{@type@ @word@,}^{@type@ @word@}})
 
-tok InDefinition Call @word@();
-tok InDefinition Call @word@(^{@equation@});
-tok InDefinition Call @word@(^+{@equation@,}^{@equation@});
+tok InDefinition Call @word@(^?{^*{@equation@,}^{@equation@}});
 
 context on Open push InDefinition
 context on Close pop InDefinition

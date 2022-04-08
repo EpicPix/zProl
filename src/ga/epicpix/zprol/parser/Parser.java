@@ -40,10 +40,10 @@ public class Parser {
         return builder.toString().trim();
     }
 
-    public static boolean check(ArrayList<Token> tTokens, DataParser parser, LanguageTokenFragment... t) {
+    public static boolean check(ArrayList<Token> tTokens, DataParser parser, int offset, LanguageTokenFragment... t) {
         ArrayList<Token> added = new ArrayList<>();
-        for(LanguageTokenFragment languageTokenFragment : t) {
-            var read = languageTokenFragment.getTokenReader().apply(parser);
+        for(int i = offset; i<t.length; i++) {
+            var read = t[i].getTokenReader().apply(parser);
             if (read == null) {
                 return false;
             }
@@ -108,30 +108,28 @@ public class Parser {
                 for(LanguageToken tok : Language.TOKENS) {
                     if(!LanguageToken.checkContextRequirement(tok.contextRequirement(), contexts)) continue;
                     parser.saveLocation();
-                    if(check(new ArrayList<>(), parser, tok.args()[0])) {
+                    if(tok.args()[0].getTokenReader().apply(parser) != null) {
                         validOptions.add(tok);
                     }
                     parser.loadLocation();
                 }
                 ArrayList<Token> preAdded = new ArrayList<>();
-                boolean lateStart = false;
+                int offset = 0;
                 var k = Language.KEYWORDS.get(word);
                 if(k != null) {
                     preAdded.add(new KeywordToken(k));
-                    lateStart = true;
+                    offset = 1;
                 }
                 for (LanguageToken tok : validOptions) {
                     parser.saveLocation();
-                    var used = tok.args();
-                    if (lateStart) {
+                    if(offset != 0) {
                         parser.nextWord();
-                        used = new LanguageTokenFragment[tok.args().length - 1];
-                        System.arraycopy(tok.args(), 1, used, 0, used.length);
                     }
                     ArrayList<Token> tTokens = new ArrayList<>(preAdded);
-                    if (check(tTokens, parser, used)) {
+                    if (check(tTokens, parser, offset, tok.args())) {
                         langToken = tok;
                         tokens.add(new ParsedToken(tok.name(), tTokens));
+                        parser.discardLocation();
                         break;
                     }
                     parser.loadLocation();

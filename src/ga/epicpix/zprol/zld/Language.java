@@ -39,8 +39,18 @@ public class Language {
         if(w.equals("^")) {
             String next = parser.nextTemplateWord(tokenCharacters);
             boolean multi = false;
+            boolean failable = false;
+            boolean m = false;
             if(next.equals("+")) {
                 multi = true;
+                next = parser.nextTemplateWord(tokenCharacters);
+            }
+            if(next.equals("*")) {
+                failable = true;
+                next = parser.nextTemplateWord(tokenCharacters);
+            }
+            if(next.equals("?")) {
+                m = true;
                 next = parser.nextTemplateWord(tokenCharacters);
             }
             if(next.equals("{")) {
@@ -49,8 +59,10 @@ public class Language {
                     fragmentsList.add(convert(next, parser));
                 }
                 LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
-                String debugName = "^" + (multi ? "+" : "") + "{" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "}";
+                String debugName = "^" + (multi ? "+" : "") + (failable ? "*" : "") + (m ? "?" : "") + "{" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "}";
                 final boolean isMulti = multi;
+                final boolean isFailable = failable || m;
+                final boolean isM = m;
                 return createMulti(p -> {
                     ArrayList<Token> tokens = new ArrayList<>();
                     boolean successful = false;
@@ -65,7 +77,7 @@ public class Language {
                                 if (successful) {
                                     break fLoop;
                                 } else {
-                                    return null;
+                                    return isFailable ? new Token[0] : null;
                                 }
                             }
                             Collections.addAll(iterTokens, r);
@@ -73,8 +85,10 @@ public class Language {
                         p.discardLocation();
                         successful = true;
                         tokens.addAll(iterTokens);
+                        if(isM) {
+                            break;
+                        }
                     } while(isMulti);
-
                     return tokens.toArray(new Token[0]);
                 }, debugName);
             }
@@ -88,20 +102,20 @@ public class Language {
             case "{" -> createExactFragment("{");
             case "}" -> createExactFragment("}");
             case "@word@" -> createSingle(p -> {
-                String x = p.nextWord();
-                return Language.KEYWORDS.get(x) == null ? new WordToken(x) : null;
+                String x = validateWord(p.nextWord());
+                return (x != null && Language.KEYWORDS.get(x) == null) ? new WordToken(x) : null;
             }, "<word>");
             case "@dword@" -> createSingle(p -> {
-                String x = p.nextDotWord();
-                return Language.KEYWORDS.get(x) == null ? new WordToken(x) : null;
+                String x = validateWord(p.nextDotWord());
+                return (x != null && Language.KEYWORDS.get(x) == null) ? new WordToken(x) : null;
             }, "<dword>");
             case "@lword@" -> createSingle(p -> {
-                String x = p.nextLongWord();
-                return Language.KEYWORDS.get(x) == null ? new WordToken(x) : null;
+                String x = validateWord(p.nextLongWord());
+                return (x != null && Language.KEYWORDS.get(x) == null) ? new WordToken(x) : null;
             }, "<lword>");
             case "@type@" -> createSingle(p -> {
-                String x = p.nextWord();
-                return Language.hasKeywordTag(x, "type", true) ? new WordToken(x) : null;
+                String x = validateWord(p.nextWord());
+                return (x != null && Language.hasKeywordTag(x, "type", true)) ? new WordToken(x) : null;
             }, "<type>");
             case "@equation@" -> createSingle(Parser::nextEquation, "<equation>");
             default -> createExactFragment(w);
