@@ -5,6 +5,7 @@ import ga.epicpix.zprol.exceptions.InvalidDataException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.Parser;
+import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
 import ga.epicpix.zprol.parser.tokens.WordToken;
@@ -41,6 +42,7 @@ public class Language {
             boolean multi = false;
             boolean failable = false;
             boolean m = false;
+            String name = null;
             if(next.equals("+")) {
                 multi = true;
                 next = parser.nextTemplateWord(tokenCharacters);
@@ -53,16 +55,21 @@ public class Language {
                 m = true;
                 next = parser.nextTemplateWord(tokenCharacters);
             }
+            if(next.equals("-")) {
+                name = parser.nextWord();
+                next = parser.nextTemplateWord(tokenCharacters);
+            }
             if(next.equals("{")) {
                 ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
                 while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
                     fragmentsList.add(convert(next, parser));
                 }
                 LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
-                String debugName = "^" + (multi ? "+" : "") + (failable ? "*" : "") + (m ? "?" : "") + "{" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "}";
+                String debugName = "^" + (multi ? "+" : "") + (failable ? "*" : "") + (m ? "?" : "") + (name != null ? "-" + name : "") + "{" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "}";
                 final boolean isMulti = multi;
                 final boolean isFailable = failable || m;
                 final boolean isM = m;
+                final String getName = name;
                 return createMulti(p -> {
                     ArrayList<Token> tokens = new ArrayList<>();
                     boolean successful = false;
@@ -84,7 +91,11 @@ public class Language {
                         }
                         p.discardLocation();
                         successful = true;
-                        tokens.addAll(iterTokens);
+                        if(getName == null) {
+                            tokens.addAll(iterTokens);
+                        }else {
+                            tokens.add(new NamedToken(getName, iterTokens.toArray(new Token[0])));
+                        }
                         if(isM) {
                             break;
                         }
@@ -95,12 +106,12 @@ public class Language {
         }
 
         return switch (w) {
-            case ";" -> createExactFragment(";");
-            case "," -> createExactFragment(",");
-            case "(" -> createExactFragment("(");
-            case ")" -> createExactFragment(")");
-            case "{" -> createExactFragment("{");
-            case "}" -> createExactFragment("}");
+            case ";" -> createExactFragmentType(";", () -> new Token(TokenType.END_LINE));
+            case "," -> createExactFragmentType(",", () -> new Token(TokenType.COMMA));
+            case "(" -> createExactFragmentType("(", () -> new Token(TokenType.OPEN));
+            case ")" -> createExactFragmentType(")", () -> new Token(TokenType.CLOSE));
+            case "{" -> createExactFragmentType("{", () -> new Token(TokenType.OPEN_SCOPE));
+            case "}" -> createExactFragmentType("}", () -> new Token(TokenType.CLOSE_SCOPE));
             case "@word@" -> createSingle(p -> {
                 String x = validateWord(p.nextWord());
                 return (x != null && Language.KEYWORDS.get(x) == null) ? new WordToken(x) : null;

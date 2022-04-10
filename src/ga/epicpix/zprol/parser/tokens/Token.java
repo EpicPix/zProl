@@ -22,6 +22,10 @@ public class Token {
         return (ParsedToken) this;
     }
 
+    public NamedToken asNamedToken() {
+        return (NamedToken) this;
+    }
+
     public WordHolder asWordHolder() {
         return (WordHolder) this;
     }

@@ -2,6 +2,7 @@ package ga.epicpix.zprol.precompiled;
 
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.exceptions.InvalidOperationException;
+import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.ParsedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
@@ -32,11 +33,11 @@ public class PreCompiler {
                     PreFunction func = new PreFunction();
                     func.returnType = ts.get(0).asWordHolder().getWord();
                     func.name = ts.get(1).asWordToken().getWord();
-                    int paramCount = (ts.size() - 3) / 3;
-                    for(int i = 0; i<paramCount; i++) {
+                    for(NamedToken namedToken : parsed.getTokensWithName("FunctionParameter")) {
+                        var paramTokens = namedToken.tokens;
                         PreParameter param = new PreParameter();
-                        param.type = ts.get(i * 3 + 3).asWordHolder().getWord();
-                        param.name = ts.get(i * 3 + 4).asWordToken().getWord();
+                        param.type = paramTokens[0].asWordHolder().getWord();
+                        param.name = paramTokens[1].asWordToken().getWord();
                         func.parameters.add(param);
                     }
                     int opens = 0;

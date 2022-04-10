@@ -4,6 +4,7 @@ import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.WordToken;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class LanguageTokenFragment {
 
@@ -27,6 +28,11 @@ public class LanguageTokenFragment {
     private LanguageTokenFragment(Function<DataParser, Token[]> tokenReader, String debugName) {
         this.tokenReader = tokenReader;
         this.debugName = debugName;
+    }
+
+    public static LanguageTokenFragment createExactFragmentType(String data, Supplier<Token> gen) {
+        final Token token = gen.get();
+        return new LanguageTokenFragment(p -> exactWordGenerator(data, p.nextWord()) != null ? new Token[] {token} : null, data);
     }
 
     public static LanguageTokenFragment createExactFragment(String data) {
