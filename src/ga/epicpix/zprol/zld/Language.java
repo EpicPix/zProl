@@ -23,6 +23,7 @@ public class Language {
 
     public static final HashMap<String, LanguageKeyword> KEYWORDS = new HashMap<>();
     public static final ArrayList<LanguageToken> TOKENS = new ArrayList<>();
+    public static final HashMap<String, LanguageToken> DEFINITIONS = new HashMap<>();
     public static final HashMap<String, PrimitiveType> TYPES = new HashMap<>();
 
     private static final char[] tagsCharacters = joinCharacters(nonSpecialCharacters, new char[] {','});
@@ -30,75 +31,84 @@ public class Language {
     private static final char[] tokenCharacters = joinCharacters(nonSpecialCharacters, new char[] {'@', '%'});
 
     private static LanguageTokenFragment convert(String w, DataParser parser) {
-        if(w.startsWith("\\"))
-            return createExactFragment(w.substring(1));
+        if(w.startsWith("\\")) {
+            w = w.substring(1);
+            if(!w.equals("{")) {
+                return createExactFragment(w.substring(1));
+            }
+        } else if(w.equals("{")) {
+            ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
+            String next;
+            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
+                fragmentsList.add(convert(next, parser));
+            }
+            LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
+            String debugName = "{" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "}";
+            return createMulti(p -> {
+                ArrayList<Token> tokens = new ArrayList<>();
+                boolean successful = false;
 
-        if(w.equals("^")) {
-            String next = parser.nextTemplateWord(tokenCharacters);
-            boolean multi = false;
-            boolean failable = false;
-            boolean m = false;
-            String name = null;
-            if(next.equals("+")) {
-                multi = true;
-                next = parser.nextTemplateWord(tokenCharacters);
-            }
-            if(next.equals("*")) {
-                failable = true;
-                next = parser.nextTemplateWord(tokenCharacters);
-            }
-            if(next.equals("?")) {
-                m = true;
-                next = parser.nextTemplateWord(tokenCharacters);
-            }
-            if(next.equals("-")) {
-                name = parser.nextWord();
-                next = parser.nextTemplateWord(tokenCharacters);
-            }
-            if(next.equals("{")) {
-                ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
-                while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
-                    fragmentsList.add(convert(next, parser));
-                }
-                LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
-                String debugName = "^" + (multi ? "+" : "") + (failable ? "*" : "") + (m ? "?" : "") + (name != null ? "-" + name : "") + "{" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "}";
-                final boolean isMulti = multi;
-                final boolean isFailable = failable || m;
-                final boolean isM = m;
-                final String getName = name;
-                return createMulti(p -> {
-                    ArrayList<Token> tokens = new ArrayList<>();
-                    boolean successful = false;
-
-                    fLoop: do {
-                        p.saveLocation();
-                        ArrayList<Token> iterTokens = new ArrayList<>();
-                        for (var frag : fragments) {
-                            var r = frag.getTokenReader().apply(p);
-                            if (r == null) {
-                                p.loadLocation();
-                                if (successful) {
-                                    break fLoop;
-                                } else {
-                                    return isFailable ? new Token[0] : null;
-                                }
+                fLoop: do {
+                    p.saveLocation();
+                    ArrayList<Token> iterTokens = new ArrayList<>();
+                    for (var frag : fragments) {
+                        var r = frag.getTokenReader().apply(p);
+                        if (r == null) {
+                            p.loadLocation();
+                            if (successful) {
+                                break fLoop;
+                            } else {
+                                return new Token[0];
                             }
-                            Collections.addAll(iterTokens, r);
                         }
-                        p.discardLocation();
-                        successful = true;
-                        if(getName == null) {
-                            tokens.addAll(iterTokens);
-                        }else {
-                            tokens.add(new NamedToken(getName, iterTokens.toArray(new Token[0])));
-                        }
-                        if(isM) {
-                            break;
-                        }
-                    } while(isMulti);
-                    return tokens.toArray(new Token[0]);
-                }, debugName);
+                        Collections.addAll(iterTokens, r);
+                    }
+                    p.discardLocation();
+                    successful = true;
+                    tokens.addAll(iterTokens);
+                } while(true);
+                return tokens.toArray(new Token[0]);
+            }, debugName);
+
+        }else if(w.equals("$")) {
+            String use = parser.nextTemplateWord(tokenCharacters);
+            return createMulti(p -> {
+                var def = DEFINITIONS.get(use);
+                p.saveLocation();
+                ArrayList<Token> iterTokens = new ArrayList<>();
+                for (var frag : def.args()) {
+                    var r = frag.getTokenReader().apply(p);
+                    if (r == null) {
+                        p.loadLocation();
+                        return null;
+                    }
+                    Collections.addAll(iterTokens, r);
+                }
+                p.discardLocation();
+                return new Token[] {new NamedToken(use, iterTokens.toArray(new Token[0]))};
+            }, "$" + use);
+        }else if(w.equals("[")) {
+            ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
+            String next;
+            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("]")) {
+                fragmentsList.add(convert(next, parser));
             }
+            LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
+            String debugName = "[" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "]";
+            return createMulti(p -> {
+                p.saveLocation();
+                ArrayList<Token> iterTokens = new ArrayList<>();
+                for (var frag : fragments) {
+                    var r = frag.getTokenReader().apply(p);
+                    if (r == null) {
+                        p.loadLocation();
+                        return new Token[0];
+                    }
+                    Collections.addAll(iterTokens, r);
+                }
+                p.discardLocation();
+                return iterTokens.toArray(new Token[0]);
+            }, debugName);
         }
 
         return switch (w) {
@@ -194,6 +204,13 @@ public class Language {
                     tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
                 }
                 TOKENS.add(new LanguageToken(name, tokens.toArray(new LanguageTokenFragment[0])));
+            } else if(d.equals("def")) {
+                ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();
+                String name = parser.nextWord();
+                while(!parser.checkNewLine() && parser.hasNext()) {
+                    tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
+                }
+                DEFINITIONS.put(name, new LanguageToken(name, tokens.toArray(new LanguageTokenFragment[0])));
             } else {
                 throw new ParserException("Unknown language file word: " + d, parser);
             }

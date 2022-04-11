@@ -33,12 +33,15 @@ public class PreCompiler {
                     PreFunction func = new PreFunction();
                     func.returnType = ts.get(0).asWordHolder().getWord();
                     func.name = ts.get(1).asWordToken().getWord();
-                    for(NamedToken namedToken : parsed.getTokensWithName("FunctionParameter")) {
-                        var paramTokens = namedToken.tokens;
-                        PreParameter param = new PreParameter();
-                        param.type = paramTokens[0].asWordHolder().getWord();
-                        param.name = paramTokens[1].asWordToken().getWord();
-                        func.parameters.add(param);
+                    var paramList = parsed.getTokenWithName("ParameterList");
+                    if(paramList != null) {
+                        for (NamedToken namedToken : paramList.getTokensWithName("Parameter")) {
+                            var paramTokens = namedToken.tokens;
+                            PreParameter param = new PreParameter();
+                            param.type = paramTokens[0].asWordHolder().getWord();
+                            param.name = paramTokens[1].asWordToken().getWord();
+                            func.parameters.add(param);
+                        }
                     }
                     int opens = 0;
                     while(true) {

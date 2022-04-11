@@ -25,6 +25,17 @@ public class ParsedToken extends Token {
         return t;
     }
 
+    public NamedToken getTokenWithName(String name) {
+        for(Token token : tokens) {
+            if(token instanceof NamedToken named) {
+                if(named.name.equals(name)) {
+                    return named;
+                }
+            }
+        }
+        return null;
+    }
+
     protected String getData() {
         return name + " - " +  tokens;
     }
