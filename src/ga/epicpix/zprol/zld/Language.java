@@ -1,7 +1,6 @@
 package ga.epicpix.zprol.zld;
 
 import ga.epicpix.zprol.compiled.PrimitiveType;
-import ga.epicpix.zprol.exceptions.InvalidDataException;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.Parser;
@@ -18,7 +17,6 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import static ga.epicpix.zprol.parser.DataParser.*;
-import static ga.epicpix.zprol.zld.LanguageContextEvent.ContextManipulationOperation;
 import static ga.epicpix.zprol.zld.LanguageTokenFragment.*;
 
 public class Language {
@@ -26,8 +24,6 @@ public class Language {
     public static final HashMap<String, LanguageKeyword> KEYWORDS = new HashMap<>();
     public static final ArrayList<LanguageToken> TOKENS = new ArrayList<>();
     public static final HashMap<String, PrimitiveType> TYPES = new HashMap<>();
-    public static final HashMap<String, LanguageToken> GHOST_TOKENS = new HashMap<>();
-    public static final ArrayList<LanguageContextEvent> CONTEXT_EVENTS = new ArrayList<>();
 
     private static final char[] tagsCharacters = joinCharacters(nonSpecialCharacters, new char[] {','});
     private static final char[] propertiesCharacters = joinCharacters(nonSpecialCharacters, new char[] {',', '='});
@@ -191,24 +187,13 @@ public class Language {
                 }
                 TYPES.put(name, new PrimitiveType(type, descriptor, name));
                 KEYWORDS.put(name, new LanguageKeyword(name, "type"));
-            } else if(d.equals("ghost")) {
-                String name = parser.nextWord();
-                String w = parser.nextWord();
-                GHOST_TOKENS.put(w, new LanguageToken("*", name, createExactFragment(w)));
             } else if(d.equals("tok")) {
                 ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();
-                String requirement = parser.nextLongWord();
                 String name = parser.nextWord();
-                while(!parser.checkNewLine()) {
+                while(!parser.checkNewLine() && parser.hasNext()) {
                     tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
                 }
-                TOKENS.add(new LanguageToken(requirement, name, tokens.toArray(new LanguageTokenFragment[0])));
-            } else if(d.equals("context")) {
-                if(!parser.nextWord().equals("on")) throw new ParserException("Unknown word after 'context' keyword", parser);
-                String on = parser.nextLongWord();
-                ContextManipulationOperation manipulation = ContextManipulationOperation.valueOf(parser.nextWord().toUpperCase());
-                String context = parser.nextLongWord();
-                CONTEXT_EVENTS.add(new LanguageContextEvent(on, manipulation, context));
+                TOKENS.add(new LanguageToken(name, tokens.toArray(new LanguageTokenFragment[0])));
             } else {
                 throw new ParserException("Unknown language file word: " + d, parser);
             }

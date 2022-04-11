@@ -11,9 +11,7 @@ import ga.epicpix.zprol.parser.tokens.ParsedToken;
 import ga.epicpix.zprol.parser.tokens.StringToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
-import ga.epicpix.zprol.parser.tokens.WordHolder;
 import ga.epicpix.zprol.parser.tokens.WordToken;
-import ga.epicpix.zprol.zld.LanguageContextEvent;
 import ga.epicpix.zprol.zld.LanguageToken;
 import ga.epicpix.zprol.zld.LanguageTokenFragment;
 
@@ -24,10 +22,6 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Stack;
-
-import static ga.epicpix.zprol.zld.LanguageContextEvent.ContextManipulationOperation;
-import static ga.epicpix.zprol.zld.LanguageContextEvent.ContextManipulationOperation.*;
 
 public class Parser {
 
@@ -84,29 +78,20 @@ public class Parser {
 
         DataParser parser = new DataParser(new File(fileName).getName(), Files.readAllLines(file.toPath()).toArray(new String[0]));
 
-        Stack<String> contexts = new Stack<>();
         ArrayList<Token> tokens = new ArrayList<>();
 
         String word;
         while((word = parser.seekWord()) != null) {
-            LanguageToken langToken = null;
             boolean skip = false;
-            parser.saveLocation();
-            try {
-                String w = parser.nextWord();
-                langToken = Language.GHOST_TOKENS.get(w);
-                Token tk = getToken(parser, w);
-                if (!(tk instanceof WordHolder) || langToken != null) {
-                    tokens.add(tk);
-                    parser.discardLocation();
-                    skip = true;
-                }
-            }catch(ParserException ignored) {}
-            if(!skip) {
-                parser.loadLocation();
+            if(word.equals("{")) {
+                parser.nextWord();
+                tokens.add(new Token(TokenType.OPEN_SCOPE));
+            }else if(word.equals("}")) {
+                parser.nextWord();
+                tokens.add(new Token(TokenType.CLOSE_SCOPE));
+            }else if(!skip) {
                 ArrayList<LanguageToken> validOptions = new ArrayList<>();
                 for(LanguageToken tok : Language.TOKENS) {
-                    if(!LanguageToken.checkContextRequirement(tok.contextRequirement(), contexts)) continue;
                     parser.saveLocation();
                     if(tok.args()[0].getTokenReader().apply(parser) != null) {
                         validOptions.add(tok);
@@ -120,6 +105,7 @@ public class Parser {
                     preAdded.add(new KeywordToken(k));
                     offset = 1;
                 }
+                LanguageToken langToken = null;
                 for (LanguageToken tok : validOptions) {
                     parser.saveLocation();
                     if(offset != 0) {
@@ -139,21 +125,6 @@ public class Parser {
                     String l = parser.nextWord();
                     for(int j = 0; j<expressions.length; j++) expressions[j] = "Expected " + getLanguageDefinition(validOptions.get(j), l);
                     throw new ParserException(expressions.length != 0 ? String.join("\n", expressions) : "Invalid expression", parser);
-                }
-            }
-
-            if(langToken != null) {
-                for (LanguageContextEvent event : Language.CONTEXT_EVENTS) {
-                    if (event.on().equals(langToken.name())) {
-                        ContextManipulationOperation manipulation = event.manipulation();
-                        if (manipulation == POP) {
-                            if (!contexts.pop().equals(event.context())) {
-                                throw new ParserException("Invalid context popped", parser);
-                            }
-                        } else if (manipulation == PUSH) {
-                            contexts.push(event.context());
-                        }
-                    }
                 }
             }
         }
