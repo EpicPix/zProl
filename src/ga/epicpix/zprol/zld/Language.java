@@ -12,6 +12,7 @@ import ga.epicpix.zprol.parser.tokens.WordToken;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.stream.Collectors;
@@ -23,7 +24,7 @@ public class Language {
 
     public static final HashMap<String, LanguageKeyword> KEYWORDS = new HashMap<>();
     public static final ArrayList<LanguageToken> TOKENS = new ArrayList<>();
-    public static final HashMap<String, LanguageToken> DEFINITIONS = new HashMap<>();
+    public static final HashMap<String, ArrayList<LanguageToken>> DEFINITIONS = new HashMap<>();
     public static final HashMap<String, PrimitiveType> TYPES = new HashMap<>();
 
     private static final char[] tagsCharacters = joinCharacters(nonSpecialCharacters, new char[] {','});
@@ -73,19 +74,23 @@ public class Language {
         }else if(w.equals("$")) {
             String use = parser.nextTemplateWord(tokenCharacters);
             return createMulti(p -> {
-                var def = DEFINITIONS.get(use);
-                p.saveLocation();
-                ArrayList<Token> iterTokens = new ArrayList<>();
-                for (var frag : def.args()) {
-                    var r = frag.getTokenReader().apply(p);
-                    if (r == null) {
-                        p.loadLocation();
-                        return null;
+                var defs = DEFINITIONS.get(use);
+                fLoop: for(LanguageToken def : defs) {
+                    p.saveLocation();
+                    ArrayList<Token> iterTokens = new ArrayList<>();
+                    for (var frag : def.args()) {
+                        var r = frag.getTokenReader().apply(p);
+                        if (r == null) {
+                            p.loadLocation();
+                            continue fLoop;
+                        }
+                        Collections.addAll(iterTokens, r);
                     }
-                    Collections.addAll(iterTokens, r);
+                    p.discardLocation();
+                    if(def.inline()) return iterTokens.toArray(new Token[0]);
+                    return new Token[]{new NamedToken(use, iterTokens.toArray(new Token[0]))};
                 }
-                p.discardLocation();
-                return new Token[] {new NamedToken(use, iterTokens.toArray(new Token[0]))};
+                return null;
             }, "$" + use);
         }else if(w.equals("[")) {
             ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
@@ -166,7 +171,7 @@ public class Language {
         while(parser.hasNext()) {
             String d = parser.nextWord();
             if(d.equals("keyword")) {
-                String[] tags = parser.nextTemplateWord(tagsCharacters).split("\\.");
+                String[] tags = parser.nextTemplateWord(tagsCharacters).split(",");
                 String name = parser.nextWord();
                 KEYWORDS.put(name, new LanguageKeyword(name, tags));
             } else if(d.equals("type")) {
@@ -200,17 +205,60 @@ public class Language {
             } else if(d.equals("tok")) {
                 ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();
                 String name = parser.nextWord();
-                while(!parser.checkNewLine() && parser.hasNext()) {
-                    tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
+                boolean checkWhitespace = false;
+                if(parser.seekWord().equals(":")) {
+                    parser.nextWord();
+                    checkWhitespace = true;
                 }
-                TOKENS.add(new LanguageToken(name, tokens.toArray(new LanguageTokenFragment[0])));
+                while(parser.hasNext()) {
+                    tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
+                    if(!checkWhitespace) {
+                        if(parser.checkNewLine()) {
+                            break;
+                        }
+                        continue;
+                    }
+                    if(parser.checkNewLine()) {
+                        if(parser.seekCharacter() != ' ') {
+                            break;
+                        }
+                        TOKENS.add(new LanguageToken(name, false, tokens.toArray(new LanguageTokenFragment[0])));
+                        tokens.clear();
+                    }
+                }
+                TOKENS.add(new LanguageToken(name, false, tokens.toArray(new LanguageTokenFragment[0])));
             } else if(d.equals("def")) {
                 ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();
+                boolean inline = false;
                 String name = parser.nextWord();
-                while(!parser.checkNewLine() && parser.hasNext()) {
-                    tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
+                if(name.equals("inline")) {
+                    name = parser.nextWord();
+                    inline = true;
                 }
-                DEFINITIONS.put(name, new LanguageToken(name, tokens.toArray(new LanguageTokenFragment[0])));
+                boolean checkWhitespace = false;
+                if(parser.seekWord().equals(":")) {
+                    parser.nextWord();
+                    checkWhitespace = true;
+                }
+                while(parser.hasNext()) {
+                    tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
+                    if(!checkWhitespace) {
+                        if(parser.checkNewLine()) {
+                            break;
+                        }
+                        continue;
+                    }
+                    if(parser.checkNewLine()) {
+                        if(parser.seekCharacter() != ' ') {
+                            break;
+                        }
+                        DEFINITIONS.putIfAbsent(name, new ArrayList<>());
+                        DEFINITIONS.get(name).add(new LanguageToken(name, inline, tokens.toArray(new LanguageTokenFragment[0])));
+                        tokens.clear();
+                    }
+                }
+                DEFINITIONS.putIfAbsent(name, new ArrayList<>());
+                DEFINITIONS.get(name).add(new LanguageToken(name, inline, tokens.toArray(new LanguageTokenFragment[0])));
             } else {
                 throw new ParserException("Unknown language file word: " + d, parser);
             }

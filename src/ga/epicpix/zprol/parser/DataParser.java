@@ -116,6 +116,10 @@ public class DataParser {
         return data.codePointAt(index) == '\n';
     }
 
+    public int seekCharacter() {
+        return data.codePointAt(index + 1);
+    }
+
     public void ignoreWhitespace() {
         while(index + 1 < data.length()) {
             if(!Character.isWhitespace(data.codePointAt(index)) && data.codePointAt(index) != '\n') {
@@ -193,6 +197,13 @@ public class DataParser {
     public String seekWord() {
         saveLocation();
         String str = nextWord();
+        loadLocation();
+        return str;
+    }
+
+    public String seekTemplatedWord(char[] allowedCharacters) {
+        saveLocation();
+        String str = nextTemplateWord(allowedCharacters);
         loadLocation();
         return str;
     }

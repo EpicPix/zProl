@@ -1,3 +1,3 @@
 package ga.epicpix.zprol.zld;
 
-public record LanguageToken(String name, LanguageTokenFragment... args) {}
+public record LanguageToken(String name, boolean inline, LanguageTokenFragment... args) {}

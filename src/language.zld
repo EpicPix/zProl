@@ -28,13 +28,26 @@ type ulong unsigned,size=8 uL
 
 type pointer unsigned,size=8,pointer P
 
-tok Using using @dword@ ;
-tok Namespace namespace @dword@ ;
+def inline Word @word@
+def inline Type @type@
+def inline DotWord @dword@
+def inline Equation @equation@
 
-tok Return return ;
-tok ReturnValue return @equation@ ;
+tok Using:
+  using $DotWord ;
 
-def Parameter @type@ @word@
-def ParameterList $Parameter {, $Parameter}
+tok Namespace:
+  namespace $DotWord ;
 
-tok Function @type@ @word@ ( [$ParameterList] )
+tok Return:
+  return ;
+  return $Equation ;
+
+def Parameter:
+  $Type $Word
+
+def ParameterList:
+  $Parameter {, $Parameter}
+
+tok Function:
+  $Type $Word ( [$ParameterList] )
