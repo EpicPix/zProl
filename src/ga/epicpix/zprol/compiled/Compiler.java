@@ -34,7 +34,7 @@ public class Compiler {
             if(token.getType() == TokenType.PARSED) {
                 ParsedToken parsed = (ParsedToken) token;
                 if("Return".equals(parsed.name)) {
-                    if(!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) throw new CompileException("Expected value in return");
+                    if((!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) && parsed.getTokenWithName("Equation") == null) throw new CompileException("Expected value in return");
                     storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
                     if(opens == 0) {
                         hasReturned = true;

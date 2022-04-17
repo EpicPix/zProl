@@ -31,7 +31,7 @@ type pointer unsigned,size=8,pointer P
 def inline Word @word@
 def inline Type @type@
 def inline DotWord @dword@
-def inline Equation @equation@
+def Equation @equation@
 
 tok Using:
   using $DotWord ;
