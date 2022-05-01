@@ -125,24 +125,6 @@ public class Parser {
 
     }
 
-    public static EquationToken nextEquation(DataParser parser) {
-        ArrayList<Token> tokens = new ArrayList<>();
-        Token current;
-        int open = 0;
-        while(true) {
-            SavedLocation loc = parser.getSaveLocation();
-            current = nextToken(parser);
-            if(current.getType() == TokenType.OPEN) open++;
-            if(!(current.getType() == TokenType.WORD || current.getType() == TokenType.OPERATOR || current.getType() == TokenType.NUMBER || current.getType() == TokenType.STRING || current.getType() == TokenType.ACCESSOR) && open <= 0) {
-                parser.loadLocation(loc);
-                break;
-            }
-            if(current.getType() == TokenType.CLOSE) open--;
-            tokens.add(current);
-        }
-        return new EquationToken(tokens);
-    }
-
     public static BigInteger getInteger(String str) {
         int radix = 10;
         if(str.startsWith("0x") || str.startsWith("0X")) {
@@ -154,7 +136,11 @@ public class Parser {
                 str = str.substring(1);
             }
         }
-        return new BigInteger(str, radix);
+        try {
+            return new BigInteger(str, radix);
+        }catch(NumberFormatException e) {
+            return null;
+        }
     }
 
     public static String generateAst(ArrayList<Token> tokens) {
@@ -185,12 +171,6 @@ public class Parser {
             builder.append("  token").append(index).append("[label=\"").append("operator \\\"").append(operator.operator).append("\\\"\"]\n");
         }else if (token instanceof NumberToken number) {
             builder.append("  token").append(index).append("[label=\"").append("number ").append(number.number).append("\"]\n");
-        }else if(token instanceof EquationToken equation) {
-            builder.append("  token").append(index).append("[label=\"").append(token.getType().name().toLowerCase()).append("\"]\n");
-            for(var t : equation.tokens) {
-                int num = writeTokenAst(t, builder, current);
-                builder.append("  token").append(index).append(" -> token").append(num).append("\n");
-            }
         }else if(token.getType() == TokenType.OPEN) {
             builder.append("  token").append(index).append("[label=\"(\"]\n");
         }else if(token.getType() == TokenType.CLOSE) {

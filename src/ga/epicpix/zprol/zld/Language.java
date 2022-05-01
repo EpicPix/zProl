@@ -4,10 +4,8 @@ import ga.epicpix.zprol.compiled.PrimitiveType;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.Parser;
-import ga.epicpix.zprol.parser.tokens.NamedToken;
-import ga.epicpix.zprol.parser.tokens.Token;
-import ga.epicpix.zprol.parser.tokens.TokenType;
-import ga.epicpix.zprol.parser.tokens.WordToken;
+import ga.epicpix.zprol.parser.ParserLocation;
+import ga.epicpix.zprol.parser.tokens.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +29,7 @@ public class Language {
 
     private static final char[] tagsCharacters = joinCharacters(nonSpecialCharacters, new char[] {','});
     private static final char[] propertiesCharacters = joinCharacters(nonSpecialCharacters, new char[] {',', '='});
-    private static final char[] tokenCharacters = joinCharacters(nonSpecialCharacters, new char[] {'@', '%', '=', '>'});
+    private static final char[] tokenCharacters = joinCharacters(nonSpecialCharacters, new char[] {'@', '%', '=', '>', ':'});
 
     private static LanguageTokenFragment convert(String w, DataParser parser) {
         if(w.startsWith("\\")) {
@@ -143,7 +141,10 @@ public class Language {
                 String x = validateWord(p.nextWord());
                 return (x != null && Language.hasKeywordTag(x, "type", true)) ? new WordToken(x) : null;
             }, "<type>");
-            case "@equation@" -> createSingle(Parser::nextEquation, "<equation>");
+            case "@number@" -> createSingle(p -> {
+                var num = Parser.getInteger(p.nextWord());
+                return num == null ? null : new NumberToken(num);
+            }, "<number>");
             default -> createExactFragment(w);
         };
 

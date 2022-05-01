@@ -11,16 +11,11 @@ import ga.epicpix.zprol.operation.Operation.OperationField;
 import ga.epicpix.zprol.operation.Operation.OperationNumber;
 import ga.epicpix.zprol.operation.Operation.OperationString;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
-import ga.epicpix.zprol.parser.tokens.EquationToken;
 import ga.epicpix.zprol.parser.tokens.NumberToken;
 import ga.epicpix.zprol.parser.tokens.OperatorToken;
 import ga.epicpix.zprol.parser.tokens.StringToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Stack;
 
@@ -39,7 +34,7 @@ public class OperationCompiler {
                 call = true;
                 if(tokens.seek().getType() != TokenType.CLOSE) {
                     ArrayList<Operation> op = new ArrayList<>();
-                    if(tokens.seek().getType() == TokenType.EQUATION) compile0(2, op, new Stack<>(), new SeekIterator<>(tokens.next().asEquationToken().tokens), data);
+                    if(tokens.seek().getType() == TokenType.NAMED) compile0(2, op, new Stack<>(), new SeekIterator<>(tokens.next().asNamedToken().tokens), data);
                     else compile0(2, op, new Stack<>(), tokens, data);
                     params.add(op.get(0));
                 }else {
@@ -48,7 +43,7 @@ public class OperationCompiler {
                 }
             }else if(token.getType() == TokenType.COMMA && call) {
                 ArrayList<Operation> op = new ArrayList<>();
-                if(tokens.seek().getType() == TokenType.EQUATION) compile0(2, op, new Stack<>(), new SeekIterator<>(tokens.next().asEquationToken().tokens), data);
+                if(tokens.seek().getType() == TokenType.NAMED) compile0(2, op, new Stack<>(), new SeekIterator<>(tokens.next().asNamedToken().tokens), data);
                 else compile0(2, op, new Stack<>(), tokens, data);
                 params.add(op.get(0));
             }else if(token.getType() == TokenType.COMMA) {
@@ -160,11 +155,7 @@ public class OperationCompiler {
         current = 0;
         ArrayList<Operation> operations = new ArrayList<>();
         Stack<ArrayList<Operation>> stackOperations = new Stack<>();
-        if(tokens.seek() instanceof EquationToken) {
-            compile0(0, operations, stackOperations, new SeekIterator<>(((EquationToken) tokens.next()).tokens), data);
-        }else {
-            compile0(0, operations, stackOperations, tokens, data);
-        }
+        compile0(0, operations, stackOperations, tokens, data);
         if(Boolean.parseBoolean(System.getProperty("DEBUG"))) {
             System.out.println(operations);
             printOperations(operations.get(0));

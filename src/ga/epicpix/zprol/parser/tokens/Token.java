@@ -14,10 +14,6 @@ public class Token {
         return (WordToken) this;
     }
 
-    public EquationToken asEquationToken() {
-        return (EquationToken) this;
-    }
-
     public NamedToken asNamedToken() {
         return (NamedToken) this;
     }
@@ -65,8 +61,6 @@ public class Token {
                 builder.append("}\n");
             }else if(token.getType() == TokenType.NUMBER) {
                 builder.append(((NumberToken) token).number);
-            }else if(token.getType() == TokenType.EQUATION) {
-                builder.append(toFriendlyString(((EquationToken) token).tokens));
             }else {
                 builder.append("(").append(token.getType().name().toLowerCase()).append(")");
             }

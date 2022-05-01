@@ -12,6 +12,10 @@ public class SeekIterator<T> implements ListIterator<T> {
         this.elements = (T[]) elements.toArray(new Object[0]);
     }
 
+    public SeekIterator(T[] elements) {
+        this.elements = elements;
+    }
+
     public boolean hasNext() {
         return index < elements.length;
     }

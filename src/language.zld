@@ -28,10 +28,20 @@ type ulong unsigned,size=8 uL
 
 type pointer unsigned,size=8,pointer P
 
+def saveable Expression:
+  $Number $ExpressionType
+
+def inline ExpressionType:
+  + [$Number] [$ExpressionType]
+  - [$Number] [$ExpressionType]
+  * [$Number] [$ExpressionType]
+  / [$Number] [$ExpressionType]
+  % [$Number] [$ExpressionType]
+
 def inline Word @word@
 def inline Type @type@
 def inline DotWord @dword@
-def Equation @equation@
+def inline Number @number@
 
 tok Using:
   using $DotWord ;
@@ -41,7 +51,7 @@ tok Namespace:
 
 def Return:
   return ;
-  return $Equation ;
+  return $Expression ;
 
 def Parameter:
   $Type $Word
