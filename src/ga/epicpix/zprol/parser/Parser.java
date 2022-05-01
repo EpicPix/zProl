@@ -1,17 +1,9 @@
 package ga.epicpix.zprol.parser;
 
+import ga.epicpix.zprol.parser.tokens.*;
 import ga.epicpix.zprol.zld.Language;
 import ga.epicpix.zprol.parser.DataParser.SavedLocation;
 import ga.epicpix.zprol.exceptions.ParserException;
-import ga.epicpix.zprol.parser.tokens.EquationToken;
-import ga.epicpix.zprol.parser.tokens.KeywordToken;
-import ga.epicpix.zprol.parser.tokens.NumberToken;
-import ga.epicpix.zprol.parser.tokens.OperatorToken;
-import ga.epicpix.zprol.parser.tokens.ParsedToken;
-import ga.epicpix.zprol.parser.tokens.StringToken;
-import ga.epicpix.zprol.parser.tokens.Token;
-import ga.epicpix.zprol.parser.tokens.TokenType;
-import ga.epicpix.zprol.parser.tokens.WordToken;
 import ga.epicpix.zprol.zld.LanguageToken;
 import ga.epicpix.zprol.zld.LanguageTokenFragment;
 
@@ -25,7 +17,7 @@ import java.util.Collections;
 
 public class Parser {
 
-    private static String getLanguageDefinition(LanguageToken f, String t) {
+    public static String getLanguageDefinition(LanguageToken f, String t) {
         StringBuilder builder = new StringBuilder(t + " ");
         var args = f.args();
         for(int i = 1; i<args.length; i++) {
@@ -34,9 +26,18 @@ public class Parser {
         return builder.toString().trim();
     }
 
-    public static boolean check(ArrayList<Token> tTokens, DataParser parser, LanguageTokenFragment... t) {
+    public static String getLanguageDefinition(LanguageToken f) {
+        StringBuilder builder = new StringBuilder();
+        var args = f.args();
+        for(LanguageTokenFragment arg : args) {
+            builder.append(arg.getDebugName()).append(" ");
+        }
+        return builder.toString().trim();
+    }
+
+    public static boolean check(ArrayList<Token> tTokens, DataParser parser, LanguageToken token) {
         ArrayList<Token> added = new ArrayList<>();
-        for(var fragment : t) {
+        for(var fragment : token.args()) {
             var read = fragment.getTokenReader().apply(parser);
             if (read == null) {
                 return false;
@@ -98,14 +99,13 @@ public class Parser {
                     }
                     parser.loadLocation();
                 }
-                ArrayList<Token> preAdded = new ArrayList<>();
                 LanguageToken langToken = null;
                 for (LanguageToken tok : validOptions) {
                     parser.saveLocation();
-                    ArrayList<Token> tTokens = new ArrayList<>(preAdded);
-                    if (check(tTokens, parser, tok.args())) {
+                    ArrayList<Token> tTokens = new ArrayList<>();
+                    if (check(tTokens, parser, tok)) {
                         langToken = tok;
-                        tokens.add(new ParsedToken(tok.name(), tTokens));
+                        tokens.add(new NamedToken(tok.name(), tTokens.toArray(new Token[0])));
                         parser.discardLocation();
                         break;
                     }

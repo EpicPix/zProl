@@ -1,13 +1,11 @@
 package ga.epicpix.zprol.precompiled;
 
 import ga.epicpix.zprol.SeekIterator;
-import ga.epicpix.zprol.exceptions.InvalidOperationException;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
-import ga.epicpix.zprol.parser.tokens.ParsedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
 public class PreCompiler {
 
@@ -19,22 +17,22 @@ public class PreCompiler {
         boolean usedOther = false;
         while(tokens.hasNext()) {
             Token token = tokens.next();
-            if(!(token.getType() == TokenType.PARSED && ((ParsedToken) token).name.equals("Namespace"))) usedOther = true;
-            if(token.getType() == TokenType.PARSED) {
-                ParsedToken parsed = (ParsedToken) token;
-                ArrayList<Token> ts = parsed.tokens;
-                if(parsed.name.equals("Using")) {
-                    pre.using.add(ts.get(1).asWordToken().getWord());
-                }else if(parsed.name.equals("Namespace")) {
+            if(!(token.getType() == TokenType.NAMED && token.asNamedToken().name.equals("Namespace"))) usedOther = true;
+            if(token.getType() == TokenType.NAMED) {
+                var named = token.asNamedToken();
+                var ts = named.tokens;
+                if(named.name.equals("Using")) {
+                    pre.using.add(ts[1].asWordToken().getWord());
+                }else if(named.name.equals("Namespace")) {
                     if(usedOther) throw new RuntimeException("Namespace not defined at the top of the file");
-                    String namespace = ts.get(1).asWordToken().getWord();
+                    String namespace = ts[1].asWordToken().getWord();
                     if(pre.namespace != null) throw new RuntimeException("Defined namespace for a file multiple times");
                     pre.namespace = namespace;
-                }else if(parsed.name.equals("Function")) {
+                }else if(named.name.equals("Function")) {
                     PreFunction func = new PreFunction();
-                    func.returnType = ts.get(1).asWordHolder().getWord();
-                    func.name = ts.get(2).asWordToken().getWord();
-                    var paramList = parsed.getTokenWithName("ParameterList");
+                    func.returnType = ts[1].asWordHolder().getWord();
+                    func.name = ts[2].asWordToken().getWord();
+                    var paramList = named.getTokenWithName("ParameterList");
                     if(paramList != null) {
                         for (NamedToken namedToken : paramList.getTokensWithName("Parameter")) {
                             var paramTokens = namedToken.tokens;
@@ -44,22 +42,10 @@ public class PreCompiler {
                             func.parameters.add(param);
                         }
                     }
-                    int opens = 0;
-                    while(true) {
-                        Token t = tokens.next();
-                        func.code.add(t);
-
-                        if(t.getType() == TokenType.OPEN_SCOPE) {
-                            opens++;
-                        } else if(t.getType() == TokenType.CLOSE_SCOPE) {
-                            if(opens == 0) throw new InvalidOperationException("Function closed too much");
-                            opens--;
-                            if(opens == 0) break;
-                        } else if(opens == 0 && t.getType() == TokenType.PARSED) break;
-                    }
+                    for(var a : named.getTokenWithName("Code").getTokensWithName("Statement")) func.code.addAll(List.of(a.tokens));
                     pre.functions.add(func);
                 }else {
-                    System.out.println("token: " + parsed);
+                    System.out.println("token: " + named);
                 }
             }else {
                 System.out.println("token: " + token);

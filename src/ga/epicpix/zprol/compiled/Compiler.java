@@ -6,6 +6,7 @@ import ga.epicpix.zprol.exceptions.CompileException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UndefinedOperationException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.ParsedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
@@ -14,6 +15,7 @@ import ga.epicpix.zprol.precompiled.PreFunction;
 import ga.epicpix.zprol.precompiled.PreParameter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static ga.epicpix.zprol.StaticImports.*;
 
@@ -31,17 +33,17 @@ public class Compiler {
         Token token;
         while(tokens.hasNext()) {
             token = tokens.next();
-            if(token.getType() == TokenType.PARSED) {
-                ParsedToken parsed = (ParsedToken) token;
-                if("Return".equals(parsed.name)) {
-                    if((!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) && parsed.getTokenWithName("Equation") == null) throw new CompileException("Expected value in return");
+            if(token.getType() == TokenType.NAMED) {
+                var named = (NamedToken) token;
+                if("Return".equals(named.name)) {
+                    if((!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) && named.getTokenWithName("Equation") == null) throw new CompileException("Expected value in return");
                     storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
                     if(opens == 0) {
                         hasReturned = true;
                         break;
                     }
                 } else {
-                    throw new NotImplementedException("Not implemented language feature: " + parsed.name + " / " + parsed.tokens);
+                    throw new NotImplementedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens));
                 }
             }else {
                 if(token.getType() == TokenType.OPEN_SCOPE) {
