@@ -22,6 +22,8 @@ import static ga.epicpix.zprol.zld.LanguageTokenFragment.*;
 
 public class Language {
 
+    private static final Token[] EMPTY_TOKENS = new Token[0];
+
     public static final HashMap<String, LanguageKeyword> KEYWORDS = new HashMap<>();
     public static final ArrayList<LanguageToken> TOKENS = new ArrayList<>();
     public static final HashMap<String, ArrayList<LanguageToken>> DEFINITIONS = new HashMap<>();
@@ -59,7 +61,7 @@ public class Language {
                             if (successful) {
                                 break fLoop;
                             } else {
-                                return new Token[0];
+                                return EMPTY_TOKENS;
                             }
                         }
                         Collections.addAll(iterTokens, r);
@@ -68,7 +70,7 @@ public class Language {
                     successful = true;
                     tokens.addAll(iterTokens);
                 } while(true);
-                return tokens.toArray(new Token[0]);
+                return tokens.toArray(EMPTY_TOKENS);
             }, debugName);
 
         }else if(w.equals("$")) {
@@ -87,8 +89,8 @@ public class Language {
                         Collections.addAll(iterTokens, r);
                     }
                     p.discardLocation();
-                    if(def.inline()) return iterTokens.toArray(new Token[0]);
-                    return new Token[]{new NamedToken(use, iterTokens.toArray(new Token[0]))};
+                    if(def.inline()) return iterTokens.toArray(EMPTY_TOKENS);
+                    return new Token[]{new NamedToken(use, iterTokens.toArray(EMPTY_TOKENS))};
                 }
                 return null;
             }, "$" + use);
@@ -107,12 +109,12 @@ public class Language {
                     var r = frag.getTokenReader().apply(p);
                     if (r == null) {
                         p.loadLocation();
-                        return new Token[0];
+                        return EMPTY_TOKENS;
                     }
                     Collections.addAll(iterTokens, r);
                 }
                 p.discardLocation();
-                return iterTokens.toArray(new Token[0]);
+                return iterTokens.toArray(EMPTY_TOKENS);
             }, debugName);
         }
 

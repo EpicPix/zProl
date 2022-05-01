@@ -7,6 +7,7 @@ import ga.epicpix.zprol.parser.tokens.ParsedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class PreCompiler {
 
@@ -31,8 +32,8 @@ public class PreCompiler {
                     pre.namespace = namespace;
                 }else if(parsed.name.equals("Function")) {
                     PreFunction func = new PreFunction();
-                    func.returnType = ts.get(0).asWordHolder().getWord();
-                    func.name = ts.get(1).asWordToken().getWord();
+                    func.returnType = ts.get(1).asWordHolder().getWord();
+                    func.name = ts.get(2).asWordToken().getWord();
                     var paramList = parsed.getTokenWithName("ParameterList");
                     if(paramList != null) {
                         for (NamedToken namedToken : paramList.getTokensWithName("Parameter")) {

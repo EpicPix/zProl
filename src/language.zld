@@ -49,5 +49,11 @@ def Parameter:
 def ParameterList:
   $Parameter {, $Parameter}
 
+def inline FunctionModifier:
+  external
+
+def FunctionModifiers:
+  { $FunctionModifier }
+
 tok Function:
-  $Type $Word ( [$ParameterList] )
+  $FunctionModifiers $Type $Word ( [$ParameterList] )

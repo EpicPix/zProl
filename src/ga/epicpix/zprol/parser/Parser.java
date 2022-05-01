@@ -34,10 +34,10 @@ public class Parser {
         return builder.toString().trim();
     }
 
-    public static boolean check(ArrayList<Token> tTokens, DataParser parser, int offset, LanguageTokenFragment... t) {
+    public static boolean check(ArrayList<Token> tTokens, DataParser parser, LanguageTokenFragment... t) {
         ArrayList<Token> added = new ArrayList<>();
-        for(int i = offset; i<t.length; i++) {
-            var read = t[i].getTokenReader().apply(parser);
+        for(var fragment : t) {
+            var read = fragment.getTokenReader().apply(parser);
             if (read == null) {
                 return false;
             }
@@ -99,20 +99,11 @@ public class Parser {
                     parser.loadLocation();
                 }
                 ArrayList<Token> preAdded = new ArrayList<>();
-                int offset = 0;
-                var k = Language.KEYWORDS.get(word);
-                if(k != null) {
-                    preAdded.add(new KeywordToken(k));
-                    offset = 1;
-                }
                 LanguageToken langToken = null;
                 for (LanguageToken tok : validOptions) {
                     parser.saveLocation();
-                    if(offset != 0) {
-                        parser.nextWord();
-                    }
                     ArrayList<Token> tTokens = new ArrayList<>(preAdded);
-                    if (check(tTokens, parser, offset, tok.args())) {
+                    if (check(tTokens, parser, tok.args())) {
                         langToken = tok;
                         tokens.add(new ParsedToken(tok.name(), tTokens));
                         parser.discardLocation();
