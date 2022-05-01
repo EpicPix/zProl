@@ -78,10 +78,10 @@ public class Language {
                     p.saveLocation();
                     ArrayList<Token> iterTokens = new ArrayList<>();
                     for (var frag : def.args()) {
+                        p.ignoreWhitespace();
                         var currentPos = p.getLocation();
                         var r = frag.getTokenReader().apply(p);
                         if (r == null) {
-                            p.ignoreWhitespace();
                             if(!currentPos.equals(p.getLocation()) && def.saveable()) {
                                 throw new ParserException("Expected " + frag.getDebugName(), p);
                             }
