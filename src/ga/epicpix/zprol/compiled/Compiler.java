@@ -5,6 +5,9 @@ import ga.epicpix.zprol.compiled.bytecode.IBytecodeStorage;
 import ga.epicpix.zprol.exceptions.CompileException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.operation.OperationGenerator;
+import ga.epicpix.zprol.operation.OperationNumber;
+import ga.epicpix.zprol.operation.OperationOperator;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
@@ -34,8 +37,18 @@ public class Compiler {
             if(token.getType() == TokenType.NAMED) {
                 var named = (NamedToken) token;
                 if("Return".equals(named.name)) {
-                    if((!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) && named.getTokenWithName("Equation") == null) throw new CompileException("Expected value in return");
-                    storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
+                    if(!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) {
+                        if(named.getTokenWithName("Expression") == null) {
+                            throw new CompileException("Function is not void, expected a return value");
+                        }
+                        generateInstructionsFromEquation(named.getTokenWithName("Expression").tokens, sig.returnType(), data, localsManager, storage);
+                    }
+                    if(sig.returnType().isBuiltInType() && sig.returnType().getSize() == 0) {
+                        if(named.getTokenWithName("Expression") != null) {
+                            throw new CompileException("Function is void, expected no value");
+                        }
+                    }
+                    storage.pushInstruction(getConstructedSizeInstruction(sig.returnType().getSize(), "return"));
                     if(opens == 0) {
                         hasReturned = true;
                         break;
@@ -66,6 +79,41 @@ public class Compiler {
         }
         storage.setLocalsSize(localsManager.getLocalVariablesSize());
         return storage;
+    }
+
+    public static void generateInstructionsFromEquation(Token[] equation, PrimitiveType expectedType, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode) {
+        var operations = OperationGenerator.getOperations(new SeekIterator<>(equation));
+        for(var operation : operations) {
+            if(operation instanceof OperationNumber number) {
+                bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "push", number.number));
+            }else if(operation instanceof OperationOperator operator) {
+                String op = operator.operator.operator();
+                switch (op) {
+                    case "+":
+                        bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "add"));
+                        break;
+                    case "-":
+                        bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "sub"));
+                        break;
+                    case "*":
+                        if (expectedType.isUnsigned()) {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "mulu"));
+                        } else {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "mul"));
+                        }
+                        break;
+                    case "/":
+                        if (expectedType.isUnsigned()) {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "divu"));
+                        } else {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "div"));
+                        }
+                        break;
+                    default:
+                        throw new NotImplementedException("Unknown operator " + op);
+                }
+            }
+        }
     }
 
     public static void compileFunction(CompiledData data, PreFunction function) throws UnknownTypeException {

@@ -14,6 +14,7 @@ public interface IBytecodeInstruction extends IConstantPoolPreparable {
 
     public int getId();
     public String getName();
+    public Object[] getData();
     public byte[] write(ConstantPool pool) throws IOException;
 
     public default void write(DataOutput out, ConstantPool pool) throws IOException {

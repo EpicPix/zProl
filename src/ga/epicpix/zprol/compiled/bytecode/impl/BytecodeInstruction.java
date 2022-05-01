@@ -24,6 +24,10 @@ record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implemen
         return data.name();
     }
 
+    public Object[] getData() {
+        return args;
+    }
+
     public void prepareConstantPool(ConstantPool pool) {
         var values = data.values();
         for(int i = 0; i<values.length; i++) {

@@ -28,6 +28,10 @@ public class PrimitiveType extends Type {
         return (id & 0x8000) == 0x8000;
     }
 
+    public boolean isUnsigned() {
+        return (id & 0x0010) == 0x0010;
+    }
+
     public int getSize() {
         if(isBuiltInType()) {
             return (int) Math.pow(2, id & 0x000f) / 2;

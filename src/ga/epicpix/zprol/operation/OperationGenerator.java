@@ -60,8 +60,6 @@ public class OperationGenerator {
             operations.add(new OperationOperator(cachedOperator.pop()));
         }
 
-        System.out.println(operations.stream().map(Object::toString).collect(Collectors.joining(" ")));
-
         return operations;
     }
 

@@ -28,7 +28,12 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     private static final HashMap<String, InstructionGenerator> instructionGenerators = new HashMap<>();
 
     static {
-        instructionGenerators.put("vreturn", (i, s) -> "ret\n");
+        instructionGenerators.put("vreturn", (i, s) -> "  ret\n");
+        instructionGenerators.put("breturn", (i, s) -> "  pop ax\n  ret\n");
+        instructionGenerators.put("bpush", (i, s) -> "  push word " + i.getData()[0] + "\n");
+        instructionGenerators.put("badd", (i, s) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
+        instructionGenerators.put("bsub", (i, s) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
+        instructionGenerators.put("bmul", (i, s) -> "  pop cx\n  pop dx\n  imul cx, dx\n  push cx\n");
     }
 
     private interface InstructionGenerator {
