@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.parser;
 
+import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.parser.tokens.*;
 import ga.epicpix.zprol.zld.Language;
 import ga.epicpix.zprol.parser.DataParser.SavedLocation;
@@ -14,6 +15,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Parser {
 
@@ -153,6 +155,60 @@ public class Parser {
             }
         }
         return new BigInteger(str, radix);
+    }
+
+    public static String generateAst(ArrayList<Token> tokens) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("digraph {\n");
+        AtomicInteger current = new AtomicInteger();
+        int root = current.getAndIncrement();
+        builder.append("  token").append(root).append("[label=\"<root>\"]\n");
+        for(var t : tokens) {
+            int num = writeTokenAst(t, builder, current);
+            builder.append("  token").append(root).append(" -> token").append(num).append("\n");
+        }
+        builder.append("}");
+        return builder.toString();
+    }
+
+    private static int writeTokenAst(Token token, StringBuilder builder, AtomicInteger current) {
+        int index = current.getAndIncrement();
+        if (token instanceof NamedToken named) {
+            builder.append("  token").append(index).append("[label=\"").append(token.getType().name().toLowerCase()).append(" (").append(named.name).append(")\"]\n");
+            for(var t : named.tokens) {
+                int num = writeTokenAst(t, builder, current);
+                builder.append("  token").append(index).append(" -> token").append(num).append("\n");
+            }
+        }else if (token instanceof WordHolder word) {
+            builder.append("  token").append(index).append("[label=\"").append(token.getType().name().toLowerCase()).append(" \\\"").append(word.getWord()).append("\\\"\"]\n");
+        }else if (token instanceof OperatorToken operator) {
+            builder.append("  token").append(index).append("[label=\"").append("operator \\\"").append(operator.operator).append("\\\"\"]\n");
+        }else if (token instanceof NumberToken number) {
+            builder.append("  token").append(index).append("[label=\"").append("number ").append(number.number).append("\"]\n");
+        }else if(token instanceof EquationToken equation) {
+            builder.append("  token").append(index).append("[label=\"").append(token.getType().name().toLowerCase()).append("\"]\n");
+            for(var t : equation.tokens) {
+                int num = writeTokenAst(t, builder, current);
+                builder.append("  token").append(index).append(" -> token").append(num).append("\n");
+            }
+        }else if(token.getType() == TokenType.OPEN) {
+            builder.append("  token").append(index).append("[label=\"(\"]\n");
+        }else if(token.getType() == TokenType.CLOSE) {
+            builder.append("  token").append(index).append("[label=\")\"]\n");
+        }else if(token.getType() == TokenType.OPEN_SCOPE) {
+            builder.append("  token").append(index).append("[label=\"{\"]\n");
+        }else if(token.getType() == TokenType.CLOSE_SCOPE) {
+            builder.append("  token").append(index).append("[label=\"}\"]\n");
+        }else if(token.getType() == TokenType.END_LINE) {
+            builder.append("  token").append(index).append("[label=\";\"]\n");
+        }else if(token.getType() == TokenType.ACCESSOR) {
+            builder.append("  token").append(index).append("[label=\".\"]\n");
+        }else if(token.getType() == TokenType.COMMA) {
+            builder.append("  token").append(index).append("[label=\",\"]\n");
+        }else {
+            builder.append("  token").append(index).append("[label=\"").append(token.getType().name().toLowerCase()).append("\"]\n");
+        }
+        return index;
     }
 
 }

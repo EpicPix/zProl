@@ -40,7 +40,8 @@ tok Namespace:
   namespace $DotWord ;
 
 def Return:
-  return [$Equation] ;
+  return ;
+  return $Equation ;
 
 def Parameter:
   $Type $Word

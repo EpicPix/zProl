@@ -14,6 +14,7 @@ import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.zld.Language;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,11 +114,21 @@ public class Start {
             if(load) {
                 throw new NotImplementedException("Cannot load compiled files yet!");
             }else {
+                String normalName = file.substring(0, file.lastIndexOf('.') == -1 ? file.length() : file.lastIndexOf('.'));
                 try {
                     long startToken = System.currentTimeMillis();
                     ArrayList<Token> tokens = Parser.tokenize(file);
                     long endToken = System.currentTimeMillis();
                     System.out.printf("[%s] Took %d ms to tokenize\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
+
+                    if(Boolean.parseBoolean(System.getProperty("PARSER_AST"))) {
+                        long startAst = System.currentTimeMillis();
+                        DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".dot"));
+                        out.write(Parser.generateAst(tokens).getBytes(StandardCharsets.UTF_8));
+                        out.close();
+                        long endAst = System.currentTimeMillis();
+                        System.out.printf("[%s] Took %d ms to save parser ast\n", file.substring(file.lastIndexOf('/') + 1), endAst - startAst);
+                    }
 
                     long startPreCompile = System.currentTimeMillis();
                     PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tokens);
