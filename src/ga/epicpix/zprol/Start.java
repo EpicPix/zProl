@@ -117,7 +117,7 @@ public class Start {
                 String normalName = file.substring(0, file.lastIndexOf('.') == -1 ? file.length() : file.lastIndexOf('.'));
                 try {
                     long startToken = System.currentTimeMillis();
-                    ArrayList<Token> tokens = Parser.tokenize(file);
+                    ArrayList<Token> tokens = Parser.tokenize(new File(file));
                     long endToken = System.currentTimeMillis();
                     System.out.printf("[%s] Took %d ms to tokenize\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 

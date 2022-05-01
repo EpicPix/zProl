@@ -1,5 +1,15 @@
 // Definitions of stuff in this language
 
+// Operators
+operator 0 >>
+operator 0 <<
+operator 1 %
+operator 1 +
+operator 1 -
+operator 2 *
+operator 2 /
+operator 2 %
+
 // Keywords
 keyword definition using
 keyword definition namespace
@@ -31,17 +41,18 @@ type pointer unsigned,size=8,pointer P
 def saveable Expression:
   $Number $ExpressionType
 
+def saveable ExpressionParenthesis:
+  ( $Number $ExpressionType )
+
 def inline ExpressionType:
-  + [$Number] [$ExpressionType]
-  - [$Number] [$ExpressionType]
-  * [$Number] [$ExpressionType]
-  / [$Number] [$ExpressionType]
-  % [$Number] [$ExpressionType]
+  $Operator $Number [$ExpressionType]
+  $Operator $ExpressionParenthesis [$ExpressionType]
 
 def inline Word @word@
 def inline Type @type@
 def inline DotWord @dword@
 def inline Number @number@
+def inline Operator @operator@
 
 tok Using:
   using $DotWord ;

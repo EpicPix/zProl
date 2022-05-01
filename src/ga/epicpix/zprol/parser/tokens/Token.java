@@ -22,6 +22,10 @@ public class Token {
         return (WordHolder) this;
     }
 
+    public OperatorToken asOperatorToken() {
+        return (OperatorToken) this;
+    }
+
     public static String toFriendlyString(ArrayList<Token> tokens) {
         StringBuilder builder = new StringBuilder();
         int indent = 0;

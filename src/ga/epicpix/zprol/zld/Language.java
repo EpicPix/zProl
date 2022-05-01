@@ -4,7 +4,6 @@ import ga.epicpix.zprol.compiled.PrimitiveType;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.Parser;
-import ga.epicpix.zprol.parser.ParserLocation;
 import ga.epicpix.zprol.parser.tokens.*;
 
 import java.io.IOException;
@@ -15,7 +14,6 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import static ga.epicpix.zprol.parser.DataParser.*;
-import static ga.epicpix.zprol.parser.Parser.getLanguageDefinition;
 import static ga.epicpix.zprol.zld.LanguageTokenFragment.*;
 
 public class Language {
@@ -26,10 +24,12 @@ public class Language {
     public static final ArrayList<LanguageToken> TOKENS = new ArrayList<>();
     public static final HashMap<String, ArrayList<LanguageToken>> DEFINITIONS = new HashMap<>();
     public static final HashMap<String, PrimitiveType> TYPES = new HashMap<>();
+    public static final HashMap<String, LanguageOperator> OPERATORS = new HashMap<>();
 
     private static final char[] tagsCharacters = joinCharacters(nonSpecialCharacters, new char[] {','});
     private static final char[] propertiesCharacters = joinCharacters(nonSpecialCharacters, new char[] {',', '='});
     private static final char[] tokenCharacters = joinCharacters(nonSpecialCharacters, new char[] {'@', '%', '=', '>', ':'});
+    private static final char[] numberCharacters = genCharacters('0', '9');
 
     private static LanguageTokenFragment convert(String w, DataParser parser) {
         if(w.startsWith("\\")) {
@@ -145,6 +145,10 @@ public class Language {
                 var num = Parser.getInteger(p.nextWord());
                 return num == null ? null : new NumberToken(num);
             }, "<number>");
+            case "@operator@" -> createSingle(p -> {
+                var op = p.nextWord();
+                return OPERATORS.get(op) != null ? new OperatorToken(OPERATORS.get(op)) : null;
+            }, "<operator>");
             default -> createExactFragment(w);
         };
 
@@ -175,7 +179,11 @@ public class Language {
         DataParser parser = new DataParser(fileName, data.toString().split("(\r|\n|\r\n|\n\r)"));
         while(parser.hasNext()) {
             String d = parser.nextWord();
-            if(d.equals("keyword")) {
+            if(d.equals("operator")) {
+                int precedence = Integer.parseInt(parser.nextTemplateWord(numberCharacters));
+                String operator = parser.nextWord();
+                OPERATORS.put(operator, new LanguageOperator(operator, precedence));
+            }else if(d.equals("keyword")) {
                 String[] tags = parser.nextTemplateWord(tagsCharacters).split(",");
                 String name = parser.nextWord();
                 KEYWORDS.put(name, new LanguageKeyword(name, tags));

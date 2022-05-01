@@ -50,36 +50,12 @@ public class Parser {
         return true;
     }
 
-    public static Token nextToken(DataParser parser) {
-        return getToken(parser, parser.nextWord());
+    public static ArrayList<Token> tokenize(File file) throws IOException {
+        return tokenize(file.getName(), Files.readAllLines(file.toPath()).toArray(new String[0]));
     }
 
-    public static Token getToken(DataParser parser, String word) {
-        if(Language.KEYWORDS.get(word) != null) throw new ParserException("Keywords not allowed here", parser);
-        else if(DataParser.matchesCharacters(DataParser.operatorCharacters, word)) return new OperatorToken(word);
-        else if(word.equals(";")) return new Token(TokenType.END_LINE);
-        else if(word.equals("(")) return new Token(TokenType.OPEN);
-        else if(word.equals(")")) return new Token(TokenType.CLOSE);
-        else if(word.equals(",")) return new Token(TokenType.COMMA);
-        else if(word.equals(".")) return new Token(TokenType.ACCESSOR);
-        else if(word.equals("\"")) return new StringToken(parser.nextStringStarted());
-        else if(word.equals("{")) return new Token(TokenType.OPEN_SCOPE);
-        else if(word.equals("}")) return new Token(TokenType.CLOSE_SCOPE);
-
-        try {
-            return new NumberToken(getInteger(word));
-        } catch(NumberFormatException ignored) {}
-
-        return new WordToken(word);
-    }
-
-    public static ArrayList<Token> tokenize(String fileName) throws IOException {
-        File file = new File(fileName);
-        if(!file.exists()) {
-            throw new FileNotFoundException(fileName);
-        }
-
-        DataParser parser = new DataParser(new File(fileName).getName(), Files.readAllLines(file.toPath()).toArray(new String[0]));
+    public static ArrayList<Token> tokenize(String fileName, String[] lines) {
+        DataParser parser = new DataParser(fileName, lines);
 
         ArrayList<Token> tokens = new ArrayList<>();
 
