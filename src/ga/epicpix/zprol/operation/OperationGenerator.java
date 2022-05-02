@@ -67,6 +67,8 @@ public class OperationGenerator {
                     operations.add(new OperationCall(name, callOp));
                 }else if(named.name.equals("Identifier")) {
                     operations.add(new OperationField(named.tokens[0].asWordToken().getWord()));
+                }else if(named.name.equals("String")) {
+                    operations.add(new OperationString(named.getSingleTokenWithName("StringChars").asWordToken().getWord()));
                 }else {
                     throw new NotImplementedException("Not implemented named token in expression '" + named.name + "' " + Arrays.toString(named.tokens));
                 }

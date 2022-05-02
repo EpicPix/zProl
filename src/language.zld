@@ -53,9 +53,12 @@ def inline ExpressionCallables:
   $ExpressionParenthesis
   $FunctionCall
   $Identifier
+  $String
 
 def chars Identifier [$Whitespace] <a-zA-Z_> { <a-zA-Z0-9_> }
 def chars clean Whitespace < \t\n> { < \t\n> }
+def chars StringChars <^\n"> { <^\n"> }
+def String " $StringChars "
 def inline DotWord @dword@
 def inline Number @number@
 def inline Operator @operator@

@@ -125,6 +125,7 @@ public class Language {
             }
             SeekIterator<Integer> characters = new SeekIterator<>(charactersList);
             ArrayList<int[]> cs = new ArrayList<>();
+            boolean negate = characters.hasNext() && characters.seek() == '^' && characters.next() == '^';
             while(characters.hasNext()) {
                 int from = characters.next();
                 if(characters.hasNext() && characters.seek() == '-') {
@@ -156,7 +157,7 @@ public class Language {
             String debugName = "<" + debug + ">";
             return createMulti(p -> {
                 p.saveLocation();
-                var res = p.nextChar(allowedCharacters);
+                var res = negate ? p.nextCharNot(allowedCharacters) : p.nextChar(allowedCharacters);
                 if(res == -1) {
                     p.loadLocation();
                     return null;

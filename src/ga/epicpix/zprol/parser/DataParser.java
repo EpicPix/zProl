@@ -188,6 +188,21 @@ public class DataParser {
         return cp;
     }
 
+    public int nextCharNot(int[] disallowedCharacters) {
+        lastLocation = getLocation();
+        if(!hasNext()) return -1;
+        if(matchesCharacters(disallowedCharacters, data.codePointAt(index))) {
+            return -1;
+        }
+        lineRow++;
+        int cp = data.codePointAt(index++);
+        if(cp == '\n') {
+            lineNumber++;
+            lineRow = 0;
+        }
+        return cp;
+    }
+
     public String nextTemplateWord(char[] allowedCharacters) {
         return nextTemplateWord(allowedCharacters, null);
     }

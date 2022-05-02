@@ -189,6 +189,9 @@ public class Compiler {
             }else {
                 throw new NotImplementedException("Not implemented looking in different scopes");
             }
+        }else if(operation instanceof OperationString str) {
+            bytecode.pushInstruction(getConstructedInstruction("push_string", str.getString().replace("\\\"", "\"").replace("\\n", "\n")));
+            return Language.TYPES.get("uint64");
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());
         }

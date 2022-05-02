@@ -142,7 +142,7 @@ public class Parser {
                 builder.append("  token").append(index).append(" -> token").append(num).append("\n");
             }
         }else if (token instanceof WordHolder word) {
-            builder.append("  token").append(index).append("[label=\"").append(token.getType().name().toLowerCase()).append(" \\\"").append(word.getWord()).append("\\\"\"]\n");
+            builder.append("  token").append(index).append("[label=\"").append(token.getType().name().toLowerCase()).append(" \\\"").append(word.getWord().replace("\\", "\\\\").replace("\"", "\\\"")).append("\\\"\"]\n");
         }else if (token instanceof OperatorToken operator) {
             builder.append("  token").append(index).append("[label=\"").append("operator \\\"").append(operator.operator.operator()).append("\\\"\"]\n");
         }else if (token instanceof NumberToken number) {
