@@ -1,14 +1,14 @@
 // Definitions of stuff in this language
 
 // Operators
-operator 0 >>
-operator 0 <<
-operator 1 %
-operator 1 +
-operator 1 -
-operator 2 *
-operator 2 /
+operator 1 >>
+operator 1 <<
 operator 2 %
+operator 2 +
+operator 2 -
+operator 3 *
+operator 3 /
+operator 3 %
 
 // Keywords
 keyword definition using
@@ -48,10 +48,14 @@ def ExpressionParenthesis:
 def inline ExpressionType:
   $Operator $ExpressionCallables [$ExpressionType]
 
+def Assignment:
+  $Identifier = $Expression
+
 def inline ExpressionCallables:
   $Number
   $ExpressionParenthesis
   $FunctionCall
+  $Assignment
   $Identifier
   $String
 

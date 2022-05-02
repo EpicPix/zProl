@@ -59,6 +59,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("bmul", (i, s, f, lp) -> "  pop cx\n  pop dx\n  imul cx, dx\n  push cx\n");
         instructionGenerators.put("lmul", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  imul rcx, rdx\n  push rcx\n");
         instructionGenerators.put("lpop", (i, s, f, lp) -> "  sub rsp, 8\n");
+        instructionGenerators.put("ldup", (i, s, f, lp) -> "  pop rcx\n  push rcx\n  push rcx\n");
         instructionGenerators.put("invoke", (i, s, func, lp) -> {
             StringBuilder args = new StringBuilder();
             Function f = (Function) i.getData()[0];

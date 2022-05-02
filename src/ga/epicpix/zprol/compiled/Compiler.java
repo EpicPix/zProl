@@ -185,13 +185,23 @@ public class Compiler {
             var local = localsManager.tryGetLocalVariable(field.getIdentifier());
             if(local != null) {
                 bytecode.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "load_local", local.index()));
-                return expectedType;
+                return local.type();
             }else {
                 throw new NotImplementedException("Not implemented looking in different scopes");
             }
         }else if(operation instanceof OperationString str) {
             bytecode.pushInstruction(getConstructedInstruction("push_string", str.getString().replace("\\\"", "\"").replace("\\n", "\n")));
             return Language.TYPES.get("uint64");
+        }else if(operation instanceof OperationAssignment assignment) {
+            var local = localsManager.tryGetLocalVariable(assignment.getIdentifier());
+            if(local != null) {
+                generateInstructionsFromEquation(assignment.getOperation(), local.type(), data, localsManager, bytecode, false);
+                bytecode.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "dup"));
+                bytecode.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "store_local", local.index()));
+                return local.type();
+            }else {
+                throw new NotImplementedException("Not implemented looking in different scopes");
+            }
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());
         }
