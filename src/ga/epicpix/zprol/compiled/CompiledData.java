@@ -59,7 +59,7 @@ public class CompiledData {
         functions.add(function);
     }
 
-    public PrimitiveType resolveType(String type) throws UnknownTypeException {
+    public PrimitiveType resolveType(String type) {
         PrimitiveType t = Language.TYPES.get(type);
         if(t != null) return t;
         throw new UnknownTypeException(type);

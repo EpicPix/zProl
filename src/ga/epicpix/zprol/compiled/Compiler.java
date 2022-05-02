@@ -3,6 +3,7 @@ package ga.epicpix.zprol.compiled;
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.bytecode.IBytecodeStorage;
 import ga.epicpix.zprol.exceptions.CompileException;
+import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.operation.*;
@@ -54,6 +55,8 @@ public class Compiler {
                         hasReturned = true;
                         break;
                     }
+                } else if("FunctionCall".equals(named.name)) {
+                    generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(new Token[] {named})), null, data, localsManager, storage);
                 } else {
                     throw new NotImplementedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens));
                 }
@@ -82,13 +85,15 @@ public class Compiler {
         return storage;
     }
 
-    public static void generateInstructionsFromEquation(Operation operation, PrimitiveType expectedType, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode) {
+    public static PrimitiveType generateInstructionsFromEquation(Operation operation, PrimitiveType expectedType, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode) {
         if(operation instanceof OperationRoot root) {
             for(var op : root.getOperations()) {
                 generateInstructionsFromEquation(op, expectedType, data, localsManager, bytecode);
             }
+            return expectedType;
         }else if(operation instanceof OperationNumber number) {
             bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "push", number.number));
+            return expectedType;
         }else if(operation instanceof OperationOperator operator) {
             String op = operator.operator.operator();
             switch (op) {
@@ -115,15 +120,51 @@ public class Compiler {
                 default:
                     throw new NotImplementedException("Unknown operator " + op);
             }
+            return expectedType;
         }else if(operation instanceof OperationCall call) {
             ArrayList<PreFunction> possibleFunctions = new ArrayList<>();
-            throw new NotImplementedException("TODO");
+            for(var using : data.getUsing()) {
+                if(data.namespace != null && !data.namespace.equals(using.namespace)) continue; // currently, method name can only be a string without dots
+                for(var func : using.functions) {
+                    if(func.name.equals(call.getFunctionName())) {
+                        if(func.parameters.size() == call.getOperations().size()) {
+                            possibleFunctions.add(func);
+                        }
+                    }
+                }
+            }
+
+            if(possibleFunctions.size() == 0) {
+                throw new FunctionNotDefinedException("Unknown function: " + call.getFunctionName());
+            }else if(possibleFunctions.size() != 1) {
+                throw new NotImplementedException("Cannot match overloaded parameter types");
+            }
+
+            var func = possibleFunctions.get(0);
+            PrimitiveType returnType = data.resolveType(func.returnType);
+            PrimitiveType[] parameters = new PrimitiveType[func.parameters.size()];
+            for(int i = 0; i<func.parameters.size(); i++) {
+                parameters[i] = data.resolveType(func.parameters.get(i).type);
+            }
+            FunctionSignature signature = new FunctionSignature(returnType, parameters);
+            EnumSet<FunctionModifiers> modifiers = EnumSet.noneOf(FunctionModifiers.class);
+            for(PreFunctionModifiers modifier : func.modifiers) {
+                modifiers.add(modifier.getCompiledModifier());
+            }
+
+            for(int i = 0; i<call.getOperations().size(); i++) {
+                generateInstructionsFromEquation(call.getOperations().get(i), parameters[i], data, localsManager, bytecode);
+            }
+
+            bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
+
+            return null;
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());
         }
     }
 
-    public static void compileFunction(CompiledData data, PreFunction function) throws UnknownTypeException {
+    public static void compileFunction(CompiledData data, PreFunction function) {
         PrimitiveType returnType = data.resolveType(function.returnType);
         PrimitiveType[] parameters = new PrimitiveType[function.parameters.size()];
         String[] names = new String[function.parameters.size()];
@@ -147,6 +188,7 @@ public class Compiler {
     public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {
         CompiledData data = new CompiledData(preCompiled.namespace);
 
+        data.using(preCompiled);
         for(PreCompiledData o : other) if(preCompiled.using.contains(o.namespace)) data.using(o);
 
         for(PreFunction function : preCompiled.functions) compileFunction(data, function);

@@ -148,7 +148,6 @@ public class Start {
         for(PreCompiledData data : preCompiled) {
             ArrayList<PreCompiledData> pre = new ArrayList<>(preCompiled);
             pre.remove(data);
-            pre.add(0, data);
             long startCompile = System.currentTimeMillis();
             CompiledData zpil = Compiler.compile(data, pre);
             long stopCompile = System.currentTimeMillis();

@@ -64,8 +64,8 @@ tok Namespace:
   namespace $DotWord ;
 
 def Return:
-  return ;
-  return $Expression ;
+  return
+  return $Expression
 
 def Argument:
   $Expression
@@ -93,8 +93,8 @@ def saveable Statement:
   $FunctionCall
 
 def Code:
-  \{ {$Statement} \}
-  => $Statement
+  \{ {$Statement ;} \}
+  => $Statement ;
 
 tok Function:
   $FunctionModifiers $Type $Word ( [$ParameterList] ) $Code
