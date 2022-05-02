@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.operation;
 
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.NumberToken;
 import ga.epicpix.zprol.parser.tokens.OperatorToken;
@@ -8,12 +9,13 @@ import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.zld.LanguageOperator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class OperationGenerator {
 
-    public static ArrayList<Operation> getOperations(SeekIterator<Token> tokens) {
+    public static OperationRoot getOperations(SeekIterator<Token> tokens) {
         Stack<LanguageOperator> cachedOperator = new Stack<>();
 
         ArrayList<Operation> operations = new ArrayList<>();
@@ -51,7 +53,20 @@ public class OperationGenerator {
                 if(named.name.equals("ExpressionParenthesis")) {
                     Token[] t = new Token[named.tokens.length - 2];
                     System.arraycopy(named.tokens, 1, t, 0, t.length);
-                    operations.addAll(getOperations(new SeekIterator<>(t)));
+                    operations.addAll(getOperations(new SeekIterator<>(t)).getOperations());
+                }else if(named.name.equals("FunctionCall")) {
+                    String name = named.tokens[0].asWordToken().getWord();
+                    ArrayList<OperationRoot> callOp = new ArrayList<>();
+
+                    if(named.getTokenWithName("ArgumentList") != null) {
+                        for(Token argument : named.getTokenWithName("ArgumentList").getTokensWithName("Argument")) {
+                            callOp.add(getOperations(new SeekIterator<>(argument.asNamedToken().getTokenWithName("Expression").tokens)));
+                        }
+                    }
+
+                    operations.add(new OperationCall(name, callOp));
+                }else {
+                    throw new NotImplementedException("Not implemented named token in expression '" + named.name + "' " + Arrays.toString(named.tokens));
                 }
             }
         }
@@ -60,7 +75,7 @@ public class OperationGenerator {
             operations.add(new OperationOperator(cachedOperator.pop()));
         }
 
-        return operations;
+        return new OperationRoot(operations);
     }
 
 }

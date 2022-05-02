@@ -21,6 +21,10 @@ public class CompiledData {
         this.using.add(using);
     }
 
+    public ArrayList<PreCompiledData> getUsing() {
+        return using;
+    }
+
     private final ArrayList<Function> functions = new ArrayList<>();
 
     public ArrayList<Function> getFunctions() {
