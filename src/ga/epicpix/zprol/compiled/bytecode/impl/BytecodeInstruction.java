@@ -10,11 +10,12 @@ import ga.epicpix.zprol.exceptions.InvalidOperationException;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implements IBytecodeInstruction {
 
     public String toString() {
-        return "BytecodeInstruction[id=" + getId() + ", name=" + getName() + "]";
+        return "BytecodeInstruction[id=" + getId() + ", name=" + getName() + ", data=" + Arrays.toString(args) + "]";
     }
 
     public int getId() {

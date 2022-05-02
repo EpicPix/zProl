@@ -55,7 +55,7 @@ public class OperationGenerator {
                     System.arraycopy(named.tokens, 1, t, 0, t.length);
                     operations.addAll(getOperations(new SeekIterator<>(t)).getOperations());
                 }else if(named.name.equals("FunctionCall")) {
-                    String name = named.tokens[0].asWordToken().getWord();
+                    String name = named.getTokenWithName("Identifier").tokens[0].asWordToken().getWord();
                     ArrayList<OperationRoot> callOp = new ArrayList<>();
 
                     if(named.getTokenWithName("ArgumentList") != null) {
@@ -65,6 +65,8 @@ public class OperationGenerator {
                     }
 
                     operations.add(new OperationCall(name, callOp));
+                }else if(named.name.equals("Identifier")) {
+                    operations.add(new OperationField(named.tokens[0].asWordToken().getWord()));
                 }else {
                     throw new NotImplementedException("Not implemented named token in expression '" + named.name + "' " + Arrays.toString(named.tokens));
                 }

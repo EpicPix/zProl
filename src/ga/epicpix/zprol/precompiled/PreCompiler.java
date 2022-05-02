@@ -41,14 +41,14 @@ public class PreCompiler {
                         }
                     }
                     func.returnType = ts[1].asWordHolder().getWord();
-                    func.name = ts[2].asWordToken().getWord();
+                    func.name = named.getTokenWithName("Identifier").tokens[0].asWordToken().getWord();
                     var paramList = named.getTokenWithName("ParameterList");
                     if(paramList != null) {
                         for (NamedToken namedToken : paramList.getTokensWithName("Parameter")) {
                             var paramTokens = namedToken.tokens;
                             PreParameter param = new PreParameter();
                             param.type = paramTokens[0].asWordHolder().getWord();
-                            param.name = paramTokens[1].asWordToken().getWord();
+                            param.name = namedToken.getTokenWithName("Identifier").tokens[0].asWordToken().getWord();
                             func.parameters.add(param);
                         }
                     }

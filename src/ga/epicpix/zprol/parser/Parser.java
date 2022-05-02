@@ -40,7 +40,7 @@ public class Parser {
     public static boolean check(ArrayList<Token> tTokens, DataParser parser, LanguageToken token) {
         ArrayList<Token> added = new ArrayList<>();
         for(var fragment : token.args()) {
-            var read = fragment.getTokenReader().apply(parser);
+            var read = fragment.apply(parser);
             if (read == null) {
                 return false;
             }
@@ -72,7 +72,7 @@ public class Parser {
                 ArrayList<LanguageToken> validOptions = new ArrayList<>();
                 for(LanguageToken tok : Language.TOKENS) {
                     parser.saveLocation();
-                    if(tok.args()[0].getTokenReader().apply(parser) != null) {
+                    if(tok.args()[0].apply(parser) != null) {
                         validOptions.add(tok);
                     }
                     parser.loadLocation();
@@ -144,7 +144,7 @@ public class Parser {
         }else if (token instanceof WordHolder word) {
             builder.append("  token").append(index).append("[label=\"").append(token.getType().name().toLowerCase()).append(" \\\"").append(word.getWord()).append("\\\"\"]\n");
         }else if (token instanceof OperatorToken operator) {
-            builder.append("  token").append(index).append("[label=\"").append("operator \\\"").append(operator.operator).append("\\\"\"]\n");
+            builder.append("  token").append(index).append("[label=\"").append("operator \\\"").append(operator.operator.operator()).append("\\\"\"]\n");
         }else if (token instanceof NumberToken number) {
             builder.append("  token").append(index).append("[label=\"").append("number ").append(number.number).append("\"]\n");
         }else if(token.getType() == TokenType.OPEN) {

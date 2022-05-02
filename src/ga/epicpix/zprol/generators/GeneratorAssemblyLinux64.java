@@ -1,11 +1,7 @@
 package ga.epicpix.zprol.generators;
 
 import ga.epicpix.zprol.SeekIterator;
-import ga.epicpix.zprol.StaticImports;
-import ga.epicpix.zprol.compiled.Function;
-import ga.epicpix.zprol.compiled.FunctionModifiers;
-import ga.epicpix.zprol.compiled.FunctionSignature;
-import ga.epicpix.zprol.compiled.GeneratedData;
+import ga.epicpix.zprol.compiled.*;
 import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstruction;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
@@ -14,9 +10,7 @@ import ga.epicpix.zprol.zld.Language;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.stream.Collectors;
 
 import static ga.epicpix.zprol.StaticImports.getInstructionPrefix;
 
@@ -42,24 +36,26 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     private static final String[] SYSCALL_REGISTERS_16 = new String[] {"ax", "di", "sx", "dx", "r10w", "r8w", "r9w"};
 
     static {
-        instructionGenerators.put("vreturn", (i, s) -> "  ret\n");
-        instructionGenerators.put("breturn", (i, s) -> "  pop ax\n  ret\n");
-        instructionGenerators.put("lreturn", (i, s) -> "  pop rax\n  ret\n");
-        instructionGenerators.put("bpush", (i, s) -> "  push word " + i.getData()[0] + "\n");
-        instructionGenerators.put("lpush", (i, s) -> {
+        instructionGenerators.put("vreturn", (i, s, f) -> f.code().getLocalsSize() != 0 ? "  mov rsp, rbp\n  pop rbp\n  ret\n" : "  ret\n");
+        instructionGenerators.put("breturn", (i, s, f) -> f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop ax\n ret\n");
+        instructionGenerators.put("lreturn", (i, s, f) -> f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop rax\n  ret\n");
+        instructionGenerators.put("bpush", (i, s, f) -> "  push word " + i.getData()[0] + "\n");
+        instructionGenerators.put("lpush", (i, s, f) -> {
             long v = ((Number) i.getData()[0]).longValue();
             if(v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
                 return "  mov rax, " + v + "\n  push rax\n";
             }
             return "  push " + v + "\n";
         });
-        instructionGenerators.put("badd", (i, s) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
-        instructionGenerators.put("ladd", (i, s) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
-        instructionGenerators.put("bsub", (i, s) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
-        instructionGenerators.put("bmul", (i, s) -> "  pop cx\n  pop dx\n  imul cx, dx\n  push cx\n");
-        instructionGenerators.put("lmul", (i, s) -> "  pop rcx\n  pop rdx\n  imul rcx, rdx\n  push rcx\n");
-        instructionGenerators.put("lpop", (i, s) -> "  sub rsp, 8\n");
-        instructionGenerators.put("invoke", (i, s) -> {
+        instructionGenerators.put("lload_local", (i, s, f) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("badd", (i, s, f) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
+        instructionGenerators.put("ladd", (i, s, f) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
+        instructionGenerators.put("bsub", (i, s, f) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
+        instructionGenerators.put("lsub", (i, s, f) -> "  pop rcx\n  pop rdx\n  sub rcx, rdx\n  push rcx\n");
+        instructionGenerators.put("bmul", (i, s, f) -> "  pop cx\n  pop dx\n  imul cx, dx\n  push cx\n");
+        instructionGenerators.put("lmul", (i, s, f) -> "  pop rcx\n  pop rdx\n  imul rcx, rdx\n  push rcx\n");
+        instructionGenerators.put("lpop", (i, s, f) -> "  sub rsp, 8\n");
+        instructionGenerators.put("invoke", (i, s, func) -> {
             StringBuilder args = new StringBuilder();
             Function f = (Function) i.getData()[0];
             boolean isSyscall = FunctionModifiers.isEmptyCode(f.modifiers()) && f.name().equals("syscall");
@@ -102,7 +98,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     }
 
     private interface InstructionGenerator {
-        public String generateInstruction(IBytecodeInstruction i, SeekIterator<IBytecodeInstruction> s);
+        public String generateInstruction(IBytecodeInstruction i, SeekIterator<IBytecodeInstruction> s, Function function);
     }
 
     public void generate(DataOutputStream outStream, GeneratedData generated) throws IOException {
@@ -117,14 +113,28 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
             String functionName = getMangledName(function.namespace(), function.name(), function.signature());
             outStream.writeBytes(functionName + ":\n");
-            System.out.println(" - " + functionName);
-            System.out.println(function.code().getInstructions().stream().map(Object::toString).collect(Collectors.joining("\n")));
+            if(function.code().getLocalsSize() != 0) {
+                outStream.writeBytes("  push rbp\n");
+                outStream.writeBytes("  mov rbp, rsp\n");
+                outStream.writeBytes("  sub rsp, " + function.code().getLocalsSize() + "\n");
+            }
+            int localsIndex = 0;
+            PrimitiveType[] parameters = function.signature().parameters();
+            for (int i = parameters.length - 1; i >= 0; i--) {
+                PrimitiveType param = parameters[i];
+                localsIndex += param.getSize();
+                if(param.getSize() == 1 || param.getSize() == 2) {
+                    outStream.writeBytes("  mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_16[i] + "\n");
+                }else if(param.getSize() == 4 || param.getSize() == 8) {
+                    outStream.writeBytes("  mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_64[i] + "\n");
+                }
+            }
             SeekIterator<IBytecodeInstruction> instructions = new SeekIterator<>(function.code().getInstructions());
             while(instructions.hasNext()) {
                 var instruction = instructions.next();
                 var generator = instructionGenerators.get(instruction.getName());
                 if(generator != null) {
-                    outStream.writeBytes(generator.generateInstruction(instruction, instructions));
+                    outStream.writeBytes(generator.generateInstruction(instruction, instructions, function));
                 }else {
                     throw new UndefinedOperationException("Unable to generate instructions for the " + instruction.getName() + " instruction");
                 }

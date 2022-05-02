@@ -39,21 +39,22 @@ type ulong unsigned,size=8 uL
 
 type pointer unsigned,size=8,pointer P
 
-def saveable Expression:
+def Expression:
   $ExpressionCallables [$ExpressionType]
 
-def saveable ExpressionParenthesis:
+def ExpressionParenthesis:
   ( $ExpressionCallables $ExpressionType )
 
 def inline ExpressionType:
   $Operator $ExpressionCallables [$ExpressionType]
 
-def inline saveable ExpressionCallables:
+def inline ExpressionCallables:
   $Number
   $ExpressionParenthesis
   $FunctionCall
+  $Identifier
 
-def inline Word @word@
+def chars Identifier < a-z A-Z _ > { < a-z A-Z 0-9 _ > }
 def inline Type @type@
 def inline DotWord @dword@
 def inline Number @number@
@@ -65,7 +66,7 @@ tok Using:
 tok Namespace:
   namespace $DotWord ;
 
-def saveable Return:
+def Return:
   return $Expression
   return
 
@@ -75,11 +76,11 @@ def Argument:
 def ArgumentList:
   $Argument {, $Argument}
 
-def saveable FunctionCall:
-  $Word ( [$ArgumentList] )
+def FunctionCall:
+  $Identifier ( [$ArgumentList] )
 
 def Parameter:
-  $Type $Word
+  $Type $Identifier
 
 def ParameterList:
   $Parameter {, $Parameter}
@@ -99,5 +100,5 @@ def Code:
   => $Statement ;
 
 tok Function:
-  $FunctionModifiers $Type $Word ( [$ParameterList] ) $Code
-  $FunctionModifiers $Type $Word ( [$ParameterList] ) ;
+  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
+  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) ;

@@ -40,6 +40,16 @@ public class LocalScope {
         throw new VariableNotDefinedException(name);
     }
 
+    public LocalVariable tryGetLocalVariable(String name) {
+        for(LocalVariable lVar : localVariables) {
+            if(lVar.name().equals(name)) {
+                return lVar;
+            }
+        }
+        if(parent != null) return parent.tryGetLocalVariable(name);
+        return null;
+    }
+
     public LocalVariable findLocalVariable(String name) {
         for(LocalVariable lVar : localVariables) {
             if(lVar.name().equals(name)) {

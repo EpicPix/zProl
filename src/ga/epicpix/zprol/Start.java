@@ -1,8 +1,7 @@
 package ga.epicpix.zprol;
 
-import ga.epicpix.zprol.compiled.CompiledData;
+import ga.epicpix.zprol.compiled.*;
 import ga.epicpix.zprol.compiled.Compiler;
-import ga.epicpix.zprol.compiled.GeneratedData;
 import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.precompiled.PreCompiledData;
 import ga.epicpix.zprol.precompiled.PreCompiler;
@@ -21,6 +20,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Start {
 
@@ -160,6 +160,16 @@ public class Start {
         linked.addCompiled(compiledData.toArray(new CompiledData[0]));
         long stopLink = System.currentTimeMillis();
         System.out.printf("Took %d ms to link everything\n", stopLink - startLink);
+
+
+        if(Boolean.parseBoolean(System.getProperty("SHOW_INSTRUCTIONS"))) {
+            for(Function func : linked.functions) {
+                System.out.println(" --- " + func.name() + "  " + func.signature() + " " + func.modifiers());
+                if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
+                    System.out.println(func.code().getInstructions().stream().map(Object::toString).collect(Collectors.joining("\n")));
+                }
+            }
+        }
 
         String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
         {

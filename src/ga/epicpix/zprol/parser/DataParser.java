@@ -10,6 +10,12 @@ public class DataParser {
         return out;
     }
 
+    public static int[] genCharacters(int from, int to) {
+        int[] out = new int[to-from+1];
+        for(int i = from; i <= to; i++) out[i-from] = i;
+        return out;
+    }
+
     public static char[] joinCharacters(char[]... chars) {
         int requiredSpace = 0;
         for(char[] c : chars) requiredSpace += c.length;
@@ -20,6 +26,12 @@ public class DataParser {
     }
 
     public static boolean matchesCharacters(char[] chars, int c) {
+        if(chars == null) return false;
+        for(int t : chars) if(t == c) return true;
+        return false;
+    }
+
+    public static boolean matchesCharacters(int[] chars, int c) {
         if(chars == null) return false;
         for(int t : chars) if(t == c) return true;
         return false;
@@ -148,6 +160,17 @@ public class DataParser {
                 lineRow++;
             }
         }
+    }
+
+    public int nextChar(int[] allowedCharacters) {
+        ignoreWhitespace();
+        lastLocation = getLocation();
+        if(!hasNext()) return -1;
+        if(!matchesCharacters(allowedCharacters, data.codePointAt(index))) {
+            return -1;
+        }
+        lineRow++;
+        return data.codePointAt(index++);
     }
 
     public String nextTemplateWord(char[] allowedCharacters) {

@@ -12,6 +12,10 @@ public class LocalScopeManager {
         return currentScope.getLocalVariable(name);
     }
 
+    public LocalVariable tryGetLocalVariable(String name) {
+        return currentScope.tryGetLocalVariable(name);
+    }
+
     public LocalVariable findLocalVariable(String name) {
         return currentScope.findLocalVariable(name);
     }

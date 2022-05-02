@@ -6,6 +6,7 @@ import ga.epicpix.zprol.parser.tokens.KeywordToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.WordToken;
 
+import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -69,8 +70,8 @@ public class LanguageTokenFragment {
         return new LanguageTokenFragment(tokenReader, debugName);
     }
 
-    public Function<DataParser, Token[]> getTokenReader() {
-        return tokenReader;
+    public Token[] apply(DataParser parser) {
+        return tokenReader.apply(parser);
     }
 
     public String getDebugName() {

@@ -168,6 +168,14 @@ public class Compiler {
             }
 
             return null;
+        }else if(operation instanceof OperationField field) {
+            var local = localsManager.tryGetLocalVariable(field.getIdentifier());
+            if(local != null) {
+                bytecode.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "load_local", local.index()));
+                return expectedType;
+            }else {
+                throw new NotImplementedException("Not implemented looking in different scopes");
+            }
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());
         }

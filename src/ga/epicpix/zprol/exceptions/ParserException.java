@@ -27,7 +27,7 @@ public class ParserException extends RuntimeException {
         }
         System.err.println(parser.getLines()[line]);
         System.err.println(" ".repeat(Math.max(0, row)) + "^");
-        if(Boolean.parseBoolean(System.getProperty("DEBUG"))) {
+        if(Boolean.parseBoolean(System.getProperty("SHOW_STACK_TRACE"))) {
             System.err.println("DEBUG INFO:");
             StackTraceElement[] trace = getStackTrace();
             for(StackTraceElement traceElement : trace)
