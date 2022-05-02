@@ -31,12 +31,14 @@ public class ConstantPoolEntry {
         private final int namespace;
         private final int name;
         private final int sig;
+        private final int modifiers;
 
-        public FunctionEntry(int namespace, int name, int sig) {
+        public FunctionEntry(int namespace, int name, int sig, int modifiers) {
             super((byte) 1);
             this.namespace = namespace;
             this.name = name;
             this.sig = sig;
+            this.modifiers = modifiers;
         }
 
         public int getNamespace() {
@@ -51,15 +53,20 @@ public class ConstantPoolEntry {
             return sig;
         }
 
+        public int getModifiers() {
+            return modifiers;
+        }
+
         public void write(DataOutputStream out) throws IOException {
             super.write(out);
             out.writeInt(namespace);
             out.writeInt(name);
             out.writeInt(sig);
+            out.writeInt(modifiers);
         }
 
         public static FunctionEntry read(DataInputStream in) throws IOException {
-            return new FunctionEntry(in.readInt(), in.readInt(), in.readInt());
+            return new FunctionEntry(in.readInt(), in.readInt(), in.readInt(), in.readInt());
         }
     }
 

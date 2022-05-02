@@ -31,14 +31,14 @@ public class Language {
     private static final char[] tokenCharacters = joinCharacters(nonSpecialCharacters, new char[] {'@', '%', '=', '>', ':'});
     private static final char[] numberCharacters = genCharacters('0', '9');
 
-    private static LanguageTokenFragment convert(String w, DataParser parser) {
+    private static LanguageTokenFragment convert(boolean keyword, String w, DataParser parser) {
         if(w.startsWith("\\")) {
             w = parser.nextWord();
         } else if(w.equals("{")) {
             ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
             String next;
             while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
-                fragmentsList.add(convert(next, parser));
+                fragmentsList.add(convert(keyword, next, parser));
             }
             LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
             String debugName = "{" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "}";
@@ -98,7 +98,7 @@ public class Language {
             ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
             String next;
             while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("]")) {
-                fragmentsList.add(convert(next, parser));
+                fragmentsList.add(convert(keyword, next, parser));
             }
             LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
             String debugName = "[" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "]";
@@ -149,7 +149,7 @@ public class Language {
                 var op = p.nextWord();
                 return OPERATORS.get(op) != null ? new OperatorToken(OPERATORS.get(op)) : null;
             }, "<operator>");
-            default -> createExactFragment(w);
+            default -> keyword ? createExactKeywordFragment(w, parser) : createExactFragment(w);
         };
 
     }
@@ -224,7 +224,7 @@ public class Language {
                     checkWhitespace = true;
                 }
                 while(parser.hasNext()) {
-                    tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
+                    tokens.add(convert(false, parser.nextTemplateWord(tokenCharacters), parser));
                     if(!checkWhitespace) {
                         if(parser.checkNewLine()) {
                             break;
@@ -235,14 +235,14 @@ public class Language {
                         if(parser.seekCharacter() != ' ') {
                             break;
                         }
-                        TOKENS.add(new LanguageToken(name, false, true, tokens.toArray(new LanguageTokenFragment[0])));
+                        TOKENS.add(new LanguageToken(name, false, true, false, tokens.toArray(new LanguageTokenFragment[0])));
                         tokens.clear();
                     }
                 }
-                TOKENS.add(new LanguageToken(name, false, true, tokens.toArray(new LanguageTokenFragment[0])));
+                TOKENS.add(new LanguageToken(name, false, true, false, tokens.toArray(new LanguageTokenFragment[0])));
             } else if(d.equals("def")) {
                 ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();
-                boolean inline = false, saveable = false;
+                boolean inline = false, saveable = false, keyword = false;
                 String name = parser.nextWord();
                 if(name.equals("inline")) {
                     name = parser.nextWord();
@@ -252,13 +252,17 @@ public class Language {
                     name = parser.nextWord();
                     saveable = true;
                 }
+                if(name.equals("keyword")) {
+                    name = parser.nextWord();
+                    keyword = true;
+                }
                 boolean checkWhitespace = false;
                 if(parser.seekWord().equals(":")) {
                     parser.nextWord();
                     checkWhitespace = true;
                 }
                 while(parser.hasNext()) {
-                    tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
+                    tokens.add(convert(keyword, parser.nextTemplateWord(tokenCharacters), parser));
                     if(!checkWhitespace) {
                         if(parser.checkNewLine()) {
                             break;
@@ -270,12 +274,12 @@ public class Language {
                             break;
                         }
                         DEFINITIONS.putIfAbsent(name, new ArrayList<>());
-                        DEFINITIONS.get(name).add(new LanguageToken(name, inline, saveable, tokens.toArray(new LanguageTokenFragment[0])));
+                        DEFINITIONS.get(name).add(new LanguageToken(name, inline, saveable, keyword, tokens.toArray(new LanguageTokenFragment[0])));
                         tokens.clear();
                     }
                 }
                 DEFINITIONS.putIfAbsent(name, new ArrayList<>());
-                DEFINITIONS.get(name).add(new LanguageToken(name, inline, saveable, tokens.toArray(new LanguageTokenFragment[0])));
+                DEFINITIONS.get(name).add(new LanguageToken(name, inline, saveable, keyword, tokens.toArray(new LanguageTokenFragment[0])));
             } else {
                 throw new ParserException("Unknown language file word: " + d, parser);
             }

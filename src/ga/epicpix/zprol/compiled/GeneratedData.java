@@ -49,11 +49,14 @@ public class GeneratedData {
         out.writeInt(data.functions.size());
         for(Function func : data.functions) {
             out.writeInt(data.constantPool.getFunctionIndex(func));
-            out.writeInt(func.code().getLocalsSize());
-            var instructions = func.code().getInstructions();
-            out.writeInt(instructions.size());
-            for(var instruction : instructions) {
-                instruction.write(out, data.constantPool);
+            var hasCode = !FunctionModifiers.isEmptyCode(func.modifiers());
+            if(hasCode) {
+                out.writeInt(func.code().getLocalsSize());
+                var instructions = func.code().getInstructions();
+                out.writeInt(instructions.size());
+                for (var instruction : instructions) {
+                    instruction.write(out, data.constantPool);
+                }
             }
         }
 
@@ -75,15 +78,19 @@ public class GeneratedData {
 
         int functionLength = in.readInt();
         for(int i = 0; i<functionLength; i++) {
-            ConstantPoolEntry.FunctionEntry entry = (ConstantPoolEntry.FunctionEntry) data.constantPool.entries.get(in.readInt() - 1);
-            String namespace = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString();
-            String name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
-            String signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
-            Function function = new Function(namespace, name, FunctionSignature.fromDescriptor(signature), createStorage());
-            function.code().setLocalsSize(in.readInt());
-            int instructionsLength = in.readInt();
-            for(int j = 0; j<instructionsLength; j++) {
-                function.code().pushInstruction(IBytecodeInstruction.read(in, data.constantPool));
+            var entry = (ConstantPoolEntry.FunctionEntry) data.constantPool.entries.get(in.readInt() - 1);
+            var namespace = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString();
+            var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
+            var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
+            var modifiers = FunctionModifiers.getModifiers(entry.getModifiers());
+            var hasCode = !FunctionModifiers.isEmptyCode(modifiers);
+            Function function = new Function(namespace, modifiers, name, FunctionSignature.fromDescriptor(signature), hasCode ? createStorage() : null);
+            if(hasCode) {
+                function.code().setLocalsSize(in.readInt());
+                int instructionsLength = in.readInt();
+                for (int j = 0; j < instructionsLength; j++) {
+                    function.code().pushInstruction(IBytecodeInstruction.read(in, data.constantPool));
+                }
             }
         }
 

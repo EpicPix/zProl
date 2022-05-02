@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.generators;
 
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.compiled.FunctionModifiers;
 import ga.epicpix.zprol.compiled.FunctionSignature;
 import ga.epicpix.zprol.compiled.GeneratedData;
 import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstruction;
@@ -30,6 +31,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     static {
         instructionGenerators.put("vreturn", (i, s) -> "  ret\n");
         instructionGenerators.put("breturn", (i, s) -> "  pop ax\n  ret\n");
+        instructionGenerators.put("lreturn", (i, s) -> "  pop rax\n  ret\n");
         instructionGenerators.put("bpush", (i, s) -> "  push word " + i.getData()[0] + "\n");
         instructionGenerators.put("badd", (i, s) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
         instructionGenerators.put("bsub", (i, s) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
@@ -48,6 +50,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         outStream.writeBytes("  mov rdi, 0\n");
         outStream.writeBytes("  syscall\n");
         for(var function : generated.functions) {
+            if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
+
             String functionName = getMangledName(function.namespace(), function.name(), function.signature());
             outStream.writeBytes(functionName + ":\n");
             SeekIterator<IBytecodeInstruction> instructions = new SeekIterator<>(function.code().getInstructions());

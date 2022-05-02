@@ -13,10 +13,12 @@ import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
 import ga.epicpix.zprol.precompiled.PreCompiledData;
 import ga.epicpix.zprol.precompiled.PreFunction;
+import ga.epicpix.zprol.precompiled.PreFunctionModifiers;
 import ga.epicpix.zprol.precompiled.PreParameter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 
 import static ga.epicpix.zprol.StaticImports.*;
 
@@ -126,7 +128,15 @@ public class Compiler {
             names[i] = param.name;
         }
         FunctionSignature signature = new FunctionSignature(returnType, parameters);
-        data.addFunction(new Function(data.namespace, function.name, signature, parseFunctionCode(data, new SeekIterator<>(function.code), signature, names)));
+        IBytecodeStorage bytecode = null;
+        if(function.hasCode()) {
+            bytecode = parseFunctionCode(data, new SeekIterator<>(function.code), signature, names);
+        }
+        EnumSet<FunctionModifiers> modifiers = EnumSet.noneOf(FunctionModifiers.class);
+        for(PreFunctionModifiers modifier : function.modifiers) {
+            modifiers.add(modifier.getCompiledModifier());
+        }
+        data.addFunction(new Function(data.namespace, modifiers, function.name, signature, bytecode));
     }
 
     public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {

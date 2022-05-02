@@ -16,11 +16,11 @@ public class ConstantPool {
         for(int i = 0; i < entries.size(); i++) {
             if(entries.get(i) instanceof ConstantPoolEntry.FunctionEntry e) {
                 if(e.getNamespace() == namespaceIndex && e.getName() == nameIndex && e.getSignature() == signatureIndex) {
-                    return i;
+                    return i + 1;
                 }
             }
         }
-        entries.add(new ConstantPoolEntry.FunctionEntry(namespaceIndex, nameIndex, signatureIndex));
+        entries.add(new ConstantPoolEntry.FunctionEntry(namespaceIndex, nameIndex, signatureIndex, FunctionModifiers.toBits(func.modifiers())));
         return entries.size();
     }
 
@@ -30,7 +30,7 @@ public class ConstantPool {
         for(int i = 0; i < entries.size(); i++) {
             if(entries.get(i) instanceof ConstantPoolEntry.StringEntry e) {
                 if(e.getString().equals(str)) {
-                    return i;
+                    return i + 1;
                 }
             }
         }

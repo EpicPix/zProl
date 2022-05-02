@@ -14,6 +14,10 @@ public class Token {
         return (WordToken) this;
     }
 
+    public KeywordToken asKeywordToken() {
+        return (KeywordToken) this;
+    }
+
     public NamedToken asNamedToken() {
         return (NamedToken) this;
     }

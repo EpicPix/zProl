@@ -14,6 +14,7 @@ operator 2 %
 keyword definition using
 keyword definition namespace
 keyword control return
+keyword function_modifier native
 
 // Types, also defined as keywords
 type void size=0 V
@@ -39,7 +40,8 @@ type ulong unsigned,size=8 uL
 type pointer unsigned,size=8,pointer P
 
 def saveable Expression:
-  $Number $ExpressionType
+  $Number [$ExpressionType]
+  $FunctionCall [$ExpressionType]
 
 def saveable ExpressionParenthesis:
   ( $Number $ExpressionType )
@@ -47,6 +49,7 @@ def saveable ExpressionParenthesis:
 def inline ExpressionType:
   $Operator $Number [$ExpressionType]
   $Operator $ExpressionParenthesis [$ExpressionType]
+  $Operator $FunctionCall [$ExpressionType]
 
 def inline Word @word@
 def inline Type @type@
@@ -64,20 +67,30 @@ def Return:
   return ;
   return $Expression ;
 
+def Argument:
+  $Expression
+
+def ArgumentList:
+  $Argument {, $Argument}
+
+def FunctionCall:
+  $Word ( [$ArgumentList] )
+
 def Parameter:
   $Type $Word
 
 def ParameterList:
   $Parameter {, $Parameter}
 
-def inline FunctionModifier:
-  external
+def inline keyword FunctionModifier:
+  native
 
 def FunctionModifiers:
   { $FunctionModifier }
 
 def saveable Statement:
   $Return
+  $FunctionCall
 
 def Code:
   \{ {$Statement} \}
@@ -85,3 +98,4 @@ def Code:
 
 tok Function:
   $FunctionModifiers $Type $Word ( [$ParameterList] ) $Code
+  $FunctionModifiers $Type $Word ( [$ParameterList] ) ;

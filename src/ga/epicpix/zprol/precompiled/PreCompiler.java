@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.precompiled;
 
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.exceptions.CompileException;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
@@ -30,6 +31,15 @@ public class PreCompiler {
                     pre.namespace = namespace;
                 }else if(named.name.equals("Function")) {
                     PreFunction func = new PreFunction();
+                    if(named.getTokenWithName("FunctionModifiers") != null) {
+                        for(Token modifier : named.getTokenWithName("FunctionModifiers").tokens) {
+                            PreFunctionModifiers modifiers = PreFunctionModifiers.getModifier(modifier.asKeywordToken().getWord());
+                            if(func.modifiers.contains(modifiers)) {
+                                throw new CompileException("Duplicate function modifier: '" + modifiers.getName() + "'");
+                            }
+                            func.modifiers.add(modifiers);
+                        }
+                    }
                     func.returnType = ts[1].asWordHolder().getWord();
                     func.name = ts[2].asWordToken().getWord();
                     var paramList = named.getTokenWithName("ParameterList");
@@ -42,13 +52,23 @@ public class PreCompiler {
                             func.parameters.add(param);
                         }
                     }
-                    for(var a : named.getTokenWithName("Code").getTokensWithName("Statement")) func.code.addAll(List.of(a.tokens));
+                    if(func.hasCode()) {
+                        if(named.getTokenWithName("Code") == null) {
+                            throw new CompileException("Expected code");
+                        }
+                        for (var a : named.getTokenWithName("Code").getTokensWithName("Statement"))
+                            func.code.addAll(List.of(a.tokens));
+                    }else {
+                        if(named.getTokenWithName("Code") != null) {
+                            throw new CompileException("Expected no code");
+                        }
+                    }
                     pre.functions.add(func);
                 }else {
                     System.out.println("token: " + named);
                 }
             }else {
-                System.out.println("token: " + token);
+                throw new CompileException("Expected Named token, this might be a bug in parsing code");
             }
         }
 

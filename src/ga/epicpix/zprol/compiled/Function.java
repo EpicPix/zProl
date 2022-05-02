@@ -2,11 +2,15 @@ package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.compiled.bytecode.IBytecodeStorage;
 
-public record Function(String namespace, String name, FunctionSignature signature, IBytecodeStorage code) implements IConstantPoolPreparable {
+import java.util.EnumSet;
+
+public record Function(String namespace, EnumSet<FunctionModifiers> modifiers, String name, FunctionSignature signature, IBytecodeStorage code) implements IConstantPoolPreparable {
 
     public void prepareConstantPool(ConstantPool pool) {
-        for(var instruction : code.getInstructions()) {
-            instruction.prepareConstantPool(pool);
+        if(!FunctionModifiers.isEmptyCode(modifiers)) {
+            for (var instruction : code.getInstructions()) {
+                instruction.prepareConstantPool(pool);
+            }
         }
     }
 

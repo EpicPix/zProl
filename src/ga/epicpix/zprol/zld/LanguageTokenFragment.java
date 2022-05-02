@@ -1,5 +1,8 @@
 package ga.epicpix.zprol.zld;
+
+import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
+import ga.epicpix.zprol.parser.tokens.KeywordToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.WordToken;
 
@@ -39,6 +42,19 @@ public class LanguageTokenFragment {
         return new LanguageTokenFragment(p -> {
             var e = exactWordGenerator(data, p.nextWord());
             return e != null ? new Token[] {e} : null;
+        }, data);
+    }
+
+    public static LanguageTokenFragment createExactKeywordFragment(String data, DataParser parser) {
+        LanguageKeyword keyword = Language.KEYWORDS.get(data);
+        if(keyword == null) {
+            throw new ParserException("Unknown language keyword", parser);
+        }
+        return new LanguageTokenFragment(p -> {
+            if(!data.equals(p.nextWord())) {
+                return null;
+            }
+            return new Token[] {new KeywordToken(keyword)};
         }, data);
     }
 
