@@ -48,7 +48,6 @@ public class DataParser {
     public static final char[] validLongWordCharacters = joinCharacters(validDotWordCharacters, new char[] {'+', '-', '@', '!'});
 
     public static final char[] operatorCharacters = new char[] {'+', '=', '/', '*', '-', '%', '<', '>', '!', '&'};
-    public static final char[] typeCharacters = joinCharacters(nonSpecialCharacters, new char[] {'.', '(', ')', '<', '>'});
 
     private final String data;
     private final String fileName;
@@ -162,15 +161,31 @@ public class DataParser {
         }
     }
 
+    public int nextChar() {
+        lastLocation = getLocation();
+        if(!hasNext()) return -1;
+        lineRow++;
+        int cp = data.codePointAt(index++);
+        if(cp == '\n') {
+            lineNumber++;
+            lineRow = 0;
+        }
+        return cp;
+    }
+
     public int nextChar(int[] allowedCharacters) {
-        ignoreWhitespace();
         lastLocation = getLocation();
         if(!hasNext()) return -1;
         if(!matchesCharacters(allowedCharacters, data.codePointAt(index))) {
             return -1;
         }
         lineRow++;
-        return data.codePointAt(index++);
+        int cp = data.codePointAt(index++);
+        if(cp == '\n') {
+            lineNumber++;
+            lineRow = 0;
+        }
+        return cp;
     }
 
     public String nextTemplateWord(char[] allowedCharacters) {
@@ -229,10 +244,6 @@ public class DataParser {
         String str = nextTemplateWord(allowedCharacters);
         loadLocation();
         return str;
-    }
-
-    public String nextType() {
-        return nextTemplateWord(typeCharacters);
     }
 
     public String nextStringStarted() {

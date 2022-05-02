@@ -1,5 +1,7 @@
 package ga.epicpix.zprol.parser.tokens;
 
+import ga.epicpix.zprol.exceptions.CompileException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -31,6 +33,20 @@ public class NamedToken extends Token {
             if(token instanceof NamedToken named) {
                 if(named.name.equals(name)) {
                     return named;
+                }
+            }
+        }
+        return null;
+    }
+
+    public Token getSingleTokenWithName(String name) {
+        for(Token token : tokens) {
+            if(token instanceof NamedToken named) {
+                if(named.name.equals(name)) {
+                    if(named.tokens.length != 1) {
+                        throw new CompileException("Expected one token but found multiple");
+                    }
+                    return named.tokens[0];
                 }
             }
         }
