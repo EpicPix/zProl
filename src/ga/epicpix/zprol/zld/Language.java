@@ -355,7 +355,15 @@ public class Language {
                 }
                 dataParser.discardLocation();
                 for(var s : value) {
-                    builder.append(s.asWordHolder().getWord());
+                    if(s instanceof WordHolder holder) {
+                        builder.append(holder.getWord());
+                    }else if(s instanceof NamedToken named) {
+                        for(var t : named.tokens) {
+                            if(t instanceof WordHolder holder) {
+                                builder.append(holder.getWord());
+                            }
+                        }
+                    }
                 }
             }
             return new WordToken(builder.toString());

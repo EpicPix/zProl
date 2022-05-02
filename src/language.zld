@@ -54,7 +54,7 @@ def inline ExpressionCallables:
   $FunctionCall
   $Identifier
 
-def chars Identifier <a-zA-Z_> { <a-zA-Z0-9_> }
+def chars Identifier [$Whitespace] <a-zA-Z_> { <a-zA-Z0-9_> }
 def chars clean Whitespace < \t\n> { < \t\n> }
 def inline DotWord @dword@
 def inline Number @number@
@@ -66,9 +66,9 @@ tok Using:
 tok Namespace:
   namespace $DotWord ;
 
-def Return:
-  return $Expression
-  return
+def ReturnStatement:
+  return $Expression ;
+  return ;
 
 def Argument:
   $Expression
@@ -80,7 +80,7 @@ def FunctionCall:
   $Identifier ( [$ArgumentList] )
 
 def Parameter:
-  [$Whitespace] $Identifier $Whitespace $Identifier
+  $Identifier $Identifier
 
 def ParameterList:
   $Parameter {, $Parameter}
@@ -91,14 +91,25 @@ def inline keyword FunctionModifier:
 def FunctionModifiers:
   { $FunctionModifier $Whitespace }
 
+def FunctionCallStatement:
+  $Identifier ( [$ArgumentList] ) ;
+
+def AssignmentStatement:
+  $Identifier = $Expression ;
+
+def CreateAssignmentStatement:
+  $Identifier $Identifier = $Expression ;
+
 def Statement:
-  $Return
-  $FunctionCall
+  $ReturnStatement
+  $FunctionCallStatement
+  $AssignmentStatement
+  $CreateAssignmentStatement
 
 def Code:
-  \{ {$Statement ;} \}
-  => $Statement ;
+  \{ {$Statement} \}
+  => $Statement
 
 tok Function:
-  $FunctionModifiers [$Whitespace] $Identifier $Whitespace $Identifier ( [$ParameterList] ) $Code
-  $FunctionModifiers [$Whitespace] $Identifier $Whitespace $Identifier ( [$ParameterList] ) ;
+  $FunctionModifiers $Identifier $Identifier ( [$ParameterList] ) $Code
+  $FunctionModifiers $Identifier $Identifier ( [$ParameterList] ) ;

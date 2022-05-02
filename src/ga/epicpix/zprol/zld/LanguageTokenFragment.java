@@ -70,8 +70,19 @@ public class LanguageTokenFragment {
         return new LanguageTokenFragment(tokenReader, debugName);
     }
 
+    private static final boolean hasDebugLogging = Boolean.parseBoolean(System.getProperty("TOKEN_LOG"));
+    private static int indent = 0;
+
     public Token[] apply(DataParser parser) {
-        return tokenReader.apply(parser);
+        if(!hasDebugLogging) {
+            return tokenReader.apply(parser);
+        }
+        indent++;
+        System.out.println(" ".repeat(indent) + "Start " + getDebugName().replace("\n", "\\n"));
+        var a = tokenReader.apply(parser);
+        System.out.println(" ".repeat(indent) + "End " + getDebugName().replace("\n", "\\n") + "     " + Arrays.toString(a).replace("\n", "\\n"));
+        indent--;
+        return a;
     }
 
     public String getDebugName() {

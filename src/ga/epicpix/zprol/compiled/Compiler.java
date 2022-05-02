@@ -38,7 +38,7 @@ public class Compiler {
             token = tokens.next();
             if(token.getType() == TokenType.NAMED) {
                 var named = (NamedToken) token;
-                if("Return".equals(named.name)) {
+                if("ReturnStatement".equals(named.name)) {
                     if(!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) {
                         if(named.getTokenWithName("Expression") == null) {
                             throw new CompileException("Function is not void, expected a return value");
@@ -55,8 +55,21 @@ public class Compiler {
                         hasReturned = true;
                         break;
                     }
-                } else if("FunctionCall".equals(named.name)) {
+                } else if("FunctionCallStatement".equals(named.name)) {
                     generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(new Token[] {named})), null, data, localsManager, storage, true);
+                } else if("CreateAssignmentStatement".equals(named.name)) {
+                    var type = data.resolveType(named.getTokensWithName("Identifier").get(0).tokens[0].asWordToken().getWord());
+                    var name = named.getTokensWithName("Identifier").get(1).tokens[0].asWordToken().getWord();
+                    var expression = named.getTokenWithName("Expression").tokens;
+                    generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(expression)), type, data, localsManager, storage, false);
+                    var local = localsManager.defineLocalVariable(name, type);
+                    storage.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "store_local", local.index()));
+                } else if("AssignmentStatement".equals(named.name)) {
+                    var name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
+                    var expression = named.getTokenWithName("Expression").tokens;
+                    var local = localsManager.getLocalVariable(name);
+                    generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(expression)), local.type(), data, localsManager, storage, false);
+                    storage.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "store_local", local.index()));
                 } else {
                     throw new NotImplementedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens));
                 }

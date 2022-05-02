@@ -48,6 +48,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             return "  push " + v + "\n";
         });
         instructionGenerators.put("lload_local", (i, s, f) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("lstore_local", (i, s, f) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("badd", (i, s, f) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
         instructionGenerators.put("ladd", (i, s, f) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
         instructionGenerators.put("bsub", (i, s, f) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
