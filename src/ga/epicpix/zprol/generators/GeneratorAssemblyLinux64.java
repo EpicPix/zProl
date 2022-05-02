@@ -16,6 +16,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import static ga.epicpix.zprol.StaticImports.getInstructionPrefix;
 
@@ -57,6 +58,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("bsub", (i, s) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
         instructionGenerators.put("bmul", (i, s) -> "  pop cx\n  pop dx\n  imul cx, dx\n  push cx\n");
         instructionGenerators.put("lmul", (i, s) -> "  pop rcx\n  pop rdx\n  imul rcx, rdx\n  push rcx\n");
+        instructionGenerators.put("lpop", (i, s) -> "  sub rsp, 8\n");
         instructionGenerators.put("invoke", (i, s) -> {
             StringBuilder args = new StringBuilder();
             Function f = (Function) i.getData()[0];
@@ -115,6 +117,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
             String functionName = getMangledName(function.namespace(), function.name(), function.signature());
             outStream.writeBytes(functionName + ":\n");
+            System.out.println(" - " + functionName);
+            System.out.println(function.code().getInstructions().stream().map(Object::toString).collect(Collectors.joining("\n")));
             SeekIterator<IBytecodeInstruction> instructions = new SeekIterator<>(function.code().getInstructions());
             while(instructions.hasNext()) {
                 var instruction = instructions.next();

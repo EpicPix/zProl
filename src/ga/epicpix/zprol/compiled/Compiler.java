@@ -43,7 +43,7 @@ public class Compiler {
                         if(named.getTokenWithName("Expression") == null) {
                             throw new CompileException("Function is not void, expected a return value");
                         }
-                        generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens)), sig.returnType(), data, localsManager, storage, true);
+                        generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens)), sig.returnType(), data, localsManager, storage, false);
                     }
                     if(sig.returnType().isBuiltInType() && sig.returnType().getSize() == 0) {
                         if(named.getTokenWithName("Expression") != null) {
