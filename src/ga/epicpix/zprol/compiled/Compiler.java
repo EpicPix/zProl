@@ -116,6 +116,7 @@ public class Compiler {
                     throw new NotImplementedException("Unknown operator " + op);
             }
         }else if(operation instanceof OperationCall call) {
+            ArrayList<PreFunction> possibleFunctions = new ArrayList<>();
             throw new NotImplementedException("TODO");
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());

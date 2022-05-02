@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstruction;
+import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.InvalidDataException;
 import ga.epicpix.zprol.exceptions.RedefinedFunctionException;
 
@@ -36,6 +37,18 @@ public class GeneratedData {
             addCompiled(d);
         }
         return this;
+    }
+
+    public Function getFunction(String namespace, String name, String signature) {
+        for(Function func : functions) {
+            if(func.namespace() != null && namespace != null && !func.namespace().equals(namespace)) continue;
+            if(!func.name().equals(name)) continue;
+
+            if(func.signature().toString().equals(signature)) {
+                return func;
+            }
+        }
+        throw new FunctionNotDefinedException((namespace != null ? namespace + "." : "") + name + " - " + signature);
     }
 
     public static byte[] save(GeneratedData data) throws IOException {
@@ -91,6 +104,12 @@ public class GeneratedData {
                 for (int j = 0; j < instructionsLength; j++) {
                     function.code().pushInstruction(IBytecodeInstruction.read(in, data.constantPool));
                 }
+            }
+            data.functions.add(function);
+        }
+        for(var func : data.functions) {
+            for(var instr : func.code().getInstructions()) {
+                IBytecodeInstruction.postRead(instr, data);
             }
         }
 

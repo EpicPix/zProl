@@ -21,13 +21,13 @@ public final class Bytecode implements IBytecode {
     private Bytecode() {
         registerSizedInstruction(0, "return", new int[] {0, 1, 2, 4, 8});
         registerSizedInstruction(5, "store_local", new int[] {1, 2, 4, 8}, BytecodeValueType.SHORT);
-        registerInstruction(9, "syscall1");
-        registerInstruction(10, "syscall2");
-        registerInstruction(11, "syscall3");
-        registerInstruction(12, "syscall4");
-        registerInstruction(13, "syscall5");
-        registerInstruction(14, "syscall6");
-        registerInstruction(15, "syscall7");
+        registerInstruction(9, "invoke", BytecodeValueType.FUNCTION);
+        // id 10 is not used
+        // id 11 is not used
+        // id 12 is not used
+        // id 13 is not used
+        // id 14 is not used
+        // id 15 is not used
         registerSizedInstruction(16, "pop", new int[] {1, 2, 4, 8});
         registerSizedInstruction(20, "load_local", new int[] {1, 2, 4, 8}, BytecodeValueType.SHORT);
         registerSizedInstruction(24, "cast" + getInstructionPrefix(1), new int[] {2, 4, 8});

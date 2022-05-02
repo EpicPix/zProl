@@ -2,6 +2,7 @@ package ga.epicpix.zprol.compiled.bytecode;
 
 import ga.epicpix.zprol.compiled.ConstantPool;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry;
+import ga.epicpix.zprol.compiled.GeneratedData;
 import ga.epicpix.zprol.compiled.IConstantPoolPreparable;
 import ga.epicpix.zprol.compiled.bytecode.impl.Bytecode;
 import ga.epicpix.zprol.exceptions.InvalidOperationException;
@@ -37,9 +38,24 @@ public interface IBytecodeInstruction extends IConstantPoolPreparable {
             };
             if(type == BytecodeValueType.STRING) {
                 args[i] = ((ConstantPoolEntry.StringEntry) pool.entries.get(((Number) args[i]).intValue())).getString();
+            }else if(type == BytecodeValueType.FUNCTION) {
+                args[i] = pool.entries.get(((Number) args[i]).intValue());
             }
         }
         return instructionGenerator.createInstruction(args);
+    }
+
+    public static void postRead(IBytecodeInstruction instr, GeneratedData data) {
+        BytecodeValueType[] values = Bytecode.BYTECODE.getInstructionValueTypesRequirements(instr.getId());
+        for(int i = 0; i<values.length; i++) {
+            if(values[i] == BytecodeValueType.FUNCTION) {
+                var entry = (ConstantPoolEntry.FunctionEntry) instr.getData()[i];
+                var namespace = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString();
+                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
+                var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
+                instr.getData()[i] = data.getFunction(namespace, name, signature);
+            }
+        }
     }
 
 }
