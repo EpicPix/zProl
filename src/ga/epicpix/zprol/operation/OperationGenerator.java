@@ -54,7 +54,7 @@ public class OperationGenerator {
                     Token[] t = new Token[named.tokens.length - 2];
                     System.arraycopy(named.tokens, 1, t, 0, t.length);
                     operations.addAll(getOperations(new SeekIterator<>(t)).getOperations());
-                }else if(named.name.equals("FunctionCallStatement")) {
+                }else if(named.name.equals("FunctionCallStatement") || named.name.equals("FunctionCall")) {
                     String name = named.getTokenWithName("Identifier").tokens[0].asWordToken().getWord();
                     ArrayList<OperationRoot> callOp = new ArrayList<>();
 
