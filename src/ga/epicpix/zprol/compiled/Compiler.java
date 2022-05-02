@@ -43,7 +43,7 @@ public class Compiler {
                         if(named.getTokenWithName("Expression") == null) {
                             throw new CompileException("Function is not void, expected a return value");
                         }
-                        generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens)), sig.returnType(), data, localsManager, storage);
+                        generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens)), sig.returnType(), data, localsManager, storage, true);
                     }
                     if(sig.returnType().isBuiltInType() && sig.returnType().getSize() == 0) {
                         if(named.getTokenWithName("Expression") != null) {
@@ -56,7 +56,7 @@ public class Compiler {
                         break;
                     }
                 } else if("FunctionCall".equals(named.name)) {
-                    generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(new Token[] {named})), null, data, localsManager, storage);
+                    generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(new Token[] {named})), null, data, localsManager, storage, true);
                 } else {
                     throw new NotImplementedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens));
                 }
@@ -85,11 +85,16 @@ public class Compiler {
         return storage;
     }
 
-    public static PrimitiveType generateInstructionsFromEquation(Operation operation, PrimitiveType expectedType, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode) {
+    public static PrimitiveType generateInstructionsFromEquation(Operation operation, PrimitiveType expectedType, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
         if(operation instanceof OperationRoot root) {
             for(var op : root.getOperations()) {
-                generateInstructionsFromEquation(op, expectedType, data, localsManager, bytecode);
+                generateInstructionsFromEquation(op, expectedType, data, localsManager, bytecode, expectedType == null && discardValue);
             }
+
+            if(expectedType != null && discardValue) {
+                bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "pop"));
+            }
+
             return expectedType;
         }else if(operation instanceof OperationNumber number) {
             bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "push", number.number));
@@ -153,10 +158,14 @@ public class Compiler {
             }
 
             for(int i = 0; i<call.getOperations().size(); i++) {
-                generateInstructionsFromEquation(call.getOperations().get(i), parameters[i], data, localsManager, bytecode);
+                generateInstructionsFromEquation(call.getOperations().get(i), parameters[i], data, localsManager, bytecode, false);
             }
 
             bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
+
+            if(discardValue) {
+                bytecode.pushInstruction(getConstructedSizeInstruction(returnType.getSize(), "pop"));
+            }
 
             return null;
         }else {

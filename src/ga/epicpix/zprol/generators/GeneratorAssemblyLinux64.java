@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.generators;
 
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.StaticImports;
 import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.FunctionModifiers;
 import ga.epicpix.zprol.compiled.FunctionSignature;
@@ -15,6 +16,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+
+import static ga.epicpix.zprol.StaticImports.getInstructionPrefix;
 
 public final class GeneratorAssemblyLinux64 extends Generator {
 
@@ -79,12 +82,17 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }else {
                 args.append("  call ").append(getMangledName(f.namespace(), f.name(), f.signature())).append("\n");
             }
+            if(s.hasNext() && s.seek().getName().equals(getInstructionPrefix(f.signature().returnType().getSize()) + "pop")) {
+                s.next();
+                return args.toString();
+            }
+
             var ret = f.signature().returnType();
-            if(ret.getSize() == 1 || ret.getSize() == 2) {
+            if (ret.getSize() == 1 || ret.getSize() == 2) {
                 args.append("  push ax\n");
-            }else if(ret.getSize() == 4 || ret.getSize() == 8) {
+            } else if (ret.getSize() == 4 || ret.getSize() == 8) {
                 args.append("  push rax\n");
-            }else {
+            } else {
                 throw new NotImplementedException("Not implemented size " + ret.getSize());
             }
             return args.toString();
