@@ -37,9 +37,9 @@ public interface IBytecodeInstruction extends IConstantPoolPreparable {
                 default -> throw new InvalidOperationException("Invalid size of bytecode type: " + type.getSize());
             };
             if(type == BytecodeValueType.STRING) {
-                args[i] = ((ConstantPoolEntry.StringEntry) pool.entries.get(((Number) args[i]).intValue())).getString();
+                args[i] = ((Number) args[i]).intValue();
             }else if(type == BytecodeValueType.FUNCTION) {
-                args[i] = pool.entries.get(((Number) args[i]).intValue());
+                args[i] = ((Number) args[i]).intValue();
             }
         }
         return instructionGenerator.createInstruction(args);
@@ -48,11 +48,15 @@ public interface IBytecodeInstruction extends IConstantPoolPreparable {
     public static void postRead(IBytecodeInstruction instr, GeneratedData data) {
         BytecodeValueType[] values = Bytecode.BYTECODE.getInstructionValueTypesRequirements(instr.getId());
         for(int i = 0; i<values.length; i++) {
-            if(values[i] == BytecodeValueType.FUNCTION) {
-                var entry = (ConstantPoolEntry.FunctionEntry) instr.getData()[i];
-                var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace())).getString() : null;
-                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName())).getString();
-                var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature())).getString();
+            if(values[i] == BytecodeValueType.STRING) {
+                int index = ((Number) instr.getData()[i]).intValue();
+                instr.getData()[i] = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(index - 1)).getString();
+            }else if(values[i] == BytecodeValueType.FUNCTION) {
+                int index = ((Number) instr.getData()[i]).intValue();
+                var entry = (ConstantPoolEntry.FunctionEntry) data.constantPool.entries.get(index - 1);
+                var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
+                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
+                var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
                 instr.getData()[i] = data.getFunction(namespace, name, signature);
             }
         }

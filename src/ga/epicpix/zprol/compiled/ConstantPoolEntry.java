@@ -68,6 +68,12 @@ public class ConstantPoolEntry {
         public static FunctionEntry read(DataInputStream in) throws IOException {
             return new FunctionEntry(in.readInt(), in.readInt(), in.readInt(), in.readInt());
         }
+
+        public String toString() {
+            String mod = Integer.toHexString(modifiers);
+            mod = "0".repeat(8 - mod.length()) + mod;
+            return "FunctionEntry namespace=#" + namespace + " name=#" + name + " signature=#" + sig + " modifiers=0x" + mod;
+        }
     }
 
     public static class StringEntry extends ConstantPoolEntry {
@@ -90,6 +96,10 @@ public class ConstantPoolEntry {
 
         public static StringEntry read(DataInputStream in) throws IOException {
             return new StringEntry(in.readUTF());
+        }
+
+        public String toString() {
+            return "StringEntry string=\"" + str.replace("\"", "\\\"").replace("\n", "\\n") + "\"";
         }
     }
 

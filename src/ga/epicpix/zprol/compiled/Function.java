@@ -14,4 +14,7 @@ public record Function(String namespace, EnumSet<FunctionModifiers> modifiers, S
         }
     }
 
+    public String toString() {
+        return "Function[\"" + (namespace != null ? namespace + "." : "") + name + "\" \"" + signature + "\"" + (modifiers.size() != 0 ? " " + modifiers : "") + "]";
+    }
 }

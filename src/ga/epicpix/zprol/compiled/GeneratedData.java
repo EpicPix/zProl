@@ -86,15 +86,14 @@ public class GeneratedData {
         }
 
         int length = in.readInt() - 1;
-        data.constantPool.entries.add(null);
         for(int i = 0; i<length; i++) data.constantPool.entries.add(ConstantPoolEntry.read(in));
 
         int functionLength = in.readInt();
         for(int i = 0; i<functionLength; i++) {
-            var entry = (ConstantPoolEntry.FunctionEntry) data.constantPool.entries.get(in.readInt());
-            var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace())).getString() : null;
-            var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName())).getString();
-            var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature())).getString();
+            var entry = (ConstantPoolEntry.FunctionEntry) data.constantPool.entries.get(in.readInt() - 1);
+            var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
+            var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
+            var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
             var modifiers = FunctionModifiers.getModifiers(entry.getModifiers());
             var hasCode = !FunctionModifiers.isEmptyCode(modifiers);
             Function function = new Function(namespace, modifiers, name, FunctionSignature.fromDescriptor(signature), hasCode ? createStorage() : null);
@@ -114,7 +113,6 @@ public class GeneratedData {
                 }
             }
         }
-
         in.close();
         return data;
     }

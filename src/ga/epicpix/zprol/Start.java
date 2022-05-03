@@ -57,6 +57,7 @@ public class Start {
     public static void preMain(String[] args) throws IOException, UnknownTypeException {
         ArrayList<Generator> generators = new ArrayList<>();
         String outputFile = null;
+        String printFile = null;
 
         ArrayList<String> files = new ArrayList<>();
         Iterator<String> argsIterator = Arrays.asList(args).iterator();
@@ -86,6 +87,19 @@ public class Start {
                     }
                     outputFile = argsIterator.next();
                     continue;
+                } else if(s.equals("-p")) {
+                    if(printFile != null) {
+                        throw new IllegalArgumentException("Tried to declare input file multiple times");
+                    }
+                    if(!argsIterator.hasNext()) {
+                        if(outputFile != null) {
+                            printFile = outputFile;
+                            break;
+                        }
+                        throw new IllegalArgumentException("Missing input filename after -p");
+                    }
+                    printFile = argsIterator.next();
+                    continue;
                 }
                 System.err.println("Unknown setting: " + s);
                 System.exit(1);
@@ -99,6 +113,13 @@ public class Start {
             }
 
             compileFiles(files, Objects.requireNonNullElse(outputFile, "output.out"), generators);
+        }
+
+        if(printFile != null) {
+            printZpil(GeneratedData.load(Files.readAllBytes(new File(printFile).toPath())));
+        }
+
+        if(outputFile != null || printFile != null) {
             return;
         }
 
@@ -167,16 +188,6 @@ public class Start {
         long stopLink = System.currentTimeMillis();
         System.out.printf("Took %d ms to link everything\n", stopLink - startLink);
 
-
-        if(Boolean.parseBoolean(System.getProperty("SHOW_INSTRUCTIONS"))) {
-            for(Function func : linked.functions) {
-                System.out.println(" --- " + func.name() + "  " + func.signature() + " " + func.modifiers());
-                if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
-                    System.out.println(func.code().getInstructions().stream().map(Object::toString).collect(Collectors.joining("\n")));
-                }
-            }
-        }
-
         String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
         {
             DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".zpil"));
@@ -191,6 +202,28 @@ public class Start {
             out.close();
             long stopGenerator = System.currentTimeMillis();
             System.out.printf("Took %d ms to generate %s code\n", stopGenerator - startGenerator, gen.getGeneratorName());
+        }
+    }
+
+    public static void printZpil(GeneratedData data) {
+        System.out.println("Functions:");
+        for(Function func : data.functions) {
+            System.out.println("  Function");
+            System.out.println("    Namespace: \"" + (func.namespace() != null ? func.namespace() : "") + "\"");
+            System.out.println("    Name: \"" + func.name() + "\"");
+            System.out.println("    Signature: \"" + func.signature() + "\"");
+            System.out.println("    Modifiers (" + func.modifiers().size() + "):");
+            for(FunctionModifiers modifier : func.modifiers()) {
+                System.out.println("      " + modifier);
+            }
+            if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
+                System.out.println("    Code");
+                System.out.println("      Locals Size: " + func.code().getLocalsSize());
+                System.out.println("      Instructions");
+                for(var instruction : func.code().getInstructions()) {
+                    System.out.println("        " + instruction);
+                }
+            }
         }
     }
 
