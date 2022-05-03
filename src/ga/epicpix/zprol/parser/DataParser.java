@@ -44,10 +44,6 @@ public class DataParser {
     }
 
     public static final char[] nonSpecialCharacters = joinCharacters(genCharacters('a', 'z'), genCharacters('A', 'Z'), genCharacters('0', '9'), new char[] {'_'});
-    public static final char[] validDotWordCharacters = joinCharacters(nonSpecialCharacters, new char[] {'.'});
-    public static final char[] validLongWordCharacters = joinCharacters(validDotWordCharacters, new char[] {'+', '-', '@', '!'});
-
-    public static final char[] operatorCharacters = new char[] {'+', '=', '/', '*', '-', '%', '<', '>', '!', '&'};
 
     private final String data;
     private final String fileName;
@@ -236,15 +232,7 @@ public class DataParser {
     }
 
     public String nextWord() {
-        return nextTemplateWord(nonSpecialCharacters, operatorCharacters);
-    }
-
-    public String nextLongWord() {
-        return nextTemplateWord(validLongWordCharacters);
-    }
-
-    public String nextDotWord() {
-        return nextTemplateWord(validDotWordCharacters);
+        return nextTemplateWord(nonSpecialCharacters);
     }
 
     public String seekWord() {

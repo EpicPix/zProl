@@ -46,7 +46,7 @@ def ExpressionParenthesis:
   ( $ExpressionCallables $ExpressionType )
 
 def inline ExpressionType:
-  $Operator $ExpressionCallables [$ExpressionType]
+  [$Whitespace] $Operator $ExpressionCallables [$ExpressionType]
 
 def Assignment:
   $Identifier = $Expression
@@ -73,8 +73,16 @@ def chars Identifier [$Whitespace] <a-zA-Z_> { <a-zA-Z0-9_> }
 def chars clean Whitespace < \t\n> { < \t\n> }
 def chars StringChars <^\n"> { <^\n"> }
 def String " $StringChars "
-def inline DotWord @dword@
-def inline Operator @operator@
+def chars DotWord [$Whitespace] <a-zA-Z_> { <a-zA-Z0-9_.> }
+def chars Operator:
+  <\>\>>
+  <<<>
+  <%>
+  <+>
+  <->
+  <*>
+  </>
+  <%>
 
 tok Using:
   using $DotWord ;
@@ -122,9 +130,11 @@ def Statement:
   $AssignmentStatement
   $CreateAssignmentStatement
 
+def inline chars LineCodeChars [$Whitespace] <=> <\>>
+
 def Code:
   \{ {$Statement} \}
-  => $Statement
+  $LineCodeChars $Statement
 
 tok Function:
   $FunctionModifiers $Identifier $Identifier ( [$ParameterList] ) $Code

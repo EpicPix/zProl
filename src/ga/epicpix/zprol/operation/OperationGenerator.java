@@ -1,10 +1,11 @@
 package ga.epicpix.zprol.operation;
 
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.exceptions.CompileException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
-import ga.epicpix.zprol.parser.tokens.OperatorToken;
 import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.zld.Language;
 import ga.epicpix.zprol.zld.LanguageOperator;
 
 import java.util.ArrayList;
@@ -20,58 +21,73 @@ public class OperationGenerator {
         loop:
         while(tokens.hasNext()) {
             Token token = tokens.next();
-            if(token instanceof OperatorToken operator) {
-                if(cachedOperator.isEmpty()) {
-                    cachedOperator.push(operator.operator);
+            if(!(token instanceof NamedToken)) {
+                throw new CompileException("Expected NamedToken but got " + token.getClass().getSimpleName());
+            }
+            NamedToken named = token.asNamedToken();
+            switch (named.name) {
+                case "Operator" -> {
+                    String operatorName = named.tokens[0].asWordToken().getWord();
+                    LanguageOperator operator = Language.OPERATORS.get(operatorName);
+                    if (operator == null) {
+                        throw new CompileException("Unknown operator '" + operatorName + "'");
+                    }
+                    if (cachedOperator.isEmpty()) {
+                        cachedOperator.push(operator);
+                        continue;
+                    }
+                    while (!cachedOperator.isEmpty()) {
+                        int a = operator.precedence();
+                        int b = cachedOperator.peek().precedence();
+                        if (a < b) {
+                            operations.add(new OperationOperator(cachedOperator.pop()));
+                        } else {
+                            break;
+                        }
+                    }
+                    cachedOperator.push(operator);
                     continue;
                 }
-                while(!cachedOperator.isEmpty()) {
-                    int a = operator.operator.precedence();
-                    int b = cachedOperator.peek().precedence();
-                    if (a < b) {
-                        operations.add(new OperationOperator(cachedOperator.pop()));
-                    }else {
-                        break;
-                    }
-                }
-                cachedOperator.push(operator.operator);
-            }else if(token instanceof NamedToken named) {
-                if(named.name.equals("DecimalInteger")) {
-                    operations.add(new OperationNumber(OperationNumber.getDecimalInteger(named.tokens[0].asWordToken().getWord())));
-                    while(cachedOperator.size() != 0) {
-                        if(tokens.hasNext()) {
-                            int a = tokens.seek().asOperatorToken().operator.precedence();
-                            int b = cachedOperator.peek().precedence();
-                            if(a > b) {
-                                continue loop;
-                            }
-                        }
-                        operations.add(new OperationOperator(cachedOperator.pop()));
-                    }
-                }else if(named.name.equals("ExpressionParenthesis")) {
+                case "ExpressionParenthesis" -> {
                     Token[] t = new Token[named.tokens.length - 2];
                     System.arraycopy(named.tokens, 1, t, 0, t.length);
                     operations.addAll(getOperations(new SeekIterator<>(t)).getOperations());
-                }else if(named.name.equals("FunctionCallStatement") || named.name.equals("FunctionCall")) {
+                }
+                case "FunctionCallStatement", "FunctionCall" -> {
                     String name = named.getTokenWithName("Identifier").tokens[0].asWordToken().getWord();
                     ArrayList<OperationRoot> callOp = new ArrayList<>();
-
-                    if(named.getTokenWithName("ArgumentList") != null) {
-                        for(Token argument : named.getTokenWithName("ArgumentList").getTokensWithName("Argument")) {
+                    if (named.getTokenWithName("ArgumentList") != null) {
+                        for (Token argument : named.getTokenWithName("ArgumentList").getTokensWithName("Argument")) {
                             callOp.add(getOperations(new SeekIterator<>(argument.asNamedToken().getTokenWithName("Expression").tokens)));
                         }
                     }
-
                     operations.add(new OperationCall(name, callOp));
-                }else if(named.name.equals("Identifier")) {
-                    operations.add(new OperationField(named.tokens[0].asWordToken().getWord()));
-                }else if(named.name.equals("String")) {
-                    operations.add(new OperationString(named.getSingleTokenWithName("StringChars").asWordToken().getWord()));
-                }else if(named.name.equals("Assignment")) {
-                    operations.add(new OperationAssignment(named.getSingleTokenWithName("Identifier").asWordToken().getWord(), getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens))));
-                }else {
-                    throw new NotImplementedException("Not implemented named token in expression '" + named.name + "' " + Arrays.toString(named.tokens));
                 }
+                case "DecimalInteger" -> operations.add(new OperationNumber(OperationNumber.getDecimalInteger(named.tokens[0].asWordToken().getWord())));
+                case "Identifier" -> operations.add(new OperationField(named.tokens[0].asWordToken().getWord()));
+                case "String" -> operations.add(new OperationString(named.getSingleTokenWithName("StringChars").asWordToken().getWord()));
+                case "Assignment" -> operations.add(new OperationAssignment(named.getSingleTokenWithName("Identifier").asWordToken().getWord(), getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens))));
+                default -> throw new NotImplementedException("Not implemented named token in expression '" + named.name + "' " + Arrays.toString(named.tokens));
+            }
+
+            while (cachedOperator.size() != 0) {
+                if (tokens.hasNext()) {
+                    NamedToken t = tokens.seek().asNamedToken();
+                    if(!t.name.equals("Operator")) {
+                        throw new CompileException("Expected Operator but got " + t.name);
+                    }
+                    String operatorName = t.tokens[0].asWordToken().getWord();
+                    LanguageOperator operator = Language.OPERATORS.get(operatorName);
+                    if (operator == null) {
+                        throw new CompileException("Unknown operator '" + operatorName + "'");
+                    }
+                    int a = operator.precedence();
+                    int b = cachedOperator.peek().precedence();
+                    if (a > b) {
+                        continue loop;
+                    }
+                }
+                operations.add(new OperationOperator(cachedOperator.pop()));
             }
         }
 

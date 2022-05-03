@@ -10,6 +10,7 @@ import ga.epicpix.zprol.parser.tokens.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ public class Language {
     private static final char[] propertiesCharacters = joinCharacters(nonSpecialCharacters, new char[] {',', '='});
     private static final char[] tokenCharacters = joinCharacters(nonSpecialCharacters, new char[] {'@', '%', '=', '>', ':'});
     private static final char[] numberCharacters = genCharacters('0', '9');
+    private static final char[] operatorCharacters = new char[] {'+', '=', '/', '*', '-', '%', '<', '>', '!', '&'};
 
     private static LanguageTokenFragment convert(boolean keyword, boolean chars, String w, DataParser parser) {
         if(w.startsWith("\\")) {
@@ -121,6 +123,16 @@ public class Language {
             int next;
             ArrayList<Integer> charactersList = new ArrayList<>();
             while((next = parser.nextChar()) != '>') {
+                if(next == '\\') {
+                    int a = parser.nextChar();
+                    if(a == 'n') {
+                        next = '\n';
+                    }else if(a == 't') {
+                        next = '\t';
+                    }else {
+                        next = a;
+                    }
+                }
                 charactersList.add(next);
             }
             SeekIterator<Integer> characters = new SeekIterator<>(charactersList);
@@ -133,16 +145,6 @@ public class Language {
                     int to = characters.next();
                     cs.add(DataParser.genCharacters(from, to));
                 }else {
-                    if(from == '\\') {
-                        int a = characters.next();
-                        if(a == 'n') {
-                            from = '\n';
-                        }else if(a == 't') {
-                            from = '\t';
-                        }else {
-                            from = a;
-                        }
-                    }
                     cs.add(new int[] {from});
                 }
             }
@@ -174,18 +176,6 @@ public class Language {
             case ")" -> createExactFragmentType(")", () -> new Token(TokenType.CLOSE));
             case "{" -> createExactFragmentType("{", () -> new Token(TokenType.OPEN_SCOPE));
             case "}" -> createExactFragmentType("}", () -> new Token(TokenType.CLOSE_SCOPE));
-            case "@dword@" -> createSingle(p -> {
-                String x = validateWord(p.nextDotWord());
-                return (x != null && Language.KEYWORDS.get(x) == null) ? new WordToken(x) : null;
-            }, "<dword>");
-            case "@lword@" -> createSingle(p -> {
-                String x = validateWord(p.nextLongWord());
-                return (x != null && Language.KEYWORDS.get(x) == null) ? new WordToken(x) : null;
-            }, "<lword>");
-            case "@operator@" -> createSingle(p -> {
-                var op = p.nextWord();
-                return OPERATORS.get(op) != null ? new OperatorToken(OPERATORS.get(op)) : null;
-            }, "<operator>");
             default -> keyword ? createExactKeywordFragment(w, parser) : createExactFragment(w);
         };
 
@@ -218,7 +208,7 @@ public class Language {
             String d = parser.nextWord();
             if(d.equals("operator")) {
                 int precedence = Integer.parseInt(parser.nextTemplateWord(numberCharacters));
-                String operator = parser.nextWord();
+                String operator = parser.nextTemplateWord(operatorCharacters);
                 OPERATORS.put(operator, new LanguageOperator(operator, precedence));
             }else if(d.equals("keyword")) {
                 String[] tags = parser.nextTemplateWord(tagsCharacters).split(",");
@@ -334,6 +324,16 @@ public class Language {
             } else {
                 throw new ParserException("Unknown language file word: " + d, parser);
             }
+        }
+        if(Boolean.parseBoolean(System.getProperty("SHOW_LANGUAGE_DATA"))) {
+            System.out.println("--- Definitions");
+            DEFINITIONS.forEach((x, y) -> {
+                System.out.println("  " + x);
+                y.forEach(z -> {
+                    String debugName = Arrays.stream(z.args()).map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" "));
+                    System.out.println("    " + debugName.replace("\n", "\\n").replace("\t", "\\t"));
+                });
+            });
         }
     }
 

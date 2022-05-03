@@ -26,10 +26,6 @@ public class Token {
         return (WordHolder) this;
     }
 
-    public OperatorToken asOperatorToken() {
-        return (OperatorToken) this;
-    }
-
     public TokenType getType() {
         return type;
     }
