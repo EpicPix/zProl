@@ -1,6 +1,7 @@
 // Definitions of stuff in this language
 
 // Operators
+operator 0 |
 operator 1 >>
 operator 1 <<
 operator 2 %
@@ -83,6 +84,7 @@ def chars Operator:
   <*>
   </>
   <%>
+  <|>
 
 tok Using:
   using $DotWord ;

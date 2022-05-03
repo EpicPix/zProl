@@ -135,6 +135,9 @@ public class Compiler {
                         bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "div"));
                     }
                     break;
+                case "|":
+                    bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "or"));
+                    break;
                 default:
                     throw new NotImplementedException("Unknown operator " + op);
             }
