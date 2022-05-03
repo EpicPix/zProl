@@ -92,7 +92,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }
 
             var ret = f.signature().returnType();
-            if (ret.getSize() == 1 || ret.getSize() == 2) {
+            if (ret.getSize() == 0) {
+            }else if (ret.getSize() == 1 || ret.getSize() == 2) {
                 args.append("  push ax\n");
             } else if (ret.getSize() == 4 || ret.getSize() == 8) {
                 args.append("  push rax\n");
@@ -127,7 +128,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }
             int localsIndex = 0;
             PrimitiveType[] parameters = function.signature().parameters();
-            for (int i = parameters.length - 1; i >= 0; i--) {
+            for (int i = 0; i < parameters.length; i++) {
                 PrimitiveType param = parameters[i];
                 localsIndex += param.getSize();
                 if(param.getSize() == 1 || param.getSize() == 2) {

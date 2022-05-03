@@ -179,7 +179,7 @@ public class Compiler {
 
             bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
 
-            if(discardValue) {
+            if(discardValue && returnType.getSize() != 0) {
                 bytecode.pushInstruction(getConstructedSizeInstruction(returnType.getSize(), "pop"));
             }
 
