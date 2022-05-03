@@ -182,10 +182,6 @@ public class Language {
                 String x = validateWord(p.nextLongWord());
                 return (x != null && Language.KEYWORDS.get(x) == null) ? new WordToken(x) : null;
             }, "<lword>");
-            case "@number@" -> createSingle(p -> {
-                var num = Parser.getInteger(p.nextWord());
-                return num == null ? null : new NumberToken(num);
-            }, "<number>");
             case "@operator@" -> createSingle(p -> {
                 var op = p.nextWord();
                 return OPERATORS.get(op) != null ? new OperatorToken(OPERATORS.get(op)) : null;

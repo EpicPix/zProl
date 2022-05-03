@@ -1,17 +1,13 @@
 package ga.epicpix.zprol.parser;
 
-import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.parser.tokens.*;
 import ga.epicpix.zprol.zld.Language;
-import ga.epicpix.zprol.parser.DataParser.SavedLocation;
 import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.zld.LanguageToken;
 import ga.epicpix.zprol.zld.LanguageTokenFragment;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -101,24 +97,6 @@ public class Parser {
 
     }
 
-    public static BigInteger getInteger(String str) {
-        int radix = 10;
-        if(str.startsWith("0x") || str.startsWith("0X")) {
-            radix = 16;
-            str = str.substring(2);
-        }else if(str.startsWith("0")) {
-            if(str.length() >= 2) {
-                radix = 8;
-                str = str.substring(1);
-            }
-        }
-        try {
-            return new BigInteger(str, radix);
-        }catch(NumberFormatException e) {
-            return null;
-        }
-    }
-
     public static String generateAst(ArrayList<Token> tokens) {
         StringBuilder builder = new StringBuilder();
         builder.append("digraph {\n");
@@ -145,8 +123,6 @@ public class Parser {
             builder.append("  token").append(index).append("[label=\"").append(token.getType().name().toLowerCase()).append(" \\\"").append(word.getWord().replace("\\", "\\\\").replace("\"", "\\\"")).append("\\\"\"]\n");
         }else if (token instanceof OperatorToken operator) {
             builder.append("  token").append(index).append("[label=\"").append("operator \\\"").append(operator.operator.operator()).append("\\\"\"]\n");
-        }else if (token instanceof NumberToken number) {
-            builder.append("  token").append(index).append("[label=\"").append("number ").append(number.number).append("\"]\n");
         }else if(token.getType() == TokenType.OPEN) {
             builder.append("  token").append(index).append("[label=\"(\"]\n");
         }else if(token.getType() == TokenType.CLOSE) {

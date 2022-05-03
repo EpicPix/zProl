@@ -52,19 +52,28 @@ def Assignment:
   $Identifier = $Expression
 
 def inline ExpressionCallables:
-  $Number
+  $Integer
   $ExpressionParenthesis
   $FunctionCall
   $Assignment
   $Identifier
   $String
 
+def inline Integer:
+  [$Whitespace] $DecimalInteger
+
+def chars DecimalInteger:
+  0
+  $NonZeroDecimalDigit { $DecimalDigits }
+
+def chars NonZeroDecimalDigit <1-9>
+def chars DecimalDigits <0-9>
+
 def chars Identifier [$Whitespace] <a-zA-Z_> { <a-zA-Z0-9_> }
 def chars clean Whitespace < \t\n> { < \t\n> }
 def chars StringChars <^\n"> { <^\n"> }
 def String " $StringChars "
 def inline DotWord @dword@
-def inline Number @number@
 def inline Operator @operator@
 
 tok Using:
