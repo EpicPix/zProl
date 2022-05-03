@@ -48,6 +48,7 @@ record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implemen
     public byte[] write(ConstantPool pool) throws IOException {
         var bytes = new ByteArrayOutputStream();
         var out = new DataOutputStream(bytes);
+        out.writeByte(getId());
         var values = data.values();
         for(int i = 0; i<values.length; i++) {
             var type = values[i];

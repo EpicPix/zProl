@@ -91,10 +91,10 @@ public class GeneratedData {
 
         int functionLength = in.readInt();
         for(int i = 0; i<functionLength; i++) {
-            var entry = (ConstantPoolEntry.FunctionEntry) data.constantPool.entries.get(in.readInt() - 1);
-            var namespace = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString();
-            var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
-            var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
+            var entry = (ConstantPoolEntry.FunctionEntry) data.constantPool.entries.get(in.readInt());
+            var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace())).getString() : null;
+            var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName())).getString();
+            var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature())).getString();
             var modifiers = FunctionModifiers.getModifiers(entry.getModifiers());
             var hasCode = !FunctionModifiers.isEmptyCode(modifiers);
             Function function = new Function(namespace, modifiers, name, FunctionSignature.fromDescriptor(signature), hasCode ? createStorage() : null);
@@ -108,8 +108,10 @@ public class GeneratedData {
             data.functions.add(function);
         }
         for(var func : data.functions) {
-            for(var instr : func.code().getInstructions()) {
-                IBytecodeInstruction.postRead(instr, data);
+            if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
+                for (var instr : func.code().getInstructions()) {
+                    IBytecodeInstruction.postRead(instr, data);
+                }
             }
         }
 

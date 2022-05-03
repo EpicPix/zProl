@@ -93,10 +93,16 @@ public class Start {
                 files.add(s);
             }
         }
-        if(files.isEmpty()) {
-            throw new IllegalArgumentException("Files to compile not specified");
+        if(outputFile != null || !files.isEmpty()) {
+            if(files.isEmpty()) {
+                throw new IllegalArgumentException("Files to compile not specified");
+            }
+
+            compileFiles(files, Objects.requireNonNullElse(outputFile, "output.out"), generators);
+            return;
         }
-        compileFiles(files, Objects.requireNonNullElse(outputFile, "output.out"), generators);
+
+        throw new NotImplementedException("When help menu?");
     }
 
     public static void compileFiles(ArrayList<String> files, String output, ArrayList<Generator> generators) throws IOException, UnknownTypeException {

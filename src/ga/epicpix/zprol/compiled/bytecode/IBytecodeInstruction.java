@@ -50,9 +50,9 @@ public interface IBytecodeInstruction extends IConstantPoolPreparable {
         for(int i = 0; i<values.length; i++) {
             if(values[i] == BytecodeValueType.FUNCTION) {
                 var entry = (ConstantPoolEntry.FunctionEntry) instr.getData()[i];
-                var namespace = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString();
-                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
-                var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
+                var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace())).getString() : null;
+                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName())).getString();
+                var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature())).getString();
                 instr.getData()[i] = data.getFunction(namespace, name, signature);
             }
         }
