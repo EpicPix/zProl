@@ -24,12 +24,14 @@ import java.util.stream.Collectors;
 
 public class Start {
 
+    public static final boolean SHOW_TIMINGS = !Boolean.parseBoolean(System.getProperty("HIDE_TIMINGS"));
+
     public static void main(String[] args) throws UnknownTypeException, IOException {
         try {
             long startLoad = System.currentTimeMillis();
             Language.load("language.zld");
             long endLoad = System.currentTimeMillis();
-            System.out.printf("Took %d ms load language definition\n", endLoad - startLoad);
+            if(SHOW_TIMINGS) System.out.printf("Took %d ms load language definition\n", endLoad - startLoad);
         }catch(ParserException e) {
             e.printError();
             System.exit(1);
@@ -146,7 +148,7 @@ public class Start {
                     long startToken = System.currentTimeMillis();
                     ArrayList<Token> tokens = Parser.tokenize(new File(file));
                     long endToken = System.currentTimeMillis();
-                    System.out.printf("[%s] Took %d ms to tokenize\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
+                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to tokenize\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 
                     if(Boolean.parseBoolean(System.getProperty("PARSER_AST"))) {
                         long startAst = System.currentTimeMillis();
@@ -154,13 +156,13 @@ public class Start {
                         out.write(Parser.generateAst(tokens).getBytes(StandardCharsets.UTF_8));
                         out.close();
                         long endAst = System.currentTimeMillis();
-                        System.out.printf("[%s] Took %d ms to save parser ast\n", file.substring(file.lastIndexOf('/') + 1), endAst - startAst);
+                        if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to save parser ast\n", file.substring(file.lastIndexOf('/') + 1), endAst - startAst);
                     }
 
                     long startPreCompile = System.currentTimeMillis();
                     PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tokens);
                     long stopPreCompile = System.currentTimeMillis();
-                    System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
+                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
                     preCompiled.add(data);
                 }catch(ParserException e) {
                     e.printError();
@@ -178,7 +180,7 @@ public class Start {
             long startCompile = System.currentTimeMillis();
             CompiledData zpil = Compiler.compile(data, pre);
             long stopCompile = System.currentTimeMillis();
-            System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
+            if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
             compiledData.add(zpil);
         }
 
@@ -186,7 +188,7 @@ public class Start {
         long startLink = System.currentTimeMillis();
         linked.addCompiled(compiledData.toArray(new CompiledData[0]));
         long stopLink = System.currentTimeMillis();
-        System.out.printf("Took %d ms to link everything\n", stopLink - startLink);
+        if(SHOW_TIMINGS) System.out.printf("Took %d ms to link everything\n", stopLink - startLink);
 
         String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
         {
@@ -201,7 +203,7 @@ public class Start {
             gen.generate(out, linked);
             out.close();
             long stopGenerator = System.currentTimeMillis();
-            System.out.printf("Took %d ms to generate %s code\n", stopGenerator - startGenerator, gen.getGeneratorName());
+            if(SHOW_TIMINGS) System.out.printf("Took %d ms to generate %s code\n", stopGenerator - startGenerator, gen.getGeneratorName());
         }
     }
 

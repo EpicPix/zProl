@@ -39,7 +39,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
     static {
         instructionGenerators.put("vreturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  mov rsp, rbp\n  pop rbp\n  ret\n" : "  ret\n");
-        instructionGenerators.put("breturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop ax\n ret\n");
+        instructionGenerators.put("breturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop ax\n  ret\n");
         instructionGenerators.put("lreturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop rax\n  ret\n");
         instructionGenerators.put("bpush", (i, s, f, lp) -> "  push word " + i.getData()[0] + "\n");
         instructionGenerators.put("lpush", (i, s, f, lp) -> {
