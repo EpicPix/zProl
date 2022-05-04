@@ -11,7 +11,7 @@ async function main() {
             var nfile = file.substring(0, file.length - ".zprol".length);
             console.log(`----------${nfile}----------`);
             console.log(file);
-            const process = spawn('java', ['-jar', '../zProL.jar', file], {stdio: ['ignore', 'pipe', 'pipe']});
+            const process = spawn('java', ['-jar', '../zProl.jar', file], {stdio: ['ignore', 'pipe', 'pipe']});
             process.stdout.setEncoding('utf8');
             var data = "";
             process.stdout.on('data', (chunk) => data += chunk).on("error", () => {});
