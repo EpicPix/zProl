@@ -181,9 +181,14 @@ public class Compiler {
 
             if(discardValue && returnType.getSize() != 0) {
                 bytecode.pushInstruction(getConstructedSizeInstruction(returnType.getSize(), "pop"));
+            }else {
+                if(expectedType != null && returnType.getSize() != expectedType.getSize()) {
+                    // what about unsigned and signed?
+                    return doCast(returnType, expectedType, bytecode);
+                }
             }
 
-            return null;
+            return returnType;
         }else if(operation instanceof OperationField field) {
             var local = localsManager.tryGetLocalVariable(field.getIdentifier());
             if(local != null) {
@@ -208,6 +213,14 @@ public class Compiler {
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());
         }
+    }
+
+    public static PrimitiveType doCast(PrimitiveType from, PrimitiveType to, IBytecodeStorage bytecode) {
+        if(to.getSize() > from.getSize()) {
+            bytecode.pushInstruction(getConstructedSizeInstruction(from.getSize(), "cast" + getInstructionPrefix(to.getSize())));
+            return to;
+        }
+        throw new CompileException("Unsupported cast from " + from.name + " to " + to.name);
     }
 
     public static void compileFunction(CompiledData data, PreFunction function) {
