@@ -24,6 +24,10 @@ public class SeekIterator<T> implements ListIterator<T> {
         return elements[index++];
     }
 
+    public T current() {
+        return elements[index];
+    }
+
     public T seek() {
         return elements[index];
     }

@@ -22,7 +22,7 @@ public class OperationGenerator {
         while(tokens.hasNext()) {
             Token token = tokens.next();
             if(!(token instanceof NamedToken)) {
-                throw new CompileException("Expected NamedToken but got " + token.getClass().getSimpleName());
+                throw new CompileException("Expected NamedToken but got " + token.getClass().getSimpleName(), token);
             }
             NamedToken named = token.asNamedToken();
             switch (named.name) {
@@ -30,7 +30,7 @@ public class OperationGenerator {
                     String operatorName = named.tokens[0].asWordToken().getWord();
                     LanguageOperator operator = Language.OPERATORS.get(operatorName);
                     if (operator == null) {
-                        throw new CompileException("Unknown operator '" + operatorName + "'");
+                        throw new CompileException("Unknown operator '" + operatorName + "'", named);
                     }
                     if (cachedOperator.isEmpty()) {
                         cachedOperator.push(operator);
@@ -63,7 +63,7 @@ public class OperationGenerator {
                     }
                     operations.add(new OperationCall(name, callOp));
                 }
-                case "DecimalInteger" -> operations.add(new OperationNumber(OperationNumber.getDecimalInteger(named.tokens[0].asWordToken().getWord())));
+                case "DecimalInteger" -> operations.add(new OperationNumber(OperationNumber.getDecimalInteger(named.tokens[0])));
                 case "Identifier" -> operations.add(new OperationField(named.tokens[0].asWordToken().getWord()));
                 case "String" -> operations.add(new OperationString(named.getSingleTokenWithName("StringChars").asWordToken().getWord()));
                 case "Assignment" -> operations.add(new OperationAssignment(named.getSingleTokenWithName("Identifier").asWordToken().getWord(), getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens))));
@@ -74,12 +74,12 @@ public class OperationGenerator {
                 if (tokens.hasNext()) {
                     NamedToken t = tokens.seek().asNamedToken();
                     if(!t.name.equals("Operator")) {
-                        throw new CompileException("Expected Operator but got " + t.name);
+                        throw new CompileException("Expected Operator but got " + t.name, t);
                     }
                     String operatorName = t.tokens[0].asWordToken().getWord();
                     LanguageOperator operator = Language.OPERATORS.get(operatorName);
                     if (operator == null) {
-                        throw new CompileException("Unknown operator '" + operatorName + "'");
+                        throw new CompileException("Unknown operator '" + operatorName + "'", t);
                     }
                     int a = operator.precedence();
                     int b = cachedOperator.peek().precedence();

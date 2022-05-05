@@ -46,7 +46,7 @@ public class NamedToken extends Token {
             if(token instanceof NamedToken named) {
                 if(named.name.equals(name)) {
                     if(named.tokens.length != 1) {
-                        throw new CompileException("Expected one token but found multiple");
+                        throw new CompileException("Expected one token but found multiple", this);
                     }
                     return named.tokens[0];
                 }

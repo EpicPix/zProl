@@ -2,6 +2,7 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.*;
 import ga.epicpix.zprol.compiled.Compiler;
+import ga.epicpix.zprol.exceptions.CompileException;
 import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.precompiled.PreCompiledData;
 import ga.epicpix.zprol.precompiled.PreCompiler;
@@ -167,20 +168,31 @@ public class Start {
                     e.printError();
                     System.exit(1);
                     return;
+                }catch(CompileException e) {
+                    e.printError();
+                    System.exit(1);
+                    return;
                 }
             }
         }
 
         ArrayList<CompiledData> compiledData = new ArrayList<>();
 
-        for(PreCompiledData data : preCompiled) {
-            ArrayList<PreCompiledData> pre = new ArrayList<>(preCompiled);
-            pre.remove(data);
-            long startCompile = System.currentTimeMillis();
-            CompiledData zpil = Compiler.compile(data, pre);
-            long stopCompile = System.currentTimeMillis();
-            if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
-            compiledData.add(zpil);
+        try {
+            for (PreCompiledData data : preCompiled) {
+                ArrayList<PreCompiledData> pre = new ArrayList<>(preCompiled);
+                pre.remove(data);
+                long startCompile = System.currentTimeMillis();
+                CompiledData zpil = Compiler.compile(data, pre);
+                long stopCompile = System.currentTimeMillis();
+                if (SHOW_TIMINGS)
+                    System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
+                compiledData.add(zpil);
+            }
+        }catch(CompileException e) {
+            e.printError();
+            System.exit(1);
+            return;
         }
 
         GeneratedData linked = new GeneratedData();

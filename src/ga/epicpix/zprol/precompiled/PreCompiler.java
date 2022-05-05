@@ -25,9 +25,9 @@ public class PreCompiler {
                 if(named.name.equals("Using")) {
                     pre.using.add(ts[1].asWordToken().getWord());
                 }else if(named.name.equals("Namespace")) {
-                    if(usedOther) throw new RuntimeException("Namespace not defined at the top of the file");
+                    if(usedOther) throw new CompileException("Namespace not defined at the top of the file", named);
                     String namespace = ts[1].asWordToken().getWord();
-                    if(pre.namespace != null) throw new RuntimeException("Defined namespace for a file multiple times");
+                    if(pre.namespace != null) throw new CompileException("Defined namespace for a file multiple times", named);
                     pre.namespace = namespace;
                 }else if(named.name.equals("Function")) {
                     PreFunction func = new PreFunction();
@@ -35,7 +35,7 @@ public class PreCompiler {
                         for(Token modifier : named.getTokenWithName("FunctionModifiers").tokens) {
                             PreFunctionModifiers modifiers = PreFunctionModifiers.getModifier(modifier.asKeywordToken().getWord());
                             if(func.modifiers.contains(modifiers)) {
-                                throw new CompileException("Duplicate function modifier: '" + modifiers.getName() + "'");
+                                throw new CompileException("Duplicate function modifier: '" + modifiers.getName() + "'", modifier);
                             }
                             func.modifiers.add(modifiers);
                         }
@@ -53,13 +53,13 @@ public class PreCompiler {
                     }
                     if(func.hasCode()) {
                         if(named.getTokenWithName("Code") == null) {
-                            throw new CompileException("Expected code");
+                            throw new CompileException("Expected code", named);
                         }
                         for (var a : named.getTokenWithName("Code").getTokensWithName("Statement"))
                             func.code.addAll(List.of(a.tokens));
                     }else {
                         if(named.getTokenWithName("Code") != null) {
-                            throw new CompileException("Expected no code");
+                            throw new CompileException("Expected no code", named);
                         }
                     }
                     pre.functions.add(func);
@@ -67,7 +67,7 @@ public class PreCompiler {
                     System.out.println("token: " + named);
                 }
             }else {
-                throw new CompileException("Expected Named token, this might be a bug in parsing code");
+                throw new CompileException("Expected Named token, this might be a bug in parsing code", token);
             }
         }
 
