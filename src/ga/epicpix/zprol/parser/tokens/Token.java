@@ -1,13 +1,21 @@
 package ga.epicpix.zprol.parser.tokens;
 
-import java.util.ArrayList;
+import ga.epicpix.zprol.parser.DataParser;
+import ga.epicpix.zprol.parser.ParserLocation;
 
 public class Token {
 
+    public final ParserLocation startLocation;
+    public final ParserLocation endLocation;
+    public final DataParser parser;
+
     private final TokenType type;
 
-    public Token(TokenType type) {
+    public Token(TokenType type, ParserLocation startLocation, ParserLocation endLocation, DataParser parser) {
         this.type = type;
+        this.startLocation = startLocation;
+        this.endLocation = endLocation;
+        this.parser = parser;
     }
 
     public WordToken asWordToken() {

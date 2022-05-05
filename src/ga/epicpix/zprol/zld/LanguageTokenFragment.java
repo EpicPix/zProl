@@ -4,6 +4,7 @@ import ga.epicpix.zprol.exceptions.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.tokens.KeywordToken;
 import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.parser.tokens.TokenType;
 import ga.epicpix.zprol.parser.tokens.WordToken;
 
 import java.util.Arrays;
@@ -15,11 +16,24 @@ public class LanguageTokenFragment {
     private final Function<DataParser, Token[]> tokenReader;
     private final String debugName;
 
-    public static WordToken exactWordGenerator(String require, String got) {
+    public static WordToken exactWordGenerator(String require, DataParser parser) {
+        var startLocation = parser.getLocation();
+        String got = parser.nextWord();
         if(!require.equals(got)) {
             return null;
         }
-        return new WordToken(got);
+        var endLocation = parser.getLocation();
+        return new WordToken(got, startLocation, endLocation, parser);
+    }
+
+    public static Token exactTypeGenerator(String require, TokenType type, DataParser parser) {
+        var startLocation = parser.getLocation();
+        String got = parser.nextWord();
+        if(!require.equals(got)) {
+            return null;
+        }
+        var endLocation = parser.getLocation();
+        return new Token(type, startLocation, endLocation, parser);
     }
 
     public static String validateWord(String w) {
@@ -36,12 +50,12 @@ public class LanguageTokenFragment {
 
     public static LanguageTokenFragment createExactFragmentType(String data, Supplier<Token> gen) {
         final Token token = gen.get();
-        return new LanguageTokenFragment(p -> exactWordGenerator(data, p.nextWord()) != null ? new Token[] {token} : null, data);
+        return new LanguageTokenFragment(p -> exactWordGenerator(data, p) != null ? new Token[] {token} : null, data);
     }
 
     public static LanguageTokenFragment createExactFragment(String data) {
         return new LanguageTokenFragment(p -> {
-            var e = exactWordGenerator(data, p.nextWord());
+            var e = exactWordGenerator(data, p);
             return e != null ? new Token[] {e} : null;
         }, data);
     }
@@ -52,10 +66,12 @@ public class LanguageTokenFragment {
             throw new ParserException("Unknown language keyword", parser);
         }
         return new LanguageTokenFragment(p -> {
+            p.ignoreWhitespace();
+            var start = p.getLocation();
             if(!data.equals(p.nextWord())) {
                 return null;
             }
-            return new Token[] {new KeywordToken(keyword)};
+            return new Token[] {new KeywordToken(keyword, start, p.getLocation(), p)};
         }, data);
     }
 

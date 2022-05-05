@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class Start {
 
@@ -150,13 +149,13 @@ public class Start {
                     long endToken = System.currentTimeMillis();
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to tokenize\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 
-                    if(Boolean.parseBoolean(System.getProperty("PARSER_AST"))) {
+                    if(Boolean.parseBoolean(System.getProperty("PARSE_TREE"))) {
                         long startAst = System.currentTimeMillis();
                         DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".dot"));
-                        out.write(Parser.generateAst(tokens).getBytes(StandardCharsets.UTF_8));
+                        out.write(Parser.generateParseTree(tokens).getBytes(StandardCharsets.UTF_8));
                         out.close();
                         long endAst = System.currentTimeMillis();
-                        if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to save parser ast\n", file.substring(file.lastIndexOf('/') + 1), endAst - startAst);
+                        if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to save parser parse tree\n", file.substring(file.lastIndexOf('/') + 1), endAst - startAst);
                     }
 
                     long startPreCompile = System.currentTimeMillis();

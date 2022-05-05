@@ -55,68 +55,59 @@ public class Parser {
 
         ArrayList<Token> tokens = new ArrayList<>();
 
-        String word;
-        while((word = parser.seekWord()) != null) {
-            boolean skip = false;
-            if(word.equals("{")) {
-                parser.nextWord();
-                tokens.add(new Token(TokenType.OPEN_SCOPE));
-            }else if(word.equals("}")) {
-                parser.nextWord();
-                tokens.add(new Token(TokenType.CLOSE_SCOPE));
-            }else if(!skip) {
-                ArrayList<LanguageToken> validOptions = new ArrayList<>();
-                for(LanguageToken tok : Language.TOKENS) {
-                    parser.saveLocation();
-                    if(tok.args()[0].apply(parser) != null) {
-                        validOptions.add(tok);
-                    }
-                    parser.loadLocation();
+        while(parser.seekWord() != null) {
+            ArrayList<LanguageToken> validOptions = new ArrayList<>();
+            for(LanguageToken tok : Language.TOKENS) {
+                parser.saveLocation();
+                if(tok.args()[0].apply(parser) != null) {
+                    validOptions.add(tok);
                 }
-                LanguageToken langToken = null;
-                for (LanguageToken tok : validOptions) {
-                    parser.saveLocation();
-                    ArrayList<Token> tTokens = new ArrayList<>();
-                    if (check(tTokens, parser, tok)) {
-                        langToken = tok;
-                        tokens.add(new NamedToken(tok.name(), tTokens.toArray(new Token[0])));
-                        parser.discardLocation();
-                        break;
-                    }
-                    parser.loadLocation();
+                parser.loadLocation();
+            }
+            LanguageToken langToken = null;
+            for (LanguageToken tok : validOptions) {
+                parser.saveLocation();
+                ArrayList<Token> tTokens = new ArrayList<>();
+                var startLocation = parser.getLocation();
+                if (check(tTokens, parser, tok)) {
+                    langToken = tok;
+                    tokens.add(new NamedToken(tok.name(), startLocation, parser.getLocation(), parser, tTokens.toArray(new Token[0])));
+                    parser.discardLocation();
+                    break;
                 }
-                if(langToken == null) {
-                    String[] expressions = new String[validOptions.size()];
-                    String l = parser.nextWord();
-                    for(int j = 0; j<expressions.length; j++) expressions[j] = "Expected " + getLanguageDefinition(validOptions.get(j), l);
-                    throw new ParserException(expressions.length != 0 ? String.join("\n", expressions) : "Invalid expression", parser);
-                }
+                parser.loadLocation();
+            }
+            if(langToken == null) {
+                String[] expressions = new String[validOptions.size()];
+                String l = parser.nextWord();
+                for(int j = 0; j<expressions.length; j++) expressions[j] = "Expected " + getLanguageDefinition(validOptions.get(j), l);
+                throw new ParserException(expressions.length != 0 ? String.join("\n", expressions) : "Invalid expression", parser);
             }
         }
         return tokens;
 
     }
 
-    public static String generateAst(ArrayList<Token> tokens) {
+    public static String generateParseTree(ArrayList<Token> tokens) {
         StringBuilder builder = new StringBuilder();
         builder.append("digraph {\n");
         AtomicInteger current = new AtomicInteger();
         int root = current.getAndIncrement();
         builder.append("  token").append(root).append("[shape=box,color=\"#007FFF\",label=\"<root>\"]\n");
         for(var t : tokens) {
-            int num = writeTokenAst(t, builder, current);
+            int num = writeTokenParseTree(t, builder, current);
             builder.append("  token").append(root).append(" -> token").append(num).append("\n");
         }
         builder.append("}");
         return builder.toString();
     }
 
-    private static int writeTokenAst(Token token, StringBuilder builder, AtomicInteger current) {
+    private static int writeTokenParseTree(Token token, StringBuilder builder, AtomicInteger current) {
         int index = current.getAndIncrement();
         if (token instanceof NamedToken named) {
             builder.append("  token").append(index).append("[shape=box,color=\"#FF7F00\",label=\"").append("(").append(named.name).append(")\"]\n");
             for(var t : named.tokens) {
-                int num = writeTokenAst(t, builder, current);
+                int num = writeTokenParseTree(t, builder, current);
                 builder.append("  token").append(index).append(" -> token").append(num).append("\n");
             }
         }else if (token instanceof WordHolder word) {

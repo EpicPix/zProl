@@ -75,6 +75,7 @@ public class Language {
             String use = parser.nextTemplateWord(tokenCharacters);
             return createMulti(p -> {
                 var defs = DEFINITIONS.get(use);
+                var startLocation = p.getLocation();
                 fLoop: for(LanguageToken def : defs) {
                     p.saveLocation();
                     ArrayList<Token> iterTokens = new ArrayList<>();
@@ -93,7 +94,7 @@ public class Language {
                     p.discardLocation();
                     if(def.clean()) return EMPTY_TOKENS;
                     if(def.inline()) return iterTokens.toArray(EMPTY_TOKENS);
-                    return new Token[]{new NamedToken(use, iterTokens.toArray(EMPTY_TOKENS))};
+                    return new Token[]{new NamedToken(use, startLocation, p.getLocation(), p, iterTokens.toArray(EMPTY_TOKENS))};
                 }
                 return null;
             }, "$" + use);
@@ -158,6 +159,7 @@ public class Language {
             }
             String debugName = "<" + debug + ">";
             return createMulti(p -> {
+                var startLocation = p.getLocation();
                 p.saveLocation();
                 var res = negate ? p.nextCharNot(allowedCharacters) : p.nextChar(allowedCharacters);
                 if(res == -1) {
@@ -165,17 +167,18 @@ public class Language {
                     return null;
                 }
                 p.discardLocation();
-                return new Token[] {new WordToken(Character.toString(res))};
+                var endLocation = p.getLocation();
+                return new Token[] {new WordToken(Character.toString(res), startLocation, endLocation, p)};
             }, debugName);
         }
 
         return switch (w) {
-            case ";" -> createExactFragmentType(";", () -> new Token(TokenType.END_LINE));
-            case "," -> createExactFragmentType(",", () -> new Token(TokenType.COMMA));
-            case "(" -> createExactFragmentType("(", () -> new Token(TokenType.OPEN));
-            case ")" -> createExactFragmentType(")", () -> new Token(TokenType.CLOSE));
-            case "{" -> createExactFragmentType("{", () -> new Token(TokenType.OPEN_SCOPE));
-            case "}" -> createExactFragmentType("}", () -> new Token(TokenType.CLOSE_SCOPE));
+            case ";" -> createSingle((p) -> exactTypeGenerator(";", TokenType.END_LINE, p), w);
+            case "," -> createSingle((p) -> exactTypeGenerator(",", TokenType.COMMA, p), w);
+            case "(" -> createSingle((p) -> exactTypeGenerator("(", TokenType.OPEN, p), w);
+            case ")" -> createSingle((p) -> exactTypeGenerator(")", TokenType.CLOSE, p), w);
+            case "{" -> createSingle((p) -> exactTypeGenerator("{", TokenType.OPEN_SCOPE, p), w);
+            case "}" -> createSingle((p) -> exactTypeGenerator("}", TokenType.CLOSE_SCOPE, p), w);
             default -> keyword ? createExactKeywordFragment(w, parser) : createExactFragment(w);
         };
 
@@ -343,6 +346,7 @@ public class Language {
         String debugName = copy.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" "));
         tokens.add(createSingle(dataParser -> {
             StringBuilder builder = new StringBuilder();
+            var start = dataParser.getLocation();
             for(var c : copy) {
                 dataParser.saveLocation();
                 var value = c.apply(dataParser);
@@ -363,7 +367,7 @@ public class Language {
                     }
                 }
             }
-            return new WordToken(builder.toString());
+            return new WordToken(builder.toString(), start, dataParser.getLocation(), dataParser);
         }, debugName));
     }
 
