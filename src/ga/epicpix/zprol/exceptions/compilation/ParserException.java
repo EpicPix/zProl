@@ -1,4 +1,4 @@
-package ga.epicpix.zprol.exceptions;
+package ga.epicpix.zprol.exceptions.compilation;
 
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.ParserLocation;

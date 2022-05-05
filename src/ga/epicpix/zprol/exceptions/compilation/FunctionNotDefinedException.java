@@ -1,4 +1,4 @@
-package ga.epicpix.zprol.exceptions;
+package ga.epicpix.zprol.exceptions.compilation;
 
 public class FunctionNotDefinedException extends RuntimeException {
 

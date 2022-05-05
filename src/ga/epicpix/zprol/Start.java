@@ -2,13 +2,13 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.*;
 import ga.epicpix.zprol.compiled.Compiler;
-import ga.epicpix.zprol.exceptions.CompileException;
+import ga.epicpix.zprol.exceptions.compilation.CompileException;
 import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.precompiled.PreCompiledData;
 import ga.epicpix.zprol.precompiled.PreCompiler;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
-import ga.epicpix.zprol.exceptions.ParserException;
-import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.exceptions.compilation.ParserException;
+import ga.epicpix.zprol.exceptions.compilation.UnknownTypeException;
 import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.zld.Language;

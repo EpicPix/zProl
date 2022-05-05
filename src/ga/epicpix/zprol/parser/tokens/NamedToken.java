@@ -1,6 +1,6 @@
 package ga.epicpix.zprol.parser.tokens;
 
-import ga.epicpix.zprol.exceptions.CompileException;
+import ga.epicpix.zprol.exceptions.compilation.CompileException;
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.ParserLocation;
 

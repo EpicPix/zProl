@@ -1,7 +1,7 @@
 package ga.epicpix.zprol.compiled;
 
-import ga.epicpix.zprol.exceptions.VariableAlreadyDefinedException;
-import ga.epicpix.zprol.exceptions.VariableNotDefinedException;
+import ga.epicpix.zprol.exceptions.compilation.VariableAlreadyDefinedException;
+import ga.epicpix.zprol.exceptions.compilation.VariableNotDefinedException;
 import java.util.ArrayList;
 
 public class LocalScope {

@@ -1,8 +1,6 @@
-package ga.epicpix.zprol.exceptions;
+package ga.epicpix.zprol.exceptions.compilation;
 
 import ga.epicpix.zprol.parser.tokens.Token;
-
-import java.io.PrintStream;
 
 public class CompileException extends RuntimeException {
 

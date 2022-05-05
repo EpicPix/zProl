@@ -2,7 +2,7 @@ package ga.epicpix.zprol.parser;
 
 import ga.epicpix.zprol.parser.tokens.*;
 import ga.epicpix.zprol.zld.Language;
-import ga.epicpix.zprol.exceptions.ParserException;
+import ga.epicpix.zprol.exceptions.compilation.ParserException;
 import ga.epicpix.zprol.zld.LanguageToken;
 import ga.epicpix.zprol.zld.LanguageTokenFragment;
 

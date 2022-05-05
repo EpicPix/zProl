@@ -1,4 +1,4 @@
-package ga.epicpix.zprol.exceptions;
+package ga.epicpix.zprol.exceptions.bytecode;
 
 public class RedefinedInstructionException extends RuntimeException {
 

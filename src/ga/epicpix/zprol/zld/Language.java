@@ -2,9 +2,8 @@ package ga.epicpix.zprol.zld;
 
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.PrimitiveType;
-import ga.epicpix.zprol.exceptions.ParserException;
+import ga.epicpix.zprol.exceptions.compilation.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
-import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.tokens.*;
 
 import java.io.IOException;

@@ -5,7 +5,6 @@ import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.bytecode.BytecodeValueType;
 import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
 import ga.epicpix.zprol.bytecode.impl.Bytecode.BytecodeInstructionData;
-import ga.epicpix.zprol.exceptions.InvalidOperationException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -66,7 +65,7 @@ record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implemen
                 case 2 -> out.writeShort(num.shortValue());
                 case 4 -> out.writeInt(num.intValue());
                 case 8 -> out.writeLong(num.longValue());
-                default -> throw new InvalidOperationException("Invalid size of bytecode type: " + type.getSize());
+                default -> throw new IllegalStateException("Invalid size of bytecode type: " + type.getSize());
             }
         }
         return bytes.toByteArray();

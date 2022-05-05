@@ -1,9 +1,8 @@
 package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
-import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
-import ga.epicpix.zprol.exceptions.InvalidDataException;
-import ga.epicpix.zprol.exceptions.RedefinedFunctionException;
+import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
+import ga.epicpix.zprol.exceptions.compilation.RedefinedFunctionException;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -82,7 +81,7 @@ public class GeneratedData {
         GeneratedData data = new GeneratedData();
 
         if(!new String(in.readNBytes(4)).equals("zPrl")) {
-            throw new InvalidDataException("invalid magic");
+            throw new IllegalStateException("invalid magic");
         }
 
         int length = in.readInt() - 1;

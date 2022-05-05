@@ -4,9 +4,8 @@ import ga.epicpix.zprol.bytecode.BytecodeValueType;
 import ga.epicpix.zprol.bytecode.IBytecode;
 import ga.epicpix.zprol.bytecode.IBytecodeInstructionGenerator;
 import ga.epicpix.zprol.bytecode.IBytecodeStorage;
-import ga.epicpix.zprol.exceptions.RedefinedInstructionException;
-import ga.epicpix.zprol.exceptions.UndefinedOperationException;
-import ga.epicpix.zprol.exceptions.UnknownInstructionException;
+import ga.epicpix.zprol.exceptions.bytecode.RedefinedInstructionException;
+import ga.epicpix.zprol.exceptions.bytecode.UnknownInstructionException;
 
 import java.util.ArrayList;
 
@@ -90,7 +89,7 @@ public final class Bytecode implements IBytecode {
             case 4 -> "i";
             case 8 -> "l";
             case 16 -> "h";
-            default -> throw new UndefinedOperationException("Instruction prefix with size " + size + " is not supported");
+            default -> throw new IllegalArgumentException("Instruction prefix with size " + size + " does not exist");
         };
     }
 

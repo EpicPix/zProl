@@ -2,10 +2,8 @@ package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.precompiled.PreCompiledData;
 import ga.epicpix.zprol.zld.Language;
-import ga.epicpix.zprol.compiled.ConstantPoolEntry.FunctionEntry;
-import ga.epicpix.zprol.compiled.ConstantPoolEntry.StringEntry;
-import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
-import ga.epicpix.zprol.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
+import ga.epicpix.zprol.exceptions.compilation.UnknownTypeException;
 import java.util.ArrayList;
 
 public class CompiledData {

@@ -1,7 +1,6 @@
 package ga.epicpix.zprol.precompiled;
 
 import ga.epicpix.zprol.compiled.FunctionModifiers;
-import ga.epicpix.zprol.exceptions.NotImplementedException;
 
 public enum PreFunctionModifiers {
 
@@ -37,7 +36,7 @@ public enum PreFunctionModifiers {
                 return modifier;
             }
         }
-        throw new NotImplementedException("Not implemented function modifier '" + name + "'");
+        throw new IllegalArgumentException("Unknown function modifier '" + name + "'");
     }
 
 }

@@ -3,9 +3,9 @@ package ga.epicpix.zprol.generators;
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.*;
 import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
-import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
+import ga.epicpix.zprol.exceptions.bytecode.UnknownInstructionException;
+import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
-import ga.epicpix.zprol.exceptions.UndefinedOperationException;
 import ga.epicpix.zprol.zld.Language;
 
 import java.io.DataOutputStream;
@@ -145,7 +145,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 if(generator != null) {
                     outStream.writeBytes(generator.generateInstruction(instruction, instructions, function, localConstantPool));
                 }else {
-                    throw new UndefinedOperationException("Unable to generate instructions for the " + instruction.getName() + " instruction");
+                    throw new UnknownInstructionException("Unable to generate instructions for the " + instruction.getName() + " instruction");
                 }
             }
         }

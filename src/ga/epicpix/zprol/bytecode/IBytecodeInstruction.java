@@ -5,7 +5,6 @@ import ga.epicpix.zprol.compiled.ConstantPoolEntry;
 import ga.epicpix.zprol.compiled.GeneratedData;
 import ga.epicpix.zprol.compiled.IConstantPoolPreparable;
 import ga.epicpix.zprol.bytecode.impl.Bytecode;
-import ga.epicpix.zprol.exceptions.InvalidOperationException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -34,7 +33,7 @@ public interface IBytecodeInstruction extends IConstantPoolPreparable {
                 case 2 -> input.readShort();
                 case 4 -> input.readInt();
                 case 8 -> input.readLong();
-                default -> throw new InvalidOperationException("Invalid size of bytecode type: " + type.getSize());
+                default -> throw new IllegalStateException("Invalid size of bytecode type: " + type.getSize());
             };
             if(type == BytecodeValueType.STRING) {
                 args[i] = ((Number) args[i]).intValue();

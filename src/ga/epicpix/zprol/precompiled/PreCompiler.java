@@ -1,7 +1,7 @@
 package ga.epicpix.zprol.precompiled;
 
 import ga.epicpix.zprol.SeekIterator;
-import ga.epicpix.zprol.exceptions.CompileException;
+import ga.epicpix.zprol.exceptions.compilation.CompileException;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
