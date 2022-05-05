@@ -54,7 +54,7 @@ public class OperationGenerator {
                     operations.addAll(getOperations(new SeekIterator<>(t)).getOperations());
                 }
                 case "FunctionCallStatement", "FunctionCall" -> {
-                    String name = named.getTokenWithName("Identifier").tokens[0].asWordToken().getWord();
+                    String name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
                     ArrayList<OperationRoot> callOp = new ArrayList<>();
                     if (named.getTokenWithName("ArgumentList") != null) {
                         for (Token argument : named.getTokenWithName("ArgumentList").getTokensWithName("Argument")) {

@@ -70,7 +70,9 @@ def chars DecimalInteger:
 def chars NonZeroDecimalDigit <1-9>
 def chars DecimalDigits <0-9>
 
-def chars Identifier [$Whitespace] <a-zA-Z_> { <a-zA-Z0-9_> }
+def chars IdentifierChars <a-zA-Z_> { <a-zA-Z0-9_> }
+def chars Identifier [$Whitespace] $IdentifierChars
+def chars Type [$Whitespace] { $IdentifierChars <.> } $IdentifierChars
 def chars clean Whitespace < \t\n> { < \t\n> }
 def chars StringChars <^\n"> { <^\n"> }
 def String " $StringChars "
@@ -106,7 +108,7 @@ def FunctionCall:
   $Identifier ( [$ArgumentList] )
 
 def Parameter:
-  $Identifier $Identifier
+  $Type $Identifier
 
 def ParameterList:
   $Parameter {, $Parameter}
@@ -124,7 +126,7 @@ def AssignmentStatement:
   $Identifier = $Expression ;
 
 def CreateAssignmentStatement:
-  $Identifier $Identifier = $Expression ;
+  $Type $Identifier = $Expression ;
 
 def Statement:
   $ReturnStatement
@@ -139,5 +141,11 @@ def Code:
   $LineCodeChars $Statement
 
 tok Function:
-  $FunctionModifiers $Identifier $Identifier ( [$ParameterList] ) $Code
-  $FunctionModifiers $Identifier $Identifier ( [$ParameterList] ) ;
+  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
+  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) ;
+
+def ClassField:
+  $Type $Identifier ;
+
+tok Class:
+  class $Type \{ {$ClassField} \}

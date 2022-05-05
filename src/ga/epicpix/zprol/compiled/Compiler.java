@@ -58,8 +58,8 @@ public class Compiler {
                 } else if("FunctionCallStatement".equals(named.name)) {
                     generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(new Token[] {named})), null, data, localsManager, storage, true);
                 } else if("CreateAssignmentStatement".equals(named.name)) {
-                    var type = data.resolveType(named.getTokensWithName("Identifier").get(0).tokens[0].asWordToken().getWord());
-                    var name = named.getTokensWithName("Identifier").get(1).tokens[0].asWordToken().getWord();
+                    var type = data.resolveType(named.getSingleTokenWithName("Type").asWordToken().getWord());
+                    var name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
                     var expression = named.getTokenWithName("Expression").tokens;
                     generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(expression)), type, data, localsManager, storage, false);
                     var local = localsManager.defineLocalVariable(name, type);
