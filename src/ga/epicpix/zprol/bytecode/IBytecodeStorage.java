@@ -1,4 +1,4 @@
-package ga.epicpix.zprol.compiled.bytecode;
+package ga.epicpix.zprol.bytecode;
 
 import java.util.List;
 

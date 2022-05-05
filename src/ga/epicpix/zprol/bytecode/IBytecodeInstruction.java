@@ -1,10 +1,10 @@
-package ga.epicpix.zprol.compiled.bytecode;
+package ga.epicpix.zprol.bytecode;
 
 import ga.epicpix.zprol.compiled.ConstantPool;
 import ga.epicpix.zprol.compiled.ConstantPoolEntry;
 import ga.epicpix.zprol.compiled.GeneratedData;
 import ga.epicpix.zprol.compiled.IConstantPoolPreparable;
-import ga.epicpix.zprol.compiled.bytecode.impl.Bytecode;
+import ga.epicpix.zprol.bytecode.impl.Bytecode;
 import ga.epicpix.zprol.exceptions.InvalidOperationException;
 
 import java.io.DataInput;

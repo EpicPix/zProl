@@ -1,7 +1,7 @@
-package ga.epicpix.zprol.compiled.bytecode.impl;
+package ga.epicpix.zprol.bytecode.impl;
 
-import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstruction;
-import ga.epicpix.zprol.compiled.bytecode.IBytecodeStorage;
+import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
+import ga.epicpix.zprol.bytecode.IBytecodeStorage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

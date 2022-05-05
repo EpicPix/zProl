@@ -1,6 +1,6 @@
 package ga.epicpix.zprol.compiled;
 
-import ga.epicpix.zprol.compiled.bytecode.IBytecodeStorage;
+import ga.epicpix.zprol.bytecode.IBytecodeStorage;
 
 import java.util.EnumSet;
 

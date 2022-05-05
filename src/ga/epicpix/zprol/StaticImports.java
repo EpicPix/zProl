@@ -1,11 +1,11 @@
 package ga.epicpix.zprol;
 
-import ga.epicpix.zprol.compiled.bytecode.BytecodeValueType;
-import ga.epicpix.zprol.compiled.bytecode.IBytecode;
-import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstruction;
-import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstructionGenerator;
-import ga.epicpix.zprol.compiled.bytecode.IBytecodeStorage;
-import ga.epicpix.zprol.compiled.bytecode.impl.Bytecode;
+import ga.epicpix.zprol.bytecode.BytecodeValueType;
+import ga.epicpix.zprol.bytecode.IBytecode;
+import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
+import ga.epicpix.zprol.bytecode.IBytecodeInstructionGenerator;
+import ga.epicpix.zprol.bytecode.IBytecodeStorage;
+import ga.epicpix.zprol.bytecode.impl.Bytecode;
 
 public class StaticImports {
 

@@ -1,6 +1,6 @@
 package ga.epicpix.zprol.compiled;
 
-import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstruction;
+import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.InvalidDataException;
 import ga.epicpix.zprol.exceptions.RedefinedFunctionException;

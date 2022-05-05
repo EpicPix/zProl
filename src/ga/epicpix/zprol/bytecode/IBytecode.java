@@ -1,4 +1,4 @@
-package ga.epicpix.zprol.compiled.bytecode;
+package ga.epicpix.zprol.bytecode;
 
 public interface IBytecode {
 

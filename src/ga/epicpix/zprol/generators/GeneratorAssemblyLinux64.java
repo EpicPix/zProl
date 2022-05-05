@@ -2,7 +2,7 @@ package ga.epicpix.zprol.generators;
 
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.*;
-import ga.epicpix.zprol.compiled.bytecode.IBytecodeInstruction;
+import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
 import ga.epicpix.zprol.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.UndefinedOperationException;
