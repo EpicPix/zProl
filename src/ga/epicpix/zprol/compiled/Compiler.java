@@ -11,10 +11,7 @@ import ga.epicpix.zprol.operation.*;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
-import ga.epicpix.zprol.precompiled.PreCompiledData;
-import ga.epicpix.zprol.precompiled.PreFunction;
-import ga.epicpix.zprol.precompiled.PreFunctionModifiers;
-import ga.epicpix.zprol.precompiled.PreParameter;
+import ga.epicpix.zprol.precompiled.*;
 import ga.epicpix.zprol.zld.Language;
 
 import java.util.ArrayList;
@@ -245,12 +242,22 @@ public class Compiler {
         data.addFunction(new Function(data.namespace, modifiers, function.name, signature, bytecode));
     }
 
+    public static void compileClass(CompiledData data, PreClass clazz) {
+        ClassField[] fields = new ClassField[clazz.fields.size()];
+        for (int i = 0; i < clazz.fields.size(); i++) {
+            PreField field = clazz.fields.get(i);
+            fields[i] = new ClassField(field.name, data.resolveType(field.type));
+        }
+        data.addClass(new Class(data.namespace, clazz.name, fields));
+    }
+
     public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {
         CompiledData data = new CompiledData(preCompiled.namespace);
 
         data.using(preCompiled);
         for(PreCompiledData o : other) if(preCompiled.using.contains(o.namespace)) data.using(o);
 
+        for(PreClass clazz : preCompiled.classes) compileClass(data, clazz);
         for(PreFunction function : preCompiled.functions) compileFunction(data, function);
         return data;
     }

@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiled.generated;
 
+import ga.epicpix.zprol.compiled.Class;
 import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.FunctionModifiers;
 import ga.epicpix.zprol.exceptions.bytecode.LostConstantPoolEntryException;
@@ -40,6 +41,21 @@ public class ConstantPool {
         return entries.size();
     }
 
+    public int getOrCreateClassIndex(Class clz) {
+        int namespaceIndex = getOrCreateStringIndex(clz.namespace());
+        int nameIndex = getOrCreateStringIndex(clz.name());
+
+        for(int i = 0; i < entries.size(); i++) {
+            if(entries.get(i) instanceof ConstantPoolEntry.ClassEntry e) {
+                if(e.getNamespace() == namespaceIndex && e.getName() == nameIndex) {
+                    return i + 1;
+                }
+            }
+        }
+        entries.add(new ConstantPoolEntry.ClassEntry(namespaceIndex, nameIndex));
+        return entries.size();
+    }
+
 
 
     public int getFunctionIndex(Function func) {
@@ -68,6 +84,20 @@ public class ConstantPool {
             }
         }
         throw new LostConstantPoolEntryException("Cannot find string ConstantPoolEntry with '" + str + "'");
+    }
+
+    public int getClassIndex(Class clz) {
+        int namespaceIndex = getStringIndex(clz.namespace());
+        int nameIndex = getStringIndex(clz.name());
+
+        for(int i = 0; i < entries.size(); i++) {
+            if(entries.get(i) instanceof ConstantPoolEntry.ClassEntry e) {
+                if(e.getNamespace() == namespaceIndex && e.getName() == nameIndex) {
+                    return i + 1;
+                }
+            }
+        }
+        throw new LostConstantPoolEntryException("Cannot find class ConstantPoolEntry with " + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name());
     }
 
 }

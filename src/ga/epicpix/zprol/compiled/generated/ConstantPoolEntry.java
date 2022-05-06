@@ -22,6 +22,8 @@ public class ConstantPoolEntry {
             return FunctionEntry.read(in);
         }else if(t == 2) {
             return StringEntry.read(in);
+        }else if(t == 3) {
+            return ClassEntry.read(in);
         }
         throw new RuntimeException("Unknown tag: " + t);
     }
@@ -100,6 +102,40 @@ public class ConstantPoolEntry {
 
         public String toString() {
             return "StringEntry string=\"" + str.replace("\"", "\\\"").replace("\n", "\\n") + "\"";
+        }
+    }
+
+    public static class ClassEntry extends ConstantPoolEntry {
+
+        private final int namespace;
+        private final int name;
+
+        public ClassEntry(int namespace, int name) {
+            super((byte) 3);
+            this.namespace = namespace;
+            this.name = name;
+        }
+
+        public int getNamespace() {
+            return namespace;
+        }
+
+        public int getName() {
+            return name;
+        }
+
+        public void write(DataOutputStream out) throws IOException {
+            super.write(out);
+            out.writeInt(namespace);
+            out.writeInt(name);
+        }
+
+        public static ClassEntry read(DataInputStream in) throws IOException {
+            return new ClassEntry(in.readInt(), in.readInt());
+        }
+
+        public String toString() {
+            return "ClassEntry namespace=#" + namespace + " name=#" + name;
         }
     }
 

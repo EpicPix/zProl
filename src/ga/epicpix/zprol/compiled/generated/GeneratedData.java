@@ -1,12 +1,12 @@
 package ga.epicpix.zprol.compiled.generated;
 
 import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
-import ga.epicpix.zprol.compiled.CompiledData;
-import ga.epicpix.zprol.compiled.Function;
-import ga.epicpix.zprol.compiled.FunctionModifiers;
-import ga.epicpix.zprol.compiled.FunctionSignature;
+import ga.epicpix.zprol.compiled.*;
+import ga.epicpix.zprol.compiled.Class;
 import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
+import ga.epicpix.zprol.exceptions.compilation.RedefinedClassException;
 import ga.epicpix.zprol.exceptions.compilation.RedefinedFunctionException;
+import ga.epicpix.zprol.zld.Language;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -16,6 +16,7 @@ import static ga.epicpix.zprol.StaticImports.createStorage;
 public class GeneratedData {
 
     public final ArrayList<Function> functions = new ArrayList<>();
+    public final ArrayList<Class> classes = new ArrayList<>();
     public final ConstantPool constantPool = new ConstantPool();
 
     public GeneratedData addCompiled(CompiledData data) {
@@ -31,6 +32,18 @@ public class GeneratedData {
             functions.add(f);
             constantPool.getOrCreateFunctionIndex(f);
             f.prepareConstantPool(constantPool);
+        }
+
+        for(Class clz : data.getClasses()) {
+            for(Class validate : classes) {
+                if(validate.namespace() != null && clz.namespace() != null && !validate.namespace().equals(clz.namespace())) continue;
+                if(!validate.name().equals(clz.name())) continue;
+
+                throw new RedefinedClassException((clz.namespace() != null ? clz.namespace() + "." : "") + clz.name());
+            }
+            classes.add(clz);
+            constantPool.getOrCreateClassIndex(clz);
+            clz.prepareConstantPool(constantPool);
         }
         return this;
     }
@@ -76,6 +89,16 @@ public class GeneratedData {
             }
         }
 
+        out.writeInt(data.classes.size());
+        for(Class clz : data.classes) {
+            out.writeInt(data.constantPool.getClassIndex(clz));
+            out.writeInt(clz.fields().length);
+            for(ClassField field : clz.fields()) {
+                out.writeInt(data.constantPool.getStringIndex(field.name()));
+                out.writeInt(data.constantPool.getStringIndex(field.type().descriptor));
+            }
+        }
+
         out.close();
         return bytes.toByteArray();
     }
@@ -109,6 +132,22 @@ public class GeneratedData {
             }
             data.functions.add(function);
         }
+
+        int classLength = in.readInt();
+        for(int i = 0; i<classLength; i++) {
+            var entry = (ConstantPoolEntry.ClassEntry) data.constantPool.entries.get(in.readInt() - 1);
+            var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
+            var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
+            var fields = new ClassField[in.readInt()];
+            for(int fieldIndex = 0; fieldIndex<fields.length; fieldIndex++) {
+                var fieldName = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(in.readInt() - 1)).getString();
+                var fieldTypeDescriptor = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(in.readInt() - 1)).getString();
+                var fieldType = Language.getTypeFromDescriptor(fieldTypeDescriptor);
+                fields[fieldIndex] = new ClassField(fieldName, fieldType);
+            }
+            data.classes.add(new Class(namespace, name, fields));
+        }
+
         for(var func : data.functions) {
             if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
                 for (var instr : func.code().getInstructions()) {

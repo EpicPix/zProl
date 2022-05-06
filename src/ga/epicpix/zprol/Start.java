@@ -1,6 +1,7 @@
 package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.*;
+import ga.epicpix.zprol.compiled.Class;
 import ga.epicpix.zprol.compiled.Compiler;
 import ga.epicpix.zprol.compiled.generated.GeneratedData;
 import ga.epicpix.zprol.exceptions.compilation.CompileException;
@@ -237,6 +238,19 @@ public class Start {
                 for(var instruction : func.code().getInstructions()) {
                     System.out.println("        " + instruction);
                 }
+            }
+        }
+
+        System.out.println("Classes:");
+        for(Class clz : data.classes) {
+            System.out.println("  Class");
+            System.out.println("    Namespace: \"" + (clz.namespace() != null ? clz.namespace() : "") + "\"");
+            System.out.println("    Name: \"" + clz.name() + "\"");
+            System.out.println("    Fields:");
+            for(ClassField fld : clz.fields()) {
+                System.out.println("      Field");
+                System.out.println("        Name: \"" + fld.name() + "\"");
+                System.out.println("        Type: \"" + fld.type().getDescriptor() + "\"");
             }
         }
     }

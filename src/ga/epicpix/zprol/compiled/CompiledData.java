@@ -24,9 +24,14 @@ public class CompiledData {
     }
 
     private final ArrayList<Function> functions = new ArrayList<>();
+    private final ArrayList<Class> classes = new ArrayList<>();
 
     public ArrayList<Function> getFunctions() {
         return new ArrayList<>(functions);
+    }
+
+    public ArrayList<Class> getClasses() {
+        return new ArrayList<>(classes);
     }
 
     public Function getFunction(String namespace, String name, FunctionSignature sig) {
@@ -55,6 +60,10 @@ public class CompiledData {
 
     public void addFunction(Function function) {
         functions.add(function);
+    }
+
+    public void addClass(Class clazz) {
+        classes.add(clazz);
     }
 
     public PrimitiveType resolveType(String type) {
