@@ -2,6 +2,7 @@ package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.bytecode.IBytecodeStorage;
+import ga.epicpix.zprol.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.exceptions.compilation.CompileException;
 import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.NotImplementedException;

@@ -1,4 +1,4 @@
-package ga.epicpix.zprol.compiled;
+package ga.epicpix.zprol.compiled.generated;
 
 public interface IConstantPoolPreparable {
 

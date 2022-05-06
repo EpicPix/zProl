@@ -1,6 +1,8 @@
 package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.bytecode.IBytecodeStorage;
+import ga.epicpix.zprol.compiled.generated.ConstantPool;
+import ga.epicpix.zprol.compiled.generated.IConstantPoolPreparable;
 
 import java.util.EnumSet;
 

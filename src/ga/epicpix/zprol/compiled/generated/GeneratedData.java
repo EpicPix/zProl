@@ -1,6 +1,10 @@
-package ga.epicpix.zprol.compiled;
+package ga.epicpix.zprol.compiled.generated;
 
 import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
+import ga.epicpix.zprol.compiled.CompiledData;
+import ga.epicpix.zprol.compiled.Function;
+import ga.epicpix.zprol.compiled.FunctionModifiers;
+import ga.epicpix.zprol.compiled.FunctionSignature;
 import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.compilation.RedefinedFunctionException;
 

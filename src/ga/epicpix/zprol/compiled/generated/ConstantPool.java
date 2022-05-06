@@ -1,5 +1,7 @@
-package ga.epicpix.zprol.compiled;
+package ga.epicpix.zprol.compiled.generated;
 
+import ga.epicpix.zprol.compiled.Function;
+import ga.epicpix.zprol.compiled.FunctionModifiers;
 import ga.epicpix.zprol.exceptions.bytecode.LostConstantPoolEntryException;
 
 import java.util.ArrayList;

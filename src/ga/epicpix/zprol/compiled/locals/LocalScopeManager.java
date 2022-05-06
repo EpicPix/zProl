@@ -1,4 +1,6 @@
-package ga.epicpix.zprol.compiled;
+package ga.epicpix.zprol.compiled.locals;
+
+import ga.epicpix.zprol.compiled.PrimitiveType;
 
 public class LocalScopeManager {
 

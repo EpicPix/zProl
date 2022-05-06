@@ -1,5 +1,6 @@
-package ga.epicpix.zprol.compiled;
+package ga.epicpix.zprol.compiled.locals;
 
+import ga.epicpix.zprol.compiled.PrimitiveType;
 import ga.epicpix.zprol.exceptions.compilation.VariableAlreadyDefinedException;
 import ga.epicpix.zprol.exceptions.compilation.VariableNotDefinedException;
 import java.util.ArrayList;

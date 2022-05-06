@@ -1,9 +1,9 @@
 package ga.epicpix.zprol.bytecode;
 
-import ga.epicpix.zprol.compiled.ConstantPool;
-import ga.epicpix.zprol.compiled.ConstantPoolEntry;
-import ga.epicpix.zprol.compiled.GeneratedData;
-import ga.epicpix.zprol.compiled.IConstantPoolPreparable;
+import ga.epicpix.zprol.compiled.generated.ConstantPool;
+import ga.epicpix.zprol.compiled.generated.ConstantPoolEntry;
+import ga.epicpix.zprol.compiled.generated.GeneratedData;
+import ga.epicpix.zprol.compiled.generated.IConstantPoolPreparable;
 import ga.epicpix.zprol.bytecode.impl.Bytecode;
 
 import java.io.DataInput;

@@ -2,6 +2,7 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.compiled.*;
 import ga.epicpix.zprol.compiled.Compiler;
+import ga.epicpix.zprol.compiled.generated.GeneratedData;
 import ga.epicpix.zprol.exceptions.compilation.CompileException;
 import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.precompiled.PreCompiledData;

@@ -1,6 +1,6 @@
 package ga.epicpix.zprol.generators;
 
-import ga.epicpix.zprol.compiled.GeneratedData;
+import ga.epicpix.zprol.compiled.generated.GeneratedData;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 
 import java.io.DataOutputStream;

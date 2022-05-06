@@ -1,6 +1,6 @@
 package ga.epicpix.zprol.bytecode.impl;
 
-import ga.epicpix.zprol.compiled.ConstantPool;
+import ga.epicpix.zprol.compiled.generated.ConstantPool;
 import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.bytecode.BytecodeValueType;
 import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
