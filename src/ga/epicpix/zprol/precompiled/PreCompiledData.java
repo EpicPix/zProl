@@ -11,5 +11,6 @@ public class PreCompiledData {
     public String namespace;
 
     public final ArrayList<PreFunction> functions = new ArrayList<>();
+    public final ArrayList<PreClass> classes = new ArrayList<>();
 
 }

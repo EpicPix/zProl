@@ -63,11 +63,23 @@ public class PreCompiler {
                         }
                     }
                     pre.functions.add(func);
-                }else {
-                    System.out.println("token: " + named);
+                }else if(named.name.equals("Class")) {
+                    PreClass clazz = new PreClass();
+                    clazz.name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
+
+                    for(var fieldToken : named.getTokensWithName("ClassField")) {
+                        PreField field = new PreField();
+                        field.type = fieldToken.getSingleTokenWithName("Type").asWordToken().getWord();
+                        field.name = fieldToken.getSingleTokenWithName("Identifier").asWordToken().getWord();
+                        clazz.fields.add(field);
+                    }
+
+                    pre.classes.add(clazz);
+                } else {
+                    throw new CompileException("Unsupported named token \"" + named.name + "\"", named);
                 }
             }else {
-                throw new CompileException("Expected Named token, this might be a bug in parsing code", token);
+                throw new CompileException("Expected named token, this might be a bug in parsing code", token);
             }
         }
 

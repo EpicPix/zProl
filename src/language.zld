@@ -148,5 +148,8 @@ tok Function:
 def ClassField:
   $Type $Identifier ;
 
+def inline ClassElement:
+  $ClassField
+
 tok Class:
-  class $Type \{ {$ClassField} \}
+  class $Identifier \{ {$ClassElement} \}
