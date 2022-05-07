@@ -210,7 +210,7 @@ public class Compiler {
             }else if(discardValue) {
                 bytecode.pushInstruction(getConstructedInstruction("apop"));
             }else {
-                if(!returnType.equals(expectedType)) {
+                if(expectedType != null && !returnType.equals(expectedType)) {
                     return doCast(returnType, expectedType, bytecode);
                 }
             }
@@ -287,11 +287,12 @@ public class Compiler {
             }
         }else if(operation instanceof OperationCast cast) {
             var castType = data.resolveType(cast.getType());
+            var ret = generateInstructionsFromEquation(cast.getOperation(), null, data, localsManager, bytecode, false);
             if(cast.isHardCast()) {
                 // this will not check sizes of primitive types, this is unsafe
                 return castType;
             }
-            return doCast(expectedType, castType, bytecode);
+            return doCast(ret, castType, bytecode);
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());
         }
