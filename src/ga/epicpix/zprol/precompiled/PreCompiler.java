@@ -21,14 +21,12 @@ public class PreCompiler {
             if(!(token.getType() == TokenType.NAMED && token.asNamedToken().name.equals("Namespace"))) usedOther = true;
             if(token.getType() == TokenType.NAMED) {
                 var named = token.asNamedToken();
-                var ts = named.tokens;
                 if(named.name.equals("Using")) {
-                    pre.using.add(ts[1].asWordToken().getWord());
+                    pre.using.add(named.getSingleTokenWithName("DotWord").asWordToken().getWord());
                 }else if(named.name.equals("Namespace")) {
                     if(usedOther) throw new CompileException("Namespace not defined at the top of the file", named);
-                    String namespace = ts[1].asWordToken().getWord();
                     if(pre.namespace != null) throw new CompileException("Defined namespace for a file multiple times", named);
-                    pre.namespace = namespace;
+                    pre.namespace = named.getSingleTokenWithName("DotWord").asWordToken().getWord();
                 }else if(named.name.equals("Function")) {
                     PreFunction func = new PreFunction();
                     if(named.getTokenWithName("FunctionModifiers") != null) {

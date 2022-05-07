@@ -10,6 +10,10 @@ public class ClassType extends Type {
         this.name = name;
     }
 
+    public String normalName() {
+        return (namespace != null ? namespace + "." : "") + name;
+    }
+
     public String getName() {
         return name;
     }

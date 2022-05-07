@@ -191,7 +191,7 @@ public class Language {
             String data = descriptor.substring(1, descriptor.length() - 1);
 
             String namespace = descriptor.lastIndexOf('.') == -1 ? null : data.substring(0, data.lastIndexOf("."));
-            String name = descriptor.lastIndexOf('.') == -1 ? data : data.substring(data.lastIndexOf('.'));
+            String name = descriptor.lastIndexOf('.') == -1 ? data : data.substring(data.lastIndexOf('.') + 1);
 
             return new ClassType(namespace, name);
         }

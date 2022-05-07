@@ -18,6 +18,10 @@ public class PrimitiveType extends Type {
         return name;
     }
 
+    public String normalName() {
+        return name;
+    }
+
     public String getDescriptor() {
         return descriptor;
     }

@@ -10,6 +10,8 @@ import ga.epicpix.zprol.zld.Language;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
 
 import static ga.epicpix.zprol.StaticImports.createStorage;
 
@@ -22,7 +24,7 @@ public class GeneratedData {
     public GeneratedData addCompiled(CompiledData data) {
         for(Function f : data.getFunctions()) {
             for(Function validate : functions) {
-                if(validate.namespace() != null && f.namespace() != null && !validate.namespace().equals(f.namespace())) continue;
+                if(!Objects.equals(validate.namespace(), f.namespace())) continue;
                 if(!validate.name().equals(f.name())) continue;
 
                 if(validate.signature().validateFunctionSignature(f.signature())) {
@@ -36,7 +38,7 @@ public class GeneratedData {
 
         for(Class clz : data.getClasses()) {
             for(Class validate : classes) {
-                if(validate.namespace() != null && clz.namespace() != null && !validate.namespace().equals(clz.namespace())) continue;
+                if(!Objects.equals(validate.namespace(), clz.namespace())) continue;
                 if(!validate.name().equals(clz.name())) continue;
 
                 throw new RedefinedClassException((clz.namespace() != null ? clz.namespace() + "." : "") + clz.name());
@@ -57,7 +59,7 @@ public class GeneratedData {
 
     public Function getFunction(String namespace, String name, String signature) {
         for(Function func : functions) {
-            if(func.namespace() != null && namespace != null && !func.namespace().equals(namespace)) continue;
+            if(Objects.equals(func.namespace(), name)) continue;
             if(!func.name().equals(name)) continue;
 
             if(func.signature().toString().equals(signature)) {

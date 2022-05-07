@@ -6,8 +6,7 @@ import ga.epicpix.zprol.compiled.Compiler;
 import ga.epicpix.zprol.compiled.generated.GeneratedData;
 import ga.epicpix.zprol.exceptions.compilation.CompileException;
 import ga.epicpix.zprol.generators.Generator;
-import ga.epicpix.zprol.precompiled.PreCompiledData;
-import ga.epicpix.zprol.precompiled.PreCompiler;
+import ga.epicpix.zprol.precompiled.*;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.exceptions.compilation.ParserException;
 import ga.epicpix.zprol.exceptions.compilation.UnknownTypeException;
@@ -18,11 +17,7 @@ import ga.epicpix.zprol.zld.Language;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
 public class Start {
 
@@ -117,13 +112,14 @@ public class Start {
             }
 
             String output = Objects.requireNonNullElse(outputFile, "output.out");
-            compileFiles(files, output, generators);
+            compileFiles(files, output);
 
             String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
+            var generated = GeneratedData.load(Files.readAllBytes(new File(normalName + ".zpil").toPath()));
             for(Generator gen : generators) {
                 long startGenerator = System.currentTimeMillis();
                 DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + gen.getFileExtension()));
-                gen.generate(out, GeneratedData.load(Files.readAllBytes(new File(normalName + ".zpil").toPath())));
+                gen.generate(out, generated);
                 out.close();
                 long stopGenerator = System.currentTimeMillis();
                 if(SHOW_TIMINGS) System.out.printf("Took %d ms to generate %s code\n", stopGenerator - startGenerator, gen.getGeneratorName());
@@ -141,8 +137,11 @@ public class Start {
         throw new NotImplementedException("When help menu?");
     }
 
-    public static void compileFiles(ArrayList<String> files, String output, ArrayList<Generator> generators) throws IOException, UnknownTypeException {
+    public static void compileFiles(ArrayList<String> files, String output) throws IOException, UnknownTypeException {
         ArrayList<PreCompiledData> preCompiled = new ArrayList<>();
+        ArrayList<CompiledData> compiled = new ArrayList<>();
+        ArrayList<PreCompiledData> included = new ArrayList<>();
+        ArrayList<CompiledData> includedCompiled = new ArrayList<>();
         for(String file : files) {
             boolean load = false;
             if(new File(file).exists() && Files.size(new File(file).toPath()) >= 4) {
@@ -154,7 +153,48 @@ public class Start {
             }
 
             if(load) {
-                throw new NotImplementedException("Cannot load compiled files yet!");
+                var gen = GeneratedData.load(Files.readAllBytes(new File(file).toPath()));
+                HashMap<String, CompiledData> compiledData = new HashMap<>();
+                HashMap<String, PreCompiledData> preCompiledData = new HashMap<>();
+                for(var clazz : gen.classes) {
+                    compiledData.putIfAbsent(clazz.namespace(), new CompiledData(clazz.namespace()));
+                    preCompiledData.putIfAbsent(clazz.namespace(), new PreCompiledData());
+
+                    compiledData.get(clazz.namespace()).addClass(clazz);
+                    var fields = new ArrayList<PreField>();
+                    for(var f : clazz.fields()) {
+                        fields.add(new PreField(f.name(), f.type().normalName()));
+                    }
+                    preCompiledData.get(clazz.namespace()).classes.add(new PreClass(clazz.name(), fields.toArray(new PreField[0])));
+                }
+                for(var func : gen.functions) {
+                    compiledData.putIfAbsent(func.namespace(), new CompiledData(func.namespace()));
+                    preCompiledData.putIfAbsent(func.namespace(), new PreCompiledData());
+
+                    compiledData.get(func.namespace()).addFunction(func);
+                    var params = new ArrayList<PreParameter>();
+                    for(var f : func.signature().parameters()) {
+                        params.add(new PreParameter(null, f.normalName()));
+                    }
+                    var function = new PreFunction();
+                    function.name = func.name();
+                    function.returnType = func.signature().returnType().normalName();
+                    function.parameters.addAll(params);
+                    for(var v : func.modifiers()) {
+                        for(PreFunctionModifiers m : PreFunctionModifiers.MODIFIERS) {
+                            if(m.getCompiledModifier() == v) {
+                                function.modifiers.add(m);
+                                break;
+                            }
+                        }
+                    }
+                    preCompiledData.get(func.namespace()).functions.add(function);
+                }
+                for(var e : compiledData.entrySet()) includedCompiled.add(e.getValue());
+                for(var e : preCompiledData.entrySet()) {
+                    e.getValue().namespace = e.getKey();
+                    included.add(e.getValue());
+                }
             }else {
                 String normalName = file.substring(0, file.lastIndexOf('.') == -1 ? file.length() : file.lastIndexOf('.'));
                 try {
@@ -189,18 +229,18 @@ public class Start {
             }
         }
 
-        ArrayList<CompiledData> compiledData = new ArrayList<>();
 
         try {
             for (PreCompiledData data : preCompiled) {
-                ArrayList<PreCompiledData> pre = new ArrayList<>(preCompiled);
+                ArrayList<PreCompiledData> pre = new ArrayList<>(included);
+                pre.addAll(preCompiled);
                 pre.remove(data);
                 long startCompile = System.currentTimeMillis();
                 CompiledData zpil = Compiler.compile(data, pre);
                 long stopCompile = System.currentTimeMillis();
                 if (SHOW_TIMINGS)
                     System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
-                compiledData.add(zpil);
+                compiled.add(zpil);
             }
         }catch(CompileException e) {
             e.printError();
@@ -210,7 +250,8 @@ public class Start {
 
         GeneratedData linked = new GeneratedData();
         long startLink = System.currentTimeMillis();
-        linked.addCompiled(compiledData.toArray(new CompiledData[0]));
+        linked.addCompiled(compiled.toArray(new CompiledData[0]));
+        linked.addCompiled(includedCompiled.toArray(new CompiledData[0]));
         long stopLink = System.currentTimeMillis();
         if(SHOW_TIMINGS) System.out.printf("Took %d ms to link everything\n", stopLink - startLink);
 

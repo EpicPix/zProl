@@ -5,6 +5,7 @@ import ga.epicpix.zprol.zld.Language;
 import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.compilation.UnknownTypeException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class CompiledData {
 
@@ -70,10 +71,15 @@ public class CompiledData {
         var t = Language.TYPES.get(type);
         if(t != null) return t;
         String namespace = type.lastIndexOf('.') != -1 ? type.substring(0, type.lastIndexOf('.')) : null;
+        String name = type.lastIndexOf('.') != -1 ? type.substring(type.lastIndexOf('.') + 1) : type;
         for(var data : using) {
-            if(data.namespace != null && !data.namespace.equals(namespace)) continue;
+            if(namespace == null) {
+                if(!Objects.equals(data.namespace, null) && !Objects.equals(data.namespace, "zprol.lang")) continue;
+            }else {
+                if (data.namespace != null && !data.namespace.equals(namespace)) continue;
+            }
             for(var clz : data.classes) {
-                if(clz.name.equals(type)) {
+                if(clz.name.equals(name)) {
                     return new ClassType(data.namespace, clz.name);
                 }
             }

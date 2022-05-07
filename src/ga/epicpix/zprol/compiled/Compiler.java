@@ -269,7 +269,7 @@ public class Compiler {
             }
         }else if(operation instanceof OperationString str) {
             bytecode.pushInstruction(getConstructedInstruction("push_string", str.getString().replace("\\\"", "\"").replace("\\n", "\n")));
-            return data.resolveType("String");
+            return data.resolveType("zprol.lang.String");
         }else if(operation instanceof OperationAssignment assignment) {
             var local = localsManager.tryGetLocalVariable(assignment.getIdentifier());
             if(local != null) {
