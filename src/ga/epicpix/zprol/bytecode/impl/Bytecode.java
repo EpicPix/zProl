@@ -22,11 +22,11 @@ public final class Bytecode implements IBytecode {
         registerSizedInstruction(5, "store_local", new int[] {1, 2, 4, 8}, BytecodeValueType.SHORT);
         registerInstruction(9, "invoke", BytecodeValueType.FUNCTION);
         registerInstruction(10, "class_field_load", BytecodeValueType.CLASS, BytecodeValueType.STRING);
-        // id 11 is not used
-        // id 12 is not used
-        // id 13 is not used
-        // id 14 is not used
-        // id 15 is not used
+        registerInstruction(11, "apop");
+        registerInstruction(12, "areturn");
+        registerInstruction(13, "aload_local", BytecodeValueType.SHORT);
+        registerInstruction(14, "astore_local", BytecodeValueType.SHORT);
+        registerInstruction(15, "adup");
         registerSizedInstruction(16, "pop", new int[] {1, 2, 4, 8});
         registerSizedInstruction(20, "load_local", new int[] {1, 2, 4, 8}, BytecodeValueType.SHORT);
         registerSizedInstruction(24, "cast" + getInstructionPrefix(1), new int[] {2, 4, 8});

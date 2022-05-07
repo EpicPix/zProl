@@ -105,7 +105,7 @@ public class GeneratedData {
             out.writeInt(clz.fields().length);
             for(ClassField field : clz.fields()) {
                 out.writeInt(data.constantPool.getStringIndex(field.name()));
-                out.writeInt(data.constantPool.getStringIndex(field.type().descriptor));
+                out.writeInt(data.constantPool.getStringIndex(field.type().getDescriptor()));
             }
         }
 

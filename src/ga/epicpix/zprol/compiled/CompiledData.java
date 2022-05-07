@@ -66,9 +66,18 @@ public class CompiledData {
         classes.add(clazz);
     }
 
-    public PrimitiveType resolveType(String type) {
-        PrimitiveType t = Language.TYPES.get(type);
+    public Type resolveType(String type) {
+        var t = Language.TYPES.get(type);
         if(t != null) return t;
+        String namespace = type.lastIndexOf('.') != -1 ? type.substring(0, type.lastIndexOf('.')) : null;
+        for(var data : using) {
+            if(data.namespace != null && !data.namespace.equals(namespace)) continue;
+            for(var clz : data.classes) {
+                if(clz.name.equals(type)) {
+                    return new ClassType(data.namespace, clz.name);
+                }
+            }
+        }
         throw new UnknownTypeException(type);
     }
 

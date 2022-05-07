@@ -39,8 +39,6 @@ type uint unsigned,size=4 uI
 type uint64 unsigned,size=8 uL
 type ulong unsigned,size=8 uL
 
-type pointer unsigned,size=8,pointer P
-
 def Expression:
   $ExpressionCallables [$ExpressionType]
 
@@ -56,10 +54,15 @@ def Assignment:
 def inline ExpressionCallables:
   $Integer
   $ExpressionParenthesis
-  $FunctionCall
   $Assignment
-  $Identifier
+  $FunctionCall
+  $Accessor
   $String
+
+def inline AccessorCallables:
+  $Identifier
+
+def Accessor $AccessorCallables {. $AccessorCallables}
 
 def inline Integer:
   [$Whitespace] $DecimalInteger

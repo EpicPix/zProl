@@ -1,3 +1,8 @@
 package ga.epicpix.zprol.compiled;
 
-public class Type {}
+public abstract class Type {
+
+    public abstract String getDescriptor();
+    public abstract String getName();
+
+}

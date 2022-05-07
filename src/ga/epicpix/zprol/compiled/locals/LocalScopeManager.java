@@ -1,12 +1,12 @@
 package ga.epicpix.zprol.compiled.locals;
 
-import ga.epicpix.zprol.compiled.PrimitiveType;
+import ga.epicpix.zprol.compiled.Type;
 
 public class LocalScopeManager {
 
     private LocalScope currentScope = new LocalScope();
 
-    public LocalVariable defineLocalVariable(String name, PrimitiveType type) {
+    public LocalVariable defineLocalVariable(String name, Type type) {
         return currentScope.defineLocalVariable(name, type);
     }
 

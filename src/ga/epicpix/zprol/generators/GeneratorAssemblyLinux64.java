@@ -3,6 +3,7 @@ package ga.epicpix.zprol.generators;
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.compiled.*;
 import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
+import ga.epicpix.zprol.compiled.Class;
 import ga.epicpix.zprol.compiled.generated.ConstantPool;
 import ga.epicpix.zprol.compiled.generated.ConstantPoolEntry;
 import ga.epicpix.zprol.compiled.generated.GeneratedData;
@@ -53,8 +54,36 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             return "  push " + v + "\n";
         });
         instructionGenerators.put("lload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("aload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("lstore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("astore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("push_string", (i, s, f, lp) -> "  push _string" + lp.getOrCreateStringIndex((String) i.getData()[0]) + "\n");
+        instructionGenerators.put("class_field_load", (i, s, f, lp) -> {
+            var clz = (Class) i.getData()[0];
+            var fieldName = (String) i.getData()[1];
+            ClassField field = null;
+            int offset = 0;
+            for(var e : clz.fields()) {
+                if(e.name().equals(fieldName)) {
+                    field = e;
+                    break;
+                }
+                if(e.type() instanceof PrimitiveType t) {
+                    if(t.getSize() == 1 || t.getSize() == 2) {
+                        offset += 2;
+                    }else offset += 8;
+                }else offset += 8;
+            }
+            if(field == null) {
+                throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name() + "'");
+            }
+
+            int size = 2;
+            if(field.type() instanceof ClassType) size = 8;
+            else if(field.type() instanceof PrimitiveType primitive && (primitive.getSize() == 4 || primitive.getSize() == 8)) size = 8;
+
+            return "  pop rcx\n  push " + (size == 2 ? "word" : "qword") + " [rcx+" + offset + "]\n";
+        });
         instructionGenerators.put("badd", (i, s, f, lp) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
         instructionGenerators.put("ladd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
         instructionGenerators.put("bsub", (i, s, f, lp) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
@@ -72,12 +101,16 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
             int x = f.signature().parameters().length - 1;
             for(var param : f.signature().parameters()) {
-                if(param.getSize() == 1 || param.getSize() == 2) {
-                    args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_16[x] : CALL_REGISTERS_16[x]).append("\n");
-                }else if(param.getSize() == 4 || param.getSize() == 8) {
-                    args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]).append("\n");
+                if(param instanceof PrimitiveType primitive) {
+                    if (primitive.getSize() == 1 || primitive.getSize() == 2) {
+                        args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_16[x] : CALL_REGISTERS_16[x]).append("\n");
+                    } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
+                        args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]).append("\n");
+                    } else {
+                        throw new NotImplementedException("Not implemented size " + primitive.getSize());
+                    }
                 }else {
-                    throw new NotImplementedException("Not implemented size " + param.getSize());
+                    args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]).append("\n");
                 }
                 x--;
             }
@@ -90,19 +123,24 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }else {
                 args.append("  call ").append(getMangledName(f.namespace(), f.name(), f.signature())).append("\n");
             }
-            if(s.hasNext() && s.seek().getName().equals(getInstructionPrefix(f.signature().returnType().getSize()) + "pop")) {
+            String signatureReturnTypePrefix = f.signature().returnType() instanceof PrimitiveType primitive ? getInstructionPrefix(primitive.getSize()) : "a";
+            if(s.hasNext() && s.seek().getName().equals(signatureReturnTypePrefix + "pop")) {
                 s.next();
                 return args.toString();
             }
 
             var ret = f.signature().returnType();
-            if (ret.getSize() == 0) {
-            }else if (ret.getSize() == 1 || ret.getSize() == 2) {
-                args.append("  push ax\n");
-            } else if (ret.getSize() == 4 || ret.getSize() == 8) {
+            if(ret instanceof PrimitiveType primitive) {
+                if (primitive.getSize() == 0) {
+                } else if (primitive.getSize() == 1 || primitive.getSize() == 2) {
+                    args.append("  push ax\n");
+                } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
+                    args.append("  push rax\n");
+                } else {
+                    throw new NotImplementedException("Not implemented size " + primitive.getSize());
+                }
+            }else {
                 args.append("  push rax\n");
-            } else {
-                throw new NotImplementedException("Not implemented size " + ret.getSize());
             }
             return args.toString();
         });
@@ -131,13 +169,18 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 outStream.writeBytes("  sub rsp, " + function.code().getLocalsSize() + "\n");
             }
             int localsIndex = 0;
-            PrimitiveType[] parameters = function.signature().parameters();
+            var parameters = function.signature().parameters();
             for (int i = 0; i < parameters.length; i++) {
-                PrimitiveType param = parameters[i];
-                localsIndex += param.getSize();
-                if(param.getSize() == 1 || param.getSize() == 2) {
-                    outStream.writeBytes("  mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_16[i] + "\n");
-                }else if(param.getSize() == 4 || param.getSize() == 8) {
+                var param = parameters[i];
+                if(param instanceof PrimitiveType primitive) {
+                    localsIndex += primitive.getSize();
+                    if (primitive.getSize() == 1 || primitive.getSize() == 2) {
+                        outStream.writeBytes("  mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_16[i] + "\n");
+                    } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
+                        outStream.writeBytes("  mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_64[i] + "\n");
+                    }
+                }else {
+                    localsIndex += 8;
                     outStream.writeBytes("  mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_64[i] + "\n");
                 }
             }
@@ -155,14 +198,15 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         int index = 1;
         for(var constantPoolEntry : localConstantPool.entries) {
             if(constantPoolEntry instanceof ConstantPoolEntry.StringEntry str) {
-                outStream.writeBytes("_string" + index + ": db " + Arrays.stream(str.getString().chars().toArray()).mapToObj(x -> "0x" + Integer.toHexString(x)).collect(Collectors.joining(", ")) + "\n");
+                outStream.writeBytes("_string" + index + ".chars" + ": db " + Arrays.stream(str.getString().chars().toArray()).mapToObj(x -> "0x" + Integer.toHexString(x)).collect(Collectors.joining(", ")) + "\n");
+                outStream.writeBytes("_string" + index + ":\n  dq " + str.getString().length() + "\n  dq _string" + index + ".chars\n");
             }
             index++;
         }
     }
 
     public static String getMangledName(String namespace, String name, FunctionSignature signature) {
-        return (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + signature.toString().replace("(", "").replace(")", "");
+        return (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + signature.toString().replace("(", "").replace(")", "").replace(";", "");
     }
 
 }

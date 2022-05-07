@@ -64,7 +64,15 @@ public class OperationGenerator {
                     operations.add(new OperationCall(name, callOp));
                 }
                 case "DecimalInteger" -> operations.add(new OperationNumber(OperationNumber.getDecimalInteger(named.tokens[0])));
-                case "Identifier" -> operations.add(new OperationField(named.tokens[0].asWordToken().getWord()));
+                case "Accessor" -> {
+                    var ids = new ArrayList<String>();
+                    for(Token t : named.tokens) {
+                        if(t instanceof NamedToken tn) {
+                            ids.add(tn.tokens[0].asWordToken().getWord());
+                        }
+                    }
+                    operations.add(new OperationAccessor(ids.toArray(new String[0])));
+                }
                 case "String" -> operations.add(new OperationString(named.getSingleTokenWithName("StringChars").asWordToken().getWord()));
                 case "Assignment" -> operations.add(new OperationAssignment(named.getSingleTokenWithName("Identifier").asWordToken().getWord(), getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens))));
                 default -> throw new NotImplementedException("Not implemented named token in expression '" + named.name + "' " + Arrays.toString(named.tokens));

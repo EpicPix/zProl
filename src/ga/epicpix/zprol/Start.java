@@ -116,7 +116,18 @@ public class Start {
                 throw new IllegalArgumentException("Files to compile not specified");
             }
 
-            compileFiles(files, Objects.requireNonNullElse(outputFile, "output.out"), generators);
+            String output = Objects.requireNonNullElse(outputFile, "output.out");
+            compileFiles(files, output, generators);
+
+            String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
+            for(Generator gen : generators) {
+                long startGenerator = System.currentTimeMillis();
+                DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + gen.getFileExtension()));
+                gen.generate(out, GeneratedData.load(Files.readAllBytes(new File(normalName + ".zpil").toPath())));
+                out.close();
+                long stopGenerator = System.currentTimeMillis();
+                if(SHOW_TIMINGS) System.out.printf("Took %d ms to generate %s code\n", stopGenerator - startGenerator, gen.getGeneratorName());
+            }
         }
 
         if(printFile != null) {
@@ -208,15 +219,6 @@ public class Start {
             DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".zpil"));
             out.write(GeneratedData.save(linked));
             out.close();
-        }
-
-        for(Generator gen : generators) {
-            long startGenerator = System.currentTimeMillis();
-            DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + gen.getFileExtension()));
-            gen.generate(out, linked);
-            out.close();
-            long stopGenerator = System.currentTimeMillis();
-            if(SHOW_TIMINGS) System.out.printf("Took %d ms to generate %s code\n", stopGenerator - startGenerator, gen.getGeneratorName());
         }
     }
 

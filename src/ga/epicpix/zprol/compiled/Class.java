@@ -14,6 +14,6 @@ public record Class(String namespace, String name, ClassField[] fields) implemen
     }
 
     public String toString() {
-        return "Class[\"" + namespace + "\" \"" + name + "\"]";
+        return "Class[\"" + (namespace != null ? namespace : "") + "\" \"" + name + "\"]";
     }
 }

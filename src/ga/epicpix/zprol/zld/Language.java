@@ -1,7 +1,9 @@
 package ga.epicpix.zprol.zld;
 
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.compiled.ClassType;
 import ga.epicpix.zprol.compiled.PrimitiveType;
+import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.compilation.ParserException;
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.tokens.*;
@@ -183,8 +185,17 @@ public class Language {
 
     }
 
-    public static PrimitiveType getTypeFromDescriptor(String descriptor) {
-        for(PrimitiveType type : TYPES.values()) {
+    public static Type getTypeFromDescriptor(String descriptor) {
+        if(descriptor.startsWith("C")) {
+            if(!descriptor.endsWith(";")) return null;
+            String data = descriptor.substring(1, descriptor.length() - 1);
+
+            String namespace = descriptor.lastIndexOf('.') == -1 ? null : data.substring(0, data.lastIndexOf("."));
+            String name = descriptor.lastIndexOf('.') == -1 ? data : data.substring(data.lastIndexOf('.'));
+
+            return new ClassType(namespace, name);
+        }
+        for(var type : TYPES.values()) {
             if(type.descriptor.equals(descriptor)) {
                 return type;
             }
@@ -220,29 +231,20 @@ public class Language {
                 String name = parser.nextWord();
                 String properties = parser.nextTemplateWord(propertiesCharacters);
                 String descriptor = parser.nextWord();
-                char type = 0x8000;
+                int size = 0;
+                boolean unsigned = false;
                 for(String property : properties.split(",")) {
                     if(!property.contains("=")) property += "=true";
                     String key = property.split("=")[0];
                     String value = property.split("=")[1];
 
                     switch (key) {
-                        case "size" -> {
-                            type &= ~0x000f;
-                            type |= (int) (Math.log(Integer.parseInt(value) * 2) / Math.log(2));
-                        }
-                        case "unsigned" -> {
-                            type &= ~0x0010;
-                            type |= Boolean.parseBoolean(value) ? 0x0010 : 0x0000;
-                        }
-                        case "pointer" -> {
-                            type &= ~0x0020;
-                            type |= Boolean.parseBoolean(value) ? 0x0020 : 0x0000;
-                        }
+                        case "size" -> size = Integer.parseInt(value);
+                        case "unsigned" -> unsigned = Boolean.parseBoolean(value);
                         default -> System.err.println("Unknown type key '" + key + "' with value '" + value + "'");
                     }
                 }
-                TYPES.put(name, new PrimitiveType(type, descriptor, name));
+                TYPES.put(name, new PrimitiveType(size, unsigned, descriptor, name));
                 KEYWORDS.put(name, new LanguageKeyword(name, "type"));
             } else if(d.equals("tok")) {
                 ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();

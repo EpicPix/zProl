@@ -12,7 +12,6 @@ import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
 import ga.epicpix.zprol.precompiled.*;
-import ga.epicpix.zprol.zld.Language;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,18 +36,22 @@ public class Compiler {
             if(token.getType() == TokenType.NAMED) {
                 var named = (NamedToken) token;
                 if("ReturnStatement".equals(named.name)) {
-                    if(!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) {
+                    if(!(sig.returnType() instanceof PrimitiveType primitive) || primitive.getSize() != 0) {
                         if(named.getTokenWithName("Expression") == null) {
                             throw new CompileException("Function is not void, expected a return value", named);
                         }
                         generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens)), sig.returnType(), data, localsManager, storage, false);
                     }
-                    if(sig.returnType().isBuiltInType() && sig.returnType().getSize() == 0) {
+                    if(sig.returnType() instanceof PrimitiveType primitive && primitive.getSize() == 0) {
                         if(named.getTokenWithName("Expression") != null) {
                             throw new CompileException("Function is void, expected no value", named);
                         }
                     }
-                    storage.pushInstruction(getConstructedSizeInstruction(sig.returnType().getSize(), "return"));
+                    if(sig.returnType() instanceof PrimitiveType primitive) {
+                        storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "return"));
+                    }else {
+                        storage.pushInstruction(getConstructedInstruction("areturn"));
+                    }
                     if(opens == 0) {
                         hasReturned = true;
                         break;
@@ -61,13 +64,21 @@ public class Compiler {
                     var expression = named.getTokenWithName("Expression").tokens;
                     generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(expression)), type, data, localsManager, storage, false);
                     var local = localsManager.defineLocalVariable(name, type);
-                    storage.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "store_local", local.index()));
+                    if(local.type() instanceof PrimitiveType primitive) {
+                        storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
+                    }else {
+                        storage.pushInstruction(getConstructedInstruction("astore_local", local.index()));
+                    }
                 } else if("AssignmentStatement".equals(named.name)) {
                     var name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
                     var expression = named.getTokenWithName("Expression").tokens;
                     var local = localsManager.getLocalVariable(name);
                     generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(expression)), local.type(), data, localsManager, storage, false);
-                    storage.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "store_local", local.index()));
+                    if(local.type() instanceof PrimitiveType primitive) {
+                        storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
+                    }else {
+                        storage.pushInstruction(getConstructedInstruction("astore_local", local.index()));
+                    }
                 } else {
                     throw new NotImplementedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens));
                 }
@@ -89,55 +100,70 @@ public class Compiler {
             }
         }
         if(!hasReturned) {
-            if(!sig.returnType().isBuiltInType() || sig.returnType().getSize() != 0) throw new CompileException("Missing return statement", tokens.current());
+            if(!(sig.returnType() instanceof PrimitiveType primitive) || primitive.getSize() != 0) throw new CompileException("Missing return statement", tokens.current());
             storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
         }
         storage.setLocalsSize(localsManager.getLocalVariablesSize());
         return storage;
     }
 
-    public static PrimitiveType generateInstructionsFromEquation(Operation operation, PrimitiveType expectedType, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
+    public static Type generateInstructionsFromEquation(Operation operation, Type expectedType, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
         if(operation instanceof OperationRoot root) {
             for(var op : root.getOperations()) {
                 generateInstructionsFromEquation(op, expectedType, data, localsManager, bytecode, expectedType == null && discardValue);
             }
 
             if(expectedType != null && discardValue) {
-                bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "pop"));
+                if(expectedType instanceof PrimitiveType primitive) {
+                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
+                }else {
+                    bytecode.pushInstruction(getConstructedInstruction("apop"));
+                }
             }
 
             return expectedType;
         }else if(operation instanceof OperationNumber number) {
-            bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "push", number.number));
-            return expectedType;
+            if(expectedType instanceof PrimitiveType primitive) {
+                bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "push", number.number));
+                return primitive;
+            }else if(expectedType == null) {
+                bytecode.pushInstruction(getConstructedSizeInstruction(4, "push", number.number));
+                return data.resolveType("int32");
+            }else {
+                throw new CompileException("Cannot infer size of number from a non-primitive type (" + expectedType.getName() + ")");
+            }
         }else if(operation instanceof OperationOperator operator) {
             String op = operator.operator.operator();
-            switch (op) {
-                case "+":
-                    bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "add"));
-                    break;
-                case "-":
-                    bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "sub"));
-                    break;
-                case "*":
-                    if (expectedType.isUnsigned()) {
-                        bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "mulu"));
-                    } else {
-                        bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "mul"));
-                    }
-                    break;
-                case "/":
-                    if (expectedType.isUnsigned()) {
-                        bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "divu"));
-                    } else {
-                        bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "div"));
-                    }
-                    break;
-                case "|":
-                    bytecode.pushInstruction(getConstructedSizeInstruction(expectedType.getSize(), "or"));
-                    break;
-                default:
-                    throw new NotImplementedException("Unknown operator " + op);
+            if(expectedType instanceof PrimitiveType primitive) {
+                switch (op) {
+                    case "+":
+                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "add"));
+                        break;
+                    case "-":
+                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "sub"));
+                        break;
+                    case "*":
+                        if (primitive.isUnsigned()) {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "mulu"));
+                        } else {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "mul"));
+                        }
+                        break;
+                    case "/":
+                        if (primitive.isUnsigned()) {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "divu"));
+                        } else {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "div"));
+                        }
+                        break;
+                    case "|":
+                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "or"));
+                        break;
+                    default:
+                        throw new NotImplementedException("Unknown operator " + op);
+                }
+            }else {
+                throw new CompileException("Cannot perform math operation on a non-primitive type");
             }
             return expectedType;
         }else if(operation instanceof OperationCall call) {
@@ -160,8 +186,8 @@ public class Compiler {
             }
 
             var func = possibleFunctions.get(0);
-            PrimitiveType returnType = data.resolveType(func.returnType);
-            PrimitiveType[] parameters = new PrimitiveType[func.parameters.size()];
+            var returnType = data.resolveType(func.returnType);
+            var parameters = new Type[func.parameters.size()];
             for(int i = 0; i<func.parameters.size(); i++) {
                 parameters[i] = data.resolveType(func.parameters.get(i).type);
             }
@@ -177,33 +203,84 @@ public class Compiler {
 
             bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
 
-            if(discardValue && returnType.getSize() != 0) {
-                bytecode.pushInstruction(getConstructedSizeInstruction(returnType.getSize(), "pop"));
+            if(discardValue && returnType instanceof PrimitiveType primitive) {
+                if(primitive.getSize() != 0) {
+                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
+                }
+            }else if(discardValue) {
+                bytecode.pushInstruction(getConstructedInstruction("apop"));
             }else {
-                if(expectedType != null && returnType.getSize() != expectedType.getSize()) {
-                    // what about unsigned and signed?
+                if(!returnType.equals(expectedType)) {
                     return doCast(returnType, expectedType, bytecode);
                 }
             }
 
             return returnType;
-        }else if(operation instanceof OperationField field) {
-            var local = localsManager.tryGetLocalVariable(field.getIdentifier());
+        }else if(operation instanceof OperationAccessor field) {
+            var ids = field.getIdentifiers();
+            var local = localsManager.tryGetLocalVariable(ids[0]);
             if(local != null) {
-                bytecode.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "load_local", local.index()));
-                return local.type();
+                if(local.type() instanceof PrimitiveType primitive) {
+                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_local", local.index()));
+                }else {
+                    bytecode.pushInstruction(getConstructedInstruction("aload_local", local.index()));
+                }
+
+                var type = local.type();
+                for(int i = 1; i<ids.length; i++) {
+                    if(type instanceof PrimitiveType) {
+                        throw new CompileException("Cannot access properties of a primitive type");
+                    }else if(type instanceof ClassType classType) {
+                        PreClass clz = null;
+                        for(var p : data.getUsing()) {
+                            if(classType.getNamespace() != null && !classType.getNamespace().equals(p.namespace)) continue;
+                            for(var c : p.classes) {
+                                if(classType.getName().equals(c.name)) {
+                                    clz = c;
+                                    break;
+                                }
+                            }
+                            if(clz != null) break;
+                        }
+                        if(clz == null) {
+                            throw new CompileException("Unknown type '" + classType + "'");
+                        }
+
+                        PreField found = null;
+                        for(var f : clz.fields) {
+                            if(f.name.equals(ids[i])) {
+                                found = f;
+                                break;
+                            }
+                        }
+                        if(found == null) {
+                            throw new CompileException("Unable to find field '" + ids[i] + "' in '" + clz.name + "'");
+                        }
+
+                        bytecode.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null), found.name));
+                        type = data.resolveType(found.type);
+                    }else {
+                        throw new CompileException("Unknown type " + type.getClass().getSimpleName());
+                    }
+                }
+                return type;
             }else {
                 throw new NotImplementedException("Not implemented looking in different scopes");
             }
         }else if(operation instanceof OperationString str) {
             bytecode.pushInstruction(getConstructedInstruction("push_string", str.getString().replace("\\\"", "\"").replace("\\n", "\n")));
-            return Language.TYPES.get("uint64");
+            return data.resolveType("String");
         }else if(operation instanceof OperationAssignment assignment) {
             var local = localsManager.tryGetLocalVariable(assignment.getIdentifier());
             if(local != null) {
                 generateInstructionsFromEquation(assignment.getOperation(), local.type(), data, localsManager, bytecode, false);
-                bytecode.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "dup"));
-                bytecode.pushInstruction(getConstructedSizeInstruction(local.type().getSize(), "store_local", local.index()));
+                if(local.type() instanceof PrimitiveType primitive) {
+                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "dup"));
+                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
+                }else {
+                    bytecode.pushInstruction(getConstructedInstruction("adup"));
+                    bytecode.pushInstruction(getConstructedInstruction("astore_local", local.index()));
+                }
                 return local.type();
             }else {
                 throw new NotImplementedException("Not implemented looking in different scopes");
@@ -213,17 +290,21 @@ public class Compiler {
         }
     }
 
-    public static PrimitiveType doCast(PrimitiveType from, PrimitiveType to, IBytecodeStorage bytecode) {
-        if(to.getSize() > from.getSize()) {
-            bytecode.pushInstruction(getConstructedSizeInstruction(from.getSize(), "cast" + getInstructionPrefix(to.getSize())));
+    public static Type doCast(Type from, Type to, IBytecodeStorage bytecode) {
+        if(!(from instanceof PrimitiveType primitiveFrom) || !(to instanceof PrimitiveType primitiveTo)) throw new CompileException("Unsupported cast from " + from.getName() + " to " + to.getName());
+        if(primitiveTo.getSize() > primitiveFrom.getSize()) {
+            bytecode.pushInstruction(getConstructedSizeInstruction(primitiveFrom.getSize(), "cast" + getInstructionPrefix(primitiveTo.getSize())));
             return to;
         }
-        throw new CompileException("Unsupported cast from " + from.name + " to " + to.name);
+        if(primitiveTo.getSize() == primitiveFrom.getSize()) {
+            return to;
+        }
+        throw new CompileException("Unsupported cast from " + from.getName() + " to " + to.getName());
     }
 
     public static void compileFunction(CompiledData data, PreFunction function) {
-        PrimitiveType returnType = data.resolveType(function.returnType);
-        PrimitiveType[] parameters = new PrimitiveType[function.parameters.size()];
+        var returnType = data.resolveType(function.returnType);
+        var parameters = new Type[function.parameters.size()];
         String[] names = new String[function.parameters.size()];
         for(int i = 0; i<function.parameters.size(); i++) {
             PreParameter param = function.parameters.get(i);

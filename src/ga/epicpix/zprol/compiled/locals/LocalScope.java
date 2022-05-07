@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.compiled.locals;
 
 import ga.epicpix.zprol.compiled.PrimitiveType;
+import ga.epicpix.zprol.compiled.Type;
 import ga.epicpix.zprol.exceptions.compilation.VariableAlreadyDefinedException;
 import ga.epicpix.zprol.exceptions.compilation.VariableNotDefinedException;
 import java.util.ArrayList;
@@ -21,11 +22,15 @@ public class LocalScope {
         this.parent = parent;
     }
 
-    public LocalVariable defineLocalVariable(String name, PrimitiveType type) {
+    public LocalVariable defineLocalVariable(String name, Type type) {
         if(findLocalVariable(name) != null) {
             throw new VariableAlreadyDefinedException(name);
         }
-        localVariableSizeIndex += type.getSize();
+        if(type instanceof PrimitiveType primitive) {
+            localVariableSizeIndex += primitive.getSize();
+        }else {
+            localVariableSizeIndex += 8;
+        }
         LocalVariable localVar = new LocalVariable(name, type, localVariableSizeIndex);
         localVariables.add(localVar);
         return localVar;
