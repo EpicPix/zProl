@@ -19,10 +19,15 @@ jobs:
         working-directory: src
         run: javac $(find * -name "*.java")
 
+      - name: Compile Standard
+        shell: bash
+        working-directory: src
+        run: java ga.epicpix.zprol.Start $(find ../lang/Standard/ -name "*.zprol") -o std.zpil --ignore-std-not-found-warning
+
       - name: Generate Jar
         shell: bash
         working-directory: src
-        run: jar cmf META-INF/MANIFEST.MF zProl.jar language.zld $(find * -name "*.class")
+        run: jar cmf META-INF/MANIFEST.MF std.zpil zProl.jar language.zld $(find * -name "*.class")
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@master
@@ -54,3 +59,21 @@ jobs:
       - name: Run Tests
         working-directory: tests
         run: node test
+  pre-release:
+    runs-on: ubuntu-latest
+    needs: [build, test]
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@master
+        with:
+          name: zProl.jar
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: true
+          automatic_release_tag: "build"
+          title: "Development Build"
+          files: |
+            *.jar

@@ -55,6 +55,7 @@ public class Start {
 
     public static void preMain(String[] args) throws IOException, UnknownTypeException {
         ArrayList<Generator> generators = new ArrayList<>();
+        boolean ignoreCompileStdWarning = false;
         String outputFile = null;
         String printFile = null;
 
@@ -86,6 +87,9 @@ public class Start {
                     }
                     outputFile = argsIterator.next();
                     continue;
+                } else if(s.equals("--ignore-std-not-found-warning")) {
+                    ignoreCompileStdWarning = true;
+                    continue;
                 } else if(s.equals("-p")) {
                     if(printFile != null) {
                         throw new IllegalArgumentException("Tried to declare input file multiple times");
@@ -112,7 +116,7 @@ public class Start {
             }
 
             String output = Objects.requireNonNullElse(outputFile, "output.out");
-            compileFiles(files, output);
+            compileFiles(files, output, ignoreCompileStdWarning);
 
             String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
             var generated = GeneratedData.load(Files.readAllBytes(new File(normalName + ".zpil").toPath()));
@@ -137,11 +141,17 @@ public class Start {
         throw new NotImplementedException("When help menu?");
     }
 
-    public static void compileFiles(ArrayList<String> files, String output) throws IOException, UnknownTypeException {
+    public static void compileFiles(ArrayList<String> files, String output, boolean ignoreStdWarning) throws IOException, UnknownTypeException {
         ArrayList<PreCompiledData> preCompiled = new ArrayList<>();
         ArrayList<CompiledData> compiled = new ArrayList<>();
         ArrayList<PreCompiledData> included = new ArrayList<>();
         ArrayList<CompiledData> includedCompiled = new ArrayList<>();
+        var stdReader = Language.class.getClassLoader().getResourceAsStream("std.zpil");
+        if(stdReader != null) {
+            loadGenerated(GeneratedData.load(stdReader.readAllBytes()), includedCompiled, included);
+        }else {
+            if(!ignoreStdWarning) System.err.println("Warning! Standard library not found");
+        }
         for(String file : files) {
             boolean load = false;
             if(new File(file).exists() && Files.size(new File(file).toPath()) >= 4) {
@@ -154,47 +164,7 @@ public class Start {
 
             if(load) {
                 var gen = GeneratedData.load(Files.readAllBytes(new File(file).toPath()));
-                HashMap<String, CompiledData> compiledData = new HashMap<>();
-                HashMap<String, PreCompiledData> preCompiledData = new HashMap<>();
-                for(var clazz : gen.classes) {
-                    compiledData.putIfAbsent(clazz.namespace(), new CompiledData(clazz.namespace()));
-                    preCompiledData.putIfAbsent(clazz.namespace(), new PreCompiledData());
-
-                    compiledData.get(clazz.namespace()).addClass(clazz);
-                    var fields = new ArrayList<PreField>();
-                    for(var f : clazz.fields()) {
-                        fields.add(new PreField(f.name(), f.type().normalName()));
-                    }
-                    preCompiledData.get(clazz.namespace()).classes.add(new PreClass(clazz.name(), fields.toArray(new PreField[0])));
-                }
-                for(var func : gen.functions) {
-                    compiledData.putIfAbsent(func.namespace(), new CompiledData(func.namespace()));
-                    preCompiledData.putIfAbsent(func.namespace(), new PreCompiledData());
-
-                    compiledData.get(func.namespace()).addFunction(func);
-                    var params = new ArrayList<PreParameter>();
-                    for(var f : func.signature().parameters()) {
-                        params.add(new PreParameter(null, f.normalName()));
-                    }
-                    var function = new PreFunction();
-                    function.name = func.name();
-                    function.returnType = func.signature().returnType().normalName();
-                    function.parameters.addAll(params);
-                    for(var v : func.modifiers()) {
-                        for(PreFunctionModifiers m : PreFunctionModifiers.MODIFIERS) {
-                            if(m.getCompiledModifier() == v) {
-                                function.modifiers.add(m);
-                                break;
-                            }
-                        }
-                    }
-                    preCompiledData.get(func.namespace()).functions.add(function);
-                }
-                for(var e : compiledData.entrySet()) includedCompiled.add(e.getValue());
-                for(var e : preCompiledData.entrySet()) {
-                    e.getValue().namespace = e.getKey();
-                    included.add(e.getValue());
-                }
+                loadGenerated(gen, includedCompiled, included);
             }else {
                 String normalName = file.substring(0, file.lastIndexOf('.') == -1 ? file.length() : file.lastIndexOf('.'));
                 try {
@@ -260,6 +230,50 @@ public class Start {
             DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".zpil"));
             out.write(GeneratedData.save(linked));
             out.close();
+        }
+    }
+
+    public static void loadGenerated(GeneratedData gen, ArrayList<CompiledData> includedCompiled, ArrayList<PreCompiledData> included) {
+        HashMap<String, CompiledData> compiledData = new HashMap<>();
+        HashMap<String, PreCompiledData> preCompiledData = new HashMap<>();
+        for(var clazz : gen.classes) {
+            compiledData.putIfAbsent(clazz.namespace(), new CompiledData(clazz.namespace()));
+            preCompiledData.putIfAbsent(clazz.namespace(), new PreCompiledData());
+
+            compiledData.get(clazz.namespace()).addClass(clazz);
+            var fields = new ArrayList<PreField>();
+            for(var f : clazz.fields()) {
+                fields.add(new PreField(f.name(), f.type().normalName()));
+            }
+            preCompiledData.get(clazz.namespace()).classes.add(new PreClass(clazz.name(), fields.toArray(new PreField[0])));
+        }
+        for(var func : gen.functions) {
+            compiledData.putIfAbsent(func.namespace(), new CompiledData(func.namespace()));
+            preCompiledData.putIfAbsent(func.namespace(), new PreCompiledData());
+
+            compiledData.get(func.namespace()).addFunction(func);
+            var params = new ArrayList<PreParameter>();
+            for(var f : func.signature().parameters()) {
+                params.add(new PreParameter(null, f.normalName()));
+            }
+            var function = new PreFunction();
+            function.name = func.name();
+            function.returnType = func.signature().returnType().normalName();
+            function.parameters.addAll(params);
+            for(var v : func.modifiers()) {
+                for(PreFunctionModifiers m : PreFunctionModifiers.MODIFIERS) {
+                    if(m.getCompiledModifier() == v) {
+                        function.modifiers.add(m);
+                        break;
+                    }
+                }
+            }
+            preCompiledData.get(func.namespace()).functions.add(function);
+        }
+        for(var e : compiledData.entrySet()) includedCompiled.add(e.getValue());
+        for(var e : preCompiledData.entrySet()) {
+            e.getValue().namespace = e.getKey();
+            included.add(e.getValue());
         }
     }
 
