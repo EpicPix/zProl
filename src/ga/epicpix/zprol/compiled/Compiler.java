@@ -57,7 +57,7 @@ public class Compiler {
                         break;
                     }
                 } else if("FunctionCallStatement".equals(named.name)) {
-                    generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(new Token[] {named})), null, data, localsManager, storage, true);
+                    generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(named)), null, data, localsManager, storage, true);
                 } else if("CreateAssignmentStatement".equals(named.name)) {
                     var type = data.resolveType(named.getSingleTokenWithName("Type").asWordToken().getWord());
                     var name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
@@ -285,6 +285,13 @@ public class Compiler {
             }else {
                 throw new NotImplementedException("Not implemented looking in different scopes");
             }
+        }else if(operation instanceof OperationCast cast) {
+            var castType = data.resolveType(cast.getType());
+            if(cast.isHardCast()) {
+                // this will not check sizes of primitive types, this is unsafe
+                return castType;
+            }
+            return doCast(expectedType, castType, bytecode);
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());
         }

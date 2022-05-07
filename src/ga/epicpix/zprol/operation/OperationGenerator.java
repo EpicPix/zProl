@@ -82,6 +82,11 @@ public class OperationGenerator {
                     }
                 }
                 case "Assignment" -> operations.add(new OperationAssignment(named.getSingleTokenWithName("Identifier").asWordToken().getWord(), getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens))));
+                case "ExpressionCast" -> {
+                    var hardCast = named.getTokenWithName("HardCastOperator");
+                    String castType = (hardCast != null ? hardCast : named.getTokenWithName("CastOperator")).getSingleTokenWithName("Type").asWordToken().getWord();
+                    operations.add(new OperationCast(hardCast != null, castType, getOperations(new SeekIterator<>(named.getSingleTokenWithName("Expression").asNamedToken()))));
+                }
                 default -> throw new NotImplementedException("Not implemented named token in expression '" + named.name + "' " + Arrays.toString(named.tokens));
             }
 

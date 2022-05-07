@@ -40,16 +40,21 @@ type uint64 unsigned,size=8 uL
 type ulong unsigned,size=8 uL
 
 def Expression:
-  $ExpressionCallables [$ExpressionType]
+  $ExpressionCast [$ExpressionType]
 
 def ExpressionParenthesis:
-  ( $ExpressionCallables $ExpressionType )
+  ( $ExpressionCast $ExpressionType )
 
 def inline ExpressionType:
-  [$Whitespace] $Operator $ExpressionCallables [$ExpressionType]
+  [$Whitespace] $Operator $ExpressionCast [$ExpressionType]
 
 def Assignment:
   $Identifier = $Expression
+
+def inline ExpressionCast $ExpressionCallables
+def ExpressionCast:
+  $HardCastOperator $Expression
+  $CastOperator $Expression
 
 def inline ExpressionCallables:
   $Integer
@@ -61,6 +66,12 @@ def inline ExpressionCallables:
 
 def inline AccessorCallables:
   $Identifier
+
+def CastOperator:
+  ( $Type )
+
+def HardCastOperator:
+  ( $Type ! )
 
 def Accessor $AccessorCallables {. $AccessorCallables}
 
