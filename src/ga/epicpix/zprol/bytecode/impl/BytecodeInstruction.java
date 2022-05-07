@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.bytecode.impl;
 
+import ga.epicpix.zprol.compiled.Class;
 import ga.epicpix.zprol.compiled.generated.ConstantPool;
 import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.bytecode.BytecodeValueType;
@@ -40,6 +41,9 @@ record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implemen
             }else if(type == BytecodeValueType.FUNCTION) {
                 if(val instanceof Function v) pool.getOrCreateFunctionIndex(v);
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
+            }else if(type == BytecodeValueType.CLASS) {
+                if(val instanceof Class v) pool.getOrCreateClassIndex(v);
+                else throw new IllegalArgumentException(val.toString().getClass().getName());
             }
         }
     }
@@ -57,6 +61,9 @@ record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implemen
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }else if(type == BytecodeValueType.FUNCTION) {
                 if(val instanceof Function v) val = pool.getFunctionIndex(v);
+                else throw new IllegalArgumentException(val.toString().getClass().getName());
+            }else if(type == BytecodeValueType.CLASS) {
+                if(val instanceof Class v) val = pool.getClassIndex(v);
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }
             if(!(val instanceof Number num)) throw new IllegalArgumentException(val.toString().getClass().getName());

@@ -21,7 +21,7 @@ public final class Bytecode implements IBytecode {
         registerSizedInstruction(0, "return", new int[] {0, 1, 2, 4, 8});
         registerSizedInstruction(5, "store_local", new int[] {1, 2, 4, 8}, BytecodeValueType.SHORT);
         registerInstruction(9, "invoke", BytecodeValueType.FUNCTION);
-        // id 10 is not used
+        registerInstruction(10, "class_field_load", BytecodeValueType.CLASS, BytecodeValueType.STRING);
         // id 11 is not used
         // id 12 is not used
         // id 13 is not used

@@ -7,7 +7,8 @@ public enum BytecodeValueType {
     INT(4),
     LONG(8),
     STRING(4),
-    FUNCTION(4);
+    FUNCTION(4),
+    CLASS(4);
 
     private final int size;
 

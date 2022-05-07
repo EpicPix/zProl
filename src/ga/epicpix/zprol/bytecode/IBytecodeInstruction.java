@@ -39,6 +39,8 @@ public interface IBytecodeInstruction extends IConstantPoolPreparable {
                 args[i] = ((Number) args[i]).intValue();
             }else if(type == BytecodeValueType.FUNCTION) {
                 args[i] = ((Number) args[i]).intValue();
+            }else if(type == BytecodeValueType.CLASS) {
+                args[i] = ((Number) args[i]).intValue();
             }
         }
         return instructionGenerator.createInstruction(args);
@@ -57,6 +59,12 @@ public interface IBytecodeInstruction extends IConstantPoolPreparable {
                 var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
                 var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
                 instr.getData()[i] = data.getFunction(namespace, name, signature);
+            }else if(values[i] == BytecodeValueType.CLASS) {
+                int index = ((Number) instr.getData()[i]).intValue();
+                var entry = (ConstantPoolEntry.ClassEntry) data.constantPool.entries.get(index - 1);
+                var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
+                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
+                instr.getData()[i] = data.getClass(namespace, name);
             }
         }
     }

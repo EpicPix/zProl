@@ -67,6 +67,16 @@ public class GeneratedData {
         throw new FunctionNotDefinedException((namespace != null ? namespace + "." : "") + name + " - " + signature);
     }
 
+    public Class getClass(String namespace, String name) {
+        for(Class clz : classes) {
+            if(clz.namespace() != null && namespace != null && !clz.namespace().equals(namespace)) continue;
+            if(!clz.name().equals(name)) continue;
+
+            return clz;
+        }
+        throw new FunctionNotDefinedException((namespace != null ? namespace + "." : "") + name);
+    }
+
     public static byte[] save(GeneratedData data) throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(bytes);
