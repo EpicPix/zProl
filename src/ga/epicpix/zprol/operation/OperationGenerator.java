@@ -73,7 +73,14 @@ public class OperationGenerator {
                     }
                     operations.add(new OperationAccessor(ids.toArray(new String[0])));
                 }
-                case "String" -> operations.add(new OperationString(named.getSingleTokenWithName("StringChars").asWordToken().getWord()));
+                case "String" -> {
+                    var chars = named.getSingleTokenWithName("StringChars");
+                    if(chars != null) {
+                        operations.add(new OperationString(chars.asWordToken().getWord()));
+                    }else {
+                        operations.add(new OperationString(""));
+                    }
+                }
                 case "Assignment" -> operations.add(new OperationAssignment(named.getSingleTokenWithName("Identifier").asWordToken().getWord(), getOperations(new SeekIterator<>(named.getTokenWithName("Expression").tokens))));
                 default -> throw new NotImplementedException("Not implemented named token in expression '" + named.name + "' " + Arrays.toString(named.tokens));
             }

@@ -79,7 +79,7 @@ def chars Identifier [$Whitespace] $IdentifierChars
 def chars Type [$Whitespace] { $IdentifierChars <.> } $IdentifierChars
 def chars clean Whitespace < \t\n> { < \t\n> }
 def chars StringChars <^\n"> { <^\n"> }
-def String " $StringChars "
+def String " [$StringChars] "
 def chars DotWord [$Whitespace] <a-zA-Z_> { <a-zA-Z0-9_.> }
 def chars Operator:
   <\>\>>
