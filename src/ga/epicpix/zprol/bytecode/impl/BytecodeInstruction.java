@@ -15,7 +15,7 @@ import java.util.Arrays;
 record BytecodeInstruction(BytecodeInstructionData data, Object[] args) implements IBytecodeInstruction {
 
     public String toString() {
-        return getName() + (args.length != 0 ? " " + Arrays.toString(args).replace("\n", "\\n") : "");
+        return getName() + (args.length != 0 ? " " + Arrays.toString(args).replace("\n", "\\n").replace("\0", "\\0") : "");
     }
 
     public int getId() {

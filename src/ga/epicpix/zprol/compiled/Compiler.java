@@ -268,7 +268,7 @@ public class Compiler {
                 throw new NotImplementedException("Not implemented looking in different scopes");
             }
         }else if(operation instanceof OperationString str) {
-            bytecode.pushInstruction(getConstructedInstruction("push_string", str.getString().replace("\\\"", "\"").replace("\\n", "\n")));
+            bytecode.pushInstruction(getConstructedInstruction("push_string", str.getString().replace("\\\"", "\"").replace("\\n", "\n").replace("\\0", "\0")));
             return data.resolveType("zprol.lang.String");
         }else if(operation instanceof OperationAssignment assignment) {
             var local = localsManager.tryGetLocalVariable(assignment.getIdentifier());
