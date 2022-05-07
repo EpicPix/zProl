@@ -1,5 +1,7 @@
 package ga.epicpix.zprol.compiled;
 
+import java.util.Objects;
+
 public class ClassType extends Type {
 
     private final String namespace;
@@ -28,5 +30,16 @@ public class ClassType extends Type {
 
     public String getDescriptor() {
         return "C" + (namespace != null ? namespace + "." : "") + name + ";";
+    }
+
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ClassType classType = (ClassType) o;
+        return Objects.equals(namespace, classType.namespace) && Objects.equals(name, classType.name);
+    }
+
+    public int hashCode() {
+        return Objects.hash(namespace, name);
     }
 }

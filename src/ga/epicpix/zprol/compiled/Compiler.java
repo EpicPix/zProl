@@ -291,7 +291,13 @@ public class Compiler {
     }
 
     public static Type doCast(Type from, Type to, IBytecodeStorage bytecode) {
-        if(!(from instanceof PrimitiveType primitiveFrom) || !(to instanceof PrimitiveType primitiveTo)) throw new CompileException("Unsupported cast from " + from.getName() + " to " + to.getName());
+        if(!(from instanceof PrimitiveType primitiveFrom) || !(to instanceof PrimitiveType primitiveTo)) {
+            if(!from.equals(to)) {
+                throw new CompileException("Unsupported cast from " + from.getName() + " to " + to.getName());
+            }else {
+                return to;
+            }
+        }
         if(primitiveTo.getSize() > primitiveFrom.getSize()) {
             bytecode.pushInstruction(getConstructedSizeInstruction(primitiveFrom.getSize(), "cast" + getInstructionPrefix(primitiveTo.getSize())));
             return to;
