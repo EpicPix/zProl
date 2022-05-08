@@ -11,6 +11,7 @@ jobs:
 
       - uses: actions/setup-java@v2
         with:
+          architecture: 'aarch64'
           distribution: 'adopt'
           java-version: '17'
 
