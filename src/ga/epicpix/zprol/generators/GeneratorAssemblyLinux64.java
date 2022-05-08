@@ -42,34 +42,35 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     private static final String[] SYSCALL_REGISTERS_16 = new String[] {"ax", "di", "sx", "dx", "r10w", "r8w", "r9w"};
 
     static {
-        instructionGenerators.put("vreturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  mov rsp, rbp\n  pop rbp\n  ret\n" : "  ret\n");
-        instructionGenerators.put("breturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop ax\n  ret\n");
-        instructionGenerators.put("lreturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop rax\n  ret\n");
+        // embedded methods skip return, unsafe
+        instructionGenerators.put("vreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  mov rsp, rbp\n  pop rbp\n" : "") + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n"));
+        instructionGenerators.put("breturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n" : "  pop ax\n") + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n"));
+        instructionGenerators.put("lreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n" : "  pop rax\n ") + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n"));
         instructionGenerators.put("bpush", (i, s, f, lp) -> {
             if(s.hasNext() && s.seek().getName().equals("breturn")) {
                 s.next();
-                return "  mov al, " + i.getData()[0] + "\n  ret\n";
+                return "  mov al, " + i.getData()[0] + "\n" + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n");
             }
             return "  push word " + i.getData()[0] + "\n";
         });
         instructionGenerators.put("spush", (i, s, f, lp) -> {
             if(s.hasNext() && s.seek().getName().equals("sreturn")) {
                 s.next();
-                return "  mov ax, " + i.getData()[0] + "\n  ret\n";
+                return "  mov ax, " + i.getData()[0] + "\n" + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n");
             }
             return "  push word " + i.getData()[0] + "\n";
         });
         instructionGenerators.put("ipush", (i, s, f, lp) -> {
             if(s.hasNext() && s.seek().getName().equals("ireturn")) {
                 s.next();
-                return "  mov eax, " + i.getData()[0] + "\n  ret\n";
+                return "  mov eax, " + i.getData()[0] + "\n" + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n");
             }
             return "  push qword " + i.getData()[0] + "\n";
         });
         instructionGenerators.put("lpush", (i, s, f, lp) -> {
             if(s.hasNext() && s.seek().getName().equals("lreturn")) {
                 s.next();
-                return "  mov rax, " + i.getData()[0] + "\n  ret\n";
+                return "  mov rax, " + i.getData()[0] + "\n" + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n");
             }
             long v = ((Number) i.getData()[0]).longValue();
             if(v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
@@ -155,56 +156,91 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("ldup", (i, s, f, lp) -> "  pop rcx\n  push rcx\n  push rcx\n");
         instructionGenerators.put("bcastl", (i, s, f, lp) -> "  pop cx\n  movsx rcx, cx\n  push rcx\n");
         instructionGenerators.put("lcasts", (i, s, f, lp) -> "  pop rcx\n  push cx\n");
-        instructionGenerators.put("invoke", (i, s, func, lp) -> {
-            StringBuilder args = new StringBuilder();
-            Function f = (Function) i.getData()[0];
-            boolean isSyscall = FunctionModifiers.isEmptyCode(f.modifiers()) && f.name().equals("syscall");
+        instructionGenerators.put("invoke", (i, s, func, lp) -> invokeMethod((Function) i.getData()[0], lp));
+    }
 
-            int x = f.signature().parameters().length - 1;
-            for(var param : f.signature().parameters()) {
-                if(param instanceof PrimitiveType primitive) {
-                    if (primitive.getSize() == 1 || primitive.getSize() == 2) {
-                        args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_16[x] : CALL_REGISTERS_16[x]).append("\n");
-                    } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
-                        args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]).append("\n");
-                    } else {
-                        throw new NotImplementedException("Not implemented size " + primitive.getSize());
-                    }
-                }else {
-                    args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]).append("\n");
-                }
-                x--;
-            }
-            if(FunctionModifiers.isEmptyCode(f.modifiers())) {
-                if(isSyscall) {
-                    args.append("  syscall\n");
-                }else {
-                    throw new FunctionNotDefinedException("Unknown function " + f.name());
-                }
-            }else {
-                args.append("  call ").append(getMangledName(f.namespace(), f.name(), f.signature())).append("\n");
-            }
-            String signatureReturnTypePrefix = f.signature().returnType() instanceof PrimitiveType primitive ? getInstructionPrefix(primitive.getSize()) : "a";
-            if(s.hasNext() && s.seek().getName().equals(signatureReturnTypePrefix + "pop")) {
-                s.next();
-                return args.toString();
-            }
+    private static String invokeMethod(Function f, ConstantPool localConstantPool) {
+        StringBuilder args = new StringBuilder();
+        boolean isSyscall = FunctionModifiers.isEmptyCode(f.modifiers()) && f.name().equals("syscall");
 
-            var ret = f.signature().returnType();
-            if(ret instanceof PrimitiveType primitive) {
-                if (primitive.getSize() == 0) {
-                } else if (primitive.getSize() == 1 || primitive.getSize() == 2) {
-                    args.append("  push ax\n");
+        int x = f.signature().parameters().length - 1;
+        for(var param : f.signature().parameters()) {
+            if(param instanceof PrimitiveType primitive) {
+                if (primitive.getSize() == 1 || primitive.getSize() == 2) {
+                    args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_16[x] : CALL_REGISTERS_16[x]).append("\n");
                 } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
-                    args.append("  push rax\n");
+                    args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]).append("\n");
                 } else {
                     throw new NotImplementedException("Not implemented size " + primitive.getSize());
                 }
             }else {
-                args.append("  push rax\n");
+                args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]).append("\n");
             }
-            return args.toString();
-        });
+            x--;
+        }
+
+        if(!isSyscall && FunctionModifiers.isEmbedCode(f.modifiers())) {
+            args.append(writeFunction(f, localConstantPool));
+        }else if (FunctionModifiers.isEmptyCode(f.modifiers())) {
+            if (isSyscall) {
+                args.append("  syscall\n");
+            } else {
+                throw new FunctionNotDefinedException("Unknown function " + f.name());
+            }
+        } else {
+            args.append("  call ").append(getMangledName(f.namespace(), f.name(), f.signature())).append("\n");
+        }
+
+        var ret = f.signature().returnType();
+        if(ret instanceof PrimitiveType primitive) {
+            if (primitive.getSize() == 0) {
+            } else if (primitive.getSize() == 1 || primitive.getSize() == 2) {
+                args.append("  push ax\n");
+            } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
+                args.append("  push rax\n");
+            } else {
+                throw new NotImplementedException("Not implemented size " + primitive.getSize());
+            }
+        }else {
+            args.append("  push rax\n");
+        }
+        return args.toString();
+    }
+
+    private static String writeFunction(Function function, ConstantPool localConstantPool) {
+        StringBuilder outStream = new StringBuilder();
+        if(function.code().getLocalsSize() != 0) {
+            outStream.append("  push rbp\n");
+            outStream.append("  mov rbp, rsp\n");
+            outStream.append("  sub rsp, ").append(function.code().getLocalsSize()).append("\n");
+        }
+        int localsIndex = 0;
+        var parameters = function.signature().parameters();
+        for (int i = 0; i < parameters.length; i++) {
+            var param = parameters[i];
+            if(param instanceof PrimitiveType primitive) {
+                localsIndex += primitive.getSize();
+                if (primitive.getSize() == 1 || primitive.getSize() == 2) {
+                    outStream.append("  mov [rbp-").append(localsIndex).append("], ").append(CALL_REGISTERS_16[i]).append("\n");
+                } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
+                    outStream.append("  mov [rbp-").append(localsIndex).append("], ").append(CALL_REGISTERS_64[i]).append("\n");
+                }
+            }else {
+                localsIndex += 8;
+                outStream.append("  mov [rbp-").append(localsIndex).append("], ").append(CALL_REGISTERS_64[i]).append("\n");
+            }
+        }
+        SeekIterator<IBytecodeInstruction> instructions = new SeekIterator<>(function.code().getInstructions());
+        while(instructions.hasNext()) {
+            var instruction = instructions.next();
+            var generator = instructionGenerators.get(instruction.getName());
+            if(generator != null) {
+                outStream.append(generator.generateInstruction(instruction, instructions, function, localConstantPool));
+            }else {
+                throw new UnknownInstructionException("Unable to generate instructions for the " + instruction.getName() + " instruction");
+            }
+        }
+        return outStream.toString();
     }
 
     private interface InstructionGenerator {
@@ -221,40 +257,11 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         ConstantPool localConstantPool = new ConstantPool();
         for(var function : generated.functions) {
             if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
+            if(FunctionModifiers.isEmbedCode(function.modifiers())) continue;
 
             String functionName = getMangledName(function.namespace(), function.name(), function.signature());
             outStream.writeBytes(functionName + ":\n");
-            if(function.code().getLocalsSize() != 0) {
-                outStream.writeBytes("  push rbp\n");
-                outStream.writeBytes("  mov rbp, rsp\n");
-                outStream.writeBytes("  sub rsp, " + function.code().getLocalsSize() + "\n");
-            }
-            int localsIndex = 0;
-            var parameters = function.signature().parameters();
-            for (int i = 0; i < parameters.length; i++) {
-                var param = parameters[i];
-                if(param instanceof PrimitiveType primitive) {
-                    localsIndex += primitive.getSize();
-                    if (primitive.getSize() == 1 || primitive.getSize() == 2) {
-                        outStream.writeBytes("  mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_16[i] + "\n");
-                    } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
-                        outStream.writeBytes("  mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_64[i] + "\n");
-                    }
-                }else {
-                    localsIndex += 8;
-                    outStream.writeBytes("  mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_64[i] + "\n");
-                }
-            }
-            SeekIterator<IBytecodeInstruction> instructions = new SeekIterator<>(function.code().getInstructions());
-            while(instructions.hasNext()) {
-                var instruction = instructions.next();
-                var generator = instructionGenerators.get(instruction.getName());
-                if(generator != null) {
-                    outStream.writeBytes(generator.generateInstruction(instruction, instructions, function, localConstantPool));
-                }else {
-                    throw new UnknownInstructionException("Unable to generate instructions for the " + instruction.getName() + " instruction");
-                }
-            }
+            outStream.writeBytes(writeFunction(function, localConstantPool));
         }
         int index = 1;
         for(var constantPoolEntry : localConstantPool.entries) {

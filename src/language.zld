@@ -18,6 +18,7 @@ keyword definition namespace
 keyword definition class
 keyword control return
 keyword function_modifier native
+keyword function_modifier inline
 
 // Types, also defined as keywords
 type void size=0 V
@@ -137,6 +138,7 @@ def ParameterList:
 
 def inline keyword FunctionModifier:
   native
+  inline
 
 def FunctionModifiers:
   { $FunctionModifier $Whitespace }
