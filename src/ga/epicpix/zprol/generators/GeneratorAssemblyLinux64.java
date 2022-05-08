@@ -70,16 +70,17 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                     field = e;
                     break;
                 }
-                if(e.type() instanceof PrimitiveType t) {
-                    offset += t.getSize();
-                }else offset += 8;
+                if(e.type() instanceof PrimitiveType t) offset += t.getSize();
+                else if(e.type() instanceof BooleanType) offset += 1;
+                else offset += 8;
             }
             if(field == null) {
                 throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name() + "'");
             }
 
-            int size = 2;
+            int size = 0;
             if(field.type() instanceof ClassType) size = 8;
+            else if(field.type() instanceof BooleanType) size = 1;
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
 
             if(size == 1) return "  pop rcx\n  mov dl, [rcx+" + offset + "]\n  push dx\n";
@@ -99,16 +100,17 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                     field = e;
                     break;
                 }
-                if(e.type() instanceof PrimitiveType t) {
-                    offset += t.getSize();
-                }else offset += 8;
+                if(e.type() instanceof PrimitiveType t) offset += t.getSize();
+                else if(e.type() instanceof BooleanType) offset += 1;
+                else offset += 8;
             }
             if(field == null) {
                 throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name() + "'");
             }
 
-            int size = 2;
+            int size = 0;
             if(field.type() instanceof ClassType) size = 8;
+            else if(field.type() instanceof BooleanType) size = 1;
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
 
             if(size == 1) return "  pop rcx\n  pop dx\n  mov dl, [rcx+" + offset + "]\n";
