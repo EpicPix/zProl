@@ -18,8 +18,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
-import static ga.epicpix.zprol.StaticImports.getInstructionPrefix;
-
 public final class GeneratorAssemblyLinux64 extends Generator {
 
     public String getGeneratorCommandLine() {

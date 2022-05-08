@@ -4,13 +4,12 @@ import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
 import ga.epicpix.zprol.compiled.*;
 import ga.epicpix.zprol.compiled.Class;
 import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
-import ga.epicpix.zprol.exceptions.compilation.RedefinedClassException;
 import ga.epicpix.zprol.exceptions.compilation.RedefinedFunctionException;
+import ga.epicpix.zprol.exceptions.compilation.RedefinedClassException;
 import ga.epicpix.zprol.zld.Language;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
 import static ga.epicpix.zprol.StaticImports.createStorage;

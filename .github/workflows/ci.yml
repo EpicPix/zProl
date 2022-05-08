@@ -15,19 +15,13 @@ jobs:
           java-version: '17'
 
       - name: Compile
-        shell: bash
-        working-directory: src
-        run: javac $(find * -name "*.java")
+        run: mvn compile
 
       - name: Compile Standard
-        shell: bash
-        working-directory: src
-        run: java ga.epicpix.zprol.Start $(find ../lang/ -name "*.zprol") -o std.zpil --ignore-std-not-found-warning
+        run: java zProl.jar -o std.zpil --ignore-std-not-found-warning
 
-      - name: Generate Jar
-        shell: bash
-        working-directory: src
-        run: jar cmf META-INF/MANIFEST.MF zProl.jar std.zpil language.zld $(find * -name "*.class")
+      - name: Add std
+        run: jar uf zProl.jar std.zpil
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@master

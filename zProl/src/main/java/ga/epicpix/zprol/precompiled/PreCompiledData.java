@@ -1,7 +1,6 @@
 package ga.epicpix.zprol.precompiled;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class PreCompiledData {
 

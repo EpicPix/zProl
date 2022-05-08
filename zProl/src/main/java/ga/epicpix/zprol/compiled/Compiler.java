@@ -1,13 +1,14 @@
 package ga.epicpix.zprol.compiled;
 
+import ga.epicpix.zprol.StaticImports;
+import ga.epicpix.zprol.exceptions.NotImplementedException;
+import ga.epicpix.zprol.exceptions.compilation.CompileException;
+import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
+import ga.epicpix.zprol.exceptions.compilation.UnknownTypeException;
 import ga.epicpix.zprol.SeekIterator;
 import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
 import ga.epicpix.zprol.bytecode.IBytecodeStorage;
 import ga.epicpix.zprol.compiled.locals.LocalScopeManager;
-import ga.epicpix.zprol.exceptions.compilation.CompileException;
-import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
-import ga.epicpix.zprol.exceptions.NotImplementedException;
-import ga.epicpix.zprol.exceptions.compilation.UnknownTypeException;
 import ga.epicpix.zprol.operation.*;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
@@ -23,7 +24,7 @@ import static ga.epicpix.zprol.StaticImports.*;
 public class Compiler {
 
     public static IBytecodeStorage parseFunctionCode(CompiledData data, SeekIterator<Token> tokens, FunctionSignature sig, String[] names) {
-        IBytecodeStorage storage = createStorage();
+        IBytecodeStorage storage = StaticImports.createStorage();
         LocalScopeManager localsManager = new LocalScopeManager();
         for(int i = 0; i<names.length; i++) {
             localsManager.getCurrentScope().defineLocalVariable(names[i], sig.parameters()[i]);
@@ -49,9 +50,9 @@ public class Compiler {
                         }
                     }
                     if(sig.returnType() instanceof PrimitiveType primitive) {
-                        storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "return"));
+                        storage.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "return"));
                     }else {
-                        storage.pushInstruction(getConstructedInstruction("areturn"));
+                        storage.pushInstruction(StaticImports.getConstructedInstruction("areturn"));
                     }
                     if(opens == 0) {
                         hasReturned = true;
@@ -99,7 +100,7 @@ public class Compiler {
                         for(int i = 1; i<ids.size() - 1; i++) {
                             var next = getClassFieldType(type, data, ids.get(i));
                             if(type instanceof ClassType classType) {
-                                instructionQueue.add(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null), ids.get(i)));
+                                instructionQueue.add(StaticImports.getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null), ids.get(i)));
                             }else {
                                 throw new CompileException("Expected class in loadClassField");
                             }
@@ -109,7 +110,7 @@ public class Compiler {
                         for(var instr : instructionQueue) storage.pushInstruction(instr);
 
                         if(type instanceof ClassType classType) {
-                            storage.pushInstruction(getConstructedInstruction("class_field_store", new Class(classType.getNamespace(), classType.getName(), null), ids.get(ids.size() - 1)));
+                            storage.pushInstruction(StaticImports.getConstructedInstruction("class_field_store", new Class(classType.getNamespace(), classType.getName(), null), ids.get(ids.size() - 1)));
                         }else {
                             throw new CompileException("Expected a class");
                         }
@@ -136,7 +137,7 @@ public class Compiler {
         }
         if(!hasReturned) {
             if(!(sig.returnType() instanceof PrimitiveType primitive) || primitive.getSize() != 0) throw new CompileException("Missing return statement", tokens.current());
-            storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
+            storage.pushInstruction(StaticImports.getConstructedSizeInstruction(0, "return"));
         }
         storage.setLocalsSize(localsManager.getLocalVariablesSize());
         return storage;
@@ -152,10 +153,10 @@ public class Compiler {
             if(prob != null && discardValue) {
                 if(prob instanceof PrimitiveType primitive) {
                     if(primitive.getSize() != 0) {
-                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
+                        bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "pop"));
                     }
                 }else {
-                    bytecode.pushInstruction(getConstructedInstruction("apop"));
+                    bytecode.pushInstruction(StaticImports.getConstructedInstruction("apop"));
                 }
             }
 
@@ -175,30 +176,30 @@ public class Compiler {
             if(expectedType instanceof PrimitiveType primitive) {
                 switch (op) {
                     case "+":
-                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "add"));
+                        bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "add"));
                         break;
                     case "-":
-                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "sub"));
+                        bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "sub"));
                         break;
                     case "*":
                         if (primitive.isUnsigned()) {
-                            bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "mulu"));
+                            bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "mulu"));
                         } else {
-                            bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "mul"));
+                            bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "mul"));
                         }
                         break;
                     case "/":
                         if (primitive.isUnsigned()) {
-                            bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "divu"));
+                            bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "divu"));
                         } else {
-                            bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "div"));
+                            bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "div"));
                         }
                         break;
                     case "|":
-                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "or"));
+                        bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "or"));
                         break;
                     case "==":
-                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "cmp"));
+                        bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "cmp"));
                         return new BooleanType();
                     default:
                         throw new NotImplementedException("Unknown operator " + op);
@@ -242,14 +243,14 @@ public class Compiler {
                 generateInstructionsFromEquation(call.getOperations().get(i), parameters[i], data, localsManager, bytecode, false);
             }
 
-            bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
+            bytecode.pushInstruction(StaticImports.getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
 
             if(discardValue && returnType instanceof PrimitiveType primitive) {
                 if(primitive.getSize() != 0) {
-                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
+                    bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "pop"));
                 }
             }else if(discardValue) {
-                bytecode.pushInstruction(getConstructedInstruction("apop"));
+                bytecode.pushInstruction(StaticImports.getConstructedInstruction("apop"));
             }else {
                 if(expectedType != null && !returnType.equals(expectedType)) {
                     return doCast(returnType, expectedType, false, bytecode);
@@ -283,10 +284,10 @@ public class Compiler {
             if(local != null) {
                 generateInstructionsFromEquation(assignment.getOperation(), local.type(), data, localsManager, bytecode, false);
                 if(local.type() instanceof PrimitiveType primitive) {
-                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "dup"));
+                    bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitive.getSize(), "dup"));
                     bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
                 }else {
-                    bytecode.pushInstruction(getConstructedInstruction("adup"));
+                    bytecode.pushInstruction(StaticImports.getConstructedInstruction("adup"));
                     bytecode.pushInstruction(getConstructedInstruction("astore_local", local.index()));
                 }
                 return local.type();
@@ -302,7 +303,7 @@ public class Compiler {
             }
             return doCast(ret, castType, true, bytecode);
         }else if(operation instanceof OperationBoolean bool) {
-            bytecode.pushInstruction(getConstructedSizeInstruction(1, "push", bool.getValue() ? 1 : 0));
+            bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(1, "push", bool.getValue() ? 1 : 0));
             return new BooleanType();
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());
@@ -318,7 +319,7 @@ public class Compiler {
             }
         }
         if(primitiveTo.getSize() > primitiveFrom.getSize()) {
-            bytecode.pushInstruction(getConstructedSizeInstruction(primitiveFrom.getSize(), "cast" + getInstructionPrefix(primitiveTo.getSize())));
+            bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitiveFrom.getSize(), "cast" + StaticImports.getInstructionPrefix(primitiveTo.getSize())));
             return to;
         }
         if(primitiveTo.getSize() == primitiveFrom.getSize()) {
@@ -326,7 +327,7 @@ public class Compiler {
         }
         if(explicit) {
             if(primitiveTo.getSize() < primitiveFrom.getSize()) {
-                bytecode.pushInstruction(getConstructedSizeInstruction(primitiveFrom.getSize(), "cast" + getInstructionPrefix(primitiveTo.getSize())));
+                bytecode.pushInstruction(StaticImports.getConstructedSizeInstruction(primitiveFrom.getSize(), "cast" + StaticImports.getInstructionPrefix(primitiveTo.getSize())));
                 return to;
             }
         }
@@ -371,7 +372,7 @@ public class Compiler {
     public static Type loadClassField(Type type, CompiledData data, String field, IBytecodeStorage bytecode) {
         var next = getClassFieldType(type, data, field);
         if(type instanceof ClassType classType) {
-            bytecode.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null), field));
+            bytecode.pushInstruction(StaticImports.getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null), field));
         }else {
             throw new CompileException("Expected class in loadClassField");
         }

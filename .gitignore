@@ -11,3 +11,5 @@ out/
 *.png
 *.svg
 debug/
+target/
+*.jar

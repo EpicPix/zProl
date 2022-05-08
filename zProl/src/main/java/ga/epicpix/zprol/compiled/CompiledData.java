@@ -1,9 +1,10 @@
 package ga.epicpix.zprol.compiled;
 
-import ga.epicpix.zprol.precompiled.PreCompiledData;
-import ga.epicpix.zprol.zld.Language;
 import ga.epicpix.zprol.exceptions.compilation.FunctionNotDefinedException;
 import ga.epicpix.zprol.exceptions.compilation.UnknownTypeException;
+import ga.epicpix.zprol.precompiled.PreCompiledData;
+import ga.epicpix.zprol.zld.Language;
+
 import java.util.ArrayList;
 import java.util.Objects;
 

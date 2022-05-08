@@ -2,6 +2,7 @@ package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.exceptions.compilation.VariableAlreadyDefinedException;
 import ga.epicpix.zprol.exceptions.compilation.VariableNotDefinedException;
+
 import java.util.ArrayList;
 
 public class Scope {

@@ -1,6 +1,5 @@
 package ga.epicpix.zprol.compiled;
 
-import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.zld.Language;
 
 import java.util.ArrayList;
