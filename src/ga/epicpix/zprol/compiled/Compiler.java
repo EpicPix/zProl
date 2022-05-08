@@ -197,6 +197,9 @@ public class Compiler {
                     case "|":
                         bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "or"));
                         break;
+                    case "==":
+                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "cmp"));
+                        return new BooleanType();
                     default:
                         throw new NotImplementedException("Unknown operator " + op);
                 }
@@ -298,6 +301,9 @@ public class Compiler {
                 return castType;
             }
             return doCast(ret, castType, true, bytecode);
+        }else if(operation instanceof OperationBoolean bool) {
+            bytecode.pushInstruction(getConstructedSizeInstruction(1, "push", bool.getValue() ? 1 : 0));
+            return new BooleanType();
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());
         }

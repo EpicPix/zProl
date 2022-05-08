@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.zld;
 
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.compiled.BooleanType;
 import ga.epicpix.zprol.compiled.ClassType;
 import ga.epicpix.zprol.compiled.PrimitiveType;
 import ga.epicpix.zprol.compiled.Type;
@@ -194,6 +195,9 @@ public class Language {
             String name = descriptor.lastIndexOf('.') == -1 ? data : data.substring(data.lastIndexOf('.') + 1);
 
             return new ClassType(namespace, name);
+        }
+        if(descriptor.equals("b")) {
+            return new BooleanType();
         }
         for(var type : TYPES.values()) {
             if(type.descriptor.equals(descriptor)) {

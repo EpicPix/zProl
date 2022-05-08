@@ -1,15 +1,16 @@
 // Definitions of stuff in this language
 
 // Operators
-operator 0 |
-operator 1 >>
-operator 1 <<
-operator 2 %
-operator 2 +
-operator 2 -
-operator 3 *
-operator 3 /
-operator 3 %
+operator 5 ==
+operator 10 |
+operator 15 >>
+operator 15 <<
+operator 20 %
+operator 20 +
+operator 20 -
+operator 25 *
+operator 25 /
+operator 25 %
 
 // Keywords
 keyword definition using
@@ -57,6 +58,7 @@ def ExpressionCast:
   $CastOperator $Expression
 
 def inline ExpressionCallables:
+  $Boolean
   $Integer
   $ExpressionParenthesis
   $Assignment
@@ -74,6 +76,10 @@ def HardCastOperator:
   ( $Type ! )
 
 def Accessor $AccessorCallables {. $AccessorCallables}
+
+def Boolean:
+  true
+  false
 
 def inline Integer:
   [$Whitespace] $DecimalInteger
@@ -102,6 +108,7 @@ def chars Operator:
   </>
   <%>
   <|>
+  <=><=>
 
 tok Using:
   using $DotWord ;

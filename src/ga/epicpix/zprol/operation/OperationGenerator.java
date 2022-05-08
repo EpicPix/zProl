@@ -87,6 +87,7 @@ public class OperationGenerator {
                     String castType = (hardCast != null ? hardCast : named.getTokenWithName("CastOperator")).getSingleTokenWithName("Type").asWordToken().getWord();
                     operations.add(new OperationCast(hardCast != null, castType, getOperations(new SeekIterator<>(named.getSingleTokenWithName("Expression").asNamedToken()))));
                 }
+                case "Boolean" -> operations.add(new OperationBoolean(Boolean.parseBoolean(named.tokens[0].asWordToken().getWord())));
                 default -> throw new NotImplementedException("Not implemented named token in expression '" + named.name + "' " + Arrays.toString(named.tokens));
             }
 

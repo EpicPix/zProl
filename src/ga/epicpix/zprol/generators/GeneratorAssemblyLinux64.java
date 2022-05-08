@@ -47,6 +47,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("lreturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop rax\n  ret\n");
         instructionGenerators.put("bpush", (i, s, f, lp) -> "  push word " + i.getData()[0] + "\n");
         instructionGenerators.put("spush", (i, s, f, lp) -> "  push word " + i.getData()[0] + "\n");
+        instructionGenerators.put("ipush", (i, s, f, lp) -> "  push qword " + i.getData()[0] + "\n");
         instructionGenerators.put("lpush", (i, s, f, lp) -> {
             long v = ((Number) i.getData()[0]).longValue();
             if(v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
@@ -81,17 +82,12 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             if(field.type() instanceof ClassType) size = 8;
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
 
-            if(size == 1) {
-                return "  pop rcx\n  mov dl, [rcx+" + offset + "]\n  push dx\n";
-            }else if(size == 2) {
-                return "  pop rcx\n  push word [rcx+" + offset + "]\n";
-            }else if(size == 4) {
-                return "  pop rcx\n  mov edx, [rcx+" + offset + "]\n  push rdx\n";
-            }else if(size == 8) {
-                return "  pop rcx\n  push qword [rcx+" + offset + "]\n";
-            }else {
-                throw new IllegalStateException("Unsupported size " + size);
-            }
+            if(size == 1) return "  pop rcx\n  mov dl, [rcx+" + offset + "]\n  push dx\n";
+            else if(size == 2) return "  pop rcx\n  push word [rcx+" + offset + "]\n";
+            else if(size == 4) return "  pop rcx\n  mov edx, [rcx+" + offset + "]\n  push rdx\n";
+            else if(size == 8) return "  pop rcx\n  push qword [rcx+" + offset + "]\n";
+            else throw new IllegalStateException("Unsupported size " + size);
+
         });
         instructionGenerators.put("class_field_store", (i, s, f, lp) -> {
             var clz = (Class) i.getData()[0];
@@ -115,19 +111,16 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             if(field.type() instanceof ClassType) size = 8;
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
 
-            if(size == 1) {
-                return "  pop rcx\n  pop dx\n  mov dl, [rcx+" + offset + "]\n";
-            }else if(size == 2) {
-                return "  pop rcx\n  pop word [rcx+" + offset + "]\n";
-            }else if(size == 4) {
-                return "  pop rcx\n  pop rdx\n  mov edx, [rcx+" + offset + "]\n";
-            }else if(size == 8) {
-                return "  pop rcx\n  pop qword [rcx+" + offset + "]\n";
-            }else {
-                throw new IllegalStateException("Unsupported size " + size);
-            }
+            if(size == 1) return "  pop rcx\n  pop dx\n  mov dl, [rcx+" + offset + "]\n";
+            else if(size == 2) return "  pop rcx\n  pop word [rcx+" + offset + "]\n";
+            else if(size == 4) return "  pop rcx\n  pop rdx\n  mov edx, [rcx+" + offset + "]\n";
+            else if(size == 8) return "  pop rcx\n  pop qword [rcx+" + offset + "]\n";
+            else throw new IllegalStateException("Unsupported size " + size);
+
         });
+        instructionGenerators.put("icmp", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  cmp ecx, edx\n");
         instructionGenerators.put("badd", (i, s, f, lp) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
+        instructionGenerators.put("iadd", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  add ecx, edx\n  push ecx\n");
         instructionGenerators.put("ladd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
         instructionGenerators.put("bsub", (i, s, f, lp) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
         instructionGenerators.put("lsub", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  sub rcx, rdx\n  push rcx\n");
