@@ -19,7 +19,7 @@ jobs:
 
       - name: Compile Standard
         shell: bash
-        run: java -jar zProl.jar $(find ../lang/ -name "*.zprol") -o std.zpil --ignore-std-not-found-warning
+        run: java -jar zProl.jar $(find lang/ -name "*.zprol") -o std.zpil --ignore-std-not-found-warning
 
       - name: Add std
         run: jar uf zProl.jar std.zpil
