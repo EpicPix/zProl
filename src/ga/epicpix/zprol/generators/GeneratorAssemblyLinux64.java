@@ -45,10 +45,32 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("vreturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  mov rsp, rbp\n  pop rbp\n  ret\n" : "  ret\n");
         instructionGenerators.put("breturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop ax\n  ret\n");
         instructionGenerators.put("lreturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop rax\n  ret\n");
-        instructionGenerators.put("bpush", (i, s, f, lp) -> "  push word " + i.getData()[0] + "\n");
-        instructionGenerators.put("spush", (i, s, f, lp) -> "  push word " + i.getData()[0] + "\n");
-        instructionGenerators.put("ipush", (i, s, f, lp) -> "  push qword " + i.getData()[0] + "\n");
+        instructionGenerators.put("bpush", (i, s, f, lp) -> {
+            if(s.hasNext() && s.seek().getName().equals("breturn")) {
+                s.next();
+                return "  mov al, " + i.getData()[0] + "\n  ret\n";
+            }
+            return "  push word " + i.getData()[0] + "\n";
+        });
+        instructionGenerators.put("spush", (i, s, f, lp) -> {
+            if(s.hasNext() && s.seek().getName().equals("sreturn")) {
+                s.next();
+                return "  mov ax, " + i.getData()[0] + "\n  ret\n";
+            }
+            return "  push word " + i.getData()[0] + "\n";
+        });
+        instructionGenerators.put("ipush", (i, s, f, lp) -> {
+            if(s.hasNext() && s.seek().getName().equals("ireturn")) {
+                s.next();
+                return "  mov eax, " + i.getData()[0] + "\n  ret\n";
+            }
+            return "  push qword " + i.getData()[0] + "\n";
+        });
         instructionGenerators.put("lpush", (i, s, f, lp) -> {
+            if(s.hasNext() && s.seek().getName().equals("lreturn")) {
+                s.next();
+                return "  mov rax, " + i.getData()[0] + "\n  ret\n";
+            }
             long v = ((Number) i.getData()[0]).longValue();
             if(v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
                 return "  mov rax, " + v + "\n  push rax\n";
