@@ -1,9 +1,5 @@
-package ga.epicpix.zprol.bytecode.impl;
+package ga.epicpix.zprol.bytecode;
 
-import ga.epicpix.zprol.bytecode.BytecodeValueType;
-import ga.epicpix.zprol.bytecode.IBytecode;
-import ga.epicpix.zprol.bytecode.IBytecodeInstructionGenerator;
-import ga.epicpix.zprol.bytecode.IBytecodeStorage;
 import ga.epicpix.zprol.exceptions.bytecode.RedefinedInstructionException;
 import ga.epicpix.zprol.exceptions.bytecode.UnknownInstructionException;
 

@@ -5,7 +5,7 @@ import ga.epicpix.zprol.bytecode.IBytecode;
 import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
 import ga.epicpix.zprol.bytecode.IBytecodeInstructionGenerator;
 import ga.epicpix.zprol.bytecode.IBytecodeStorage;
-import ga.epicpix.zprol.bytecode.impl.Bytecode;
+import ga.epicpix.zprol.bytecode.Bytecode;
 
 public class StaticImports {
 

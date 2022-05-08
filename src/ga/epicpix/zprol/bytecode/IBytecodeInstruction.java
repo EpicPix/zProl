@@ -1,24 +1,53 @@
 package ga.epicpix.zprol.bytecode;
 
+import ga.epicpix.zprol.compiled.Class;
+import ga.epicpix.zprol.compiled.Function;
 import ga.epicpix.zprol.compiled.generated.ConstantPool;
 import ga.epicpix.zprol.compiled.generated.ConstantPoolEntry;
 import ga.epicpix.zprol.compiled.generated.GeneratedData;
 import ga.epicpix.zprol.compiled.generated.IConstantPoolPreparable;
-import ga.epicpix.zprol.bytecode.impl.Bytecode;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 
 public interface IBytecodeInstruction extends IConstantPoolPreparable {
 
     public int getId();
     public String getName();
     public Object[] getData();
-    public byte[] write(ConstantPool pool) throws IOException;
 
     public default void write(DataOutput out, ConstantPool pool) throws IOException {
-        out.write(write(pool));
+        out.write(write(this, pool));
+    }
+
+    public static byte[] write(IBytecodeInstruction instr, ConstantPool pool) throws IOException {
+        var bytes = new ByteArrayOutputStream();
+        var out = new DataOutputStream(bytes);
+        out.writeByte(instr.getId());
+        var values = Bytecode.BYTECODE.getInstructionValueTypesRequirements(instr.getId());
+        var args = instr.getData();
+        for(int i = 0; i<values.length; i++) {
+            var type = values[i];
+            var val = args[i];
+            if(type == BytecodeValueType.STRING) {
+                if(val instanceof String v) val = pool.getStringIndex(v);
+                else throw new IllegalArgumentException(val.toString().getClass().getName());
+            }else if(type == BytecodeValueType.FUNCTION) {
+                if(val instanceof Function v) val = pool.getFunctionIndex(v);
+                else throw new IllegalArgumentException(val.toString().getClass().getName());
+            }else if(type == BytecodeValueType.CLASS) {
+                if(val instanceof Class v) val = pool.getClassIndex(v);
+                else throw new IllegalArgumentException(val.toString().getClass().getName());
+            }
+            if(!(val instanceof Number num)) throw new IllegalArgumentException(val.toString().getClass().getName());
+            switch (type.getSize()) {
+                case 1 -> out.writeByte(num.byteValue());
+                case 2 -> out.writeShort(num.shortValue());
+                case 4 -> out.writeInt(num.intValue());
+                case 8 -> out.writeLong(num.longValue());
+                default -> throw new IllegalStateException("Invalid size of bytecode type: " + type.getSize());
+            }
+        }
+        return bytes.toByteArray();
     }
 
     public static IBytecodeInstruction read(DataInput input, ConstantPool pool) throws IOException {
