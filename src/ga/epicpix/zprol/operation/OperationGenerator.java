@@ -67,7 +67,7 @@ public class OperationGenerator {
                 case "Accessor" -> {
                     var ids = new ArrayList<String>();
                     for(Token t : named.tokens) {
-                        if(t instanceof NamedToken tn) {
+                        if(t instanceof NamedToken tn && tn.name.equals("Identifier")) {
                             ids.add(tn.tokens[0].asWordToken().getWord());
                         }
                     }

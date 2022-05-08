@@ -53,6 +53,7 @@ public final class Bytecode implements IBytecode {
         registerInstruction(92, "push_string", BytecodeValueType.STRING);
         registerSizedInstruction(93, "dup", new int[] {1, 2, 4, 8});
         registerSizedInstruction(97, "or", new int[] {1, 2, 4, 8});
+        registerInstruction(101, "class_field_store", BytecodeValueType.CLASS, BytecodeValueType.STRING);
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {

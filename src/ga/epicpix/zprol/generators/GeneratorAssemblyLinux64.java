@@ -46,6 +46,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("breturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop ax\n  ret\n");
         instructionGenerators.put("lreturn", (i, s, f, lp) -> f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n  ret\n" : "  pop rax\n  ret\n");
         instructionGenerators.put("bpush", (i, s, f, lp) -> "  push word " + i.getData()[0] + "\n");
+        instructionGenerators.put("spush", (i, s, f, lp) -> "  push word " + i.getData()[0] + "\n");
         instructionGenerators.put("lpush", (i, s, f, lp) -> {
             long v = ((Number) i.getData()[0]).longValue();
             if(v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
@@ -83,6 +84,32 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             else if(field.type() instanceof PrimitiveType primitive && (primitive.getSize() == 4 || primitive.getSize() == 8)) size = 8;
 
             return "  pop rcx\n  push " + (size == 2 ? "word" : "qword") + " [rcx+" + offset + "]\n";
+        });
+        instructionGenerators.put("class_field_store", (i, s, f, lp) -> {
+            var clz = (Class) i.getData()[0];
+            var fieldName = (String) i.getData()[1];
+            ClassField field = null;
+            int offset = 0;
+            for(var e : clz.fields()) {
+                if(e.name().equals(fieldName)) {
+                    field = e;
+                    break;
+                }
+                if(e.type() instanceof PrimitiveType t) {
+                    if(t.getSize() == 1 || t.getSize() == 2) {
+                        offset += 2;
+                    }else offset += 8;
+                }else offset += 8;
+            }
+            if(field == null) {
+                throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name() + "'");
+            }
+
+            int size = 2;
+            if(field.type() instanceof ClassType) size = 8;
+            else if(field.type() instanceof PrimitiveType primitive && (primitive.getSize() == 4 || primitive.getSize() == 8)) size = 8;
+
+            return "  pop rcx\n  pop " + (size == 2 ? "word" : "qword") + " [rcx+" + offset + "]\n";
         });
         instructionGenerators.put("badd", (i, s, f, lp) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
         instructionGenerators.put("ladd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");

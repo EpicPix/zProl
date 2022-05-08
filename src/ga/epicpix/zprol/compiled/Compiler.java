@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.compiled;
 
 import ga.epicpix.zprol.SeekIterator;
+import ga.epicpix.zprol.bytecode.IBytecodeInstruction;
 import ga.epicpix.zprol.bytecode.IBytecodeStorage;
 import ga.epicpix.zprol.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.exceptions.compilation.CompileException;
@@ -70,14 +71,48 @@ public class Compiler {
                         storage.pushInstruction(getConstructedInstruction("astore_local", local.index()));
                     }
                 } else if("AssignmentStatement".equals(named.name)) {
-                    var name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
+
+                    var ids = new ArrayList<String>();
+                    for(Token t : named.getTokenWithName("Accessor").tokens) {
+                        if(t instanceof NamedToken tn && tn.name.equals("Identifier")) {
+                            ids.add(tn.tokens[0].asWordToken().getWord());
+                        }
+                    }
+                    var name = ids.get(0);
                     var expression = named.getTokenWithName("Expression").tokens;
                     var local = localsManager.getLocalVariable(name);
-                    generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(expression)), local.type(), data, localsManager, storage, false);
-                    if(local.type() instanceof PrimitiveType primitive) {
-                        storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
+                    if(ids.size() == 1) {
+                        generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(expression)), local.type(), data, localsManager, storage, false);
+                        if (local.type() instanceof PrimitiveType primitive) {
+                            storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
+                        } else {
+                            storage.pushInstruction(getConstructedInstruction("astore_local", local.index()));
+                        }
                     }else {
-                        storage.pushInstruction(getConstructedInstruction("astore_local", local.index()));
+                        ArrayList<IBytecodeInstruction> instructionQueue = new ArrayList<>();
+                        if (local.type() instanceof PrimitiveType primitive) {
+                            instructionQueue.add(getConstructedSizeInstruction(primitive.getSize(), "load_local", local.index()));
+                        } else {
+                            instructionQueue.add(getConstructedInstruction("aload_local", local.index()));
+                        }
+                        var type = local.type();
+                        for(int i = 1; i<ids.size() - 1; i++) {
+                            var next = getClassFieldType(type, data, ids.get(i));
+                            if(type instanceof ClassType classType) {
+                                instructionQueue.add(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null), ids.get(i)));
+                            }else {
+                                throw new CompileException("Expected class in loadClassField");
+                            }
+                            type = next;
+                        }
+                        generateInstructionsFromEquation(OperationGenerator.getOperations(new SeekIterator<>(expression)), getClassFieldType(type, data, ids.get(ids.size() - 1)), data, localsManager, storage, false);
+                        for(var instr : instructionQueue) storage.pushInstruction(instr);
+
+                        if(type instanceof ClassType classType) {
+                            storage.pushInstruction(getConstructedInstruction("class_field_store", new Class(classType.getNamespace(), classType.getName(), null), ids.get(ids.size() - 1)));
+                        }else {
+                            throw new CompileException("Expected a class");
+                        }
                     }
                 } else {
                     throw new NotImplementedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens));
@@ -228,40 +263,7 @@ public class Compiler {
 
                 var type = local.type();
                 for(int i = 1; i<ids.length; i++) {
-                    if(type instanceof PrimitiveType) {
-                        throw new CompileException("Cannot access properties of a primitive type");
-                    }else if(type instanceof ClassType classType) {
-                        PreClass clz = null;
-                        for(var p : data.getUsing()) {
-                            if(classType.getNamespace() != null && !classType.getNamespace().equals(p.namespace)) continue;
-                            for(var c : p.classes) {
-                                if(classType.getName().equals(c.name)) {
-                                    clz = c;
-                                    break;
-                                }
-                            }
-                            if(clz != null) break;
-                        }
-                        if(clz == null) {
-                            throw new CompileException("Unknown type '" + classType + "'");
-                        }
-
-                        PreField found = null;
-                        for(var f : clz.fields) {
-                            if(f.name.equals(ids[i])) {
-                                found = f;
-                                break;
-                            }
-                        }
-                        if(found == null) {
-                            throw new CompileException("Unable to find field '" + ids[i] + "' in '" + clz.name + "'");
-                        }
-
-                        bytecode.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null), found.name));
-                        type = data.resolveType(found.type);
-                    }else {
-                        throw new CompileException("Unknown type " + type.getClass().getSimpleName());
-                    }
+                    type = loadClassField(type, data, ids[i], bytecode);
                 }
                 return type;
             }else {
@@ -314,6 +316,51 @@ public class Compiler {
             return to;
         }
         throw new CompileException("Unsupported cast from " + from.getName() + " to " + to.getName());
+    }
+
+    public static Type getClassFieldType(Type type, CompiledData data, String field) {
+        if(type instanceof PrimitiveType) {
+            throw new CompileException("Cannot access fields of a primitive type");
+        }else if(type instanceof ClassType classType) {
+            PreClass clz = null;
+            for(var p : data.getUsing()) {
+                if(classType.getNamespace() != null && !classType.getNamespace().equals(p.namespace)) continue;
+                for(var c : p.classes) {
+                    if(classType.getName().equals(c.name)) {
+                        clz = c;
+                        break;
+                    }
+                }
+                if(clz != null) break;
+            }
+            if(clz == null) {
+                throw new CompileException("Unknown type '" + classType + "'");
+            }
+
+            PreField found = null;
+            for(var f : clz.fields) {
+                if(f.name.equals(field)) {
+                    found = f;
+                    break;
+                }
+            }
+            if(found == null) {
+                throw new CompileException("Unable to find field '" + field + "' in '" + clz.name + "'");
+            }
+            return data.resolveType(found.type);
+        }else {
+            throw new CompileException("Unknown type " + type.getClass().getSimpleName());
+        }
+    }
+
+    public static Type loadClassField(Type type, CompiledData data, String field, IBytecodeStorage bytecode) {
+        var next = getClassFieldType(type, data, field);
+        if(type instanceof ClassType classType) {
+            bytecode.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null), field));
+        }else {
+            throw new CompileException("Expected class in loadClassField");
+        }
+        return next;
     }
 
     public static void compileFunction(CompiledData data, PreFunction function) {
