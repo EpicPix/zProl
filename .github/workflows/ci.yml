@@ -18,7 +18,7 @@ jobs:
         run: mvn package
 
       - name: Compile Standard
-        run: java zProl.jar -o std.zpil --ignore-std-not-found-warning
+        run: java -jar zProl.jar -o std.zpil --ignore-std-not-found-warning
 
       - name: Add std
         run: jar uf zProl.jar std.zpil
