@@ -22,7 +22,7 @@ jobs:
       - name: Compile Standard
         shell: bash
         working-directory: src
-        run: java ga.epicpix.zprol.Start $(find ../lang/Standard/ -name "*.zprol") -o std.zpil --ignore-std-not-found-warning
+        run: java ga.epicpix.zprol.Start $(find ../lang/ -name "*.zprol") -o std.zpil --ignore-std-not-found-warning
 
       - name: Generate Jar
         shell: bash
