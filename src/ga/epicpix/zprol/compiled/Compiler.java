@@ -144,19 +144,22 @@ public class Compiler {
 
     public static Type generateInstructionsFromEquation(Operation operation, Type expectedType, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
         if(operation instanceof OperationRoot root) {
+            Type prob = expectedType;
             for(var op : root.getOperations()) {
-                generateInstructionsFromEquation(op, expectedType, data, localsManager, bytecode, expectedType == null && discardValue);
+                prob = generateInstructionsFromEquation(op, prob, data, localsManager, bytecode, expectedType == null && discardValue);
             }
 
-            if(expectedType != null && discardValue) {
-                if(expectedType instanceof PrimitiveType primitive) {
-                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
+            if(prob != null && discardValue) {
+                if(prob instanceof PrimitiveType primitive) {
+                    if(primitive.getSize() != 0) {
+                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
+                    }
                 }else {
                     bytecode.pushInstruction(getConstructedInstruction("apop"));
                 }
             }
 
-            return expectedType;
+            return prob;
         }else if(operation instanceof OperationNumber number) {
             if(expectedType instanceof PrimitiveType primitive) {
                 bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "push", number.number));
@@ -246,7 +249,7 @@ public class Compiler {
                 bytecode.pushInstruction(getConstructedInstruction("apop"));
             }else {
                 if(expectedType != null && !returnType.equals(expectedType)) {
-                    return doCast(returnType, expectedType, bytecode);
+                    return doCast(returnType, expectedType, false, bytecode);
                 }
             }
 
@@ -294,13 +297,13 @@ public class Compiler {
                 // this will not check sizes of primitive types, this is unsafe
                 return castType;
             }
-            return doCast(ret, castType, bytecode);
+            return doCast(ret, castType, true, bytecode);
         }else {
             throw new NotImplementedException("Unknown operation " + operation.getClass());
         }
     }
 
-    public static Type doCast(Type from, Type to, IBytecodeStorage bytecode) {
+    public static Type doCast(Type from, Type to, boolean explicit, IBytecodeStorage bytecode) {
         if(!(from instanceof PrimitiveType primitiveFrom) || !(to instanceof PrimitiveType primitiveTo)) {
             if(!from.equals(to)) {
                 throw new CompileException("Unsupported cast from " + from.getName() + " to " + to.getName());
@@ -314,6 +317,12 @@ public class Compiler {
         }
         if(primitiveTo.getSize() == primitiveFrom.getSize()) {
             return to;
+        }
+        if(explicit) {
+            if(primitiveTo.getSize() < primitiveFrom.getSize()) {
+                bytecode.pushInstruction(getConstructedSizeInstruction(primitiveFrom.getSize(), "cast" + getInstructionPrefix(primitiveTo.getSize())));
+                return to;
+            }
         }
         throw new CompileException("Unsupported cast from " + from.getName() + " to " + to.getName());
     }
