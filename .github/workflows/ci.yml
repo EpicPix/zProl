@@ -28,8 +28,8 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@master
         with:
-          name: zProl.jar
-          path: zProl.jar
+          name: zProl
+          path: '*.jar'
   pre-release:
     runs-on: ubuntu-latest
     needs: [build]
@@ -38,7 +38,7 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@master
         with:
-          name: zProl.jar
+          name: zProl
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
