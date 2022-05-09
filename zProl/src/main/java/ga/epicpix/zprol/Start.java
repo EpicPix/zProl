@@ -1,21 +1,19 @@
 package ga.epicpix.zprol;
 
-import ga.epicpix.zprol.compiled.*;
-import ga.epicpix.zprol.compiled.Class;
-import ga.epicpix.zprol.compiled.Compiler;
-import ga.epicpix.zprol.compiled.generated.GeneratedData;
+import ga.epicpix.zpil.GeneratedData;
+import ga.epicpix.zprol.compiler.Compiler;
+import ga.epicpix.zprol.compiler.compiled.CompiledData;
+import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
-import ga.epicpix.zprol.exceptions.compilation.CompileException;
-import ga.epicpix.zprol.exceptions.compilation.ParserException;
-import ga.epicpix.zprol.exceptions.compilation.UnknownTypeException;
+import ga.epicpix.zprol.parser.LanguageToken;
+import ga.epicpix.zprol.parser.exceptions.ParserException;
+import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.generators.Generator;
-import ga.epicpix.zprol.precompiled.*;
-import ga.epicpix.zprol.exceptions.NotImplementedException;
-import ga.epicpix.zprol.exceptions.compilation.ParserException;
-import ga.epicpix.zprol.exceptions.compilation.UnknownTypeException;
 import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.tokens.Token;
-import ga.epicpix.zprol.zld.Language;
+import ga.epicpix.zprol.structures.FunctionModifiers;
+import ga.epicpix.zld.ZldParser;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -29,7 +27,14 @@ public class Start {
     public static void main(String[] args) throws UnknownTypeException, IOException {
         try {
             long startLoad = System.currentTimeMillis();
-            Language.load("language.zld");
+            InputStream in = Start.class.getClassLoader().getResourceAsStream("language.zld");
+            StringBuilder data = new StringBuilder();
+            int temp;
+            while((temp = in.read()) != -1) {
+                data.append((char) temp);
+            }
+            in.close();
+            ZldParser.load("language.zld", data.toString());
             long endLoad = System.currentTimeMillis();
             if(SHOW_TIMINGS) System.out.printf("Took %d ms load language definition\n", endLoad - startLoad);
         }catch(ParserException e) {
@@ -149,7 +154,7 @@ public class Start {
         ArrayList<CompiledData> compiled = new ArrayList<>();
         ArrayList<PreCompiledData> included = new ArrayList<>();
         ArrayList<CompiledData> includedCompiled = new ArrayList<>();
-        var stdReader = Language.class.getClassLoader().getResourceAsStream("std.zpil");
+        var stdReader = ZldParser.class.getClassLoader().getResourceAsStream("std.zpil");
         if(stdReader != null) {
             loadGenerated(GeneratedData.load(stdReader.readAllBytes()), includedCompiled, included);
         }else {
@@ -194,7 +199,7 @@ public class Start {
                     e.printError();
                     System.exit(1);
                     return;
-                }catch(CompileException e) {
+                }catch(TokenLocatedException e) {
                     e.printError();
                     System.exit(1);
                     return;
@@ -215,7 +220,7 @@ public class Start {
                     System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
                 compiled.add(zpil);
             }
-        }catch(CompileException e) {
+        }catch(TokenLocatedException e) {
             e.printError();
             System.exit(1);
             return;
@@ -223,8 +228,8 @@ public class Start {
 
         GeneratedData linked = new GeneratedData();
         long startLink = System.currentTimeMillis();
-        linked.addCompiled(compiled.toArray(new CompiledData[0]));
-        linked.addCompiled(includedCompiled.toArray(new CompiledData[0]));
+        for(CompiledData d : compiled) d.includeToGenerated(linked);
+        for(CompiledData d : includedCompiled) d.includeToGenerated(linked);
         long stopLink = System.currentTimeMillis();
         if(SHOW_TIMINGS) System.out.printf("Took %d ms to link everything\n", stopLink - startLink);
 
@@ -282,13 +287,13 @@ public class Start {
 
     public static void printZpil(GeneratedData data) {
         System.out.println("Functions:");
-        for(Function func : data.functions) {
+        for(var func : data.functions) {
             System.out.println("  Function");
             System.out.println("    Namespace: \"" + (func.namespace() != null ? func.namespace() : "") + "\"");
             System.out.println("    Name: \"" + func.name() + "\"");
             System.out.println("    Signature: \"" + func.signature() + "\"");
             System.out.println("    Modifiers (" + func.modifiers().size() + "):");
-            for(FunctionModifiers modifier : func.modifiers()) {
+            for(var modifier : func.modifiers()) {
                 System.out.println("      " + modifier);
             }
             if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
@@ -302,12 +307,12 @@ public class Start {
         }
 
         System.out.println("Classes:");
-        for(Class clz : data.classes) {
+        for(var clz : data.classes) {
             System.out.println("  Class");
             System.out.println("    Namespace: \"" + (clz.namespace() != null ? clz.namespace() : "") + "\"");
             System.out.println("    Name: \"" + clz.name() + "\"");
             System.out.println("    Fields:");
-            for(ClassField fld : clz.fields()) {
+            for(var fld : clz.fields()) {
                 System.out.println("      Field");
                 System.out.println("        Name: \"" + fld.name() + "\"");
                 System.out.println("        Type: \"" + fld.type().getDescriptor() + "\"");
