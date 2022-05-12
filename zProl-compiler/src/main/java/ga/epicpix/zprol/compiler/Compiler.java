@@ -283,6 +283,8 @@ public class Compiler {
                     }else {
                         types.push(returnType);
                     }
+                }else {
+                    types.push(returnType);
                 }
             }
         }else if(operation instanceof OperationAccessor field) {

@@ -171,8 +171,13 @@ tok Function:
 def ClassField:
   $Type $Identifier ;
 
+def ClassMethod:
+  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
+  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) ;
+
 def inline ClassElement:
   $ClassField
+  $ClassMethod
 
 tok Class:
   class $Identifier \{ {$ClassElement} \}
