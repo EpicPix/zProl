@@ -49,7 +49,7 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <finalName>zpil</finalName>
+                            <finalName>zProl-operations</finalName>
                             <outputDirectory>../</outputDirectory>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                         </configuration>

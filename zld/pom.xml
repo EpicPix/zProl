@@ -55,7 +55,7 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <finalName>zpil</finalName>
+                            <finalName>zld</finalName>
                             <outputDirectory>../</outputDirectory>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                         </configuration>
