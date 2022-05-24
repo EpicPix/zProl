@@ -1,9 +1,5 @@
-package ga.epicpix.zld;
+package ga.epicpix.zprol.parser;
 
-import ga.epicpix.zprol.parser.DataParser;
-import ga.epicpix.zprol.parser.LanguageKeyword;
-import ga.epicpix.zprol.parser.LanguageToken;
-import ga.epicpix.zprol.parser.LanguageTokenFragment;
 import ga.epicpix.zprol.parser.tokens.*;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.utils.SeekIterator;
