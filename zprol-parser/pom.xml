@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>zProl-parser</artifactId>
+    <artifactId>zprol-parser</artifactId>
 
     <build>
         <plugins>

@@ -19,13 +19,13 @@
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-parser</artifactId>
+            <artifactId>zprol-parser</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-operations</artifactId>
+            <artifactId>zprol-operations</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

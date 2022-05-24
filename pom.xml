@@ -11,14 +11,14 @@
 
     <modules>
         <module>zpil</module>
-        <module>zProl</module>
-        <module>zProl-compiler</module>
-        <module>zProl-generators</module>
-        <module>zProl-parser</module>
-        <module>zProl-types</module>
-        <module>zProl-utils</module>
+        <module>zprol</module>
+        <module>zprol-compiler</module>
+        <module>zprol-generators</module>
+        <module>zprol-parser</module>
+        <module>zprol-types</module>
+        <module>zprol-utils</module>
         <module>zld</module>
-        <module>zProl-operations</module>
+        <module>zprol-operations</module>
     </modules>
 
     <distributionManagement>
