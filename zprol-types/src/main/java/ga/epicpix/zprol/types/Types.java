@@ -6,7 +6,13 @@ public class Types {
 
     private static final HashMap<String, Type> TYPES = new HashMap<>();
 
-    public static void registerType(String name, Type type) {
+    public static void registerPrimitiveType(int size, boolean unsigned, String descriptor, String... names) {
+        for(String name : names) {
+            TYPES.put(name, new PrimitiveType(size, unsigned, descriptor, name));
+        }
+    }
+
+    public static void registerType(Type type, String name) {
         TYPES.put(name, type);
     }
 

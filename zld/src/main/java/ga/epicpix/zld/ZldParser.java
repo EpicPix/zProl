@@ -1,14 +1,11 @@
 package ga.epicpix.zld;
 
-import ga.epicpix.zprol.compiler.operation.LanguageOperator;
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.LanguageKeyword;
 import ga.epicpix.zprol.parser.LanguageToken;
 import ga.epicpix.zprol.parser.LanguageTokenFragment;
 import ga.epicpix.zprol.parser.tokens.*;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
-import ga.epicpix.zprol.types.PrimitiveType;
-import ga.epicpix.zprol.types.Types;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.util.ArrayList;
@@ -23,11 +20,7 @@ public class ZldParser {
 
     public static final HashMap<String, ArrayList<LanguageToken>> DEFINITIONS = new HashMap<>();
 
-    private static final char[] tagsCharacters = DataParser.joinCharacters(DataParser.nonSpecialCharacters, new char[] {','});
-    private static final char[] propertiesCharacters = DataParser.joinCharacters(DataParser.nonSpecialCharacters, new char[] {',', '='});
     private static final char[] tokenCharacters = DataParser.joinCharacters(DataParser.nonSpecialCharacters, new char[] {'@', '%', '=', '>', ':'});
-    private static final char[] numberCharacters = DataParser.genCharacters('0', '9');
-    private static final char[] operatorCharacters = new char[] {'+', '=', '/', '*', '-', '%', '<', '>', '!', '&'};
 
     private static LanguageTokenFragment convert(boolean keyword, boolean chars, String w, DataParser parser) {
         if(w.startsWith("\\")) {
@@ -179,43 +172,11 @@ public class ZldParser {
 
     }
 
-    public static boolean hasKeywordTag(String keyword, String tag, boolean def) {
-        var k = LanguageKeyword.KEYWORDS.get(keyword);
-        return k != null ? k.hasTag(tag) : def;
-    }
-
     public static void load(String fileName, String data) {
-        DataParser parser = new DataParser(fileName, data.toString().split("(\r|\n|\r\n|\n\r)"));
+        DataParser parser = new DataParser(fileName, data.split("(\r|\n|\r\n|\n\r)"));
         while(parser.hasNext()) {
             String d = parser.nextWord();
-            if(d.equals("operator")) {
-                int precedence = Integer.parseInt(parser.nextTemplateWord(numberCharacters));
-                String operator = parser.nextTemplateWord(operatorCharacters);
-                LanguageOperator.OPERATORS.put(operator, new LanguageOperator(operator, precedence));
-            }else if(d.equals("keyword")) {
-                String[] tags = parser.nextTemplateWord(tagsCharacters).split(",");
-                String name = parser.nextWord();
-                LanguageKeyword.KEYWORDS.put(name, new LanguageKeyword(name, tags));
-            } else if(d.equals("type")) {
-                String name = parser.nextWord();
-                String properties = parser.nextTemplateWord(propertiesCharacters);
-                String descriptor = parser.nextWord();
-                int size = 0;
-                boolean unsigned = false;
-                for(String property : properties.split(",")) {
-                    if(!property.contains("=")) property += "=true";
-                    String key = property.split("=")[0];
-                    String value = property.split("=")[1];
-
-                    switch (key) {
-                        case "size" -> size = Integer.parseInt(value);
-                        case "unsigned" -> unsigned = Boolean.parseBoolean(value);
-                        default -> System.err.println("Unknown type key '" + key + "' with value '" + value + "'");
-                    }
-                }
-                Types.registerType(name, new PrimitiveType(size, unsigned, descriptor, name));
-                LanguageKeyword.KEYWORDS.put(name, new LanguageKeyword(name, "type"));
-            } else if(d.equals("tok")) {
+            if(d.equals("tok")) {
                 ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();
                 String name = parser.nextWord();
                 boolean checkWhitespace = false;
@@ -295,7 +256,7 @@ public class ZldParser {
                 DEFINITIONS.putIfAbsent(name, new ArrayList<>());
                 DEFINITIONS.get(name).add(new LanguageToken(name, inline, saveable, keyword, clean, tokens.toArray(new LanguageTokenFragment[0])));
             } else {
-                throw new ParserException("Unknown language file word: " + d, parser);
+                throw new ParserException("Unknown grammar file word: " + d, parser);
             }
         }
         if(Boolean.parseBoolean(System.getProperty("SHOW_LANGUAGE_DATA"))) {

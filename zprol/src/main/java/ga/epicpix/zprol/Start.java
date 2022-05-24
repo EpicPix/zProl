@@ -4,9 +4,9 @@ import ga.epicpix.zpil.GeneratedData;
 import ga.epicpix.zprol.compiler.Compiler;
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.compiler.operation.LanguageOperator;
 import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
-import ga.epicpix.zprol.parser.LanguageToken;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.generators.Generator;
@@ -20,23 +20,22 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
+import static ga.epicpix.zprol.Loader.*;
+
 public class Start {
 
     public static final boolean SHOW_TIMINGS = !Boolean.parseBoolean(System.getProperty("HIDE_TIMINGS"));
 
     public static void main(String[] args) throws UnknownTypeException, IOException {
         try {
+            registerOperators();
+            registerTypes();
+            registerKeywords();
+
             long startLoad = System.currentTimeMillis();
-            InputStream in = Start.class.getClassLoader().getResourceAsStream("language.zld");
-            StringBuilder data = new StringBuilder();
-            int temp;
-            while((temp = in.read()) != -1) {
-                data.append((char) temp);
-            }
-            in.close();
-            ZldParser.load("language.zld", data.toString());
+            ZldParser.load("grammar.zld", new String(Start.class.getClassLoader().getResourceAsStream("grammar.zld").readAllBytes()));
             long endLoad = System.currentTimeMillis();
-            if(SHOW_TIMINGS) System.out.printf("Took %d ms load language definition\n", endLoad - startLoad);
+            if(SHOW_TIMINGS) System.out.printf("Took %d ms load grammar\n", endLoad - startLoad);
         }catch(ParserException e) {
             e.printError();
             System.exit(1);
