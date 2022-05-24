@@ -25,7 +25,13 @@
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-compiler</artifactId>
+            <artifactId>zProl-operations</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>ga.epicpix</groupId>
+            <artifactId>zProl-types</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
