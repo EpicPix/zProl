@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>zProl-generators</artifactId>
+    <artifactId>zprol-generators</artifactId>
     <dependencies>
         <dependency>
             <groupId>ga.epicpix</groupId>

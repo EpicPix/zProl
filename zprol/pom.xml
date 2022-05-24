@@ -79,19 +79,19 @@
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-generators</artifactId>
+            <artifactId>zprol-generators</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-parser</artifactId>
+            <artifactId>zprol-parser</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-compiler</artifactId>
+            <artifactId>zprol-compiler</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

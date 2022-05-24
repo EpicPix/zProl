@@ -9,35 +9,17 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>zProl-compiler</artifactId>
+    <artifactId>zprol-operations</artifactId>
     <dependencies>
         <dependency>
             <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-utils</artifactId>
+            <artifactId>zprol-utils</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-parser</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-types</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>ga.epicpix</groupId>
-            <artifactId>zpil</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-operations</artifactId>
+            <artifactId>zprol-parser</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
@@ -67,7 +49,7 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <finalName>zProl-compiler</finalName>
+                            <finalName>zProl-operations</finalName>
                             <outputDirectory>../</outputDirectory>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                         </configuration>

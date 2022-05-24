@@ -9,7 +9,15 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>zProl-utils</artifactId>
+    <artifactId>zprol-types</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>ga.epicpix</groupId>
+            <artifactId>zprol-utils</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
