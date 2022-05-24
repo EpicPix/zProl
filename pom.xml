@@ -18,6 +18,7 @@
         <module>zProl-types</module>
         <module>zProl-utils</module>
         <module>zld</module>
+        <module>zProl-operations</module>
     </modules>
 
     <properties>

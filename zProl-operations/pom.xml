@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>zProl-compiler</artifactId>
+    <artifactId>zProl-operations</artifactId>
     <dependencies>
         <dependency>
             <groupId>ga.epicpix</groupId>
@@ -20,24 +20,6 @@
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zProl-parser</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-types</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>ga.epicpix</groupId>
-            <artifactId>zpil</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>ga.epicpix</groupId>
-            <artifactId>zProl-operations</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
