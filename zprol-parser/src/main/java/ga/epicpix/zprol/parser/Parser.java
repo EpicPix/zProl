@@ -37,24 +37,23 @@ public class Parser {
         while(parser.seekWord() != null) {
             ArrayList<LanguageToken> validOptions = new ArrayList<>();
             for(var tok : LanguageToken.TOKENS) {
-                parser.saveLocation();
+                var loc = parser.saveLocation();
                 if(tok.args()[0].apply(parser) != null) {
                     validOptions.add(tok);
                 }
-                parser.loadLocation();
+                parser.loadLocation(loc);
             }
             LanguageToken langToken = null;
             for (var tok : validOptions) {
-                parser.saveLocation();
+                var loc = parser.saveLocation();
                 ArrayList<Token> tTokens = new ArrayList<>();
                 var startLocation = parser.getLocation();
                 if (check(tTokens, parser, tok)) {
                     langToken = tok;
                     tokens.add(new NamedToken(tok.name(), startLocation, parser.getLocation(), parser, tTokens.toArray(new Token[0])));
-                    parser.discardLocation();
                     break;
                 }
-                parser.loadLocation();
+                parser.loadLocation(loc);
             }
             if(langToken == null) {
                 throw new ParserException("Failed to parse", parser);

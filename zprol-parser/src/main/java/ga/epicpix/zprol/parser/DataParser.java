@@ -1,7 +1,5 @@
 package ga.epicpix.zprol.parser;
 
-import java.util.Stack;
-
 public class DataParser {
 
     public static char[] genCharacters(char from, char to) {
@@ -68,9 +66,7 @@ public class DataParser {
         private ParserLocation savedLast;
     }
 
-    private final Stack<SavedLocation> locationStack = new Stack<>();
-
-    public SavedLocation getSaveLocation() {
+    public SavedLocation saveLocation() {
         SavedLocation savedLocation = new SavedLocation();
         savedLocation.savedStart = index;
         savedLocation.savedCurrentLine = lineNumber;
@@ -86,24 +82,17 @@ public class DataParser {
         lastLocation = savedLocation.savedLast;
     }
 
-    public void saveLocation() {
-        locationStack.push(getSaveLocation());
-    }
-
-    public void discardLocation() {
-        locationStack.pop();
-    }
-
-    public void loadLocation() {
-        loadLocation(locationStack.pop());
-    }
-
     public String[] getLines() {
         return lines;
     }
 
     public ParserLocation getLocation() {
         return new ParserLocation(lineNumber, lineRow);
+    }
+
+    public void setLocation(ParserLocation loc) {
+        lineNumber = loc.line();
+        lineRow = loc.row();
     }
 
     public ParserLocation getLastLocation() {
@@ -200,21 +189,13 @@ public class DataParser {
     }
 
     public String nextTemplateWord(char[] allowedCharacters) {
-        return nextTemplateWord(allowedCharacters, null);
-    }
-
-    public String nextTemplateWord(char[] allowedCharacters, char[] operatorCharacters) {
         ignoreWhitespace();
         lastLocation = getLocation();
         if(!hasNext()) return null;
         StringBuilder word = new StringBuilder();
         while(hasNext() && !Character.isWhitespace(data.codePointAt(index))) {
             checkComments();
-            if(matchesCharacters(operatorCharacters, data.codePointAt(index))) {
-                if(!matchesCharacters(operatorCharacters, word.toString())) {
-                    return word.toString();
-                }
-            }else if(!matchesCharacters(allowedCharacters, data.codePointAt(index))) {
+            if(!matchesCharacters(allowedCharacters, data.codePointAt(index))) {
                 if(word.length() == 0) {
                     lineRow++;
                     word.appendCodePoint(data.codePointAt(index++));
@@ -236,16 +217,16 @@ public class DataParser {
     }
 
     public String seekWord() {
-        saveLocation();
+        var loc = saveLocation();
         String str = nextWord();
-        loadLocation();
+        loadLocation(loc);
         return str;
     }
 
     public String seekTemplatedWord(char[] allowedCharacters) {
-        saveLocation();
+        var loc = saveLocation();
         String str = nextTemplateWord(allowedCharacters);
-        loadLocation();
+        loadLocation(loc);
         return str;
     }
 

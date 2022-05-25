@@ -1,5 +1,7 @@
-package ga.epicpix.zprol.parser;
+package ga.epicpix.zprol.parser.zld;
 
+import ga.epicpix.zprol.parser.DataParser;
+import ga.epicpix.zprol.parser.LanguageToken;
 import ga.epicpix.zprol.parser.tokens.*;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.utils.SeekIterator;
@@ -34,12 +36,12 @@ public class ZldParser {
                 boolean successful = false;
 
                 fLoop: do {
-                    p.saveLocation();
+                    var loc = p.saveLocation();
                     ArrayList<Token> iterTokens = new ArrayList<>();
                     for (var frag : fragments) {
                         var r = frag.apply(p);
                         if (r == null) {
-                            p.loadLocation();
+                            p.loadLocation(loc);
                             if (successful) {
                                 break fLoop;
                             } else {
@@ -48,7 +50,6 @@ public class ZldParser {
                         }
                         Collections.addAll(iterTokens, r);
                     }
-                    p.discardLocation();
                     successful = true;
                     tokens.addAll(iterTokens);
                 } while(true);
@@ -56,32 +57,7 @@ public class ZldParser {
             }, debugName);
 
         }else if(w.equals("$")) {
-            String use = parser.nextTemplateWord(tokenCharacters);
-            return LanguageTokenFragment.createMulti(p -> {
-                var defs = DEFINITIONS.get(use);
-                var startLocation = p.getLocation();
-                fLoop: for(LanguageToken def : defs) {
-                    p.saveLocation();
-                    ArrayList<Token> iterTokens = new ArrayList<>();
-                    for (var frag : def.args()) {
-                        var currentPos = p.getLocation();
-                        var r = frag.apply(p);
-                        if (r == null) {
-                            if(!currentPos.equals(p.getLocation()) && def.saveable()) {
-                                throw new ParserException("Expected " + frag.getDebugName(), p);
-                            }
-                            p.loadLocation();
-                            continue fLoop;
-                        }
-                        Collections.addAll(iterTokens, r);
-                    }
-                    p.discardLocation();
-                    if(def.clean()) return EMPTY_TOKENS;
-                    if(def.inline()) return iterTokens.toArray(EMPTY_TOKENS);
-                    return new Token[]{new NamedToken(use, startLocation, p.getLocation(), p, iterTokens.toArray(EMPTY_TOKENS))};
-                }
-                return null;
-            }, "$" + use);
+            return new CallToken(parser.nextTemplateWord(tokenCharacters));
         }else if(w.equals("[")) {
             ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
             String next;
@@ -91,17 +67,16 @@ public class ZldParser {
             LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
             String debugName = "[" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "]";
             return LanguageTokenFragment.createMulti(p -> {
-                p.saveLocation();
+                var loc = p.saveLocation();
                 ArrayList<Token> iterTokens = new ArrayList<>();
                 for (var frag : fragments) {
                     var r = frag.apply(p);
                     if (r == null) {
-                        p.loadLocation();
+                        p.loadLocation(loc);
                         return EMPTY_TOKENS;
                     }
                     Collections.addAll(iterTokens, r);
                 }
-                p.discardLocation();
                 return iterTokens.toArray(EMPTY_TOKENS);
             }, debugName);
         }else if(w.equals("<") && chars) {
@@ -144,13 +119,12 @@ public class ZldParser {
             String debugName = "<" + debug + ">";
             return LanguageTokenFragment.createMulti(p -> {
                 var startLocation = p.getLocation();
-                p.saveLocation();
+                var loc = p.saveLocation();
                 var res = negate ? p.nextCharNot(allowedCharacters) : p.nextChar(allowedCharacters);
                 if(res == -1) {
-                    p.loadLocation();
+                    p.loadLocation(loc);
                     return null;
                 }
-                p.discardLocation();
                 var endLocation = p.getLocation();
                 return new Token[] {new WordToken(Character.toString(res), startLocation, endLocation, p)};
             }, debugName);
@@ -192,22 +166,18 @@ public class ZldParser {
                         if(parser.seekCharacter() != ' ') {
                             break;
                         }
-                        LanguageToken.TOKENS.add(new LanguageToken(name, false, true, false, false, tokens.toArray(new LanguageTokenFragment[0])));
+                        LanguageToken.TOKENS.add(new LanguageToken(name, false, false, false, false, tokens.toArray(new LanguageTokenFragment[0])));
                         tokens.clear();
                     }
                 }
-                LanguageToken.TOKENS.add(new LanguageToken(name, false, true, false, false, tokens.toArray(new LanguageTokenFragment[0])));
+                LanguageToken.TOKENS.add(new LanguageToken(name, false, false, false, false, tokens.toArray(new LanguageTokenFragment[0])));
             } else if(d.equals("def")) {
                 ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();
-                boolean inline = false, saveable = false, keyword = false, chars = false, clean = false;
+                boolean inline = false, keyword = false, chars = false, clean = false, flip = false;
                 String name = parser.nextWord();
                 if(name.equals("inline")) {
                     name = parser.nextWord();
                     inline = true;
-                }
-                if(name.equals("saveable")) {
-                    name = parser.nextWord();
-                    saveable = true;
                 }
                 if(name.equals("keyword")) {
                     name = parser.nextWord();
@@ -220,6 +190,10 @@ public class ZldParser {
                 if(name.equals("clean")) {
                     name = parser.nextWord();
                     clean = true;
+                }
+                if(name.equals("flip")) {
+                    name = parser.nextWord();
+                    flip = true;
                 }
                 boolean checkWhitespace = false;
                 if(parser.seekWord().equals(":")) {
@@ -238,19 +212,25 @@ public class ZldParser {
                         if(parser.seekCharacter() != ' ') {
                             break;
                         }
+                        if(flip) {
+                            Collections.reverse(tokens);
+                        }
                         if(chars) {
                             charGenerator(tokens);
                         }
                         DEFINITIONS.putIfAbsent(name, new ArrayList<>());
-                        DEFINITIONS.get(name).add(new LanguageToken(name, inline, saveable, keyword, clean, tokens.toArray(new LanguageTokenFragment[0])));
+                        DEFINITIONS.get(name).add(new LanguageToken(name, inline, keyword, clean, flip, tokens.toArray(new LanguageTokenFragment[0])));
                         tokens.clear();
                     }
+                }
+                if(flip) {
+                    Collections.reverse(tokens);
                 }
                 if(chars) {
                     charGenerator(tokens);
                 }
                 DEFINITIONS.putIfAbsent(name, new ArrayList<>());
-                DEFINITIONS.get(name).add(new LanguageToken(name, inline, saveable, keyword, clean, tokens.toArray(new LanguageTokenFragment[0])));
+                DEFINITIONS.get(name).add(new LanguageToken(name, inline, keyword, clean, flip, tokens.toArray(new LanguageTokenFragment[0])));
             } else {
                 throw new ParserException("Unknown grammar file word: " + d, parser);
             }
@@ -275,13 +255,12 @@ public class ZldParser {
             StringBuilder builder = new StringBuilder();
             var start = dataParser.getLocation();
             for(var c : copy) {
-                dataParser.saveLocation();
+                var loc = dataParser.saveLocation();
                 var value = c.apply(dataParser);
                 if(value == null) {
-                    dataParser.loadLocation();
+                    dataParser.loadLocation(loc);
                     return null;
                 }
-                dataParser.discardLocation();
                 for(var s : value) {
                     if(s instanceof WordHolder holder) {
                         builder.append(holder.getWord());
