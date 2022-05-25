@@ -1,87 +1,44 @@
-// New approach commented due to it still being slow
-//
-// def chars AddOperator [$Whitespace] <+>
-// def chars SubtractOperator [$Whitespace] <->
-// def chars MultiplyOperator [$Whitespace] <*>
-// def chars DivideOperator [$Whitespace] </>
-// def chars ModuloOperator [$Whitespace] <%>
-// def chars InclusiveOrOperator [$Whitespace] <|>
-// def inline chars HardCastIndicatorOperator <!>
-// def CastOperator ( $Type )
-// def HardCastOperator ( $Type $HardCastIndicatorOperator )
-//
-// def inline AdditiveOperators:
-//   $AddOperator
-//   $SubtractOperator
-//
-// def inline MultiplicativeOperators:
-//   $MultiplyOperator
-//   $DivideOperator
-//   $ModuloOperator
-//
-// def inline CastOperators:
-//   $CastOperator
-//   $HardCastOperator
-//
-// def PostExpression:
-//   $Integer
-//   $Boolean
-//   $String
-//   $FunctionCall
-//   $Accessor
-//
-// def CastExpression $CastOperators $PostExpression
-// def inline CastExpression $PostExpression
-//
-// def flip MultiplicativeExpression $MultiplicativeExpression $MultiplicativeOperators $CastExpression
-// def inline MultiplicativeExpression $CastExpression
-//
-// def flip AdditiveExpression $AdditiveExpression $AdditiveOperators $MultiplicativeExpression
-// def inline AdditiveExpression $MultiplicativeExpression
-//
-// def flip InclusiveOrExpression $InclusiveOrExpression $InclusiveOrOperator $AdditiveExpression
-// def inline InclusiveOrExpression $AdditiveExpression
-//
-// def Expression:
-//   $InclusiveOrExpression
+def chars AddOperator [$Whitespace] <+>
+def chars SubtractOperator [$Whitespace] <->
+def chars MultiplyOperator [$Whitespace] <*>
+def chars DivideOperator [$Whitespace] </>
+def chars ModuloOperator [$Whitespace] <%>
+def chars InclusiveOrOperator [$Whitespace] <|>
+def inline chars HardCastIndicatorOperator <!>
+def CastOperator ( $Type )
+def HardCastOperator ( $Type $HardCastIndicatorOperator )
 
+def inline AdditiveOperators:
+  $AddOperator
+  $SubtractOperator
 
-def Expression:
-  $ExpressionCast [$ExpressionType]
+def inline MultiplicativeOperators:
+  $MultiplyOperator
+  $DivideOperator
+  $ModuloOperator
 
-def ExpressionParenthesis:
-  ( $ExpressionCast $ExpressionType )
+def inline CastOperators:
+  $CastOperator
+  $HardCastOperator
 
-def inline ExpressionType:
-  [$Whitespace] $Operator $ExpressionCast [$ExpressionType]
-
-def Assignment:
-  $Identifier = $Expression
-
-def inline ExpressionCast $ExpressionCallables
-def ExpressionCast:
-  $HardCastOperator $Expression
-  $CastOperator $Expression
-
-def inline ExpressionCallables:
-  $Boolean
+def inline PostExpression:
+  ( $Expression )
   $Integer
-  $ExpressionParenthesis
-  $Assignment
+  $Boolean
+  $String
   $FunctionCall
   $Accessor
-  $String
 
-def inline AccessorCallables:
-  $Identifier
+def CastExpression $CastOperators $PostExpression
+def inline CastExpression $PostExpression
 
-def CastOperator:
-  ( $Type )
+def merge MultiplicativeExpression $CastExpression [ $MultiplicativeOperators $MultiplicativeExpression ]
+def merge AdditiveExpression $MultiplicativeExpression [ $AdditiveOperators $AdditiveExpression ]
+def merge InclusiveOrExpression $AdditiveExpression [ $InclusiveOrOperator $InclusiveOrExpression ]
 
-def HardCastOperator:
-  ( $Type ! )
+def Expression $InclusiveOrExpression
 
-def Accessor $AccessorCallables {. $AccessorCallables}
+def Accessor $Identifier { . $Identifier }
 
 def Boolean:
   true
@@ -104,17 +61,6 @@ def chars clean Whitespace < \t\n> { < \t\n> }
 def chars StringChars <^\n"> { <^\n"> }
 def String " [$StringChars] "
 def chars DotWord [$Whitespace] <a-zA-Z_> { <a-zA-Z0-9_.> }
-def chars Operator:
-  <\>\>>
-  <<<>
-  <%>
-  <+>
-  <->
-  <*>
-  </>
-  <%>
-  <|>
-  <=><=>
 
 tok Using:
   using $DotWord ;

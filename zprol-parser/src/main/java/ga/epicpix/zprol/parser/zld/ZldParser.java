@@ -116,7 +116,7 @@ public class ZldParser {
                 indx += c.length;
                 for(int cc : c) debug.appendCodePoint(cc);
             }
-            String debugName = "<" + debug + ">";
+            String debugName = "<" + (negate ? "^" : "") + debug + ">";
             return LanguageTokenFragment.createMulti(p -> {
                 var startLocation = p.getLocation();
                 var loc = p.saveLocation();
@@ -173,27 +173,31 @@ public class ZldParser {
                 LanguageToken.TOKENS.add(new LanguageToken(name, false, false, false, false, tokens.toArray(new LanguageTokenFragment[0])));
             } else if(d.equals("def")) {
                 ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();
-                boolean inline = false, keyword = false, chars = false, clean = false, flip = false;
                 String name = parser.nextWord();
+                var inline = false;
                 if(name.equals("inline")) {
                     name = parser.nextWord();
                     inline = true;
                 }
+                var keyword = false;
                 if(name.equals("keyword")) {
                     name = parser.nextWord();
                     keyword = true;
                 }
+                var chars = false;
                 if(name.equals("chars")) {
                     name = parser.nextWord();
                     chars = true;
                 }
+                var clean = false;
                 if(name.equals("clean")) {
                     name = parser.nextWord();
                     clean = true;
                 }
-                if(name.equals("flip")) {
+                var merge = false;
+                if(name.equals("merge")) {
                     name = parser.nextWord();
-                    flip = true;
+                    merge = true;
                 }
                 boolean checkWhitespace = false;
                 if(parser.seekWord().equals(":")) {
@@ -212,25 +216,19 @@ public class ZldParser {
                         if(parser.seekCharacter() != ' ') {
                             break;
                         }
-                        if(flip) {
-                            Collections.reverse(tokens);
-                        }
-                        if(chars) {
+                        if(chars && !clean) {
                             charGenerator(tokens);
                         }
                         DEFINITIONS.putIfAbsent(name, new ArrayList<>());
-                        DEFINITIONS.get(name).add(new LanguageToken(name, inline, keyword, clean, flip, tokens.toArray(new LanguageTokenFragment[0])));
+                        DEFINITIONS.get(name).add(new LanguageToken(name, inline, keyword, clean, merge, tokens.toArray(new LanguageTokenFragment[0])));
                         tokens.clear();
                     }
                 }
-                if(flip) {
-                    Collections.reverse(tokens);
-                }
-                if(chars) {
+                if(chars && !clean) {
                     charGenerator(tokens);
                 }
                 DEFINITIONS.putIfAbsent(name, new ArrayList<>());
-                DEFINITIONS.get(name).add(new LanguageToken(name, inline, keyword, clean, flip, tokens.toArray(new LanguageTokenFragment[0])));
+                DEFINITIONS.get(name).add(new LanguageToken(name, inline, keyword, clean, merge, tokens.toArray(new LanguageTokenFragment[0])));
             } else {
                 throw new ParserException("Unknown grammar file word: " + d, parser);
             }

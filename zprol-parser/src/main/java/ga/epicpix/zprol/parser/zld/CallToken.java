@@ -2,7 +2,6 @@ package ga.epicpix.zprol.parser.zld;
 
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.LanguageToken;
-import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 
@@ -35,9 +34,10 @@ class CallToken extends LanguageTokenFragment {
                 definitions = DEFINITIONS.get(use);
             }
             var startLocation = p.getLocation();
+
             fLoop: for(LanguageToken def : definitions) {
                 var loc = p.saveLocation();
-                ArrayList<Token> iterTokens = new ArrayList<>();
+                var iterTokens = new ArrayList<Token>();
                 for (var frag : def.args()) {
                     var r = frag.apply(p);
                     if (r == null) {
@@ -47,7 +47,7 @@ class CallToken extends LanguageTokenFragment {
                     Collections.addAll(iterTokens, r);
                 }
                 if(def.clean()) return EMPTY_TOKENS;
-                if(def.inline()) return iterTokens.toArray(EMPTY_TOKENS);
+                if(def.inline() || (def.merge() && iterTokens.size() == 1)) return iterTokens.toArray(EMPTY_TOKENS);
                 return new Token[]{new NamedToken(use, startLocation, p.getLocation(), p, iterTokens.toArray(EMPTY_TOKENS))};
             }
             return null;
