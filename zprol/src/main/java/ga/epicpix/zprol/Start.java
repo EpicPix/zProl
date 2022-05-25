@@ -315,6 +315,26 @@ public class Start {
                 System.out.println("        Name: \"" + fld.name() + "\"");
                 System.out.println("        Type: \"" + fld.type().getDescriptor() + "\"");
             }
+            System.out.println("    Methods:");
+            for(var func : clz.methods()) {
+                System.out.println("      Method");
+                System.out.println("        Namespace: \"" + (func.namespace() != null ? func.namespace() : "") + "\"");
+                System.out.println("        Class: \"" + func.className() + "\"");
+                System.out.println("        Name: \"" + func.name() + "\"");
+                System.out.println("        Signature: \"" + func.signature() + "\"");
+                System.out.println("        Modifiers (" + func.modifiers().size() + "):");
+                for(var modifier : func.modifiers()) {
+                    System.out.println("          " + modifier);
+                }
+                if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
+                    System.out.println("        Code");
+                    System.out.println("          Locals Size: " + func.code().getLocalsSize());
+                    System.out.println("          Instructions");
+                    for(var instruction : func.code().getInstructions()) {
+                        System.out.println("            " + instruction);
+                    }
+                }
+            }
         }
     }
 

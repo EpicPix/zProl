@@ -4,6 +4,7 @@ import ga.epicpix.zpil.exceptions.LostConstantPoolEntryException;
 import ga.epicpix.zprol.structures.Class;
 import ga.epicpix.zprol.structures.Function;
 import ga.epicpix.zprol.structures.FunctionModifiers;
+import ga.epicpix.zprol.structures.Method;
 
 import java.util.ArrayList;
 
@@ -56,6 +57,23 @@ public class ConstantPool {
         return entries.size();
     }
 
+    public int getOrCreateMethodIndex(Method method) {
+        int namespaceIndex = getOrCreateStringIndex(method.namespace());
+        int classNameIndex = getOrCreateStringIndex(method.className());
+        int nameIndex = getOrCreateStringIndex(method.name());
+        int signatureIndex = getOrCreateStringIndex(method.signature().toString());
+
+        for(int i = 0; i < entries.size(); i++) {
+            if(entries.get(i) instanceof ConstantPoolEntry.MethodEntry e) {
+                if(e.getNamespace() == namespaceIndex && e.getClassName() == classNameIndex && e.getName() == nameIndex && e.getSignature() == signatureIndex) {
+                    return i + 1;
+                }
+            }
+        }
+        entries.add(new ConstantPoolEntry.MethodEntry(namespaceIndex, classNameIndex, nameIndex, signatureIndex, FunctionModifiers.toBits(method.modifiers())));
+        return entries.size();
+    }
+
 
 
     public int getFunctionIndex(Function func) {
@@ -98,6 +116,22 @@ public class ConstantPool {
             }
         }
         throw new LostConstantPoolEntryException("Cannot find class ConstantPoolEntry with " + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name());
+    }
+
+    public int getMethodIndex(Method func) {
+        int namespaceIndex = getStringIndex(func.namespace());
+        int classNameIndex = getStringIndex(func.className());
+        int nameIndex = getStringIndex(func.name());
+        int signatureIndex = getStringIndex(func.signature().toString());
+
+        for(int i = 0; i < entries.size(); i++) {
+            if(entries.get(i) instanceof ConstantPoolEntry.MethodEntry e) {
+                if(e.getNamespace() == namespaceIndex && e.getClassName() == classNameIndex && e.getName() == nameIndex && e.getSignature() == signatureIndex) {
+                    return i + 1;
+                }
+            }
+        }
+        throw new LostConstantPoolEntryException("Cannot find method ConstantPoolEntry with " + (func.namespace() != null ? func.namespace() + "." : "") + func.name() + " - " + func.signature());
     }
 
 }

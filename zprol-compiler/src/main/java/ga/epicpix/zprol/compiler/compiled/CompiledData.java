@@ -45,8 +45,8 @@ public class CompiledData {
     }
 
     public void includeToGenerated(GeneratedData data) {
-        for(Function f : functions) {
-            for(Function validate : data.functions) {
+        for(var f : functions) {
+            for(var validate : data.functions) {
                 if(!Objects.equals(validate.namespace(), f.namespace())) continue;
                 if(!validate.name().equals(f.name())) continue;
 
@@ -63,8 +63,8 @@ public class CompiledData {
             }
         }
 
-        for(Class clz : classes) {
-            for(Class validate : data.classes) {
+        for(var clz : classes) {
+            for(var validate : data.classes) {
                 if(!Objects.equals(validate.namespace(), clz.namespace())) continue;
                 if(!validate.name().equals(clz.name())) continue;
 
@@ -74,9 +74,17 @@ public class CompiledData {
             data.constantPool.getOrCreateClassIndex(clz);
             data.constantPool.getOrCreateStringIndex(clz.namespace());
             data.constantPool.getOrCreateStringIndex(clz.name());
-            for(ClassField field : clz.fields()) {
+            for(var field : clz.fields()) {
                 data.constantPool.getOrCreateStringIndex(field.name());
                 data.constantPool.getOrCreateStringIndex(field.type().getDescriptor());
+            }
+            for(var m : clz.methods()) {
+                data.constantPool.getOrCreateMethodIndex(m);
+                if(!FunctionModifiers.isEmptyCode(m.modifiers())) {
+                    for (var instruction : m.code().getInstructions()) {
+                        Bytecode.prepareConstantPool(instruction, data.constantPool);
+                    }
+                }
             }
         }
     }

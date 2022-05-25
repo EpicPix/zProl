@@ -24,6 +24,8 @@ public class ConstantPoolEntry {
             return StringEntry.read(in);
         }else if(t == 3) {
             return ClassEntry.read(in);
+        }else if(t == 4) {
+            return MethodEntry.read(in);
         }
         throw new RuntimeException("Unknown tag: " + t);
     }
@@ -136,6 +138,63 @@ public class ConstantPoolEntry {
 
         public String toString() {
             return "ClassEntry namespace=#" + namespace + " name=#" + name;
+        }
+    }
+
+    public static class MethodEntry extends ConstantPoolEntry {
+
+        private final int namespace;
+        private final int className;
+        private final int name;
+        private final int sig;
+        private final int modifiers;
+
+        public MethodEntry(int namespace, int className, int name, int sig, int modifiers) {
+            super((byte) 4);
+            this.namespace = namespace;
+            this.className = className;
+            this.name = name;
+            this.sig = sig;
+            this.modifiers = modifiers;
+        }
+
+        public int getNamespace() {
+            return namespace;
+        }
+
+        public int getClassName() {
+            return className;
+        }
+
+        public int getName() {
+            return name;
+        }
+
+        public int getSignature() {
+            return sig;
+        }
+
+        public int getModifiers() {
+            return modifiers;
+        }
+
+        public void write(DataOutputStream out) throws IOException {
+            super.write(out);
+            out.writeInt(namespace);
+            out.writeInt(className);
+            out.writeInt(name);
+            out.writeInt(sig);
+            out.writeInt(modifiers);
+        }
+
+        public static MethodEntry read(DataInputStream in) throws IOException {
+            return new MethodEntry(in.readInt(), in.readInt(), in.readInt(), in.readInt(), in.readInt());
+        }
+
+        public String toString() {
+            String mod = Integer.toHexString(modifiers);
+            mod = "0".repeat(8 - mod.length()) + mod;
+            return "MethodEntry namespace=#" + namespace + " className=#" + className + " name=#" + name + " signature=#" + sig + " modifiers=0x" + mod;
         }
     }
 

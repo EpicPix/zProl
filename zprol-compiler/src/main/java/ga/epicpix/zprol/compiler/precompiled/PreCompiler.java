@@ -29,39 +29,7 @@ public class PreCompiler {
                     if(pre.namespace != null) throw new TokenLocatedException("Defined namespace for a file multiple times", named);
                     pre.namespace = named.getSingleTokenWithName("DotWord").asWordToken().getWord();
                 }else if(named.name.equals("Function")) {
-                    PreFunction func = new PreFunction();
-                    if(named.getTokenWithName("FunctionModifiers") != null) {
-                        for(Token modifier : named.getTokenWithName("FunctionModifiers").tokens) {
-                            PreFunctionModifiers modifiers = PreFunctionModifiers.getModifier(modifier.asKeywordToken().getWord());
-                            if(func.modifiers.contains(modifiers)) {
-                                throw new TokenLocatedException("Duplicate function modifier: '" + modifiers.getName() + "'", modifier);
-                            }
-                            func.modifiers.add(modifiers);
-                        }
-                    }
-                    func.returnType = named.getSingleTokenWithName("Type").asWordHolder().getWord();
-                    func.name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
-                    var paramList = named.getTokenWithName("ParameterList");
-                    if(paramList != null) {
-                        for (NamedToken namedToken : paramList.getTokensWithName("Parameter")) {
-                            PreParameter param = new PreParameter();
-                            param.type = namedToken.getSingleTokenWithName("Type").asWordHolder().getWord();
-                            param.name = namedToken.getSingleTokenWithName("Identifier").asWordToken().getWord();
-                            func.parameters.add(param);
-                        }
-                    }
-                    if(func.hasCode()) {
-                        if(named.getTokenWithName("Code") == null) {
-                            throw new TokenLocatedException("Expected code", named);
-                        }
-                        for (var a : named.getTokenWithName("Code").getTokensWithName("Statement"))
-                            func.code.addAll(List.of(a.tokens));
-                    }else {
-                        if(named.getTokenWithName("Code") != null) {
-                            throw new TokenLocatedException("Expected no code", named);
-                        }
-                    }
-                    pre.functions.add(func);
+                    pre.functions.add(parseFunction(named));
                 }else if(named.name.equals("Class")) {
                     PreClass clazz = new PreClass();
                     clazz.name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
@@ -71,6 +39,10 @@ public class PreCompiler {
                         field.type = fieldToken.getSingleTokenWithName("Type").asWordToken().getWord();
                         field.name = fieldToken.getSingleTokenWithName("Identifier").asWordToken().getWord();
                         clazz.fields.add(field);
+                    }
+
+                    for(var methodToken : named.getTokensWithName("ClassMethod")) {
+                        clazz.methods.add(parseFunction(methodToken));
                     }
 
                     pre.classes.add(clazz);
@@ -83,6 +55,42 @@ public class PreCompiler {
         }
 
         return pre;
+    }
+
+    private static PreFunction parseFunction(NamedToken function) {
+        var func = new PreFunction();
+        if(function.getTokenWithName("FunctionModifiers") != null) {
+            for(Token modifier : function.getTokenWithName("FunctionModifiers").tokens) {
+                PreFunctionModifiers modifiers = PreFunctionModifiers.getModifier(modifier.asKeywordToken().getWord());
+                if(func.modifiers.contains(modifiers)) {
+                    throw new TokenLocatedException("Duplicate function modifier: '" + modifiers.getName() + "'", modifier);
+                }
+                func.modifiers.add(modifiers);
+            }
+        }
+        func.returnType = function.getSingleTokenWithName("Type").asWordHolder().getWord();
+        func.name = function.getSingleTokenWithName("Identifier").asWordToken().getWord();
+        var paramList = function.getTokenWithName("ParameterList");
+        if(paramList != null) {
+            for (NamedToken namedToken : paramList.getTokensWithName("Parameter")) {
+                PreParameter param = new PreParameter();
+                param.type = namedToken.getSingleTokenWithName("Type").asWordHolder().getWord();
+                param.name = namedToken.getSingleTokenWithName("Identifier").asWordToken().getWord();
+                func.parameters.add(param);
+            }
+        }
+        if(func.hasCode()) {
+            if(function.getTokenWithName("Code") == null) {
+                throw new TokenLocatedException("Expected code", function);
+            }
+            for (var a : function.getTokenWithName("Code").getTokensWithName("Statement"))
+                func.code.addAll(List.of(a.tokens));
+        }else {
+            if(function.getTokenWithName("Code") != null) {
+                throw new TokenLocatedException("Expected no code", function);
+            }
+        }
+        return func;
     }
 
 }

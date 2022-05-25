@@ -63,12 +63,25 @@ public class GeneratedData {
         }
 
         out.writeInt(data.classes.size());
-        for(Class clz : data.classes) {
+        for(var clz : data.classes) {
             out.writeInt(data.constantPool.getClassIndex(clz));
             out.writeInt(clz.fields().length);
-            for(ClassField field : clz.fields()) {
+            for(var field : clz.fields()) {
                 out.writeInt(data.constantPool.getStringIndex(field.name()));
                 out.writeInt(data.constantPool.getStringIndex(field.type().getDescriptor()));
+            }
+            out.writeInt(clz.methods().length);
+            for(var func : clz.methods()) {
+                out.writeInt(data.constantPool.getMethodIndex(func));
+                var hasCode = !FunctionModifiers.isEmptyCode(func.modifiers());
+                if(hasCode) {
+                    out.writeInt(func.code().getLocalsSize());
+                    var instructions = func.code().getInstructions();
+                    out.writeInt(instructions.size());
+                    for (var instruction : instructions) {
+                        out.write(Bytecode.write(instruction, data.constantPool));
+                    }
+                }
             }
         }
 
@@ -118,13 +131,41 @@ public class GeneratedData {
                 var fieldType = Types.getTypeFromDescriptor(fieldTypeDescriptor);
                 fields[fieldIndex] = new ClassField(fieldName, fieldType);
             }
-            data.classes.add(new Class(namespace, name, fields));
+            var methods = new Method[in.readInt()];
+            for(int methodIndex = 0; methodIndex<methods.length; methodIndex++) {
+                var mentry = (ConstantPoolEntry.MethodEntry) data.constantPool.entries.get(in.readInt() - 1);
+                var mnamespace = mentry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(mentry.getNamespace() - 1)).getString() : null;
+                var mclassName = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(mentry.getClassName() - 1)).getString();
+                var mname = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(mentry.getName() - 1)).getString();
+                var msignature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(mentry.getSignature() - 1)).getString();
+                var mmodifiers = FunctionModifiers.getModifiers(mentry.getModifiers());
+                var mhasCode = !FunctionModifiers.isEmptyCode(mmodifiers);
+                Method method = new Method(mnamespace, mmodifiers, mclassName, mname, FunctionSignature.fromDescriptor(msignature), mhasCode ? Bytecode.BYTECODE.createStorage() : null);
+                if(mhasCode) {
+                    method.code().setLocalsSize(in.readInt());
+                    int instructionsLength = in.readInt();
+                    for (int j = 0; j < instructionsLength; j++) {
+                        method.code().pushInstruction(Bytecode.read(in));
+                    }
+                }
+                methods[methodIndex] = method;
+            }
+            data.classes.add(new Class(namespace, name, fields, methods));
         }
 
         for(var func : data.functions) {
             if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
                 for (var instr : func.code().getInstructions()) {
                     Bytecode.postRead(instr, data);
+                }
+            }
+        }
+        for(var clz : data.classes) {
+            for (var mth : clz.methods()) {
+                if (!FunctionModifiers.isEmptyCode(mth.modifiers())) {
+                    for (var instr : mth.code().getInstructions()) {
+                        Bytecode.postRead(instr, data);
+                    }
                 }
             }
         }

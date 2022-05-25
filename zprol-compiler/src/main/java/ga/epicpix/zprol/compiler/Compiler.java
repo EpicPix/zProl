@@ -108,7 +108,7 @@ public class Compiler {
                         for(int i = 1; i<ids.size() - 1; i++) {
                             var next = getClassFieldType(type, data, ids.get(i));
                             if(type instanceof ClassType classType) {
-                                instructionQueue.add(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null), ids.get(i)));
+                                instructionQueue.add(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null, null), ids.get(i)));
                             }else {
                                 throw new TokenLocatedException("Expected class in loadClassField");
                             }
@@ -122,7 +122,7 @@ public class Compiler {
                         for(var instr : instructionQueue) storage.pushInstruction(instr);
 
                         if(type instanceof ClassType classType) {
-                            storage.pushInstruction(getConstructedInstruction("class_field_store", new Class(classType.getNamespace(), classType.getName(), null), ids.get(ids.size() - 1)));
+                            storage.pushInstruction(getConstructedInstruction("class_field_store", new Class(classType.getNamespace(), classType.getName(), null, null), ids.get(ids.size() - 1)));
                         }else {
                             throw new TokenLocatedException("Expected a class");
                         }
@@ -394,7 +394,7 @@ public class Compiler {
     public static Type loadClassField(Type type, CompiledData data, String field, IBytecodeStorage bytecode) {
         var next = getClassFieldType(type, data, field);
         if(type instanceof ClassType classType) {
-            bytecode.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null), field));
+            bytecode.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null, null), field));
         }else {
             throw new TokenLocatedException("Expected class in loadClassField");
         }
@@ -422,13 +422,39 @@ public class Compiler {
         data.addFunction(new Function(data.namespace, modifiers, function.name, signature, bytecode));
     }
 
+    public static Method compileMethod(CompiledData data, String className, PreFunction function) {
+        var returnType = data.resolveType(function.returnType);
+        var parameters = new Type[function.parameters.size()];
+        String[] names = new String[function.parameters.size()];
+        for(int i = 0; i<function.parameters.size(); i++) {
+            PreParameter param = function.parameters.get(i);
+            parameters[i] = data.resolveType(param.type);
+            names[i] = param.name;
+        }
+        FunctionSignature signature = new FunctionSignature(returnType, parameters);
+        IBytecodeStorage bytecode = null;
+        if(function.hasCode()) {
+            bytecode = parseFunctionCode(data, new SeekIterator<>(function.code), signature, names);
+        }
+        EnumSet<FunctionModifiers> modifiers = EnumSet.noneOf(FunctionModifiers.class);
+        for(PreFunctionModifiers modifier : function.modifiers) {
+            modifiers.add(modifier.getCompiledModifier());
+        }
+        return new Method(data.namespace, modifiers, className, function.name, signature, bytecode);
+    }
+
     public static void compileClass(CompiledData data, PreClass clazz) {
-        ClassField[] fields = new ClassField[clazz.fields.size()];
+        var fields = new ClassField[clazz.fields.size()];
         for (int i = 0; i < clazz.fields.size(); i++) {
-            PreField field = clazz.fields.get(i);
+            var field = clazz.fields.get(i);
             fields[i] = new ClassField(field.name, data.resolveType(field.type));
         }
-        data.addClass(new Class(data.namespace, clazz.name, fields));
+
+        var methods = new Method[clazz.methods.size()];
+        for (int i = 0; i < clazz.methods.size(); i++) {
+            methods[i] = compileMethod(data, clazz.name, clazz.methods.get(i));
+        }
+        data.addClass(new Class(data.namespace, clazz.name, fields, methods));
     }
 
     public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other) throws UnknownTypeException {
