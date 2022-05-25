@@ -28,7 +28,6 @@ public class Start {
 
     public static void main(String[] args) throws UnknownTypeException, IOException {
         try {
-            registerOperators();
             registerTypes();
             registerKeywords();
 

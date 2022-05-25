@@ -29,7 +29,7 @@ def inline PostExpression:
   $FunctionCall
   $Accessor
 
-def CastExpression $CastOperators $PostExpression
+def CastExpression $CastOperators $CastExpression
 def inline CastExpression $PostExpression
 
 def merge MultiplicativeExpression $CastExpression [ $MultiplicativeOperators $MultiplicativeExpression ]

@@ -1,23 +1,9 @@
 package ga.epicpix.zprol;
 
-import static ga.epicpix.zprol.compiler.operation.LanguageOperator.registerOperator;
 import static ga.epicpix.zprol.parser.LanguageKeyword.registerKeyword;
 import static ga.epicpix.zprol.types.Types.registerPrimitiveType;
 
 public class Loader {
-
-    public static void registerOperators() {
-        registerOperator("==", 5);
-        registerOperator("|", 10);
-        registerOperator(">>", 15);
-        registerOperator("<<", 15);
-        registerOperator("%", 20);
-        registerOperator("+", 20);
-        registerOperator("-", 20);
-        registerOperator("*", 25);
-        registerOperator("/", 25);
-        registerOperator("%", 25);
-    }
 
     public static void registerType(int size, boolean unsigned, String descriptor, String... names) {
         registerPrimitiveType(size, unsigned, descriptor, names);
