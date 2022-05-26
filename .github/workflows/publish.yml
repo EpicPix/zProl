@@ -24,7 +24,7 @@ jobs:
       - name: maven-settings-xml-action
         uses: whelk-io/maven-settings-xml-action@v20
         with:
-          servers: '[{ "id": "epicpix", "username": "${USERNAME}", "password": "${SECRET}" }]'
+          servers: '[{ "id": "epicpix", "username": "${env.USERNAME}", "password": "${env.SECRET}" }]'
         env:
           USERNAME: ${{ secrets.username }}
           SECRET: ${{ secrets.secret }}
@@ -32,4 +32,6 @@ jobs:
       - name: Publish package
         run: mvn --batch-mode deploy -pl $MODULES
         env:
+          USERNAME: ${{ secrets.username }}
+          SECRET: ${{ secrets.secret }}
           MODULES: ${{ github.event.inputs.modules }}
