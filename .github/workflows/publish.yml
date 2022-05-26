@@ -21,9 +21,22 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
+      - name: maven-settings-xml-action
+        uses: whelk-io/maven-settings-xml-action@v20
+        with:
+          servers: >
+            [
+              {
+                "id": "epicpix",
+                "username": "${env.USERNAME}",
+                "password": "${env.SECRET}"
+              }
+            ]
+        env:
+          USERNAME: ${{ secrets.username }}
+          SECRET: ${{ secrets.secret }}
+
       - name: Publish package
         run: mvn --batch-mode deploy -pl $MODULES
         env:
-          MAVEN_USERNAME: ${{ secrets.username }}
-          MAVEN_PASSWORD: ${{ secrets.secret }}
           MODULES: ${{ github.event.inputs.modules }}
