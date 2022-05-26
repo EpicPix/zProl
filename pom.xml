@@ -21,9 +21,9 @@
 
     <distributionManagement>
         <repository>
-            <id>epicpix</id>
+            <id>epicpix-releases</id>
             <name>Maven EpicPix Repository</name>
-            <url>https://maven.epicpix.ga/</url>
+            <url>https://maven.epicpix.ga/releases/</url>
         </repository>
     </distributionManagement>
 
