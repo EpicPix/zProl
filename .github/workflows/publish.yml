@@ -24,5 +24,6 @@ jobs:
       - name: Publish package
         run: mvn --batch-mode deploy -pl $MODULES
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_USERNAME: ${{ secrets.username }}
+          MAVEN_PASSWORD: ${{ secrets.secret }}
           MODULES: ${{ github.event.inputs.modules }}
