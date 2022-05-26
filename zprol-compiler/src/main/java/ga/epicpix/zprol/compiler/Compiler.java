@@ -47,7 +47,7 @@ public class Compiler {
                         if(named.getTokenWithName("Expression") == null) {
                             throw new TokenLocatedException("Function is not void, expected a return value", named);
                         }
-                        generateInstructionsFromEquation(named.getTokenWithName("Expression"), sig.returnType(), new ArrayDeque<>(), data, localsManager, storage, false);
+                        generateInstructionsFromExpression(named.getTokenWithName("Expression"), sig.returnType(), new ArrayDeque<>(), data, localsManager, storage, false);
                     }
                     if(sig.returnType() instanceof PrimitiveType primitive && primitive.getSize() == 0) {
                         if(named.getTokenWithName("Expression") != null) {
@@ -64,13 +64,13 @@ public class Compiler {
                         break;
                     }
                 } else if("FunctionCallStatement".equals(named.name)) {
-                    generateInstructionsFromEquation(named, null, new ArrayDeque<>(), data, localsManager, storage, true);
+                    generateInstructionsFromExpression(named, null, new ArrayDeque<>(), data, localsManager, storage, true);
                 } else if("CreateAssignmentStatement".equals(named.name)) {
                     var type = data.resolveType(named.getSingleTokenWithName("Type").asWordToken().getWord());
                     var name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
                     var expression = named.getTokenWithName("Expression");
                     var types = new ArrayDeque<Type>();
-                    generateInstructionsFromEquation(expression, type, types, data, localsManager, storage, false);
+                    generateInstructionsFromExpression(expression, type, types, data, localsManager, storage, false);
                     var rType = types.pop();
                     doCast(type, rType, false, storage);
                     var local = localsManager.defineLocalVariable(name, rType);
@@ -91,7 +91,7 @@ public class Compiler {
                     var local = localsManager.getLocalVariable(name);
                     if(ids.size() == 1) {
                         var types = new ArrayDeque<Type>();
-                        generateInstructionsFromEquation(expression, local.type(), types, data, localsManager, storage, false);
+                        generateInstructionsFromExpression(expression, local.type(), types, data, localsManager, storage, false);
                         if (types.pop() instanceof PrimitiveType primitive) {
                             storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
                         } else {
@@ -116,7 +116,7 @@ public class Compiler {
                         }
                         var types = new ArrayDeque<Type>();
                         var expected = getClassFieldType(type, data, ids.get(ids.size() - 1));
-                        generateInstructionsFromEquation(expression, expected, types, data, localsManager, storage, false);
+                        generateInstructionsFromExpression(expression, expected, types, data, localsManager, storage, false);
                         var got = types.pop();
                         doCast(got, expected, false, storage);
                         for(var instr : instructionQueue) storage.pushInstruction(instr);
@@ -155,31 +155,24 @@ public class Compiler {
         return storage;
     }
 
-    public static void generateInstructionsFromEquation(NamedToken token, Type expectedType, ArrayDeque<Type> types, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
+    public static void generateInstructionsFromExpression(NamedToken token, Type expectedType, ArrayDeque<Type> types, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
         if(token.name.equals("Expression")) {
-           Type prob = expectedType;
-           for(var tok : token.tokens) {
-               if(tok instanceof NamedToken ntok) {
-                   generateInstructionsFromEquation(ntok, prob, types, data, localsManager, bytecode, expectedType == null && discardValue);
-                   if (types.size() != 0) {
-                       prob = types.peek();
-                   }
-               }
-           }
+           generateInstructionsFromExpression(token.tokens[0].asNamedToken(), expectedType, types, data, localsManager, bytecode, expectedType == null && discardValue);
+            Type prob = types.size() != 0 ? types.peek() : null;
 
-           if(prob != null && discardValue) {
-               if(prob instanceof PrimitiveType primitive) {
-                   if(primitive.getSize() != 0) {
-                       bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
-                   }else {
-                       types.push(primitive);
-                   }
-               }else {
-                   bytecode.pushInstruction(getConstructedInstruction("apop"));
-               }
-           }else if(prob != null) {
-               types.push(prob);
-           }
+            if(prob != null && discardValue) {
+                if(prob instanceof PrimitiveType primitive) {
+                    if(primitive.getSize() != 0) {
+                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
+                    }else {
+                        types.push(primitive);
+                    }
+                }else {
+                    bytecode.pushInstruction(getConstructedInstruction("apop"));
+                }
+            }else if(prob != null) {
+                types.push(prob);
+            }
         }else if(token.name.equals("MultiplicativeExpression") || token.name.equals("AdditiveExpression") || token.name.equals("InclusiveOrExpression")) {
             types.push(runOperator(token, expectedType, data, localsManager, types, bytecode));
         }else if(token.name.equals("DecimalInteger")) {
@@ -229,7 +222,7 @@ public class Compiler {
             }
 
             for(int i = 0; i<arguments.size(); i++) {
-                generateInstructionsFromEquation(arguments.get(i).getTokenWithName("Expression"), parameters[i], types, data, localsManager, bytecode, false);
+                generateInstructionsFromExpression(arguments.get(i).getTokenWithName("Expression"), parameters[i], types, data, localsManager, bytecode, false);
             }
 
             bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
@@ -241,14 +234,9 @@ public class Compiler {
             }else if(discardValue) {
                 bytecode.pushInstruction(getConstructedInstruction("apop"));
             }else {
-                if(expectedType != null) {
-                    if(!returnType.equals(expectedType)) {
-                        var got = doCast(returnType, expectedType, false, bytecode);
-                        types.push(got);
-                    }else {
-                        types.push(returnType);
-                    }
-                }else {
+                if (expectedType != null && !returnType.equals(expectedType)) {
+                    types.push(doCast(returnType, expectedType, false, bytecode));
+                } else {
                     types.push(returnType);
                 }
             }
@@ -281,7 +269,7 @@ public class Compiler {
         }else if(token.name.equals("CastExpression")) {
             var hardCast = token.getTokenWithName("HardCastOperator");
             var castType = data.resolveType((hardCast != null ? hardCast : token.getTokenWithName("CastOperator")).getSingleTokenWithName("Type").asWordToken().getWord());
-            generateInstructionsFromEquation(token.tokens[1].asNamedToken(), null, types, data, localsManager, bytecode, false);
+            generateInstructionsFromExpression(token.tokens[1].asNamedToken(), null, types, data, localsManager, bytecode, false);
             var from = types.pop();
             if(hardCast != null) {
                 // this will not check sizes of primitive types, this is unsafe
@@ -298,10 +286,10 @@ public class Compiler {
     }
 
     public static Type runOperator(NamedToken token, Type expectedType, CompiledData data, LocalScopeManager localsManager, ArrayDeque<Type> types, IBytecodeStorage bytecode) {
-        generateInstructionsFromEquation(token.tokens[0].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
+        generateInstructionsFromExpression(token.tokens[0].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
         var arg1 = types.pop();
 
-        generateInstructionsFromEquation(token.tokens[2].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
+        generateInstructionsFromExpression(token.tokens[2].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
         var arg2 = types.pop();
 
 

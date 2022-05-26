@@ -5,7 +5,7 @@
     <parent>
         <groupId>ga.epicpix</groupId>
         <artifactId>zProl-lang</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -70,24 +70,24 @@
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zpil</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zprol-generators</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zprol-parser</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zprol-compiler</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

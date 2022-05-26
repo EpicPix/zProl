@@ -7,7 +7,7 @@
     <groupId>ga.epicpix</groupId>
     <artifactId>zProl-lang</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <modules>
         <module>zpil</module>
@@ -36,6 +36,7 @@
                 <configuration>
                     <skip>true</skip>
                 </configuration>
+                <inherited>false</inherited>
             </plugin>
         </plugins>
     </build>
