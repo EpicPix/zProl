@@ -24,14 +24,7 @@ jobs:
       - name: maven-settings-xml-action
         uses: whelk-io/maven-settings-xml-action@v20
         with:
-          servers: >
-            [
-              {
-                "id": "epicpix",
-                "username": "${env.USERNAME}",
-                "password": "${env.SECRET}"
-              }
-            ]
+          servers: '[{ "id": "epicpix", "username": "${USERNAME}", "password": "${SECRET}" }]'
         env:
           USERNAME: ${{ secrets.username }}
           SECRET: ${{ secrets.secret }}
