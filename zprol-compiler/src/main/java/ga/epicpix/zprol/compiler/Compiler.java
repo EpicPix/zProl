@@ -124,11 +124,11 @@ public class Compiler {
                         if(type instanceof ClassType classType) {
                             storage.pushInstruction(getConstructedInstruction("class_field_store", new Class(classType.getNamespace(), classType.getName(), null, null), ids.get(ids.size() - 1)));
                         }else {
-                            throw new TokenLocatedException("Expected a class");
+                            throw new TokenLocatedException("Expected a class", named);
                         }
                     }
                 } else {
-                    throw new NotImplementedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens));
+                    throw new TokenLocatedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens), named);
                 }
             }else {
                 if(token.getType() == TokenType.OPEN_SCOPE) {
