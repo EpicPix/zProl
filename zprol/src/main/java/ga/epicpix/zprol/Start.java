@@ -62,6 +62,7 @@ public class Start {
     public static void preMain(String[] args) throws IOException, UnknownTypeException {
         ArrayList<Generator> generators = new ArrayList<>();
         boolean ignoreCompileStdWarning = false;
+        boolean unloadStd = false;
         String outputFile = null;
         String printFile = null;
 
@@ -96,6 +97,9 @@ public class Start {
                 } else if(s.equals("--ignore-std-not-found-warning")) {
                     ignoreCompileStdWarning = true;
                     continue;
+                } else if(s.equals("--unload-std")) {
+                    unloadStd = true;
+                    continue;
                 } else if(s.equals("-p")) {
                     if(printFile != null) {
                         throw new IllegalArgumentException("Tried to declare input file multiple times");
@@ -122,7 +126,8 @@ public class Start {
             }
 
             String output = Objects.requireNonNullElse(outputFile, "output.out");
-            compileFiles(files, output, ignoreCompileStdWarning);
+
+            compileFiles(files, output, ignoreCompileStdWarning, unloadStd);
 
             String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
             var generated = GeneratedData.load(Files.readAllBytes(new File(normalName + ".zpil").toPath()));
@@ -147,16 +152,18 @@ public class Start {
         throw new NotImplementedException("When help menu?");
     }
 
-    public static void compileFiles(ArrayList<String> files, String output, boolean ignoreStdWarning) throws IOException, UnknownTypeException {
+    public static void compileFiles(ArrayList<String> files, String output, boolean ignoreStdWarning, boolean unloadStd) throws IOException, UnknownTypeException {
         ArrayList<PreCompiledData> preCompiled = new ArrayList<>();
         ArrayList<CompiledData> compiled = new ArrayList<>();
         ArrayList<PreCompiledData> included = new ArrayList<>();
         ArrayList<CompiledData> includedCompiled = new ArrayList<>();
-        var stdReader = ZldParser.class.getClassLoader().getResourceAsStream("std.zpil");
-        if(stdReader != null) {
-            loadGenerated(GeneratedData.load(stdReader.readAllBytes()), includedCompiled, included);
-        }else {
-            if(!ignoreStdWarning) System.err.println("Warning! Standard library not found");
+        if(!unloadStd) {
+            var stdReader = ZldParser.class.getClassLoader().getResourceAsStream("std.zpil");
+            if (stdReader != null) {
+                loadGenerated(GeneratedData.load(stdReader.readAllBytes()), includedCompiled, included);
+            } else {
+                if (!ignoreStdWarning) System.err.println("Warning! Standard library not found");
+            }
         }
         for(String file : files) {
             boolean load = false;
