@@ -1,5 +1,8 @@
 package ga.epicpix.zprol;
 
+import ga.epicpix.zprol.types.BooleanType;
+import ga.epicpix.zprol.types.Types;
+
 import static ga.epicpix.zprol.parser.LanguageKeyword.registerKeyword;
 import static ga.epicpix.zprol.types.Types.registerPrimitiveType;
 
@@ -24,6 +27,8 @@ public class Loader {
         registerType(2, true, "uS", "uint16", "ushort");
         registerType(4, true, "uI", "uint32", "uint");
         registerType(8, true, "uL", "uint64", "ulong");
+
+        Types.registerType(new BooleanType(), "bool");
     }
 
     public static void registerKeywords() {
