@@ -2,6 +2,14 @@ namespace zprol.lang.linux.amd64;
 
 using zprol.lang;
 
+native uint64 syscall(int64 a);
+native uint64 syscall(int64 a, int64 b);
+native uint64 syscall(int64 a, int64 b, int64 c);
+native uint64 syscall(int64 a, int64 b, int64 c, int64 d);
+native uint64 syscall(int64 a, int64 b, int64 c, int64 d, int64 e);
+native uint64 syscall(int64 a, int64 b, int64 c, int64 d, int64 e, int64 f);
+native uint64 syscall(int64 a, int64 b, int64 c, int64 d, int64 e, int64 f, int64 g);
+
 inline int64 SYSCALL_READ() => return 0;
 inline int64 SYSCALL_WRITE() => return 1;
 inline int64 SYSCALL_OPEN() => return 2;
