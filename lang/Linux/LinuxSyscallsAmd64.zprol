@@ -1,5 +1,7 @@
 namespace zprol.lang.linux.amd64;
 
+using zprol.lang;
+
 inline int64 SYSCALL_READ() => return 0;
 inline int64 SYSCALL_WRITE() => return 1;
 inline int64 SYSCALL_OPEN() => return 2;
@@ -336,3 +338,18 @@ inline int64 SYSCALL_STATX() => return 332;
 inline int64 SYSCALL_IO_URING_SETUP() => return 425;
 inline int64 SYSCALL_IO_URING_ENTER() => return 426;
 inline int64 SYSCALL_FACCESSAT2() => return 439;
+
+inline int64 STDOUT() => return 0;
+inline int64 STDERR() => return 1;
+
+inline int64 EXIT_SUCCESS() => return 0;
+inline int64 EXIT_FAILURE() => return 1;
+
+
+inline void write(uint64 fd, uint64 buf, uint64 length) => syscall(SYSCALL_WRITE(), fd, buf, length);
+
+inline void stdout(uint64 buf, uint64 length) => write(STDOUT(), buf, length);
+inline void stdout(String str) => write(STDOUT(), str.bytes, str.length);
+
+inline void exit(uint64 exitCode) => syscall(SYSCALL_EXIT(), exitCode);
+inline void exit() => exit(EXIT_SUCCESS());

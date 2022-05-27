@@ -271,7 +271,6 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         ConstantPool localConstantPool = new ConstantPool();
         for(var function : generated.functions) {
             if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
-            if(FunctionModifiers.isEmbedCode(function.modifiers())) continue;
 
             String functionName = getMangledName(function.namespace(), function.name(), function.signature());
             outStream.writeBytes(functionName + ":\n");
