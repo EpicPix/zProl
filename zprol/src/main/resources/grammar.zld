@@ -4,6 +4,8 @@ def chars MultiplyOperator [$Whitespace] <*>
 def chars DivideOperator [$Whitespace] </>
 def chars ModuloOperator [$Whitespace] <%>
 def chars InclusiveOrOperator [$Whitespace] <|>
+def chars EqualOperator [$Whitespace] <=><=>
+def chars NotEqualOperator [$Whitespace] <!><=>
 def inline chars HardCastIndicatorOperator <!>
 def CastOperator ( $Type )
 def HardCastOperator ( $Type $HardCastIndicatorOperator )
@@ -11,6 +13,10 @@ def HardCastOperator ( $Type $HardCastIndicatorOperator )
 def inline AdditiveOperators:
   $AddOperator
   $SubtractOperator
+
+def inline EqualityOperators:
+  $EqualOperator
+  $NotEqualOperator
 
 def inline MultiplicativeOperators:
   $MultiplyOperator
@@ -35,8 +41,9 @@ def inline CastExpression $PostExpression
 def merge MultiplicativeExpression $CastExpression [ $MultiplicativeOperators $MultiplicativeExpression ]
 def merge AdditiveExpression $MultiplicativeExpression [ $AdditiveOperators $AdditiveExpression ]
 def merge InclusiveOrExpression $AdditiveExpression [ $InclusiveOrOperator $InclusiveOrExpression ]
+def merge EqualsExpression $InclusiveOrExpression [ $EqualityOperators $EqualsExpression ]
 
-def Expression $InclusiveOrExpression
+def Expression $EqualsExpression
 
 def Accessor $Identifier { . $Identifier }
 
@@ -103,11 +110,15 @@ def AssignmentStatement:
 def CreateAssignmentStatement:
   $Type $Identifier = $Expression ;
 
+def IfStatement:
+  if ( $Expression ) $Code
+
 def Statement:
   $ReturnStatement
   $FunctionCallStatement
   $AssignmentStatement
   $CreateAssignmentStatement
+  $IfStatement
 
 def inline chars LineCodeChars [$Whitespace] <=> <\>>
 
