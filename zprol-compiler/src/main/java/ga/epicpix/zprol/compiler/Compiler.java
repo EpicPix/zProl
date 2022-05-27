@@ -27,13 +27,17 @@ import java.util.Arrays;
 import java.util.EnumSet;
 
 public class Compiler {
-
     public static IBytecodeStorage parseFunctionCode(CompiledData data, SeekIterator<Token> tokens, FunctionSignature sig, String[] names) {
         IBytecodeStorage storage = createStorage();
         LocalScopeManager localsManager = new LocalScopeManager();
         for(int i = 0; i<names.length; i++) {
             localsManager.getCurrentScope().defineLocalVariable(names[i], sig.parameters()[i]);
         }
+        parseFunctionCode(data, tokens, sig, names, storage, localsManager);
+        return storage;
+    }
+
+    public static void parseFunctionCode(CompiledData data, SeekIterator<Token> tokens, FunctionSignature sig, String[] names, IBytecodeStorage storage, LocalScopeManager localsManager) {
         localsManager.newScope();
         int opens = 0;
         boolean hasReturned = false;
@@ -127,24 +131,23 @@ public class Compiler {
                             throw new TokenLocatedException("Expected a class", named);
                         }
                     }
+                } else if("IfStatement".equals(named.name)) {
+                    var types = new ArrayDeque<Type>();
+                    generateInstructionsFromExpression(named.getTokenWithName("Expression"), null, types, data, localsManager, storage, false);
+                    var ret = types.pop();
+                    if(!(ret instanceof BooleanType)) {
+                        throw new TokenLocatedException("Expected boolean expression", named.getTokenWithName("Expression"));
+                    }
+                    var statements = new ArrayList<Token>();
+                    for(var statement : named.getTokenWithName("Code").getTokensWithName("Statement")) {
+                        statements.add(statement.tokens[0]);
+                    }
+                    int preInstr = storage.getInstructions().size();
+                    parseFunctionCode(data, new SeekIterator<>(statements), sig, names, storage, localsManager);
+                    storage.pushInstruction(preInstr, getConstructedInstruction("neqjmp", storage.getInstructions().size()-preInstr));
                 } else {
                     throw new TokenLocatedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens), named);
                 }
-            }else {
-                if(token.getType() == TokenType.OPEN_SCOPE) {
-                    opens++;
-                    localsManager.newScope();
-                }else if(token.getType() == TokenType.CLOSE_SCOPE) {
-                    opens--;
-                    localsManager.leaveScope();
-                    if(opens == 0) {
-                        localsManager.leaveScope();
-                        break;
-                    }
-                }else {
-                    throw new RuntimeException("Not implemented token type: " + token);
-                }
-                //TODO: ++x or --x
             }
         }
         if(!hasReturned) {
@@ -152,7 +155,6 @@ public class Compiler {
             storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
         }
         storage.setLocalsSize(localsManager.getLocalVariablesSize());
-        return storage;
     }
 
     public static void generateInstructionsFromExpression(NamedToken token, Type expectedType, ArrayDeque<Type> types, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
@@ -173,7 +175,7 @@ public class Compiler {
             }else if(prob != null) {
                 types.push(prob);
             }
-        }else if(token.name.equals("MultiplicativeExpression") || token.name.equals("AdditiveExpression") || token.name.equals("InclusiveOrExpression")) {
+        }else if(token.name.equals("MultiplicativeExpression") || token.name.equals("AdditiveExpression") || token.name.equals("InclusiveOrExpression") || token.name.equals("EqualsExpression")) {
             types.push(runOperator(token, expectedType, data, localsManager, types, bytecode));
         }else if(token.name.equals("DecimalInteger")) {
            BigInteger number = getDecimalInteger(token.tokens[0]);
@@ -315,6 +317,14 @@ public class Compiler {
                 else bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "div"));
             }
             case "|" -> bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "or"));
+            case "==" -> {
+                bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "eq"));
+                got = new BooleanType();
+            }
+            case "!=" -> {
+                bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "neq"));
+                got = new BooleanType();
+            }
             default -> throw new TokenLocatedException("Unknown operator '" + operator + "'", token);
         }
         return got;

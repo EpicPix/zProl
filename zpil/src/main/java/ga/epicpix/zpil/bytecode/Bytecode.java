@@ -41,8 +41,8 @@ public final class Bytecode implements IBytecode {
         registerInstruction(37, getInstructionPrefix(2) + "push", BytecodeValueType.SHORT);
         registerInstruction(38, getInstructionPrefix(4) + "push", BytecodeValueType.INT);
         registerInstruction(39, getInstructionPrefix(8) + "push", BytecodeValueType.LONG);
-        registerSizedInstruction(40, "cmp", new int[] {1, 2, 4, 8});
-        registerSizedInstruction(44, "ncmp", new int[] {1, 2, 4, 8});
+        registerSizedInstruction(40, "eq", new int[] {1, 2, 4, 8});
+        registerSizedInstruction(44, "neq", new int[] {1, 2, 4, 8});
         registerSizedInstruction(48, "add", new int[] {1, 2, 4, 8});
         registerSizedInstruction(52, "sub", new int[] {1, 2, 4, 8});
         registerSizedInstruction(56, "mul", new int[] {1, 2, 4, 8});
@@ -58,6 +58,9 @@ public final class Bytecode implements IBytecode {
         registerSizedInstruction(93, "dup", new int[] {1, 2, 4, 8});
         registerSizedInstruction(97, "or", new int[] {1, 2, 4, 8});
         registerInstruction(101, "class_field_store", BytecodeValueType.CLASS, BytecodeValueType.STRING);
+        registerInstruction(102, "jmp", BytecodeValueType.SHORT);
+        registerInstruction(103, "eqjmp", BytecodeValueType.SHORT);
+        registerInstruction(104, "neqjmp", BytecodeValueType.SHORT);
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {

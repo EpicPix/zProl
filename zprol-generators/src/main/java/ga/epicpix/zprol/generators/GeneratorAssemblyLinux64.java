@@ -16,6 +16,7 @@ import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.stream.Collectors;
@@ -144,7 +145,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             else throw new IllegalStateException("Unsupported size " + size);
 
         });
-        instructionGenerators.put("icmp", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  cmp ecx, edx\n");
+        instructionGenerators.put("ineq", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  cmp ecx, edx\n");
+        instructionGenerators.put("neqjmp", (i, s, f, lp) -> "  jne " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
         instructionGenerators.put("badd", (i, s, f, lp) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
         instructionGenerators.put("iadd", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  add ecx, edx\n  push ecx\n");
         instructionGenerators.put("ladd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
@@ -182,9 +184,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             x--;
         }
 
-        if(!isSyscall && FunctionModifiers.isEmbedCode(f.modifiers())) {
-            args.append(writeFunction(f, localConstantPool));
-        }else if (FunctionModifiers.isEmptyCode(f.modifiers())) {
+        if (FunctionModifiers.isEmptyCode(f.modifiers())) {
             if (isSyscall) {
                 args.append("  syscall\n");
             } else {
@@ -233,8 +233,19 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 outStream.append("  mov [rbp-").append(localsIndex).append("], ").append(CALL_REGISTERS_64[i]).append("\n");
             }
         }
+        var labelList = new ArrayList<Integer>();
+        int c = 0;
+        for(var instr : function.code().getInstructions()) {
+            if(instr.getName().equals("neqjmp")) {
+                labelList.add(c + ((Number) instr.getData()[0]).shortValue());
+            }
+            c++;
+        }
         SeekIterator<IBytecodeInstruction> instructions = new SeekIterator<>(function.code().getInstructions());
         while(instructions.hasNext()) {
+            if(labelList.contains(instructions.currentIndex() - 1)) {
+                outStream.append(getMangledName(function.namespace(), function.name(), function.signature())).append(".").append(instructions.currentIndex() - 1).append(":\n");
+            }
             var instruction = instructions.next();
             var generator = instructionGenerators.get(instruction.getName());
             if(generator != null) {

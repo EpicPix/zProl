@@ -16,6 +16,10 @@ class BytecodeData implements IBytecodeStorage {
         instructions.add(instruction);
     }
 
+    public void pushInstruction(int index, IBytecodeInstruction instruction) {
+        instructions.add(index, instruction);
+    }
+
     public List<IBytecodeInstruction> getInstructions() {
         return Collections.unmodifiableList(instructions);
     }
