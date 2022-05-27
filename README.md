@@ -1,8 +1,10 @@
 # zProl
 
-Z Programming Language that I made because I got bored.
+Z Programming Language
 
-Currently, reworking a lot of things which might mean that some features will be removed for now, that might be re-added with a better implementation
+For actual usage check the [wiki](https://github.com/EpicPix/zProl/wiki).
+
+I made this language only because I got bored, and I work on it when I have nothing else to do.
 
 ## Maven Repository
 
