@@ -85,7 +85,11 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("lstore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("astore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("push_string", (i, s, f, lp) -> "  push _string" + lp.getOrCreateStringIndex((String) i.getData()[0]) + "\n");
-        instructionGenerators.put("bload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop cx\n  pop rdx\n  mov byte cl, [rdx + rcx]\n  push cx\n");
+        instructionGenerators.put("bload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop rcx\n  pop rdx\n  mov byte cl, [rdx + rcx]\n  push cx\n");
+        instructionGenerators.put("sload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop rcx\n  pop rdx\n  mov word cx, [rdx + rcx]\n  push cx\n");
+        instructionGenerators.put("iload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop rcx\n  pop rdx\n  mov word rcx, [rdx + rcx * 8]\n  push rcx\n");
+        instructionGenerators.put("lload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop rcx\n  pop rdx\n  mov qword rcx, [rdx + rcx * 8]\n  push rcx\n");
+        instructionGenerators.put("aload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop rcx\n  pop rdx\n  mov qword rcx, [rdx + rcx * 8]\n  push rcx\n");
         instructionGenerators.put("class_field_load", (i, s, f, lp) -> {
             var clz = (Class) i.getData()[0];
             var fieldName = (String) i.getData()[1];
@@ -214,11 +218,11 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             } else if(f.name().equals("__set_array_byte")) {
                 args.append("  add rdi, rsi\n  mov byte [rdi], dl\n");
             } else if(f.name().equals("__set_array_short")) {
-                args.append("  imul rsi, 2\n  add rdi, rsi\n  mov byte [rdi], dx\n");
+                args.append("  imul rsi, 2\n  add rdi, rsi\n  mov word [rdi], dx\n");
             } else if(f.name().equals("__set_array_int")) {
-                args.append("  imul rsi, 4\n  add rdi, rsi\n  mov byte [rdi], edx\n");
+                args.append("  imul rsi, 4\n  add rdi, rsi\n  mov dword [rdi], edx\n");
             } else if(f.name().equals("__set_array_long")) {
-                args.append("  imul rsi, 8\n  add rdi, rsi\n  mov byte [rdi], rdx\n");
+                args.append("  imul rsi, 8\n  add rdi, rsi\n  mov qword [rdi], rdx\n");
             } else {
                 throw new FunctionNotDefinedException("Unknown native function " + f.name());
             }

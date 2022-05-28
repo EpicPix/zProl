@@ -218,7 +218,7 @@ public class Compiler {
                bytecode.pushInstruction(getConstructedSizeInstruction(4, "push", number));
                types.push(data.resolveType("int32"));
            }else {
-               throw new TokenLocatedException("Cannot infer size of number from a non-primitive type (" + expectedType.getName() + ")");
+               throw new TokenLocatedException("Cannot infer size of number from a non-primitive type (" + expectedType.getName() + ")", token);
            }
         }else if(token.name.equals("FunctionCall") || token.name.equals("FunctionCallStatement")) {
             var name = token.getSingleTokenWithName("Identifier").asWordToken().getWord();
@@ -319,7 +319,7 @@ public class Compiler {
                 throw new TokenLocatedException("Expected type does not match the array type", token);
             }
             var expr = token.getTokenWithName("Expression");
-            generateInstructionsFromExpression(expr, expectedType, types, data, localsManager, bytecode, false);
+            generateInstructionsFromExpression(expr, null, types, data, localsManager, bytecode, false);
             var expressionType = types.pop();
             if(!(expressionType instanceof PrimitiveType)) {
                 throw new TokenLocatedException("Expected a primitive number", expr);
