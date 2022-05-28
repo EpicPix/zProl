@@ -2,6 +2,7 @@ package ga.epicpix.zprol;
 
 import ga.epicpix.zprol.types.BooleanType;
 import ga.epicpix.zprol.types.Types;
+import ga.epicpix.zprol.types.VoidType;
 
 import static ga.epicpix.zprol.parser.LanguageKeyword.registerKeyword;
 import static ga.epicpix.zprol.types.Types.registerPrimitiveType;
@@ -16,7 +17,7 @@ public class Loader {
     }
 
     public static void registerTypes() {
-        registerType(0, false, "V", "void");
+        Types.registerType(new VoidType(), "void");
 
         registerType(1, false, "B", "int8", "byte");
         registerType(2, false, "S", "int16", "short");

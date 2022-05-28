@@ -8,10 +8,7 @@ import ga.epicpix.zpil.pool.ConstantPoolEntry;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
-import ga.epicpix.zprol.types.BooleanType;
-import ga.epicpix.zprol.types.ClassType;
-import ga.epicpix.zprol.types.PrimitiveType;
-import ga.epicpix.zprol.types.Types;
+import ga.epicpix.zprol.types.*;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.io.DataOutputStream;
@@ -96,7 +93,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 }
                 if(e.type() instanceof PrimitiveType t) offset += t.getSize();
                 else if(e.type() instanceof BooleanType) offset += 8;
-                else offset += 8;
+                else if(e.type() instanceof ClassType) offset += 8;
+                else throw new IllegalStateException("Cannot get size of type '" + e.type().getName() + "'");
             }
             if(field == null) {
                 throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name() + "'");
@@ -106,6 +104,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             if(field.type() instanceof ClassType) size = 8;
             else if(field.type() instanceof BooleanType) size = 8;
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
+            else throw new IllegalStateException("Cannot get size of type '" + field.type().getName() + "'");
 
             if(size == 1) return "  pop rcx\n  mov dl, [rcx+" + offset + "]\n  push dx\n";
             else if(size == 2) return "  pop rcx\n  push word [rcx+" + offset + "]\n";
@@ -126,7 +125,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 }
                 if(e.type() instanceof PrimitiveType t) offset += t.getSize();
                 else if(e.type() instanceof BooleanType) offset += 8;
-                else offset += 8;
+                else if(e.type() instanceof ClassType) offset += 8;
+                else throw new IllegalStateException("Cannot get size of type '" + e.type().getName() + "'");
             }
             if(field == null) {
                 throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name() + "'");
@@ -136,6 +136,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             if(field.type() instanceof ClassType) size = 8;
             else if(field.type() instanceof BooleanType) size = 8;
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
+            else throw new IllegalStateException("Cannot get size of type '" + field.type().getName() + "'");
 
             if(size == 1) return "  pop rcx\n  pop dx\n  mov dl, [rcx+" + offset + "]\n";
             else if(size == 2) return "  pop rcx\n  pop word [rcx+" + offset + "]\n";

@@ -14,10 +14,7 @@ import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
-import ga.epicpix.zprol.types.BooleanType;
-import ga.epicpix.zprol.types.ClassType;
-import ga.epicpix.zprol.types.PrimitiveType;
-import ga.epicpix.zprol.types.Type;
+import ga.epicpix.zprol.types.*;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.math.BigInteger;
@@ -35,7 +32,9 @@ public class Compiler {
         }
         boolean hasReturned = parseFunctionCode(data, tokens, sig, names, storage, localsManager);
         if(!hasReturned) {
-            if(!(sig.returnType() instanceof PrimitiveType primitive) || primitive.getSize() != 0) throw new TokenLocatedException("Missing return statement", tokens.current());
+            if(!(sig.returnType() instanceof VoidType)) {
+                throw new TokenLocatedException("Missing return statement in " + sig);
+            }
             storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
         }
         storage.setLocalsSize(localsManager.getLocalVariablesSize());
@@ -52,11 +51,14 @@ public class Compiler {
             if(token.getType() == TokenType.NAMED) {
                 var named = (NamedToken) token;
                 if("ReturnStatement".equals(named.name)) {
+                    Type retType = null;
                     if(!(sig.returnType() instanceof PrimitiveType primitive) || primitive.getSize() != 0) {
                         if(named.getTokenWithName("Expression") == null) {
                             throw new TokenLocatedException("Function is not void, expected a return value", named);
                         }
-                        generateInstructionsFromExpression(named.getTokenWithName("Expression"), sig.returnType(), new ArrayDeque<>(), data, localsManager, storage, false);
+                        var types = new ArrayDeque<Type>();
+                        generateInstructionsFromExpression(named.getTokenWithName("Expression"), sig.returnType(), types, data, localsManager, storage, false);
+                        retType = types.pop();
                     }
                     if(sig.returnType() instanceof PrimitiveType primitive && primitive.getSize() == 0) {
                         if(named.getTokenWithName("Expression") != null) {
@@ -76,12 +78,15 @@ public class Compiler {
                     generateInstructionsFromExpression(named, null, new ArrayDeque<>(), data, localsManager, storage, true);
                 } else if("CreateAssignmentStatement".equals(named.name)) {
                     var type = data.resolveType(named.getSingleTokenWithName("Type").asWordToken().getWord());
+                    if(type instanceof VoidType) {
+                        throw new TokenLocatedException("Cannot create a variable with void type", named);
+                    }
                     var name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
                     var expression = named.getTokenWithName("Expression");
                     var types = new ArrayDeque<Type>();
                     generateInstructionsFromExpression(expression, type, types, data, localsManager, storage, false);
                     var rType = types.pop();
-                    doCast(type, rType, false, storage);
+                    doCast(type, rType, false, storage, expression);
                     var local = localsManager.defineLocalVariable(name, rType);
                     if(rType instanceof PrimitiveType primitive) {
                         storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
@@ -103,6 +108,10 @@ public class Compiler {
                         generateInstructionsFromExpression(expression, local.type(), types, data, localsManager, storage, false);
                         if (types.pop() instanceof PrimitiveType primitive) {
                             storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
+                        }else if (types.pop() instanceof BooleanType) {
+                            storage.pushInstruction(getConstructedSizeInstruction(8, "store_local", local.index()));
+                        }else if (types.pop() instanceof VoidType) {
+                            throw new TokenLocatedException("Cannot store void type");
                         } else {
                             storage.pushInstruction(getConstructedInstruction("astore_local", local.index()));
                         }
@@ -110,6 +119,10 @@ public class Compiler {
                         ArrayList<IBytecodeInstruction> instructionQueue = new ArrayList<>();
                         if (local.type() instanceof PrimitiveType primitive) {
                             instructionQueue.add(getConstructedSizeInstruction(primitive.getSize(), "load_local", local.index()));
+                        }else if (local.type() instanceof BooleanType) {
+                            instructionQueue.add(getConstructedSizeInstruction(8, "load_local", local.index()));
+                        }else if (local.type() instanceof VoidType) {
+                            throw new TokenLocatedException("Cannot load void type");
                         } else {
                             instructionQueue.add(getConstructedInstruction("aload_local", local.index()));
                         }
@@ -127,7 +140,7 @@ public class Compiler {
                         var expected = getClassFieldType(type, data, ids.get(ids.size() - 1), token);
                         generateInstructionsFromExpression(expression, expected, types, data, localsManager, storage, false);
                         var got = types.pop();
-                        doCast(got, expected, false, storage);
+                        doCast(got, expected, false, storage, expression);
                         for(var instr : instructionQueue) storage.pushInstruction(instr);
 
                         if(type instanceof ClassType classType) {
@@ -232,17 +245,21 @@ public class Compiler {
 
             bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
 
+            if(!discardValue && returnType instanceof VoidType) {
+                throw new TokenLocatedException("Cannot store a void type", token);
+            }
+
             if(discardValue && returnType instanceof PrimitiveType primitive) {
-                if(primitive.getSize() != 0) {
-                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
-                }
+                bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
             }else if(discardValue && returnType instanceof BooleanType) {
                 bytecode.pushInstruction(getConstructedSizeInstruction(8, "pop"));
             }else if(discardValue) {
-                bytecode.pushInstruction(getConstructedInstruction("apop"));
+                if(!(returnType instanceof VoidType)) {
+                    bytecode.pushInstruction(getConstructedInstruction("apop"));
+                }
             }else {
                 if (expectedType != null && !returnType.equals(expectedType)) {
-                    types.push(doCast(returnType, expectedType, false, bytecode));
+                    types.push(doCast(returnType, expectedType, false, bytecode, token));
                 } else {
                     types.push(returnType);
                 }
@@ -273,7 +290,8 @@ public class Compiler {
                 throw new NotImplementedException("Not implemented looking in different scopes");
             }
         }else if(token.name.equals("String")) {
-            bytecode.pushInstruction(getConstructedInstruction("push_string", token.getSingleTokenWithName("StringChars").asWordToken().getWord().replace("\\\"", "\"").replace("\\n", "\n").replace("\\0", "\0")));
+            var strChars = token.getSingleTokenWithName("StringChars");
+            bytecode.pushInstruction(getConstructedInstruction("push_string", strChars != null ? strChars.asWordToken().getWord().replace("\\\"", "\"").replace("\\n", "\n").replace("\\0", "\0") : ""));
             types.push(data.resolveType("zprol.lang.String"));
         }else if(token.name.equals("CastExpression")) {
             var hardCast = token.getTokenWithName("HardCastOperator");
@@ -285,7 +303,7 @@ public class Compiler {
                 types.push(castType);
                 return;
             }
-            types.push(doCast(from, castType, true, bytecode));
+            types.push(doCast(from, castType, true, bytecode, token.tokens[1]));
         }else if(token.name.equals("Boolean")) {
             bytecode.pushInstruction(getConstructedSizeInstruction(1, "push", Boolean.parseBoolean(token.tokens[0].asWordToken().getWord()) ? 1 : 0));
             types.push(new BooleanType());
@@ -307,7 +325,7 @@ public class Compiler {
         }
         var bigger = prim1.getSize() > prim2.getSize() ? prim1 : prim2;
         var smaller = prim1.getSize() <= prim2.getSize() ? prim1 : prim2;
-        var got = doCast(smaller, bigger, false, bytecode);
+        var got = doCast(smaller, bigger, false, bytecode, token);
         var primitive = (PrimitiveType) got;
 
         var operator = token.tokens[1].asNamedToken().tokens[0].asWordToken().getWord();
@@ -341,10 +359,10 @@ public class Compiler {
         return got;
     }
 
-    public static Type doCast(Type from, Type to, boolean explicit, IBytecodeStorage bytecode) {
+    public static Type doCast(Type from, Type to, boolean explicit, IBytecodeStorage bytecode, Token location) {
         if(!(from instanceof PrimitiveType primitiveFrom) || !(to instanceof PrimitiveType primitiveTo)) {
             if(!from.equals(to)) {
-                throw new TokenLocatedException("Unsupported cast from " + from.getName() + " to " + to.getName());
+                throw new TokenLocatedException("Unsupported cast from " + from.getName() + " to " + to.getName(), location);
             }else {
                 return to;
             }
@@ -362,7 +380,7 @@ public class Compiler {
                 return to;
             }
         }
-        throw new TokenLocatedException("Unsupported cast from " + from.getName() + " to " + to.getName());
+        throw new TokenLocatedException("Unsupported implicit cast from " + from.getName() + " to " + to.getName(), location);
     }
 
     public static Type getClassFieldType(Type type, CompiledData data, String field, Token token) {
@@ -370,6 +388,8 @@ public class Compiler {
             throw new TokenLocatedException("Cannot access fields of a primitive type", token);
         }else if(type instanceof BooleanType) {
             throw new TokenLocatedException("Cannot access fields of a boolean type", token);
+        }else if(type instanceof VoidType) {
+            throw new TokenLocatedException("Cannot access fields of a void type", token);
         }else if(type instanceof ClassType classType) {
             PreClass clz = null;
             for(var p : data.getUsing()) {
@@ -407,7 +427,7 @@ public class Compiler {
         if(type instanceof ClassType classType) {
             bytecode.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null, null), field));
         }else {
-            throw new TokenLocatedException("Expected class in loadClassField");
+            throw new TokenLocatedException("Expected class in loadClassField", token);
         }
         return next;
     }
@@ -419,6 +439,9 @@ public class Compiler {
         for(int i = 0; i<function.parameters.size(); i++) {
             PreParameter param = function.parameters.get(i);
             parameters[i] = data.resolveType(param.type);
+            if(parameters[i] instanceof VoidType) {
+                throw new TokenLocatedException("Cannot use 'void' type for arguments");
+            }
             names[i] = param.name;
         }
         FunctionSignature signature = new FunctionSignature(returnType, parameters);
@@ -440,6 +463,9 @@ public class Compiler {
         for(int i = 0; i<function.parameters.size(); i++) {
             PreParameter param = function.parameters.get(i);
             parameters[i] = data.resolveType(param.type);
+            if(parameters[i] instanceof VoidType) {
+                throw new TokenLocatedException("Cannot use 'void' type for arguments");
+            }
             names[i] = param.name;
         }
         FunctionSignature signature = new FunctionSignature(returnType, parameters);
@@ -458,7 +484,11 @@ public class Compiler {
         var fields = new ClassField[clazz.fields.size()];
         for (int i = 0; i < clazz.fields.size(); i++) {
             var field = clazz.fields.get(i);
-            fields[i] = new ClassField(field.name, data.resolveType(field.type));
+            var type = data.resolveType(field.type);
+            if(type instanceof VoidType) {
+                throw new TokenLocatedException("Cannot create a field with void type");
+            }
+            fields[i] = new ClassField(field.name, type);
         }
 
         var methods = new Method[clazz.methods.size()];
