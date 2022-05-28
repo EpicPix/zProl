@@ -51,14 +51,12 @@ public class Compiler {
             if(token.getType() == TokenType.NAMED) {
                 var named = (NamedToken) token;
                 if("ReturnStatement".equals(named.name)) {
-                    Type retType = null;
                     if(!(sig.returnType() instanceof VoidType)) {
                         if(named.getTokenWithName("Expression") == null) {
                             throw new TokenLocatedException("Function is not void, expected a return value", named);
                         }
                         var types = new ArrayDeque<Type>();
                         generateInstructionsFromExpression(named.getTokenWithName("Expression"), sig.returnType(), types, data, localsManager, storage, false);
-                        retType = types.pop();
                     }
                     if(sig.returnType() instanceof VoidType) {
                         if(named.getTokenWithName("Expression") != null) {
@@ -67,7 +65,9 @@ public class Compiler {
                     }
                     if(sig.returnType() instanceof PrimitiveType primitive) {
                         storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "return"));
-                    }else {
+                    }else if(sig.returnType() instanceof BooleanType) {
+                        storage.pushInstruction(getConstructedSizeInstruction(8, "return"));
+                    }else if(!(sig.returnType() instanceof VoidType)) {
                         storage.pushInstruction(getConstructedInstruction("areturn"));
                     }
                     if(opens == 0) {
