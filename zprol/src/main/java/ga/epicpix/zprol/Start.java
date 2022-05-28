@@ -133,7 +133,7 @@ public class Start {
             var generated = GeneratedData.load(Files.readAllBytes(new File(normalName + ".zpil").toPath()));
             for(Generator gen : generators) {
                 long startGenerator = System.currentTimeMillis();
-                DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + gen.getFileExtension()));
+                DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(normalName + gen.getFileExtension())));
                 gen.generate(out, generated);
                 out.close();
                 long stopGenerator = System.currentTimeMillis();
