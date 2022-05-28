@@ -144,14 +144,14 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             else throw new IllegalStateException("Unsupported size " + size);
 
         });
-        instructionGenerators.put("ineq", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  cmp ecx, edx\n  cmove rax, 0\n  cmovne rax, 1\n  push rax\n");
-        instructionGenerators.put("lneq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  cmp rcx, rdx\n  cmove rax, 0\n  cmovne rax, 1\n  push rax\n");
-        instructionGenerators.put("ieq", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  cmp ecx, edx\n  cmove rax, 1\n  cmovne rax, 0\n  push rax\n");
-        instructionGenerators.put("leq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  cmp rcx, rdx\n  cmove rax, 1\n  cmovne rax, 0\n  push rax\n");
+        instructionGenerators.put("ineq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  cmp ecx, edx\n  xor rax, rax\n  mov rcx, 1\n  cmovne rax, rcx\n  push rax\n");
+        instructionGenerators.put("lneq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  cmp rcx, rdx\n  xor rax, rax\n  mov rcx, 1\n  cmovne rax, rcx\n  push rax\n");
+        instructionGenerators.put("ieq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  cmp ecx, edx\n  xor rax, rax\n  mov rcx, 1\n  cmove rax, rcx\n  push rax\n");
+        instructionGenerators.put("leq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  cmp rcx, rdx\n  xor rax, rax\n  mov rcx, 1\n  cmove rax, rcx\n  push rax\n");
         instructionGenerators.put("neqjmp", (i, s, f, lp) -> "  pop rax\n  cmp rax, 0\n  jne " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
         instructionGenerators.put("eqjmp", (i, s, f, lp) -> "  pop rax\n  cmp rax, 0\n  je " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
         instructionGenerators.put("badd", (i, s, f, lp) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
-        instructionGenerators.put("iadd", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  add ecx, edx\n  push ecx\n");
+        instructionGenerators.put("iadd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add ecx, edx\n  push rcx\n");
         instructionGenerators.put("ladd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
         instructionGenerators.put("bsub", (i, s, f, lp) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
         instructionGenerators.put("lsub", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  sub rcx, rdx\n  push rcx\n");
@@ -242,7 +242,6 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         for(var instr : function.code().getInstructions()) {
             if(instr.getName().equals("jmp") || instr.getName().equals("eqjmp") || instr.getName().equals("neqjmp")) {
                 labelList.add(c + ((Number) instr.getData()[0]).shortValue());
-                System.out.println("Thing " + instr.getName() + " " + (c + ((Number) instr.getData()[0]).shortValue()));
             }
             c++;
         }
