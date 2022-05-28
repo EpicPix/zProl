@@ -63,6 +63,8 @@ public final class Bytecode implements IBytecode {
         registerInstruction(104, "neqjmp", BytecodeValueType.SHORT);
         registerSizedInstruction(105, "load_array", new int[] {1, 2, 4, 8});
         registerInstruction(109, "aload_array");
+        registerSizedInstruction(110, "store_array", new int[] {1, 2, 4, 8});
+        registerInstruction(114, "astore_array");
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {

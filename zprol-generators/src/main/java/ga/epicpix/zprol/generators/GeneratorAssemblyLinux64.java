@@ -63,11 +63,16 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("lstore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("astore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("push_string", (i, s, f, lp) -> "  push _string" + lp.getOrCreateStringIndex((String) i.getData()[0]) + "\n");
-        instructionGenerators.put("bload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop rcx\n  pop rdx\n  mov byte cl, [rdx + rcx]\n  push cx\n");
-        instructionGenerators.put("sload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop rcx\n  pop rdx\n  mov word cx, [rdx + rcx]\n  push cx\n");
-        instructionGenerators.put("iload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop rcx\n  pop rdx\n  mov word rcx, [rdx + rcx * 8]\n  push rcx\n");
-        instructionGenerators.put("lload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop rcx\n  pop rdx\n  mov qword rcx, [rdx + rcx * 8]\n  push rcx\n");
-        instructionGenerators.put("aload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop rcx\n  pop rdx\n  mov qword rcx, [rdx + rcx * 8]\n  push rcx\n");
+        instructionGenerators.put("bload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov byte cl, [rdx + rcx]\n  push cx\n");
+        instructionGenerators.put("sload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov word cx, [rdx + rcx * 2]\n  push cx\n");
+        instructionGenerators.put("iload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov word ecx, [rdx + rcx * 4]\n  push rcx\n");
+        instructionGenerators.put("lload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov qword rcx, [rdx + rcx * 8]\n  push rcx\n");
+        instructionGenerators.put("aload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov qword rcx, [rdx + rcx * 8]\n  push rcx\n");
+        instructionGenerators.put("bstore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop ax\n  mov byte [rdx + rcx], al\n");
+        instructionGenerators.put("sstore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop ax\n  mov word [rdx + rcx * 2], ax\n");
+        instructionGenerators.put("istore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop rax\n  mov word [rdx + rcx * 4], eax\n");
+        instructionGenerators.put("lstore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop rax\n  mov qword [rdx + rcx * 8], rax\n");
+        instructionGenerators.put("astore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop rax\n  mov qword [rdx + rcx * 8], rax\n");
         instructionGenerators.put("class_field_load", (i, s, f, lp) -> {
             var clz = (Class) i.getData()[0];
             var fieldName = (String) i.getData()[1];
@@ -193,14 +198,6 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         if (FunctionModifiers.isEmptyCode(f.modifiers())) {
             if (isSyscall) {
                 args.append("  syscall\n");
-            } else if(f.name().equals("__set_array_byte")) {
-                args.append("  add rdi, rsi\n  mov byte [rdi], dl\n");
-            } else if(f.name().equals("__set_array_short")) {
-                args.append("  imul rsi, 2\n  add rdi, rsi\n  mov word [rdi], dx\n");
-            } else if(f.name().equals("__set_array_int")) {
-                args.append("  imul rsi, 4\n  add rdi, rsi\n  mov dword [rdi], edx\n");
-            } else if(f.name().equals("__set_array_long")) {
-                args.append("  imul rsi, 8\n  add rdi, rsi\n  mov qword [rdi], rdx\n");
             } else {
                 throw new FunctionNotDefinedException("Unknown native function " + f.name());
             }
@@ -221,6 +218,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }else if(ret instanceof ClassType) {
             args.append("  push rax\n");
         }else if(ret instanceof BooleanType) {
+            args.append("  push rax\n");
+        }else if(ret instanceof ArrayType) {
             args.append("  push rax\n");
         }else if(!(ret instanceof VoidType)) {
             throw new IllegalStateException("Cannot finish generating call instruction because of an unknown type '" + ret.getName() + "'");
@@ -268,6 +267,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 outStream.append(getMangledName(function.namespace(), function.name(), function.signature())).append(".").append(instructions.currentIndex() - 1).append(":\n");
             }
             var instruction = instructions.next();
+            outStream.append("; ").append(instruction.getName()).append("\n");
             var generator = instructionGenerators.get(instruction.getName());
             if(generator != null) {
                 outStream.append(generator.generateInstruction(instruction, instructions, function, localConstantPool));

@@ -6,7 +6,6 @@ import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.*;
-import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zpil.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
@@ -96,61 +95,51 @@ public class Compiler {
                         storage.pushInstruction(getConstructedInstruction("astore_local", local.index()));
                     }
                 } else if("AssignmentStatement".equals(named.name)) {
-                    var ids = new ArrayList<String>();
+                    var accessors = new ArrayList<NamedToken>();
                     for(Token t : named.getTokenWithName("Accessor").tokens) {
-                        if(t instanceof NamedToken tn && tn.name.equals("Identifier")) {
-                            ids.add(tn.tokens[0].asWordToken().getWord());
+                        if(t instanceof NamedToken tn && tn.name.equals("AccessorElement")) {
+                            accessors.add(tn);
                         }
                     }
-                    var name = ids.get(0);
+                    var name = named.getTokenWithName("Accessor").getSingleTokenWithName("Identifier").asWordToken().getWord();
                     var expression = named.getTokenWithName("Expression");
                     var local = localsManager.getLocalVariable(name);
-                    if(ids.size() == 1) {
-                        var types = new ArrayDeque<Type>();
-                        generateInstructionsFromExpression(expression, local.type(), types, data, localsManager, storage, false);
-                        if (types.pop() instanceof PrimitiveType primitive) {
-                            storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
-                        }else if (types.pop() instanceof BooleanType) {
-                            storage.pushInstruction(getConstructedSizeInstruction(8, "store_local", local.index()));
-                        }else if (types.pop() instanceof VoidType) {
+                    var types = new ArrayDeque<Type>();
+                    var queue = createStorage();
+                    var expected = local.type();
+                    types.push(expected);
+                    if(accessors.size() == 0) {
+                        generateInstructionsFromExpression(expression, expected, types, data, localsManager, queue, false);
+                        var castType = doCast(types.pop(), expected, false, queue, expression);
+                        if (castType instanceof PrimitiveType primitive) {
+                            queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
+                        } else if (castType instanceof BooleanType) {
+                            queue.pushInstruction(getConstructedSizeInstruction(8, "store_local", local.index()));
+                        } else if (castType instanceof VoidType) {
                             throw new TokenLocatedException("Cannot store void type");
                         } else {
-                            storage.pushInstruction(getConstructedInstruction("astore_local", local.index()));
+                            queue.pushInstruction(getConstructedInstruction("astore_local", local.index()));
                         }
-                    }else {
-                        ArrayList<IBytecodeInstruction> instructionQueue = new ArrayList<>();
-                        if (local.type() instanceof PrimitiveType primitive) {
-                            instructionQueue.add(getConstructedSizeInstruction(primitive.getSize(), "load_local", local.index()));
-                        }else if (local.type() instanceof BooleanType) {
-                            instructionQueue.add(getConstructedSizeInstruction(8, "load_local", local.index()));
-                        }else if (local.type() instanceof VoidType) {
+                    } else {
+                        var localType = local.type();
+                        if (localType instanceof PrimitiveType primitive) {
+                            queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_local", local.index()));
+                        } else if (localType instanceof BooleanType) {
+                            queue.pushInstruction(getConstructedSizeInstruction(8, "load_local", local.index()));
+                        } else if (localType instanceof VoidType) {
                             throw new TokenLocatedException("Cannot load void type");
                         } else {
-                            instructionQueue.add(getConstructedInstruction("aload_local", local.index()));
+                            queue.pushInstruction(getConstructedInstruction("aload_local", local.index()));
                         }
-                        var type = local.type();
-                        for(int i = 1; i<ids.size() - 1; i++) {
-                            var next = getClassFieldType(type, data, ids.get(i), token);
-                            if(type instanceof ClassType classType) {
-                                instructionQueue.add(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null, null), ids.get(i)));
-                            }else {
-                                throw new TokenLocatedException("Expected class in loadClassField");
-                            }
-                            type = next;
+                        for (int i = 0; i < accessors.size() - 1; i++) {
+                            getAccessor(accessors.get(i), types, data, storage, localsManager);
                         }
-                        var types = new ArrayDeque<Type>();
-                        var expected = getClassFieldType(type, data, ids.get(ids.size() - 1), token);
-                        generateInstructionsFromExpression(expression, expected, types, data, localsManager, storage, false);
-                        var got = types.pop();
-                        doCast(got, expected, false, storage, expression);
-                        for(var instr : instructionQueue) storage.pushInstruction(instr);
-
-                        if(type instanceof ClassType classType) {
-                            storage.pushInstruction(getConstructedInstruction("class_field_store", new Class(classType.getNamespace(), classType.getName(), null, null), ids.get(ids.size() - 1)));
-                        }else {
-                            throw new TokenLocatedException("Expected a class", named);
-                        }
+                        expected = setAccessor(accessors.get(accessors.size() - 1), types, data, queue, localsManager);
                     }
+                    generateInstructionsFromExpression(expression, expected, types, data, localsManager, storage, false);
+                    var got = types.pop();
+                    doCast(got, expected, false, storage, expression);
+                    for(var instr : queue.getInstructions()) storage.pushInstruction(instr);
                 } else if("IfStatement".equals(named.name)) {
                     var types = new ArrayDeque<Type>();
                     generateInstructionsFromExpression(named.getTokenWithName("Expression"), null, types, data, localsManager, storage, false);
@@ -243,7 +232,7 @@ public class Compiler {
             if(possibleFunctions.size() == 0) {
                 throw new FunctionNotDefinedException("Unknown function: " + name);
             }else if(possibleFunctions.size() != 1) {
-                throw new NotImplementedException("Cannot match overloaded parameter types");
+                throw new TokenLocatedException("Cannot match overloaded parameter types", token);
             }
 
             var func = possibleFunctions.get(0);
@@ -285,37 +274,28 @@ public class Compiler {
                 }
             }
         } else if(token.name.equals("Accessor")) {
-            var ids = new ArrayList<String>();
+            var accessors = new ArrayList<NamedToken>();
             for(Token t : token.tokens) {
-                if(t instanceof NamedToken tn && tn.name.equals("Identifier")) {
-                    ids.add(tn.tokens[0].asWordToken().getWord());
+                if(t instanceof NamedToken tn && tn.name.equals("AccessorElement")) {
+                    accessors.add(tn);
                 }
             }
-            var local = localsManager.tryGetLocalVariable(ids.get(0));
-            if(local != null) {
-                if(local.type() instanceof PrimitiveType primitive) {
-                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_local", local.index()));
-                }else if(local.type() instanceof BooleanType) {
-                    bytecode.pushInstruction(getConstructedSizeInstruction(8, "load_local", local.index()));
-                }else {
-                    bytecode.pushInstruction(getConstructedInstruction("aload_local", local.index()));
-                }
+            String firstAccess = token.getSingleTokenWithName("Identifier").asWordToken().getWord();
+            var local = localsManager.tryGetLocalVariable(firstAccess);
+            if(local == null) {
+                throw new TokenLocatedException("Unknown local variable '" + firstAccess + "'", token.getSingleTokenWithName("Identifier"));
+            }
+            if(local.type() instanceof PrimitiveType primitive)
+                bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_local", local.index()));
+            else if(local.type() instanceof BooleanType)
+                 bytecode.pushInstruction(getConstructedSizeInstruction(8, "load_local", local.index()));
+            else
+                bytecode.pushInstruction(getConstructedInstruction("aload_local", local.index()));
 
-                var type = local.type();
-                for(int i = 1; i<ids.size(); i++) {
-                    type = loadClassField(type, data, ids.get(i), token, bytecode);
-                }
-                types.push(type);
+            types.push(local.type());
 
-                for(var arr : token.getTokensWithName("ArrayAccessor")) {
-                    if(!(type instanceof ArrayType)) {
-                        throw new TokenLocatedException("Expected an array got '" + type.getName() + "'", arr);
-                    }
-                    type = ((ArrayType) type).type;
-                    generateInstructionsFromExpression(arr, type, types, data, localsManager, bytecode, false);
-                }
-            }else {
-                throw new TokenLocatedException("Not implemented looking in different scopes", token);
+            for(var accessor : accessors) {
+                getAccessor(accessor, types, data, bytecode, localsManager);
             }
         }else if(token.name.equals("ArrayAccessor")) {
             var arrayType = (ArrayType) types.pop();
@@ -440,53 +420,130 @@ public class Compiler {
         throw new TokenLocatedException("Unsupported implicit cast from " + from.getName() + " to " + to.getName(), location);
     }
 
-    public static Type getClassFieldType(Type type, CompiledData data, String field, Token token) {
-        if(type instanceof PrimitiveType) {
-            throw new TokenLocatedException("Cannot access fields of a primitive type", token);
-        }else if(type instanceof BooleanType) {
-            throw new TokenLocatedException("Cannot access fields of a boolean type", token);
-        }else if(type instanceof VoidType) {
-            throw new TokenLocatedException("Cannot access fields of a void type", token);
-        }else if(type instanceof ClassType classType) {
-            PreClass clz = null;
-            for(var p : data.getUsing()) {
-                if(classType.getNamespace() != null && !classType.getNamespace().equals(p.namespace)) continue;
-                for(var c : p.classes) {
-                    if(classType.getName().equals(c.name)) {
-                        clz = c;
+    public static void getAccessor(NamedToken accessor, ArrayDeque<Type> types, CompiledData data, IBytecodeStorage storage, LocalScopeManager localsManager) {
+        var type = types.pop();
+        if(accessor.getTokenWithName("Identifier") != null) {
+            String field = accessor.getSingleTokenWithName("Identifier").asWordToken().getWord();
+
+            if (type instanceof PrimitiveType) {
+                throw new TokenLocatedException("Cannot access fields of a primitive type", accessor);
+            } else if (type instanceof BooleanType) {
+                throw new TokenLocatedException("Cannot access fields of a boolean type", accessor);
+            } else if (type instanceof ArrayType) {
+                throw new TokenLocatedException("Cannot access fields of an array", accessor);
+            } else if (type instanceof VoidType) {
+                throw new TokenLocatedException("Cannot access fields of a void type", accessor);
+            } else if (type instanceof ClassType classType) {
+                PreClass clz = null;
+                for(var p : data.getUsing()) {
+                    if(classType.getNamespace() != null && !classType.getNamespace().equals(p.namespace)) continue;
+                    for(var c : p.classes) {
+                        if(classType.getName().equals(c.name)) {
+                            clz = c;
+                            break;
+                        }
+                    }
+                    if(clz != null) break;
+                }
+                if(clz == null) {
+                    throw new TokenLocatedException("Unknown type '" + classType + "'", accessor);
+                }
+
+                PreField found = null;
+                for(var f : clz.fields) {
+                    if(f.name.equals(field)) {
+                        found = f;
                         break;
                     }
                 }
-                if(clz != null) break;
-            }
-            if(clz == null) {
-                throw new TokenLocatedException("Unknown type '" + classType + "'", token);
-            }
-
-            PreField found = null;
-            for(var f : clz.fields) {
-                if(f.name.equals(field)) {
-                    found = f;
-                    break;
+                if(found == null) {
+                    throw new TokenLocatedException("Unable to find field '" + field + "' in '" + clz.name + "'", accessor);
                 }
+                storage.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null, null), field));
+                types.push(data.resolveType(found.type));
+            } else {
+                throw new TokenLocatedException("Unknown type " + type.getClass().getSimpleName(), accessor);
             }
-            if(found == null) {
-                throw new TokenLocatedException("Unable to find field '" + field + "' in '" + clz.name + "'", token);
+        }else if(accessor.getTokenWithName("ArrayAccessor") != null) {
+            if(!(type instanceof ArrayType)) {
+                throw new TokenLocatedException("Expected an array got '" + type.getName() + "'", accessor);
             }
-            return data.resolveType(found.type);
+            types.push(type);
+            generateInstructionsFromExpression(accessor.getTokenWithName("ArrayAccessor"), ((ArrayType) type).type, types, data, localsManager, storage, false);
+            var got = types.peek();
+            if(!((ArrayType) type).type.equals(got)) {
+                throw new TokenLocatedException("Could not get the value", accessor);
+            }
         }else {
-            throw new TokenLocatedException("Unknown type " + type.getClass().getSimpleName(), token);
+            throw new TokenLocatedException("Unknown accessor", accessor);
         }
     }
 
-    public static Type loadClassField(Type type, CompiledData data, String field, Token token, IBytecodeStorage bytecode) {
-        var next = getClassFieldType(type, data, field, token);
-        if(type instanceof ClassType classType) {
-            bytecode.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null, null), field));
+    public static Type setAccessor(NamedToken accessor, ArrayDeque<Type> types, CompiledData data, IBytecodeStorage storage, LocalScopeManager localsManager) {
+        var type = types.pop();
+        if(accessor.getTokenWithName("Identifier") != null) {
+            String field = accessor.getSingleTokenWithName("Identifier").asWordToken().getWord();
+
+            if (type instanceof PrimitiveType) {
+                throw new TokenLocatedException("Cannot access fields of a primitive type", accessor);
+            } else if (type instanceof BooleanType) {
+                throw new TokenLocatedException("Cannot access fields of a boolean type", accessor);
+            } else if (type instanceof ArrayType) {
+                throw new TokenLocatedException("Cannot access fields of an array", accessor);
+            } else if (type instanceof VoidType) {
+                throw new TokenLocatedException("Cannot access fields of a void type", accessor);
+            } else if (type instanceof ClassType classType) {
+                PreClass clz = null;
+                for(var p : data.getUsing()) {
+                    if(classType.getNamespace() != null && !classType.getNamespace().equals(p.namespace)) continue;
+                    for(var c : p.classes) {
+                        if(classType.getName().equals(c.name)) {
+                            clz = c;
+                            break;
+                        }
+                    }
+                    if(clz != null) break;
+                }
+                if(clz == null) {
+                    throw new TokenLocatedException("Unknown type '" + classType + "'", accessor);
+                }
+
+                PreField found = null;
+                for(var f : clz.fields) {
+                    if(f.name.equals(field)) {
+                        found = f;
+                        break;
+                    }
+                }
+                if(found == null) {
+                    throw new TokenLocatedException("Unable to find field '" + field + "' in '" + clz.name + "'", accessor);
+                }
+                storage.pushInstruction(getConstructedInstruction("class_field_store", new Class(classType.getNamespace(), classType.getName(), null, null), field));
+                return data.resolveType(found.type);
+            } else {
+                throw new TokenLocatedException("Unknown type " + type.getClass().getSimpleName(), accessor);
+            }
+        }else if(accessor.getTokenWithName("ArrayAccessor") != null) {
+            if(!(type instanceof ArrayType arrType)) {
+                throw new TokenLocatedException("Expected an array got '" + type.getName() + "'", accessor);
+            }
+            types.push(type);
+            var expr = accessor.getTokenWithName("ArrayAccessor").getTokenWithName("Expression");
+            generateInstructionsFromExpression(expr, null, types, data, localsManager, storage, false);
+            var got = types.pop();
+            if(!(got instanceof PrimitiveType)) {
+                throw new TokenLocatedException("Could not get the index", expr);
+            }
+            var arrayData = arrType.type;
+            if(arrayData instanceof PrimitiveType primitive) storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_array"));
+            else if(arrayData instanceof BooleanType) storage.pushInstruction(getConstructedSizeInstruction(8, "loastore_array"));
+            else if(arrayData instanceof ArrayType) storage.pushInstruction(getConstructedInstruction("astore_array"));
+            else if(arrayData instanceof ClassType) storage.pushInstruction(getConstructedInstruction("astore_array"));
+            else throw new TokenLocatedException("Unsupported type " + arrayData.getClass().getSimpleName(), accessor);
+            return arrayData;
         }else {
-            throw new TokenLocatedException("Expected class in loadClassField", token);
+            throw new TokenLocatedException("Unknown set accessor", accessor);
         }
-        return next;
     }
 
     public static void compileFunction(CompiledData data, PreFunction function) {

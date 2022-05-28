@@ -2,5 +2,5 @@ namespace zprol.lang;
 
 class String {
     uint64 length;
-    uint64 bytes;
+    byte[] bytes;
 }

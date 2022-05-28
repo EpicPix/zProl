@@ -354,9 +354,9 @@ inline int64 EXIT_SUCCESS() => return 0;
 inline int64 EXIT_FAILURE() => return 1;
 
 
-inline void write(uint64 fd, uint64 buf, uint64 length) => syscall(SYSCALL_WRITE(), fd, buf, length);
+inline void write(uint64 fd, byte[] buf, uint64 length) => syscall(SYSCALL_WRITE(), fd, (int64!) buf, length);
 
-inline void stdout(uint64 buf, uint64 length) => write(STDOUT(), buf, length);
+inline void stdout(byte[] buf, uint64 length) => write(STDOUT(), buf, length);
 inline void stdout(String str) => write(STDOUT(), str.bytes, str.length);
 
 inline void exit(uint64 exitCode) => syscall(SYSCALL_EXIT(), exitCode);

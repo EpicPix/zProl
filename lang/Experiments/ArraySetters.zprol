@@ -1,6 +1,0 @@
-namespace zprol.lang.experiments.array;
-
-native void __set_array_byte(byte[] array, long index, byte value);
-native void __set_array_short(short[] array, long index, short value);
-native void __set_array_int(int[] array, long index, int value);
-native void __set_array_long(long[] array, long index, long value);
