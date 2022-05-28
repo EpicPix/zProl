@@ -302,9 +302,35 @@ public class Compiler {
                     type = loadClassField(type, data, ids.get(i), token, bytecode);
                 }
                 types.push(type);
+
+                for(var arr : token.getTokensWithName("ArrayAccessor")) {
+                    if(!(type instanceof ArrayType)) {
+                        throw new TokenLocatedException("Expected an array got '" + type.getName() + "'", arr);
+                    }
+                    type = ((ArrayType) type).type;
+                    generateInstructionsFromExpression(arr, type, types, data, localsManager, bytecode, false);
+                }
             }else {
-                throw new NotImplementedException("Not implemented looking in different scopes");
+                throw new TokenLocatedException("Not implemented looking in different scopes", token);
             }
+        }else if(token.name.equals("ArrayAccessor")) {
+            var arrayType = (ArrayType) types.pop();
+            if(!arrayType.type.equals(expectedType)) {
+                throw new TokenLocatedException("Expected type does not match the array type", token);
+            }
+            var expr = token.getTokenWithName("Expression");
+            generateInstructionsFromExpression(expr, expectedType, types, data, localsManager, bytecode, false);
+            var expressionType = types.pop();
+            if(!(expressionType instanceof PrimitiveType)) {
+                throw new TokenLocatedException("Expected a primitive number", expr);
+            }
+            var arrayData = arrayType.type;
+            if(arrayData instanceof PrimitiveType primitive) bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_array"));
+            else if(arrayData instanceof BooleanType) bytecode.pushInstruction(getConstructedSizeInstruction(8, "load_array"));
+            else if(arrayData instanceof ArrayType) bytecode.pushInstruction(getConstructedInstruction("aload_array"));
+            else if(arrayData instanceof ClassType) bytecode.pushInstruction(getConstructedInstruction("aload_array"));
+            else throw new TokenLocatedException("Unsupported type " + arrayData.getClass().getSimpleName(), token);
+            types.push(arrayType.type);
         }else if(token.name.equals("String")) {
             var strChars = token.getSingleTokenWithName("StringChars");
             bytecode.pushInstruction(getConstructedInstruction("push_string", strChars != null ? strChars.asWordToken().getWord().replace("\\\"", "\"").replace("\\n", "\n").replace("\\0", "\0") : ""));
@@ -332,7 +358,8 @@ public class Compiler {
         generateInstructionsFromExpression(token.tokens[0].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
         var arg1 = types.pop();
 
-        generateInstructionsFromExpression(token.tokens[2].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
+        var tempStorage = createStorage();
+        generateInstructionsFromExpression(token.tokens[2].asNamedToken(), expectedType, types, data, localsManager, tempStorage, false);
         var arg2 = types.pop();
 
 
@@ -341,7 +368,17 @@ public class Compiler {
         }
         var bigger = prim1.getSize() > prim2.getSize() ? prim1 : prim2;
         var smaller = prim1.getSize() <= prim2.getSize() ? prim1 : prim2;
+        if(prim2 != bigger) {
+            for(var instr : tempStorage.getInstructions()) {
+                bytecode.pushInstruction(instr);
+            }
+        }
         var got = doCast(smaller, bigger, false, bytecode, token);
+        if(prim2 == bigger) {
+            for(var instr : tempStorage.getInstructions()) {
+                bytecode.pushInstruction(instr);
+            }
+        }
         var primitive = (PrimitiveType) got;
 
         var operator = token.tokens[1].asNamedToken().tokens[0].asWordToken().getWord();

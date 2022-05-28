@@ -61,6 +61,7 @@ public final class Bytecode implements IBytecode {
         registerInstruction(102, "jmp", BytecodeValueType.SHORT);
         registerInstruction(103, "eqjmp", BytecodeValueType.SHORT);
         registerInstruction(104, "neqjmp", BytecodeValueType.SHORT);
+        registerSizedInstruction(105, "load_array", new int[] {1, 2, 4, 8});
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {

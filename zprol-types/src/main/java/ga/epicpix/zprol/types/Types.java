@@ -20,7 +20,19 @@ public class Types {
         return TYPES.get(name);
     }
 
+    private static Type putInArrayType(Type type, int times) {
+        for(int i = 0; i<times; i++) {
+            type = new ArrayType(type);
+        }
+        return type;
+    }
+
     public static Type getTypeFromDescriptor(String descriptor) {
+        int arrTimes = 0;
+        while(descriptor.startsWith("[")) {
+            descriptor = descriptor.substring(1);
+            arrTimes++;
+        }
         if(descriptor.startsWith("C")) {
             if(!descriptor.endsWith(";")) return null;
             String data = descriptor.substring(1, descriptor.length() - 1);
@@ -28,14 +40,14 @@ public class Types {
             String namespace = descriptor.lastIndexOf('.') == -1 ? null : data.substring(0, data.lastIndexOf("."));
             String name = descriptor.lastIndexOf('.') == -1 ? data : data.substring(data.lastIndexOf('.') + 1);
 
-            return new ClassType(namespace, name);
+            return putInArrayType(new ClassType(namespace, name), arrTimes);
         }
         if(descriptor.equals("b")) {
-            return new BooleanType();
+            return putInArrayType(new BooleanType(), arrTimes);
         }
         for(var type : TYPES.values()) {
             if(type.getDescriptor().equals(descriptor)) {
-                return type;
+                return putInArrayType(type, arrTimes);
             }
         }
         return null;

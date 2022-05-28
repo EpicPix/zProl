@@ -45,7 +45,10 @@ def merge EqualsExpression $InclusiveOrExpression [ $EqualityOperators $EqualsEx
 
 def Expression $EqualsExpression
 
-def Accessor $Identifier { . $Identifier }
+def inline chars ArrayAccessorOpenCharacter [$Whitespace] <[>
+def inline chars ArrayAccessorCloseCharacter [$Whitespace] <]>
+def ArrayAccessor $ArrayAccessorOpenCharacter $Expression $ArrayAccessorCloseCharacter
+def Accessor $Identifier { . $Identifier } { $ArrayAccessor }
 
 def Boolean:
   true
@@ -61,9 +64,11 @@ def chars DecimalInteger:
 def chars NonZeroDecimalDigit <1-9>
 def chars DecimalDigits <0-9>
 
+def chars ArrayCharacters <[><]>
+
 def chars IdentifierChars <a-zA-Z_> { <a-zA-Z0-9_> }
 def chars Identifier [$Whitespace] $IdentifierChars
-def chars Type [$Whitespace] { $IdentifierChars <.> } $IdentifierChars
+def chars Type [$Whitespace] { $IdentifierChars <.> } $IdentifierChars { $ArrayCharacters }
 def chars clean Whitespace < \t\n> { < \t\n> }
 def chars StringChars <^\n"> { <^\n"> }
 def String " [$StringChars] "

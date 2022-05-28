@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>zProl</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <build>
         <plugins>
@@ -70,13 +70,8 @@
     <dependencies>
         <dependency>
             <groupId>ga.epicpix</groupId>
-            <artifactId>zpil</artifactId>
-            <version>1.0.2</version>
-        </dependency>
-        <dependency>
-            <groupId>ga.epicpix</groupId>
             <artifactId>zprol-generators</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -88,7 +83,7 @@
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zprol-compiler</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.3</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

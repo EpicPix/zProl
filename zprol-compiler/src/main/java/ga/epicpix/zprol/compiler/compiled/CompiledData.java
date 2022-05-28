@@ -9,6 +9,7 @@ import ga.epicpix.zprol.compiler.exceptions.RedefinedClassException;
 import ga.epicpix.zprol.compiler.exceptions.RedefinedFunctionException;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
+import ga.epicpix.zprol.types.ArrayType;
 import ga.epicpix.zprol.types.ClassType;
 import ga.epicpix.zprol.types.Type;
 import ga.epicpix.zprol.types.Types;
@@ -122,8 +123,18 @@ public class CompiledData {
     }
 
     public Type resolveType(String type) {
+        int arrAmount = 0;
+        while(type.endsWith("[]")) {
+            type = type.substring(0, type.length() - 2);
+            arrAmount++;
+        }
         var t = Types.getType(type);
-        if(t != null) return t;
+        if(t != null) {
+            for(int i = 0; i<arrAmount; i++) {
+                t = new ArrayType(t);
+            }
+            return t;
+        }
         String namespace = type.lastIndexOf('.') != -1 ? type.substring(0, type.lastIndexOf('.')) : null;
         String name = type.lastIndexOf('.') != -1 ? type.substring(type.lastIndexOf('.') + 1) : type;
         for(var data : using) {
@@ -134,7 +145,11 @@ public class CompiledData {
             }
             for(var clz : data.classes) {
                 if(clz.name.equals(name)) {
-                    return new ClassType(data.namespace, clz.name);
+                    t = new ClassType(data.namespace, clz.name);
+                    for(int i = 0; i<arrAmount; i++) {
+                        t = new ArrayType(t);
+                    }
+                    return t;
                 }
             }
         }

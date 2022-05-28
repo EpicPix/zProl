@@ -35,7 +35,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     private static final HashMap<String, InstructionGenerator> instructionGenerators = new HashMap<>();
 
     private static final String[] CALL_REGISTERS_64 = new String[] {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
-    private static final String[] CALL_REGISTERS_16 = new String[] {"dx", "sx", "dx", "cx", "r8w", "r9w"};
+    private static final String[] CALL_REGISTERS_16 = new String[] {"di", "sx", "dx", "cx", "r8w", "r9w"};
     private static final String[] SYSCALL_REGISTERS_64 = new String[] {"rax", "rdi", "rsi", "rdx", "r10", "r8", "r9"};
     private static final String[] SYSCALL_REGISTERS_16 = new String[] {"ax", "di", "sx", "dx", "r10w", "r8w", "r9w"};
 
@@ -43,6 +43,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("vreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  mov rsp, rbp\n  pop rbp\n" : "") + "  ret\n");
         instructionGenerators.put("breturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n" : "  pop ax\n") + "  ret\n");
         instructionGenerators.put("lreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n" : "  pop rax\n ") + "  ret\n");
+        instructionGenerators.put("areturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n" : "  pop rax\n ") + "  ret\n");
         instructionGenerators.put("bpush", (i, s, f, lp) -> {
             if(s.hasNext() && s.seek().getName().equals("breturn")) {
                 s.next();
@@ -79,10 +80,12 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("iload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("lload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("aload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("bstore_local", (i, s, f, lp) -> "  pop word [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("istore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("lstore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("astore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("push_string", (i, s, f, lp) -> "  push _string" + lp.getOrCreateStringIndex((String) i.getData()[0]) + "\n");
+        instructionGenerators.put("bload_array", (i, s, f, lp) -> "  mov rcx, 0\n  pop cx\n  pop rdx\n  mov byte cl, [rdx + rcx]\n  push cx\n");
         instructionGenerators.put("class_field_load", (i, s, f, lp) -> {
             var clz = (Class) i.getData()[0];
             var fieldName = (String) i.getData()[1];
@@ -95,6 +98,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 }
                 if(e.type() instanceof PrimitiveType t) offset += t.getSize();
                 else if(e.type() instanceof BooleanType) offset += 8;
+                else if(e.type() instanceof ArrayType) offset += 8;
                 else if(e.type() instanceof ClassType) offset += 8;
                 else throw new IllegalStateException("Cannot get size of type '" + e.type().getName() + "'");
             }
@@ -105,6 +109,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             int size = 0;
             if(field.type() instanceof ClassType) size = 8;
             else if(field.type() instanceof BooleanType) size = 8;
+            else if(field.type() instanceof ArrayType) size = 8;
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
             else throw new IllegalStateException("Cannot get size of type '" + field.type().getName() + "'");
 
@@ -127,6 +132,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 }
                 if(e.type() instanceof PrimitiveType t) offset += t.getSize();
                 else if(e.type() instanceof BooleanType) offset += 8;
+                else if(e.type() instanceof ArrayType) offset += 8;
                 else if(e.type() instanceof ClassType) offset += 8;
                 else throw new IllegalStateException("Cannot get size of type '" + e.type().getName() + "'");
             }
@@ -137,6 +143,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             int size = 0;
             if(field.type() instanceof ClassType) size = 8;
             else if(field.type() instanceof BooleanType) size = 8;
+            else if(field.type() instanceof ArrayType) size = 8;
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
             else throw new IllegalStateException("Cannot get size of type '" + field.type().getName() + "'");
 
@@ -174,6 +181,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("lpop", (i, s, f, lp) -> "  sub rsp, 8\n");
         instructionGenerators.put("apop", (i, s, f, lp) -> "  sub rsp, 8\n");
         instructionGenerators.put("ldup", (i, s, f, lp) -> "  pop rcx\n  push rcx\n  push rcx\n");
+        instructionGenerators.put("bcasti", (i, s, f, lp) -> "  pop cx\n  movsx ecx, cx\n  push rcx\n");
         instructionGenerators.put("bcastl", (i, s, f, lp) -> "  pop cx\n  movsx rcx, cx\n  push rcx\n");
         instructionGenerators.put("icastl", (i, s, f, lp) -> "  pop rcx\n  movsxd rcx, ecx\n  push rcx\n");
         instructionGenerators.put("lcasts", (i, s, f, lp) -> "  pop rcx\n  push cx\n");
@@ -184,8 +192,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         StringBuilder args = new StringBuilder();
         boolean isSyscall = FunctionModifiers.isEmptyCode(f.modifiers()) && f.name().equals("syscall");
 
-        int x = f.signature().parameters().length - 1;
-        for(var param : f.signature().parameters()) {
+        var params = f.signature().parameters();
+        for(int x = params.length - 1; x>=0; x--) {
+            var param = params[x];
             if(param instanceof PrimitiveType primitive) {
                 if (primitive.getSize() == 1 || primitive.getSize() == 2) {
                     args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_16[x] : CALL_REGISTERS_16[x]).append("\n");
@@ -197,14 +206,21 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }else {
                 args.append("  pop ").append(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]).append("\n");
             }
-            x--;
         }
 
         if (FunctionModifiers.isEmptyCode(f.modifiers())) {
             if (isSyscall) {
                 args.append("  syscall\n");
+            } else if(f.name().equals("__set_array_byte")) {
+                args.append("  add rdi, rsi\n  mov byte [rdi], dl\n");
+            } else if(f.name().equals("__set_array_short")) {
+                args.append("  imul rsi, 2\n  add rdi, rsi\n  mov byte [rdi], dx\n");
+            } else if(f.name().equals("__set_array_int")) {
+                args.append("  imul rsi, 4\n  add rdi, rsi\n  mov byte [rdi], edx\n");
+            } else if(f.name().equals("__set_array_long")) {
+                args.append("  imul rsi, 8\n  add rdi, rsi\n  mov byte [rdi], rdx\n");
             } else {
-                throw new FunctionNotDefinedException("Unknown function " + f.name());
+                throw new FunctionNotDefinedException("Unknown native function " + f.name());
             }
         } else {
             args.append("  call ").append(getMangledName(f.namespace(), f.name(), f.signature())).append("\n");
@@ -307,7 +323,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     }
 
     public static String getMangledName(String namespace, String name, FunctionSignature signature) {
-        return (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + signature.toString().replace("(", "").replace(")", "").replace(";", "");
+        return (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + signature.toString().replace("(", "").replace(")", "").replace(";", "").replace("[", "r");
     }
 
 }
