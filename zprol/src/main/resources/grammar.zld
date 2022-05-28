@@ -113,12 +113,16 @@ def CreateAssignmentStatement:
 def IfStatement:
   if ( $Expression ) $Code
 
+def WhileStatement:
+  while ( $Expression ) $Code
+
 def Statement:
   $ReturnStatement
   $FunctionCallStatement
   $AssignmentStatement
   $CreateAssignmentStatement
   $IfStatement
+  $WhileStatement
 
 def inline chars LineCodeChars [$Whitespace] <=> <\>>
 

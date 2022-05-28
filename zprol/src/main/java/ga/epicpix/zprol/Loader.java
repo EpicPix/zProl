@@ -38,6 +38,8 @@ public class Loader {
         registerKeyword("class", "definition");
 
         registerKeyword("return", "control");
+        registerKeyword("if", "control");
+        registerKeyword("while", "control");
 
         registerKeyword("native", "function_modifier");
         registerKeyword("inline", "function_modifier");

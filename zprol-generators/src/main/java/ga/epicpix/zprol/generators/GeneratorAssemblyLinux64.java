@@ -76,8 +76,10 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             return "  push " + v + "\n";
         });
         instructionGenerators.put("bload_local", (i, s, f, lp) -> "  push word [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("iload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("lload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("aload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("istore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("lstore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("astore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("push_string", (i, s, f, lp) -> "  push _string" + lp.getOrCreateStringIndex((String) i.getData()[0]) + "\n");
@@ -151,6 +153,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("leq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  xor rax, rax\n  cmp rcx, rdx\n  mov rcx, 1\n  cmove rax, rcx\n  push rax\n");
         instructionGenerators.put("neqjmp", (i, s, f, lp) -> "  pop rax\n  cmp rax, 0\n  je " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
         instructionGenerators.put("eqjmp", (i, s, f, lp) -> "  pop rax\n  cmp rax, 0\n  jne " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
+        instructionGenerators.put("jmp", (i, s, f, lp) -> "  jmp " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
         instructionGenerators.put("badd", (i, s, f, lp) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
         instructionGenerators.put("iadd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add ecx, edx\n  push rcx\n");
         instructionGenerators.put("ladd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
@@ -217,8 +220,12 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             } else {
                 throw new NotImplementedException("Not implemented size " + primitive.getSize());
             }
-        }else {
+        }else if(ret instanceof ClassType) {
             args.append("  push rax\n");
+        }else if(ret instanceof BooleanType) {
+            args.append("  push rax\n");
+        }else if(!(ret instanceof VoidType)) {
+            throw new IllegalStateException("Cannot finish generating call instruction because of an unknown type '" + ret.getName() + "'");
         }
         return args.toString();
     }

@@ -163,6 +163,22 @@ public class Compiler {
                     int preInstr = storage.getInstructions().size();
                     parseFunctionCode(data, new SeekIterator<>(statements), sig, names, storage, localsManager);
                     storage.pushInstruction(preInstr, getConstructedInstruction("neqjmp", storage.getInstructions().size()-preInstr));
+                } else if("WhileStatement".equals(named.name)) {
+                    var types = new ArrayDeque<Type>();
+                    int preInstr = storage.getInstructions().size() - 1;
+                    generateInstructionsFromExpression(named.getTokenWithName("Expression"), null, types, data, localsManager, storage, false);
+                    var ret = types.pop();
+                    if(!(ret instanceof BooleanType)) {
+                        throw new TokenLocatedException("Expected boolean expression", named.getTokenWithName("Expression"));
+                    }
+                    int addInstr = storage.getInstructions().size();
+                    var statements = new ArrayList<Token>();
+                    for(var statement : named.getTokenWithName("Code").getTokensWithName("Statement")) {
+                        statements.add(statement.tokens[0]);
+                    }
+                    parseFunctionCode(data, new SeekIterator<>(statements), sig, names, storage, localsManager);
+                    storage.pushInstruction(addInstr, getConstructedInstruction("neqjmp", storage.getInstructions().size()-addInstr+1));
+                    storage.pushInstruction(getConstructedInstruction("jmp", preInstr-storage.getInstructions().size()));
                 } else {
                     throw new TokenLocatedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens), named);
                 }
