@@ -43,35 +43,34 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     private static final String[] SYSCALL_REGISTERS_16 = new String[] {"ax", "di", "sx", "dx", "r10w", "r8w", "r9w"};
 
     static {
-        // embedded methods skip return, unsafe
-        instructionGenerators.put("vreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  mov rsp, rbp\n  pop rbp\n" : "") + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n"));
-        instructionGenerators.put("breturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n" : "  pop ax\n") + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n"));
-        instructionGenerators.put("lreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n" : "  pop rax\n ") + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n"));
+        instructionGenerators.put("vreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  mov rsp, rbp\n  pop rbp\n" : "") + "  ret\n");
+        instructionGenerators.put("breturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n" : "  pop ax\n") + "  ret\n");
+        instructionGenerators.put("lreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n" : "  pop rax\n ") + "  ret\n");
         instructionGenerators.put("bpush", (i, s, f, lp) -> {
             if(s.hasNext() && s.seek().getName().equals("breturn")) {
                 s.next();
-                return "  mov al, " + i.getData()[0] + "\n" + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n");
+                return "  mov al, " + i.getData()[0] + "\n  ret\n";
             }
             return "  push word " + i.getData()[0] + "\n";
         });
         instructionGenerators.put("spush", (i, s, f, lp) -> {
             if(s.hasNext() && s.seek().getName().equals("sreturn")) {
                 s.next();
-                return "  mov ax, " + i.getData()[0] + "\n" + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n");
+                return "  mov ax, " + i.getData()[0] + "\n  ret\n";
             }
             return "  push word " + i.getData()[0] + "\n";
         });
         instructionGenerators.put("ipush", (i, s, f, lp) -> {
             if(s.hasNext() && s.seek().getName().equals("ireturn")) {
                 s.next();
-                return "  mov eax, " + i.getData()[0] + "\n" + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n");
+                return "  mov eax, " + i.getData()[0] + "\n  ret\n";
             }
             return "  push qword " + i.getData()[0] + "\n";
         });
         instructionGenerators.put("lpush", (i, s, f, lp) -> {
             if(s.hasNext() && s.seek().getName().equals("lreturn")) {
                 s.next();
-                return "  mov rax, " + i.getData()[0] + "\n" + (FunctionModifiers.isEmbedCode(f.modifiers()) ? "" : "  ret\n");
+                return "  mov rax, " + i.getData()[0] + "\n  ret\n";
             }
             long v = ((Number) i.getData()[0]).longValue();
             if(v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
@@ -96,7 +95,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                     break;
                 }
                 if(e.type() instanceof PrimitiveType t) offset += t.getSize();
-                else if(e.type() instanceof BooleanType) offset += 1;
+                else if(e.type() instanceof BooleanType) offset += 8;
                 else offset += 8;
             }
             if(field == null) {
@@ -105,7 +104,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
             int size = 0;
             if(field.type() instanceof ClassType) size = 8;
-            else if(field.type() instanceof BooleanType) size = 1;
+            else if(field.type() instanceof BooleanType) size = 8;
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
 
             if(size == 1) return "  pop rcx\n  mov dl, [rcx+" + offset + "]\n  push dx\n";
@@ -126,7 +125,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                     break;
                 }
                 if(e.type() instanceof PrimitiveType t) offset += t.getSize();
-                else if(e.type() instanceof BooleanType) offset += 1;
+                else if(e.type() instanceof BooleanType) offset += 8;
                 else offset += 8;
             }
             if(field == null) {
@@ -135,7 +134,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
             int size = 0;
             if(field.type() instanceof ClassType) size = 8;
-            else if(field.type() instanceof BooleanType) size = 1;
+            else if(field.type() instanceof BooleanType) size = 8;
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
 
             if(size == 1) return "  pop rcx\n  pop dx\n  mov dl, [rcx+" + offset + "]\n";
@@ -145,8 +144,12 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             else throw new IllegalStateException("Unsupported size " + size);
 
         });
-        instructionGenerators.put("ineq", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  cmp ecx, edx\n");
-        instructionGenerators.put("neqjmp", (i, s, f, lp) -> "  jne " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
+        instructionGenerators.put("ineq", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  cmp ecx, edx\n  cmove rax, 0\n  cmovne rax, 1\n  push rax\n");
+        instructionGenerators.put("lneq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  cmp rcx, rdx\n  cmove rax, 0\n  cmovne rax, 1\n  push rax\n");
+        instructionGenerators.put("ieq", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  cmp ecx, edx\n  cmove rax, 1\n  cmovne rax, 0\n  push rax\n");
+        instructionGenerators.put("leq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  cmp rcx, rdx\n  cmove rax, 1\n  cmovne rax, 0\n  push rax\n");
+        instructionGenerators.put("neqjmp", (i, s, f, lp) -> "  pop rax\n  cmp rax, 0\n  jne " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
+        instructionGenerators.put("eqjmp", (i, s, f, lp) -> "  pop rax\n  cmp rax, 0\n  je " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
         instructionGenerators.put("badd", (i, s, f, lp) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
         instructionGenerators.put("iadd", (i, s, f, lp) -> "  pop ecx\n  pop edx\n  add ecx, edx\n  push ecx\n");
         instructionGenerators.put("ladd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
@@ -160,6 +163,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("apop", (i, s, f, lp) -> "  sub rsp, 8\n");
         instructionGenerators.put("ldup", (i, s, f, lp) -> "  pop rcx\n  push rcx\n  push rcx\n");
         instructionGenerators.put("bcastl", (i, s, f, lp) -> "  pop cx\n  movsx rcx, cx\n  push rcx\n");
+        instructionGenerators.put("icastl", (i, s, f, lp) -> "  pop ecx\n  movsxd rcx, ecx\n  push rcx\n");
         instructionGenerators.put("lcasts", (i, s, f, lp) -> "  pop rcx\n  push cx\n");
         instructionGenerators.put("invoke", (i, s, func, lp) -> invokeMethod((Function) i.getData()[0], lp));
     }
@@ -236,8 +240,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         var labelList = new ArrayList<Integer>();
         int c = 0;
         for(var instr : function.code().getInstructions()) {
-            if(instr.getName().equals("neqjmp")) {
+            if(instr.getName().equals("jmp") || instr.getName().equals("eqjmp") || instr.getName().equals("neqjmp")) {
                 labelList.add(c + ((Number) instr.getData()[0]).shortValue());
+                System.out.println("Thing " + instr.getName() + " " + (c + ((Number) instr.getData()[0]).shortValue()));
             }
             c++;
         }

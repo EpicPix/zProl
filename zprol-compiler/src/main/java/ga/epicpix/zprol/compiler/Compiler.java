@@ -33,11 +33,16 @@ public class Compiler {
         for(int i = 0; i<names.length; i++) {
             localsManager.getCurrentScope().defineLocalVariable(names[i], sig.parameters()[i]);
         }
-        parseFunctionCode(data, tokens, sig, names, storage, localsManager);
+        boolean hasReturned = parseFunctionCode(data, tokens, sig, names, storage, localsManager);
+        if(!hasReturned) {
+            if(!(sig.returnType() instanceof PrimitiveType primitive) || primitive.getSize() != 0) throw new TokenLocatedException("Missing return statement", tokens.current());
+            storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
+        }
+        storage.setLocalsSize(localsManager.getLocalVariablesSize());
         return storage;
     }
 
-    public static void parseFunctionCode(CompiledData data, SeekIterator<Token> tokens, FunctionSignature sig, String[] names, IBytecodeStorage storage, LocalScopeManager localsManager) {
+    public static boolean parseFunctionCode(CompiledData data, SeekIterator<Token> tokens, FunctionSignature sig, String[] names, IBytecodeStorage storage, LocalScopeManager localsManager) {
         localsManager.newScope();
         int opens = 0;
         boolean hasReturned = false;
@@ -150,11 +155,7 @@ public class Compiler {
                 }
             }
         }
-        if(!hasReturned) {
-            if(!(sig.returnType() instanceof PrimitiveType primitive) || primitive.getSize() != 0) throw new TokenLocatedException("Missing return statement", tokens.current());
-            storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
-        }
-        storage.setLocalsSize(localsManager.getLocalVariablesSize());
+        return hasReturned;
     }
 
     public static void generateInstructionsFromExpression(NamedToken token, Type expectedType, ArrayDeque<Type> types, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
