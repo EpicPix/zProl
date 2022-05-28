@@ -148,8 +148,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("lneq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  xor rax, rax\n  cmp rcx, rdx\n  mov rcx, 1\n  cmovne rax, rcx\n  push rax\n");
         instructionGenerators.put("ieq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  xor rax, rax\n  cmp ecx, edx\n  mov rcx, 1\n  cmove rax, rcx\n  push rax\n");
         instructionGenerators.put("leq", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  xor rax, rax\n  cmp rcx, rdx\n  mov rcx, 1\n  cmove rax, rcx\n  push rax\n");
-        instructionGenerators.put("neqjmp", (i, s, f, lp) -> "  pop rax\n  cmp rax, 0\n  jne " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
-        instructionGenerators.put("eqjmp", (i, s, f, lp) -> "  pop rax\n  cmp rax, 0\n  je " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
+        instructionGenerators.put("neqjmp", (i, s, f, lp) -> "  pop rax\n  cmp rax, 0\n  je " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
+        instructionGenerators.put("eqjmp", (i, s, f, lp) -> "  pop rax\n  cmp rax, 0\n  jne " + (getMangledName(f.namespace(), f.name(), f.signature()) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())) + "\n");
         instructionGenerators.put("badd", (i, s, f, lp) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
         instructionGenerators.put("iadd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add ecx, edx\n  push rcx\n");
         instructionGenerators.put("ladd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
