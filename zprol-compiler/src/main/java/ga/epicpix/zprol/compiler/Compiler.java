@@ -52,7 +52,7 @@ public class Compiler {
                 var named = (NamedToken) token;
                 if("ReturnStatement".equals(named.name)) {
                     Type retType = null;
-                    if(!(sig.returnType() instanceof PrimitiveType primitive) || primitive.getSize() != 0) {
+                    if(!(sig.returnType() instanceof VoidType)) {
                         if(named.getTokenWithName("Expression") == null) {
                             throw new TokenLocatedException("Function is not void, expected a return value", named);
                         }
@@ -60,7 +60,7 @@ public class Compiler {
                         generateInstructionsFromExpression(named.getTokenWithName("Expression"), sig.returnType(), types, data, localsManager, storage, false);
                         retType = types.pop();
                     }
-                    if(sig.returnType() instanceof PrimitiveType primitive && primitive.getSize() == 0) {
+                    if(sig.returnType() instanceof VoidType) {
                         if(named.getTokenWithName("Expression") != null) {
                             throw new TokenLocatedException("Function is void, expected no value", named);
                         }
