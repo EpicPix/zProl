@@ -58,7 +58,7 @@
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zprol-types</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
