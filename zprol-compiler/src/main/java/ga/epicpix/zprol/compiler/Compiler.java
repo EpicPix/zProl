@@ -153,7 +153,17 @@ public class Compiler {
                     }
                     int preInstr = storage.getInstructions().size();
                     parseFunctionCode(data, new SeekIterator<>(statements), sig, names, storage, localsManager);
-                    storage.pushInstruction(preInstr, getConstructedInstruction("neqjmp", storage.getInstructions().size()-preInstr));
+                    int postInstr = storage.getInstructions().size();
+                    if(named.getTokenWithName("ElseStatement") != null) {
+                        var elseStatements = new ArrayList<Token>();
+                        for(var statement : named.getTokenWithName("ElseStatement").getTokenWithName("Code").getTokensWithName("Statement")) {
+                            elseStatements.add(statement.tokens[0]);
+                        }
+                        parseFunctionCode(data, new SeekIterator<>(elseStatements), sig, names, storage, localsManager);
+                        storage.pushInstruction(postInstr, getConstructedInstruction("jmp", storage.getInstructions().size()-postInstr));
+                        postInstr++;
+                    }
+                    storage.pushInstruction(preInstr, getConstructedInstruction("neqjmp", postInstr-preInstr));
                 } else if("WhileStatement".equals(named.name)) {
                     var types = new ArrayDeque<Type>();
                     int preInstr = storage.getInstructions().size() - 1;
