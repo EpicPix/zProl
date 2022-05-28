@@ -115,7 +115,7 @@ public class Compiler {
                         }
                         var type = local.type();
                         for(int i = 1; i<ids.size() - 1; i++) {
-                            var next = getClassFieldType(type, data, ids.get(i));
+                            var next = getClassFieldType(type, data, ids.get(i), token);
                             if(type instanceof ClassType classType) {
                                 instructionQueue.add(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null, null), ids.get(i)));
                             }else {
@@ -124,7 +124,7 @@ public class Compiler {
                             type = next;
                         }
                         var types = new ArrayDeque<Type>();
-                        var expected = getClassFieldType(type, data, ids.get(ids.size() - 1));
+                        var expected = getClassFieldType(type, data, ids.get(ids.size() - 1), token);
                         generateInstructionsFromExpression(expression, expected, types, data, localsManager, storage, false);
                         var got = types.pop();
                         doCast(got, expected, false, storage);
@@ -170,6 +170,8 @@ public class Compiler {
                     }else {
                         types.push(primitive);
                     }
+                }else if(prob instanceof BooleanType) {
+                    bytecode.pushInstruction(getConstructedSizeInstruction(8, "pop"));
                 }else {
                     bytecode.pushInstruction(getConstructedInstruction("apop"));
                 }
@@ -234,6 +236,8 @@ public class Compiler {
                 if(primitive.getSize() != 0) {
                     bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
                 }
+            }else if(discardValue && returnType instanceof BooleanType) {
+                bytecode.pushInstruction(getConstructedSizeInstruction(8, "pop"));
             }else if(discardValue) {
                 bytecode.pushInstruction(getConstructedInstruction("apop"));
             }else {
@@ -254,13 +258,15 @@ public class Compiler {
             if(local != null) {
                 if(local.type() instanceof PrimitiveType primitive) {
                     bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_local", local.index()));
+                }else if(local.type() instanceof BooleanType) {
+                    bytecode.pushInstruction(getConstructedSizeInstruction(8, "load_local", local.index()));
                 }else {
                     bytecode.pushInstruction(getConstructedInstruction("aload_local", local.index()));
                 }
 
                 var type = local.type();
                 for(int i = 1; i<ids.size(); i++) {
-                    type = loadClassField(type, data, ids.get(i), bytecode);
+                    type = loadClassField(type, data, ids.get(i), token, bytecode);
                 }
                 types.push(type);
             }else {
@@ -355,9 +361,11 @@ public class Compiler {
         throw new TokenLocatedException("Unsupported cast from " + from.getName() + " to " + to.getName());
     }
 
-    public static Type getClassFieldType(Type type, CompiledData data, String field) {
+    public static Type getClassFieldType(Type type, CompiledData data, String field, Token token) {
         if(type instanceof PrimitiveType) {
-            throw new TokenLocatedException("Cannot access fields of a primitive type");
+            throw new TokenLocatedException("Cannot access fields of a primitive type", token);
+        }else if(type instanceof BooleanType) {
+            throw new TokenLocatedException("Cannot access fields of a boolean type", token);
         }else if(type instanceof ClassType classType) {
             PreClass clz = null;
             for(var p : data.getUsing()) {
@@ -371,7 +379,7 @@ public class Compiler {
                 if(clz != null) break;
             }
             if(clz == null) {
-                throw new TokenLocatedException("Unknown type '" + classType + "'");
+                throw new TokenLocatedException("Unknown type '" + classType + "'", token);
             }
 
             PreField found = null;
@@ -382,16 +390,16 @@ public class Compiler {
                 }
             }
             if(found == null) {
-                throw new TokenLocatedException("Unable to find field '" + field + "' in '" + clz.name + "'");
+                throw new TokenLocatedException("Unable to find field '" + field + "' in '" + clz.name + "'", token);
             }
             return data.resolveType(found.type);
         }else {
-            throw new TokenLocatedException("Unknown type " + type.getClass().getSimpleName());
+            throw new TokenLocatedException("Unknown type " + type.getClass().getSimpleName(), token);
         }
     }
 
-    public static Type loadClassField(Type type, CompiledData data, String field, IBytecodeStorage bytecode) {
-        var next = getClassFieldType(type, data, field);
+    public static Type loadClassField(Type type, CompiledData data, String field, Token token, IBytecodeStorage bytecode) {
+        var next = getClassFieldType(type, data, field, token);
         if(type instanceof ClassType classType) {
             bytecode.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null, null), field));
         }else {
