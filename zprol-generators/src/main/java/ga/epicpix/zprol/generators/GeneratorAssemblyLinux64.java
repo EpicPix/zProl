@@ -157,13 +157,21 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("lsub", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  sub rcx, rdx\n  push rcx\n");
         instructionGenerators.put("bmul", (i, s, f, lp) -> "  pop cx\n  pop dx\n  imul cx, dx\n  push cx\n");
         instructionGenerators.put("lmul", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  imul rcx, rdx\n  push rcx\n");
+        instructionGenerators.put("idiv", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  xor rdx, rdx\n  idiv ecx\n  push rax\n");
+        instructionGenerators.put("ldiv", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  xor rdx, rdx\n  idiv rcx\n  push rax\n");
+        instructionGenerators.put("idivu", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  xor rdx, rdx\n  div ecx\n  push rax\n");
+        instructionGenerators.put("ldivu", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  xor rdx, rdx\n  div rcx\n  push rax\n");
+        instructionGenerators.put("imod", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  xor rdx, rdx\n  idiv ecx\n  push rdx\n");
+        instructionGenerators.put("lmod", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  xor rdx, rdx\n  idiv rcx\n  push rdx\n");
+        instructionGenerators.put("imodu", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  xor rdx, rdx\n  div ecx\n  push rdx\n");
+        instructionGenerators.put("lmodu", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  xor rdx, rdx\n  div rcx\n  push rdx\n");
         instructionGenerators.put("lmulu", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  mov rdx, 0\n  mul rcx\n  push rdx\n");
         instructionGenerators.put("lor", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  or rcx, rdx\n  push rcx\n");
         instructionGenerators.put("lpop", (i, s, f, lp) -> "  sub rsp, 8\n");
         instructionGenerators.put("apop", (i, s, f, lp) -> "  sub rsp, 8\n");
         instructionGenerators.put("ldup", (i, s, f, lp) -> "  pop rcx\n  push rcx\n  push rcx\n");
         instructionGenerators.put("bcastl", (i, s, f, lp) -> "  pop cx\n  movsx rcx, cx\n  push rcx\n");
-        instructionGenerators.put("icastl", (i, s, f, lp) -> "  pop ecx\n  movsxd rcx, ecx\n  push rcx\n");
+        instructionGenerators.put("icastl", (i, s, f, lp) -> "  pop rcx\n  movsxd rcx, ecx\n  push rcx\n");
         instructionGenerators.put("lcasts", (i, s, f, lp) -> "  pop rcx\n  push cx\n");
         instructionGenerators.put("invoke", (i, s, func, lp) -> invokeMethod((Function) i.getData()[0], lp));
     }

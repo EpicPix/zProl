@@ -323,6 +323,10 @@ public class Compiler {
                 if (primitive.isUnsigned()) bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "divu"));
                 else bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "div"));
             }
+            case "%" -> {
+                if (primitive.isUnsigned()) bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "modu"));
+                else bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "mod"));
+            }
             case "|" -> bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "or"));
             case "==" -> {
                 bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "eq"));
