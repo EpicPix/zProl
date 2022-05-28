@@ -37,6 +37,14 @@
         </plugins>
     </build>
 
+    <repositories>
+        <repository>
+            <id>epicpix-releases</id>
+            <name>Maven EpicPix Repository</name>
+            <url>https://maven.epicpix.ga/releases/</url>
+        </repository>
+    </repositories>
+
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
