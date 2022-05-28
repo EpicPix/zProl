@@ -32,7 +32,7 @@ public class LocalScope {
         }else {
             localVariableSizeIndex += 8;
         }
-        LocalVariable localVar = new LocalVariable(name, type, localVariableSizeIndex);
+        LocalVariable localVar = new LocalVariable(name, type, getLocalVariablesSize());
         localVariables.add(localVar);
         return localVar;
     }
@@ -71,12 +71,16 @@ public class LocalScope {
         return localVariableSizeIndex;
     }
 
+    public int getUsed() {
+        return used;
+    }
+
     public int getLocalVariablesSize() {
         if(parent != null) return parent.getLocalVariablesSize() + localVariableSizeIndex + used;
         return localVariableSizeIndex + used;
     }
 
-    public void setParentUsed(int used) {
+    public void setUsed(int used) {
         if(this.used < used) {
             this.used = used;
         }

@@ -42,34 +42,12 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     static {
         instructionGenerators.put("vreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  mov rsp, rbp\n  pop rbp\n" : "") + "  ret\n");
         instructionGenerators.put("breturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop ax\n  mov rsp, rbp\n  pop rbp\n" : "  pop ax\n") + "  ret\n");
-        instructionGenerators.put("lreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n" : "  pop rax\n ") + "  ret\n");
-        instructionGenerators.put("areturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n" : "  pop rax\n ") + "  ret\n");
-        instructionGenerators.put("bpush", (i, s, f, lp) -> {
-            if(s.hasNext() && s.seek().getName().equals("breturn")) {
-                s.next();
-                return "  mov al, " + i.getData()[0] + "\n  ret\n";
-            }
-            return "  push word " + i.getData()[0] + "\n";
-        });
-        instructionGenerators.put("spush", (i, s, f, lp) -> {
-            if(s.hasNext() && s.seek().getName().equals("sreturn")) {
-                s.next();
-                return "  mov ax, " + i.getData()[0] + "\n  ret\n";
-            }
-            return "  push word " + i.getData()[0] + "\n";
-        });
-        instructionGenerators.put("ipush", (i, s, f, lp) -> {
-            if(s.hasNext() && s.seek().getName().equals("ireturn")) {
-                s.next();
-                return "  mov eax, " + i.getData()[0] + "\n  ret\n";
-            }
-            return "  push qword " + i.getData()[0] + "\n";
-        });
+        instructionGenerators.put("lreturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n" : "  pop rax\n") + "  ret\n");
+        instructionGenerators.put("areturn", (i, s, f, lp) -> (f.code().getLocalsSize() != 0 ? "  pop rax\n  mov rsp, rbp\n  pop rbp\n" : "  pop rax\n") + "  ret\n");
+        instructionGenerators.put("bpush", (i, s, f, lp) -> "  push word " + i.getData()[0] + "\n");
+        instructionGenerators.put("spush", (i, s, f, lp) -> "  push word " + i.getData()[0] + "\n");
+        instructionGenerators.put("ipush", (i, s, f, lp) -> "  push qword " + i.getData()[0] + "\n");
         instructionGenerators.put("lpush", (i, s, f, lp) -> {
-            if(s.hasNext() && s.seek().getName().equals("lreturn")) {
-                s.next();
-                return "  mov rax, " + i.getData()[0] + "\n  ret\n";
-            }
             long v = ((Number) i.getData()[0]).longValue();
             if(v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
                 return "  mov rax, " + v + "\n  push rax\n";
@@ -182,8 +160,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("lmodu", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  xor rdx, rdx\n  div rcx\n  push rdx\n");
         instructionGenerators.put("lmulu", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  mov rdx, 0\n  mul rcx\n  push rdx\n");
         instructionGenerators.put("lor", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  or rcx, rdx\n  push rcx\n");
-        instructionGenerators.put("lpop", (i, s, f, lp) -> "  sub rsp, 8\n");
-        instructionGenerators.put("apop", (i, s, f, lp) -> "  sub rsp, 8\n");
+        instructionGenerators.put("lpop", (i, s, f, lp) -> "  add rsp, 8\n");
+        instructionGenerators.put("apop", (i, s, f, lp) -> "  add rsp, 8\n");
         instructionGenerators.put("ldup", (i, s, f, lp) -> "  pop rcx\n  push rcx\n  push rcx\n");
         instructionGenerators.put("bcasti", (i, s, f, lp) -> "  pop cx\n  movsx ecx, cx\n  push rcx\n");
         instructionGenerators.put("bcastl", (i, s, f, lp) -> "  pop cx\n  movsx rcx, cx\n  push rcx\n");
@@ -262,11 +240,14 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         for (int i = 0; i < parameters.length; i++) {
             var param = parameters[i];
             if(param instanceof PrimitiveType primitive) {
-                localsIndex += primitive.getSize();
                 if (primitive.getSize() == 1 || primitive.getSize() == 2) {
+                    localsIndex += 2;
                     outStream.append("  mov [rbp-").append(localsIndex).append("], ").append(CALL_REGISTERS_16[i]).append("\n");
                 } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
+                    localsIndex += 8;
                     outStream.append("  mov [rbp-").append(localsIndex).append("], ").append(CALL_REGISTERS_64[i]).append("\n");
+                } else {
+                    localsIndex += primitive.getSize();
                 }
             }else {
                 localsIndex += 8;

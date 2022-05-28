@@ -28,8 +28,9 @@ public class Compiler {
         IBytecodeStorage storage = createStorage();
         LocalScopeManager localsManager = new LocalScopeManager();
         for(int i = 0; i<names.length; i++) {
-            localsManager.getCurrentScope().defineLocalVariable(names[i], sig.parameters()[i]);
+            localsManager.defineLocalVariable(names[i], sig.parameters()[i]);
         }
+        localsManager.newScope();
         boolean hasReturned = parseFunctionCode(data, tokens, sig, names, storage, localsManager);
         if(!hasReturned) {
             if(!(sig.returnType() instanceof VoidType)) {
@@ -37,6 +38,7 @@ public class Compiler {
             }
             storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
         }
+        localsManager.leaveScope();
         storage.setLocalsSize(localsManager.getLocalVariablesSize());
         return storage;
     }
@@ -184,6 +186,7 @@ public class Compiler {
                 }
             }
         }
+        localsManager.leaveScope();
         return hasReturned;
     }
 
@@ -257,6 +260,7 @@ public class Compiler {
 
             for(int i = 0; i<arguments.size(); i++) {
                 generateInstructionsFromExpression(arguments.get(i).getTokenWithName("Expression"), parameters[i], types, data, localsManager, bytecode, false);
+                types.push(doCast(types.pop(), signature.parameters()[i], false, bytecode, arguments.get(i).getTokenWithName("Expression")));
             }
 
             bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
@@ -274,7 +278,7 @@ public class Compiler {
                     bytecode.pushInstruction(getConstructedInstruction("apop"));
                 }
             }else {
-                if (expectedType != null && !returnType.equals(expectedType)) {
+                if (expectedType != null) {
                     types.push(doCast(returnType, expectedType, false, bytecode, token));
                 } else {
                     types.push(returnType);
