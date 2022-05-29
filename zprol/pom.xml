@@ -76,12 +76,6 @@
         </dependency>
         <dependency>
             <groupId>ga.epicpix</groupId>
-            <artifactId>zprol-parser</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>ga.epicpix</groupId>
             <artifactId>zprol-compiler</artifactId>
             <version>1.0.3</version>
             <scope>compile</scope>

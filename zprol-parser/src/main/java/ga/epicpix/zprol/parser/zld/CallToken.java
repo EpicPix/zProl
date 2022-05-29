@@ -38,16 +38,28 @@ class CallToken extends LanguageTokenFragment {
             fLoop: for(LanguageToken def : definitions) {
                 var loc = p.saveLocation();
                 var iterTokens = new ArrayList<Token>();
+                int rl = 0;
                 for (var frag : def.args()) {
                     var r = frag.apply(p);
                     if (r == null) {
                         p.loadLocation(loc);
                         continue fLoop;
                     }
-                    Collections.addAll(iterTokens, r);
+                    rl += r.length;
+                    if(!def.merge()) {
+                        Collections.addAll(iterTokens, r);
+                    }else {
+                        for(Token t : r) {
+                            if(t instanceof NamedToken nt && nt.name.equals(use)) {
+                                Collections.addAll(iterTokens, nt.tokens);
+                            }else {
+                                iterTokens.add(t);
+                            }
+                        }
+                    }
                 }
                 if(def.clean()) return EMPTY_TOKENS;
-                if(def.inline() || (def.merge() && iterTokens.size() == 1)) return iterTokens.toArray(EMPTY_TOKENS);
+                if(def.inline() || (def.merge() && rl == 1)) return iterTokens.toArray(EMPTY_TOKENS);
                 return new Token[]{new NamedToken(use, startLocation, p.getLocation(), p, iterTokens.toArray(EMPTY_TOKENS))};
             }
             return null;

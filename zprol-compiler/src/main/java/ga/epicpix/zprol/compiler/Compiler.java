@@ -351,39 +351,48 @@ public class Compiler {
     }
 
     public static Type runOperator(NamedToken token, Type expectedType, CompiledData data, LocalScopeManager localsManager, ArrayDeque<Type> types, IBytecodeStorage bytecode) {
-        if(token.tokens[0].getType() == TokenType.OPEN) {
+        if (token.tokens[0].getType() == TokenType.OPEN) {
             generateInstructionsFromExpression(token.tokens[1].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
             return types.pop();
         }
         generateInstructionsFromExpression(token.tokens[0].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
         var arg1 = types.pop();
 
-        var tempStorage = createStorage();
-        generateInstructionsFromExpression(token.tokens[2].asNamedToken(), expectedType, types, data, localsManager, tempStorage, false);
-        var arg2 = types.pop();
+        int amtOperators = (token.tokens.length - 1) / 2;
+        for (int i = 0; i < amtOperators; i++) {
 
+            var arg2Storage = createStorage();
+            generateInstructionsFromExpression(token.tokens[i * 2 + 2].asNamedToken(), expectedType, types, data, localsManager, arg2Storage, false);
+            var arg2 = types.pop();
 
+            arg1 = runOperator(arg1, arg2, token.tokens[i * 2 + 1].asNamedToken(), token, expectedType, data, localsManager, types, bytecode, arg2Storage);
+        }
+
+        return arg1;
+    }
+
+    public static Type runOperator(Type arg1, Type arg2, NamedToken operator, Token location, Type expectedType, CompiledData data, LocalScopeManager localsManager, ArrayDeque<Type> types, IBytecodeStorage bytecode, IBytecodeStorage arg2bytecode) {
         if(!(arg1 instanceof PrimitiveType prim1) || !(arg2 instanceof PrimitiveType prim2)) {
-            throw new TokenLocatedException("Cannot perform math operation on types " + arg1.getName() + " <-> " + arg2.getName(), token);
+            throw new TokenLocatedException("Cannot perform math operation on types " + arg1.getName() + " <-> " + arg2.getName(), location);
         }
         var bigger = prim1.getSize() > prim2.getSize() ? prim1 : prim2;
         var smaller = prim1.getSize() <= prim2.getSize() ? prim1 : prim2;
         if(prim2 != bigger) {
-            for(var instr : tempStorage.getInstructions()) {
+            for(var instr : arg2bytecode.getInstructions()) {
                 bytecode.pushInstruction(instr);
             }
         }
-        var got = doCast(smaller, bigger, false, bytecode, token);
+        var got = doCast(smaller, bigger, false, bytecode, location);
         if(prim2 == bigger) {
-            for(var instr : tempStorage.getInstructions()) {
+            for(var instr : arg2bytecode.getInstructions()) {
                 bytecode.pushInstruction(instr);
             }
         }
         var primitive = (PrimitiveType) got;
 
-        var operator = token.tokens[1].asNamedToken().tokens[0].asWordToken().getWord();
+        var operatorName = operator.tokens[0].asWordToken().getWord();
 
-        switch (operator) {
+        switch (operatorName) {
             case "+" -> bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "add"));
             case "-" -> bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "sub"));
             case "*" -> {
@@ -410,7 +419,7 @@ public class Compiler {
                 bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "neq"));
                 got = new BooleanType();
             }
-            default -> throw new TokenLocatedException("Unknown operator '" + operator + "'", token);
+            default -> throw new TokenLocatedException("Unknown operator '" + operatorName + "'", location);
         }
         return got;
     }
