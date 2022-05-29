@@ -209,7 +209,7 @@ public class Compiler {
             }else if(prob != null) {
                 types.push(prob);
             }
-        }else if(token.name.equals("MultiplicativeExpression") || token.name.equals("AdditiveExpression") || token.name.equals("InclusiveOrExpression") || token.name.equals("EqualsExpression")) {
+        }else if(token.name.equals("MultiplicativeExpression") || token.name.equals("AdditiveExpression") || token.name.equals("InclusiveOrExpression") || token.name.equals("EqualsExpression") || token.name.equals("ShiftExpression") || token.name.equals("InclusiveAndExpression")) {
             types.push(runOperator(token, expectedType, data, localsManager, types, bytecode));
         }else if(token.name.equals("DecimalInteger")) {
            BigInteger number = getDecimalInteger(token.tokens[0]);
@@ -349,6 +349,10 @@ public class Compiler {
     }
 
     public static Type runOperator(NamedToken token, Type expectedType, CompiledData data, LocalScopeManager localsManager, ArrayDeque<Type> types, IBytecodeStorage bytecode) {
+        if(token.tokens[0].getType() == TokenType.OPEN) {
+            generateInstructionsFromExpression(token.tokens[1].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
+            return types.pop();
+        }
         generateInstructionsFromExpression(token.tokens[0].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
         var arg1 = types.pop();
 
@@ -392,6 +396,9 @@ public class Compiler {
                 if (primitive.isUnsigned()) bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "modu"));
                 else bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "mod"));
             }
+            case "&" -> bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "and"));
+            case "<<" -> bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "shift_left"));
+            case ">>" -> bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "shift_right"));
             case "|" -> bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "or"));
             case "==" -> {
                 bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "eq"));

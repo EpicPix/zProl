@@ -4,6 +4,9 @@ def chars MultiplyOperator [$Whitespace] <*>
 def chars DivideOperator [$Whitespace] </>
 def chars ModuloOperator [$Whitespace] <%>
 def chars InclusiveOrOperator [$Whitespace] <|>
+def chars AndOperator [$Whitespace] <&>
+def chars ShiftLeftOperator [$Whitespace] <\<><\<>
+def chars ShiftRightOperator [$Whitespace] <\>><\>>
 def chars EqualOperator [$Whitespace] <=><=>
 def chars NotEqualOperator [$Whitespace] <!><=>
 def inline chars HardCastIndicatorOperator <!>
@@ -17,6 +20,10 @@ def inline AdditiveOperators:
 def inline EqualityOperators:
   $EqualOperator
   $NotEqualOperator
+
+def inline ShiftOperators:
+  $ShiftLeftOperator
+  $ShiftRightOperator
 
 def inline MultiplicativeOperators:
   $MultiplyOperator
@@ -40,10 +47,12 @@ def inline CastExpression $PostExpression
 
 def merge MultiplicativeExpression $CastExpression [ $MultiplicativeOperators $MultiplicativeExpression ]
 def merge AdditiveExpression $MultiplicativeExpression [ $AdditiveOperators $AdditiveExpression ]
-def merge InclusiveOrExpression $AdditiveExpression [ $InclusiveOrOperator $InclusiveOrExpression ]
-def merge EqualsExpression $InclusiveOrExpression [ $EqualityOperators $EqualsExpression ]
+def merge EqualsExpression $AdditiveExpression [ $EqualityOperators $EqualsExpression ]
+def merge ShiftExpression $EqualsExpression [ $ShiftOperators $ShiftExpression ]
+def merge InclusiveOrExpression $ShiftExpression [ $InclusiveOrOperator $InclusiveOrExpression ]
+def merge InclusiveAndExpression $InclusiveOrExpression [ $AndOperator $InclusiveAndExpression ]
 
-def Expression $EqualsExpression
+def Expression $InclusiveAndExpression
 
 def inline chars ArrayAccessorOpenCharacter [$Whitespace] <[>
 def inline chars ArrayAccessorCloseCharacter [$Whitespace] <]>

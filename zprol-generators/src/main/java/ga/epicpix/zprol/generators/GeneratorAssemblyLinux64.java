@@ -153,6 +153,18 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("ladd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
         instructionGenerators.put("bsub", (i, s, f, lp) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
         instructionGenerators.put("lsub", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  sub rcx, rdx\n  push rcx\n");
+        instructionGenerators.put("band", (i, s, f, lp) -> "  pop cx\n  pop dx\n  and cl, ch\n  push cx\n");
+        instructionGenerators.put("sand", (i, s, f, lp) -> "  pop cx\n  pop dx\n  and cx, cx\n  push cx\n");
+        instructionGenerators.put("iand", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  and ecx, edx\n  push rcx\n");
+        instructionGenerators.put("land", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  and rcx, rdx\n  push rcx\n");
+        instructionGenerators.put("bshift_left", (i, s, f, lp) -> "  pop cx\n  pop dx\n  shl dl, cl\n  push dx\n");
+        instructionGenerators.put("sshift_left", (i, s, f, lp) -> "  pop cx\n  pop dx\n  shl dx, cl\n  push dx\n");
+        instructionGenerators.put("ishift_left", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  shl edx, cl\n  push rdx\n");
+        instructionGenerators.put("lshift_left", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  shl rdx, cl\n  push rdx\n");
+        instructionGenerators.put("bshift_right", (i, s, f, lp) -> "  pop cx\n  pop dx\n  shr dl, cl\n  push dx\n");
+        instructionGenerators.put("sshift_right", (i, s, f, lp) -> "  pop cx\n  pop dx\n  shl dx, cl\n  push dx\n");
+        instructionGenerators.put("ishift_right", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  shr edx, cl\n  push rdx\n");
+        instructionGenerators.put("lshift_right", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  shr rdx, cl\n  push rdx\n");
         instructionGenerators.put("bmul", (i, s, f, lp) -> "  pop cx\n  pop dx\n  imul cx, dx\n  push cx\n");
         instructionGenerators.put("lmul", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  imul rcx, rdx\n  push rcx\n");
         instructionGenerators.put("idiv", (i, s, f, lp) -> "  pop rcx\n  pop rax\n  xor rdx, rdx\n  idiv ecx\n  push rax\n");
