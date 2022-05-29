@@ -54,25 +54,27 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }
             return "  push " + v + "\n";
         });
-        instructionGenerators.put("bload_local", (i, s, f, lp) -> "  push word [rbp-" + i.getData()[0] + "]\n");
-        instructionGenerators.put("iload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("bload_local", (i, s, f, lp) -> "  xor cx, cx\n  mov cl, [rbp-" + i.getData()[0] + "]\n  push cx\n");
+        instructionGenerators.put("sload_local", (i, s, f, lp) -> "  push word [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("iload_local", (i, s, f, lp) -> "  xor rcx, rcx\n  mov ecx, [rbp-" + i.getData()[0] + "]\n  push rcx\n");
         instructionGenerators.put("lload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("aload_local", (i, s, f, lp) -> "  push qword [rbp-" + i.getData()[0] + "]\n");
-        instructionGenerators.put("bstore_local", (i, s, f, lp) -> "  pop word [rbp-" + i.getData()[0] + "]\n");
-        instructionGenerators.put("istore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("bstore_local", (i, s, f, lp) -> "  pop cx\n  mov [rbp-" + i.getData()[0] + "], cl\n");
+        instructionGenerators.put("sstore_local", (i, s, f, lp) -> "  pop word [rbp-" + i.getData()[0] + "]\n");
+        instructionGenerators.put("istore_local", (i, s, f, lp) -> "  pop rcx\n  mov [rbp-" + i.getData()[0] + "], ecx\n");
         instructionGenerators.put("lstore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("astore_local", (i, s, f, lp) -> "  pop qword [rbp-" + i.getData()[0] + "]\n");
         instructionGenerators.put("push_string", (i, s, f, lp) -> "  push _string" + lp.getOrCreateStringIndex((String) i.getData()[0]) + "\n");
-        instructionGenerators.put("bload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov byte cl, [rdx + rcx]\n  push cx\n");
-        instructionGenerators.put("sload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov word cx, [rdx + rcx * 2]\n  push cx\n");
-        instructionGenerators.put("iload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov word ecx, [rdx + rcx * 4]\n  push rcx\n");
-        instructionGenerators.put("lload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov qword rcx, [rdx + rcx * 8]\n  push rcx\n");
-        instructionGenerators.put("aload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov qword rcx, [rdx + rcx * 8]\n  push rcx\n");
-        instructionGenerators.put("bstore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop ax\n  mov byte [rdx + rcx], al\n");
-        instructionGenerators.put("sstore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop ax\n  mov word [rdx + rcx * 2], ax\n");
-        instructionGenerators.put("istore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop rax\n  mov word [rdx + rcx * 4], eax\n");
-        instructionGenerators.put("lstore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop rax\n  mov qword [rdx + rcx * 8], rax\n");
-        instructionGenerators.put("astore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop rax\n  mov qword [rdx + rcx * 8], rax\n");
+        instructionGenerators.put("bload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov cl, [rdx + rcx]\n  push cx\n");
+        instructionGenerators.put("sload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov cx, [rdx + rcx * 2]\n  push cx\n");
+        instructionGenerators.put("iload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov ecx, [rdx + rcx * 4]\n  push rcx\n");
+        instructionGenerators.put("lload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov rcx, [rdx + rcx * 8]\n  push rcx\n");
+        instructionGenerators.put("aload_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  mov rcx, [rdx + rcx * 8]\n  push rcx\n");
+        instructionGenerators.put("bstore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop ax\n  mov [rdx + rcx], al\n");
+        instructionGenerators.put("sstore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop ax\n  mov [rdx + rcx * 2], ax\n");
+        instructionGenerators.put("istore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop rax\n  mov [rdx + rcx * 4], eax\n");
+        instructionGenerators.put("lstore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop rax\n  mov [rdx + rcx * 8], rax\n");
+        instructionGenerators.put("astore_array", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  pop rax\n  mov [rdx + rcx * 8], rax\n");
         instructionGenerators.put("class_field_load", (i, s, f, lp) -> {
             var clz = (Class) i.getData()[0];
             var fieldName = (String) i.getData()[1];
@@ -151,8 +153,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("badd", (i, s, f, lp) -> "  pop cx\n  pop dx\n  add cx, dx\n  push cx\n");
         instructionGenerators.put("iadd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add ecx, edx\n  push rcx\n");
         instructionGenerators.put("ladd", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  add rcx, rdx\n  push rcx\n");
-        instructionGenerators.put("bsub", (i, s, f, lp) -> "  pop cx\n  pop dx\n  sub cx, dx\n  push cx\n");
-        instructionGenerators.put("lsub", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  sub rcx, rdx\n  push rcx\n");
+        instructionGenerators.put("bsub", (i, s, f, lp) -> "  pop cx\n  pop dx\n  sub dx, cx\n  push dx\n");
+        instructionGenerators.put("isub", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  sub edx, ecx\n  push rdx\n");
+        instructionGenerators.put("lsub", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  sub rdx, rcx\n  push rdx\n");
         instructionGenerators.put("band", (i, s, f, lp) -> "  pop cx\n  pop dx\n  and cl, ch\n  push cx\n");
         instructionGenerators.put("sand", (i, s, f, lp) -> "  pop cx\n  pop dx\n  and cx, cx\n  push cx\n");
         instructionGenerators.put("iand", (i, s, f, lp) -> "  pop rcx\n  pop rdx\n  and ecx, edx\n  push rcx\n");
@@ -275,8 +278,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }
         SeekIterator<IBytecodeInstruction> instructions = new SeekIterator<>(function.code().getInstructions());
         while(instructions.hasNext()) {
-            if(labelList.contains(instructions.currentIndex() - 1)) {
-                outStream.append(getMangledName(function.namespace(), function.name(), function.signature())).append(".").append(instructions.currentIndex() - 1).append(":\n");
+            if(labelList.contains(instructions.currentIndex())) {
+                outStream.append(getMangledName(function.namespace(), function.name(), function.signature())).append(".").append(instructions.currentIndex()).append(":\n");
             }
             var instruction = instructions.next();
             outStream.append("; ").append(instruction.getName()).append("\n");

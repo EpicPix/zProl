@@ -160,13 +160,13 @@ public class Compiler {
                             elseStatements.add(statement.tokens[0]);
                         }
                         parseFunctionCode(data, new SeekIterator<>(elseStatements), sig, names, storage, localsManager);
-                        storage.pushInstruction(postInstr, getConstructedInstruction("jmp", storage.getInstructions().size()-postInstr));
+                        storage.pushInstruction(postInstr, getConstructedInstruction("jmp", storage.getInstructions().size()-postInstr+1));
                         postInstr++;
                     }
-                    storage.pushInstruction(preInstr, getConstructedInstruction("neqjmp", postInstr-preInstr));
+                    storage.pushInstruction(preInstr, getConstructedInstruction("neqjmp", postInstr-preInstr+1));
                 } else if("WhileStatement".equals(named.name)) {
                     var types = new ArrayDeque<Type>();
-                    int preInstr = storage.getInstructions().size() - 1;
+                    int preInstr = storage.getInstructions().size();
                     generateInstructionsFromExpression(named.getTokenWithName("Expression"), null, types, data, localsManager, storage, false);
                     var ret = types.pop();
                     if(!(ret instanceof BooleanType)) {
@@ -178,8 +178,10 @@ public class Compiler {
                         statements.add(statement.tokens[0]);
                     }
                     parseFunctionCode(data, new SeekIterator<>(statements), sig, names, storage, localsManager);
-                    storage.pushInstruction(addInstr, getConstructedInstruction("neqjmp", storage.getInstructions().size()-addInstr+1));
-                    storage.pushInstruction(getConstructedInstruction("jmp", preInstr-storage.getInstructions().size()));
+                    int postInstr = storage.getInstructions().size() + 1;
+
+                    storage.pushInstruction(getConstructedInstruction("jmp", preInstr-postInstr));
+                    storage.pushInstruction(addInstr, getConstructedInstruction("neqjmp", postInstr-addInstr+1));
                 } else {
                     throw new TokenLocatedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens), named);
                 }
@@ -341,7 +343,7 @@ public class Compiler {
             }
             types.push(doCast(from, castType, true, bytecode, token.tokens[1]));
         }else if(token.name.equals("Boolean")) {
-            bytecode.pushInstruction(getConstructedSizeInstruction(1, "push", Boolean.parseBoolean(token.tokens[0].asWordToken().getWord()) ? 1 : 0));
+            bytecode.pushInstruction(getConstructedSizeInstruction(8, "push", Boolean.parseBoolean(token.tokens[0].asWordToken().getWord()) ? 1 : 0));
             types.push(new BooleanType());
         }else {
             throw new TokenLocatedException("Unknown token " + token.name, token);
