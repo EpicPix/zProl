@@ -21,6 +21,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.stream.Collectors;
 
 public class Compiler {
     public static IBytecodeStorage parseFunctionCode(CompiledData data, SeekIterator<Token> tokens, FunctionSignature sig, String[] names) {
@@ -244,7 +245,37 @@ public class Compiler {
             if(possibleFunctions.size() == 0) {
                 throw new FunctionNotDefinedException("Unknown function: " + name);
             }else if(possibleFunctions.size() != 1) {
-                throw new TokenLocatedException("Cannot match overloaded parameter types", token);
+
+                var garbage = createStorage();
+                var argTypes = new ArrayList<Type>();
+
+                for(var arg : arguments) {
+                    generateInstructionsFromExpression(arg.tokens[0].asNamedToken(), null, types, data, localsManager, garbage, false);
+                    argTypes.add(types.pop());
+                }
+
+                ArrayList<String> candidates = new ArrayList<>();
+                PreFunction exactMatch = null;
+                for(var a : possibleFunctions) {
+                    boolean matches = true;
+                    for(int i = 0; i<a.parameters.size(); i++) {
+                        if(!data.resolveType(a.parameters.get(i).type).equals(argTypes.get(i))) {
+                            matches = false;
+                        }
+                    }
+                    if(matches) {
+                        exactMatch = a;
+                        break;
+                    }
+                    candidates.add("(" + a.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")");
+                }
+
+                if(exactMatch != null) {
+                    possibleFunctions.clear();
+                    possibleFunctions.add(exactMatch);
+                }else {
+                    throw new TokenLocatedException("Cannot find overload for arguments (" + argTypes.stream().map(Type::getName).collect(Collectors.joining(", ")) + ")\nCandidates are:\n" + String.join("\n", candidates), token);
+                }
             }
 
             var func = possibleFunctions.get(0);
@@ -360,7 +391,6 @@ public class Compiler {
 
         int amtOperators = (token.tokens.length - 1) / 2;
         for (int i = 0; i < amtOperators; i++) {
-
             var arg2Storage = createStorage();
             generateInstructionsFromExpression(token.tokens[i * 2 + 2].asNamedToken(), expectedType, types, data, localsManager, arg2Storage, false);
             var arg2 = types.pop();
