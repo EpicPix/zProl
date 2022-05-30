@@ -27,7 +27,7 @@ and then to use `zprol-parser` you can do
     <dependency>
         <groupId>ga.epicpix</groupId>
         <artifactId>zprol-parser</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
     </dependency>
 </dependencies>
 ```
