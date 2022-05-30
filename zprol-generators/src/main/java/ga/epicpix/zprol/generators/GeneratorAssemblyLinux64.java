@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class GeneratorAssemblyLinux64 extends Generator {
@@ -34,7 +35,138 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
     private static final HashMap<String, InstructionGenerator> instructionGenerators = new HashMap<>();
 
-    public record Instruction(String data) {}
+    public static class Instruction {
+        private final String data;
+
+        public Instruction(String data) {
+            this.data = data;
+        }
+
+        public String data() {
+            return data;
+        }
+    }
+
+    public static class PushInstruction extends Instruction {
+
+        private final String register;
+
+        public PushInstruction(String register) {
+            super("push " + register);
+            this.register = register;
+        }
+
+        public String register() {
+            return register;
+        }
+    }
+
+    public static class PushNumberInstruction extends Instruction {
+
+        private final long number;
+
+        public PushNumberInstruction(long number) {
+            super("push " + number);
+            this.number = number;
+        }
+
+        public long number() {
+            return number;
+        }
+    }
+
+    public static class PopInstruction extends Instruction {
+
+        private final String register;
+
+        public PopInstruction(String register) {
+            super("pop " + register);
+            this.register = register;
+        }
+
+        public String register() {
+            return register;
+        }
+    }
+
+    public static class CallInstruction extends Instruction {
+
+        private final String location;
+        private final Function function;
+
+        public CallInstruction(String location, Function func) {
+            super("call " + location);
+            this.location = location;
+            function = func;
+        }
+
+        public String location() {
+            return location;
+        }
+
+        public Function function() {
+            return function;
+        }
+
+    }
+
+    public static class ReturnInstruction extends Instruction {
+
+        public ReturnInstruction() {
+            super("ret");
+        }
+
+    }
+
+    public static class ValueReturnInstruction extends Instruction {
+
+        private final long value;
+
+        public ValueReturnInstruction(long value) {
+            super("mov rax, " + value + "\nret");
+            this.value = value;
+        }
+
+        public long value() {
+            return value;
+        }
+
+    }
+
+    public static class FunctionStartInstruction extends Instruction {
+
+        private final Function function;
+
+        public FunctionStartInstruction(Function func) {
+            super(getMangledName(func) + ":");
+            function = func;
+        }
+
+        public Function function() {
+            return function;
+        }
+
+    }
+
+    public static PushInstruction push(String reg) {
+        return new PushInstruction(reg);
+    }
+
+    public static PushNumberInstruction push(long num) {
+        return new PushNumberInstruction(num);
+    }
+
+    public static PopInstruction pop(String reg) {
+        return new PopInstruction(reg);
+    }
+
+    public static CallInstruction call(String reg, Function func) {
+        return new CallInstruction(reg, func);
+    }
+
+    public static ReturnInstruction ret() {
+        return new ReturnInstruction();
+    }
 
     private static final String[] CALL_REGISTERS_64 = new String[] {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
     private static final String[] CALL_REGISTERS_16 = new String[] {"di", "sx", "dx", "cx", "r8w", "r9w"};
@@ -42,59 +174,59 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     private static final String[] SYSCALL_REGISTERS_16 = new String[] {"ax", "di", "sx", "dx", "r10w", "r8w", "r9w"};
 
     static {
-        instructionGenerators.put("vreturn", (i, s, f, lp, instructions) -> (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp").add("pop rbp") : instructions).add("ret"));
+        instructionGenerators.put("vreturn", (i, s, f, lp, instructions) -> (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret()));
         instructionGenerators.put("breturn", (i, s, f, lp, instructions) -> {
-            instructions.add("pop ax");
-            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp").add("pop rbp") : instructions).add("ret");
+            instructions.add(pop("ax"));
+            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret());
         });
         instructionGenerators.put("sreturn", (i, s, f, lp, instructions) -> {
-            instructions.add("pop ax");
-            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp").add("pop rbp") : instructions).add("ret");
+            instructions.add(pop("ax"));
+            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret());
         });
         instructionGenerators.put("ireturn", (i, s, f, lp, instructions) -> {
-            instructions.add("pop rax");
-            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp").add("pop rbp") : instructions).add("ret");
+            instructions.add(pop("rax"));
+            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret());
         });
         instructionGenerators.put("lreturn", (i, s, f, lp, instructions) -> {
-            instructions.add("pop rax");
-            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp").add("pop rbp") : instructions).add("ret");
+            instructions.add(pop("rax"));
+            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret());
         });
         instructionGenerators.put("areturn", (i, s, f, lp, instructions) -> {
-            instructions.add("pop rax");
-            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp").add("pop rbp") : instructions).add("ret");
+            instructions.add(pop("rax"));
+            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret());
         });
         instructionGenerators.put("bpush", (i, s, f, lp, instructions) -> instructions.add("push word " + i.getData()[0]));
         instructionGenerators.put("spush", (i, s, f, lp, instructions) -> instructions.add("push word " + i.getData()[0]));
-        instructionGenerators.put("ipush", (i, s, f, lp, instructions) -> instructions.add("push qword " + i.getData()[0]));
+        instructionGenerators.put("ipush", (i, s, f, lp, instructions) -> instructions.add(push(((Number)i.getData()[0]).longValue())));
         instructionGenerators.put("lpush", (i, s, f, lp, instructions) -> {
             long v = ((Number) i.getData()[0]).longValue();
             if(v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
                 instructions.add("mov rax, " + v);
-                instructions.add("push rax");
+                instructions.add(push("rax"));
             }
-            instructions.add("push " + v);
+            instructions.add(push(v));
         });
-        instructionGenerators.put("bload_local", (i, s, f, lp, instructions) -> instructions.add("xor cx, cx").add("mov cl, [rbp-" + i.getData()[0] + "]").add("push cx"));
+        instructionGenerators.put("bload_local", (i, s, f, lp, instructions) -> instructions.add("xor cx, cx", "mov cl, [rbp-" + i.getData()[0] + "]", push("cx")));
         instructionGenerators.put("sload_local", (i, s, f, lp, instructions) -> instructions.add("push word [rbp-" + i.getData()[0] + "]"));
-        instructionGenerators.put("iload_local", (i, s, f, lp, instructions) -> instructions.add("xor rcx, rcx").add("mov ecx, [rbp-" + i.getData()[0] + "]").add("push rcx"));
+        instructionGenerators.put("iload_local", (i, s, f, lp, instructions) -> instructions.add("xor rcx, rcx", "mov ecx, [rbp-" + i.getData()[0] + "]", push("rcx")));
         instructionGenerators.put("lload_local", (i, s, f, lp, instructions) -> instructions.add("push qword [rbp-" + i.getData()[0] + "]"));
         instructionGenerators.put("aload_local", (i, s, f, lp, instructions) -> instructions.add("push qword [rbp-" + i.getData()[0] + "]"));
-        instructionGenerators.put("bstore_local", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("mov [rbp-" + i.getData()[0] + "], cl"));
+        instructionGenerators.put("bstore_local", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), "mov [rbp-" + i.getData()[0] + "], cl"));
         instructionGenerators.put("sstore_local", (i, s, f, lp, instructions) -> instructions.add("pop word [rbp-" + i.getData()[0] + "]"));
-        instructionGenerators.put("istore_local", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("mov qword [rbp-" + i.getData()[0] + "], ecx"));
+        instructionGenerators.put("istore_local", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), "mov qword [rbp-" + i.getData()[0] + "], ecx"));
         instructionGenerators.put("lstore_local", (i, s, f, lp, instructions) -> instructions.add("pop qword [rbp-" + i.getData()[0] + "]"));
         instructionGenerators.put("astore_local", (i, s, f, lp, instructions) -> instructions.add("pop qword [rbp-" + i.getData()[0] + "]"));
         instructionGenerators.put("push_string", (i, s, f, lp, instructions) -> instructions.add("push _string" + lp.getOrCreateStringIndex((String) i.getData()[0])));
-        instructionGenerators.put("bload_array", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("mov cl, [rdx + rcx]").add("push cx"));
-        instructionGenerators.put("sload_array", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("mov cx, [rdx + rcx * 2]").add("push cx"));
-        instructionGenerators.put("iload_array", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("mov ecx, [rdx + rcx * 4]").add("push rcx"));
-        instructionGenerators.put("lload_array", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("mov rcx, [rdx + rcx * 8]").add("push rcx"));
-        instructionGenerators.put("aload_array", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("mov rcx, [rdx + rcx * 8]").add("push rcx"));
-        instructionGenerators.put("bstore_array", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("pop ax").add("mov [rdx + rcx], al"));
-        instructionGenerators.put("sstore_array", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("pop ax").add("mov [rdx + rcx * 2], ax"));
-        instructionGenerators.put("istore_array", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("pop rax").add("mov [rdx + rcx * 4], eax"));
-        instructionGenerators.put("lstore_array", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("pop rax").add("mov [rdx + rcx * 8], rax"));
-        instructionGenerators.put("astore_array", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("pop rax").add("mov [rdx + rcx * 8], rax"));
+        instructionGenerators.put("bload_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "mov cl, [rdx + rcx]", push("cx")));
+        instructionGenerators.put("sload_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "mov cx, [rdx + rcx * 2]", push("cx")));
+        instructionGenerators.put("iload_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "mov ecx, [rdx + rcx * 4]", push("rcx")));
+        instructionGenerators.put("lload_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "mov rcx, [rdx + rcx * 8]", push("rcx")));
+        instructionGenerators.put("aload_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "mov rcx, [rdx + rcx * 8]", push("rcx")));
+        instructionGenerators.put("bstore_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), pop("ax"), "mov [rdx + rcx], al"));
+        instructionGenerators.put("sstore_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), pop("ax"), "mov [rdx + rcx * 2], ax"));
+        instructionGenerators.put("istore_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), pop("rax"), "mov [rdx + rcx * 4], eax"));
+        instructionGenerators.put("lstore_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), pop("rax"), "mov [rdx + rcx * 8], rax"));
+        instructionGenerators.put("astore_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), pop("rax"), "mov [rdx + rcx * 8], rax"));
         instructionGenerators.put("class_field_load", (i, s, f, lp, instructions) -> {
             var clz = (Class) i.getData()[0];
             var fieldName = (String) i.getData()[1];
@@ -122,14 +254,14 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
             else throw new IllegalStateException("Cannot get size of type '" + field.type().getName() + "'");
 
-            instructions.add("pop rcx");
+            instructions.add(pop("rcx"));
             if(size == 1) {
                 instructions.add("mov dl, [rcx+" + offset + "]");
-                instructions.add("push dx");
+                instructions.add(push("dx"));
             } else if(size == 2) instructions.add("push word [rcx+" + offset + "]");
             else if(size == 4) {
                 instructions.add("mov edx, [rcx+" + offset + "]");
-                instructions.add("push rdx");
+                instructions.add(push("rdx"));
             }
             else if(size == 8) instructions.add("push qword [rcx+" + offset + "]");
             else throw new IllegalStateException("Unsupported size " + size);
@@ -162,73 +294,73 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
             else throw new IllegalStateException("Cannot get size of type '" + field.type().getName() + "'");
 
-            instructions.add("pop rcx");
+            instructions.add(pop("rcx"));
             if(size == 1) {
-                instructions.add("pop dx");
+                instructions.add(pop("dx"));
                 instructions.add("mov dl, [rcx+" + offset + "]");
             }
             else if(size == 2) instructions.add("pop word [rcx+" + offset + "]");
             else if(size == 4) {
-                instructions.add("pop rdx");
+                instructions.add(pop("rdx"));
                 instructions.add("mov edx, [rcx+" + offset + "]");
             }
             else if(size == 8) instructions.add("pop qword [rcx+" + offset + "]");
             else throw new IllegalStateException("Unsupported size " + size);
 
         });
-        instructionGenerators.put("ineq", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("xor rax, rax").add("cmp ecx, edx").add("mov rcx, 1").add("cmovne rax, rcx").add("push rax"));
-        instructionGenerators.put("lneq", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("xor rax, rax").add("cmp rcx, rdx").add("mov rcx, 1").add("cmovne rax, rcx").add("push rax"));
-        instructionGenerators.put("ieq", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("xor rax, rax").add("cmp ecx, edx").add("mov rcx, 1").add("cmove rax, rcx").add("push rax"));
-        instructionGenerators.put("leq", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("xor rax, rax").add("cmp rcx, rdx").add("mov rcx, 1").add("cmove rax, rcx").add("push rax"));
-        instructionGenerators.put("neqjmp", (i, s, f, lp, instructions) -> instructions.add("pop rax").add("cmp rax, 0").add("je " + getMangledName(f) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())));
-        instructionGenerators.put("eqjmp", (i, s, f, lp, instructions) -> instructions.add("pop rax").add("cmp rax, 0").add("jne " + getMangledName(f) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())));
+        instructionGenerators.put("ineq", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "xor rax, rax", "cmp ecx, edx", "mov rcx, 1", "cmovne rax, rcx", push("rax")));
+        instructionGenerators.put("lneq", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmovne rax, rcx", push("rax")));
+        instructionGenerators.put("ieq", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "xor rax, rax", "cmp ecx, edx", "mov rcx, 1", "cmove rax, rcx", push("rax")));
+        instructionGenerators.put("leq", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmove rax, rcx", push("rax")));
+        instructionGenerators.put("neqjmp", (i, s, f, lp, instructions) -> instructions.add(pop("rax"), "cmp rax, 0", "je " + getMangledName(f) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())));
+        instructionGenerators.put("eqjmp", (i, s, f, lp, instructions) -> instructions.add(pop("rax"), "cmp rax, 0", "jne " + getMangledName(f) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())));
         instructionGenerators.put("jmp", (i, s, f, lp, instructions) -> instructions.add("jmp " + getMangledName(f) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())));
-        instructionGenerators.put("badd", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("add cl, dl").add("push cx"));
-        instructionGenerators.put("sadd", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("add cx, dx").add("push cx"));
-        instructionGenerators.put("iadd", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("add ecx, edx").add("push rcx"));
-        instructionGenerators.put("ladd", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("add rcx, rdx").add("push rcx"));
-        instructionGenerators.put("bsub", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("sub dl, cl").add("push dx"));
-        instructionGenerators.put("ssub", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("sub dx, cx").add("push dx"));
-        instructionGenerators.put("isub", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("sub edx, ecx").add("push rdx"));
-        instructionGenerators.put("lsub", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("sub rdx, rcx").add("push rdx"));
-        instructionGenerators.put("band", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("and cl, dl").add("push cx"));
-        instructionGenerators.put("sand", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("and cx, dx").add("push cx"));
-        instructionGenerators.put("iand", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("and ecx, edx").add("push rcx"));
-        instructionGenerators.put("land", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("and rcx, rdx").add("push rcx"));
-        instructionGenerators.put("bshift_left", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("shl dl, cl").add("push dx"));
-        instructionGenerators.put("sshift_left", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("shl dx, cl").add("push dx"));
-        instructionGenerators.put("ishift_left", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("shl edx, cl").add("push rdx"));
-        instructionGenerators.put("lshift_left", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("shl rdx, cl").add("push rdx"));
-        instructionGenerators.put("bshift_right", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("shr dl, cl").add("push dx"));
-        instructionGenerators.put("sshift_right", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("shr dx, cl").add("push dx"));
-        instructionGenerators.put("ishift_right", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("shr edx, cl").add("push rdx"));
-        instructionGenerators.put("lshift_right", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("shr rdx, cl").add("push rdx"));
-        instructionGenerators.put("bmul", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("pop dx").add("imul cx, dx").add("push cx"));
-        instructionGenerators.put("lmul", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("imul rcx, rdx").add("push rcx"));
-        instructionGenerators.put("lmulu", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rax").add("xor rdx, rdx").add("mul rcx").add("push rdx"));
-        instructionGenerators.put("idiv", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rax").add("xor rdx, rdx").add("idiv ecx").add("push rax"));
-        instructionGenerators.put("ldiv", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rax").add("xor rdx, rdx").add("idiv rcx").add("push rax"));
-        instructionGenerators.put("idivu", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rax").add("xor rdx, rdx").add("div ecx").add("push rax"));
-        instructionGenerators.put("ldivu", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rax").add("xor rdx, rdx").add("div rcx").add("push rax"));
-        instructionGenerators.put("imod", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rax").add("xor rdx, rdx").add("idiv ecx").add("push rdx"));
-        instructionGenerators.put("lmod", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rax").add("xor rdx, rdx").add("idiv rcx").add("push rdx"));
-        instructionGenerators.put("imodu", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rax").add("xor rdx, rdx").add("div ecx").add("push rdx"));
-        instructionGenerators.put("lmodu", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rax").add("xor rdx, rdx").add("div rcx").add("push rdx"));
-        instructionGenerators.put("lor", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("pop rdx").add("or rcx, rdx").add("push rcx"));
+        instructionGenerators.put("badd", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "add cl, dl", push("cx")));
+        instructionGenerators.put("sadd", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "add cx, dx", push("cx")));
+        instructionGenerators.put("iadd", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "add ecx, edx", push("rcx")));
+        instructionGenerators.put("ladd", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "add rcx, rdx", push("rcx")));
+        instructionGenerators.put("bsub", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "sub dl, cl", push("dx")));
+        instructionGenerators.put("ssub", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "sub dx, cx", push("dx")));
+        instructionGenerators.put("isub", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "sub edx, ecx", push("rdx")));
+        instructionGenerators.put("lsub", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "sub rdx, rcx", push("rdx")));
+        instructionGenerators.put("band", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "and cl, dl", push("cx")));
+        instructionGenerators.put("sand", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "and cx, dx", push("cx")));
+        instructionGenerators.put("iand", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "and ecx, edx", push("rcx")));
+        instructionGenerators.put("land", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "and rcx, rdx", push("rcx")));
+        instructionGenerators.put("bshift_left", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "shl dl, cl", push("dx")));
+        instructionGenerators.put("sshift_left", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "shl dx, cl", push("dx")));
+        instructionGenerators.put("ishift_left", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "shl edx, cl", push("rdx")));
+        instructionGenerators.put("lshift_left", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "shl rdx, cl", push("rdx")));
+        instructionGenerators.put("bshift_right", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "shr dl, cl", push("dx")));
+        instructionGenerators.put("sshift_right", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "shr dx, cl", push("dx")));
+        instructionGenerators.put("ishift_right", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "shr edx, cl", push("rdx")));
+        instructionGenerators.put("lshift_right", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "shr rdx, cl", push("rdx")));
+        instructionGenerators.put("bmul", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "imul cx, dx", push("cx")));
+        instructionGenerators.put("lmul", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "imul rcx, rdx", push("rcx")));
+        instructionGenerators.put("lmulu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "mul rcx", push("rdx")));
+        instructionGenerators.put("idiv", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "idiv ecx", push("rax")));
+        instructionGenerators.put("ldiv", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "idiv rcx", push("rax")));
+        instructionGenerators.put("idivu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "div ecx", push("rax")));
+        instructionGenerators.put("ldivu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "div rcx", push("rax")));
+        instructionGenerators.put("imod", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "idiv ecx", push("rdx")));
+        instructionGenerators.put("lmod", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "idiv rcx", push("rdx")));
+        instructionGenerators.put("imodu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "div ecx", push("rdx")));
+        instructionGenerators.put("lmodu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "div rcx", push("rdx")));
+        instructionGenerators.put("lor", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "or rcx, rdx", push("rcx")));
         instructionGenerators.put("bpop", (i, s, f, lp, instructions) -> instructions.add("add rsp, 2"));
         instructionGenerators.put("spop", (i, s, f, lp, instructions) -> instructions.add("add rsp, 2"));
         instructionGenerators.put("ipop", (i, s, f, lp, instructions) -> instructions.add("add rsp, 8"));
         instructionGenerators.put("lpop", (i, s, f, lp, instructions) -> instructions.add("add rsp, 8"));
         instructionGenerators.put("apop", (i, s, f, lp, instructions) -> instructions.add("add rsp, 8"));
-        instructionGenerators.put("bdup", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("push cx").add("push cx"));
-        instructionGenerators.put("sdup", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("push cx").add("push cx"));
-        instructionGenerators.put("idup", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("push rcx").add("push rcx"));
-        instructionGenerators.put("ldup", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("push rcx").add("push rcx"));
-        instructionGenerators.put("adup", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("push rcx").add("push rcx"));
-        instructionGenerators.put("bcasti", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("movsx ecx, cx").add("push rcx"));
-        instructionGenerators.put("bcastl", (i, s, f, lp, instructions) -> instructions.add("pop cx").add("movsx rcx, cx").add("push rcx"));
-        instructionGenerators.put("icastl", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("movsxd rcx, ecx").add("push rcx"));
-        instructionGenerators.put("lcasts", (i, s, f, lp, instructions) -> instructions.add("pop rcx").add("push cx"));
+        instructionGenerators.put("bdup", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), push("cx"), push("cx")));
+        instructionGenerators.put("sdup", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), push("cx"), push("cx")));
+        instructionGenerators.put("idup", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), push("rcx"), push("rcx")));
+        instructionGenerators.put("ldup", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), push("rcx"), push("rcx")));
+        instructionGenerators.put("adup", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), push("rcx"), push("rcx")));
+        instructionGenerators.put("bcasti", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), "movsx ecx, cx", push("rcx")));
+        instructionGenerators.put("bcastl", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), "movsx rcx, cx", push("rcx")));
+        instructionGenerators.put("icastl", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), "movsxd rcx, ecx", push("rcx")));
+        instructionGenerators.put("lcasts", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), push("cx")));
         instructionGenerators.put("invoke", (i, s, func, lp, instructions) -> invokeMethod((Function) i.getData()[0], instructions));
     }
 
@@ -240,14 +372,14 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             var param = params[x];
             if(param instanceof PrimitiveType primitive) {
                 if (primitive.getSize() == 1 || primitive.getSize() == 2) {
-                    instructions.add("pop " + (isSyscall ? SYSCALL_REGISTERS_16[x] : CALL_REGISTERS_16[x]));
+                    instructions.add(pop(isSyscall ? SYSCALL_REGISTERS_16[x] : CALL_REGISTERS_16[x]));
                 } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
-                    instructions.add("pop " + (isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]));
+                    instructions.add(pop(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]));
                 } else {
                     throw new NotImplementedException("Not implemented size " + primitive.getSize());
                 }
             }else {
-                instructions.add("pop " + (isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]));
+                instructions.add(pop(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]));
             }
         }
 
@@ -258,25 +390,25 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 throw new FunctionNotDefinedException("Unknown native function " + f.name());
             }
         } else {
-            instructions.add("call " + getMangledName(f));
+            instructions.add(call(getMangledName(f), f));
         }
 
         var ret = f.signature().returnType();
         if(ret instanceof PrimitiveType primitive) {
             if (primitive.getSize() == 0) {
             } else if (primitive.getSize() == 1 || primitive.getSize() == 2) {
-                instructions.add("push ax");
+                instructions.add(push("ax"));
             } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
-                instructions.add("push rax");
+                instructions.add(push("rax"));
             } else {
                 throw new NotImplementedException("Not implemented size " + primitive.getSize());
             }
         }else if(ret instanceof ClassType) {
-            instructions.add("push rax");
+            instructions.add(push("rax"));
         }else if(ret instanceof BooleanType) {
-            instructions.add("push rax");
+            instructions.add(push("rax"));
         }else if(ret instanceof ArrayType) {
-            instructions.add("push rax");
+            instructions.add(push("rax"));
         }else if(!(ret instanceof VoidType)) {
             throw new IllegalStateException("Cannot finish generating call instruction because of an unknown type '" + ret.getName() + "'");
         }
@@ -284,7 +416,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
     private static void writeFunction(Function function, ConstantPool localConstantPool, InstructionList assembly) {
         if(function.code().getLocalsSize() != 0) {
-            assembly.add("push rbp");
+            assembly.add(push("rbp"));
             assembly.add("mov rbp, rsp");
             assembly.add("sub rsp, " + function.code().getLocalsSize());
         }
@@ -321,7 +453,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 assembly.add(new Instruction(getMangledName(function) + "." + instructions.currentIndex() + ":"));
             }
             var instruction = instructions.next();
-            assembly.add(new Instruction("; " + instruction.getName()));
+//            assembly.add(new Instruction("; " + instruction.getName()));
             var generator = instructionGenerators.get(instruction.getName());
             if(generator != null) {
                 generator.generateInstruction(instruction, instructions, function, localConstantPool, assembly);
@@ -340,8 +472,15 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             return this;
         }
 
-        public InstructionList add(String instr) {
-            return add(new Instruction(instr));
+        public InstructionList add(Object... instr) {
+            for(Object inst : instr) {
+                if(inst instanceof Instruction i) {
+                    add(i);
+                }else {
+                    add(new Instruction(inst.toString()));
+                }
+            }
+            return this;
         }
 
     }
@@ -363,7 +502,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         for(var function : generated.functions) {
             if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
 
-            assembly.add(getMangledName(function) + ":");
+            assembly.add(new FunctionStartInstruction(function));
             writeFunction(function, localConstantPool, assembly);
         }
         int index = 1;
@@ -376,6 +515,67 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }
             index++;
         }
+
+        // -O embed value return functions
+        HashMap<Function, ValueReturnInstruction> valueReturnFunctions = new HashMap<>();
+        for(int i = 0; i<assembly.instructions.size(); i++) {
+            if(assembly.instructions.get(i) instanceof FunctionStartInstruction func) {
+                if(func.function.signature().parameters().length == 0 && func.function.signature().returnType() instanceof PrimitiveType prim && prim.getSize() == 8) {
+                    if (assembly.instructions.get(i + 1) instanceof PushNumberInstruction push) {
+                        if (assembly.instructions.get(i + 2) instanceof PopInstruction pop) {
+                            if (pop.register.equals("rax")) {
+                                if (assembly.instructions.get(i + 3) instanceof ReturnInstruction) {
+                                    assembly.instructions.remove(i);
+                                    assembly.instructions.remove(i);
+                                    assembly.instructions.remove(i);
+                                    assembly.instructions.remove(i);
+                                    i -= 4;
+                                    valueReturnFunctions.put(func.function, new ValueReturnInstruction(push.number));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for(int i = 0; i<assembly.instructions.size(); i++) {
+            if(assembly.instructions.get(i) instanceof CallInstruction call) {
+                var v = valueReturnFunctions.get(call.function);
+                if(v != null) {
+                    if(assembly.instructions.get(i + 1) instanceof PushInstruction push && push.register.equals("rax")) {
+                        assembly.instructions.remove(i + 1);
+                        assembly.instructions.remove(i);
+                        assembly.instructions.add(i, new Instruction("push " + v.value));
+                    }else {
+                        assembly.instructions.remove(i);
+                        assembly.instructions.add(i, new Instruction("mov rax, " + v.value));
+                    }
+                }
+            }
+        }
+
+        // -O merge pop,push to mov
+        for(int i = 0; i<assembly.instructions.size(); i++) {
+            if(assembly.instructions.get(i) instanceof PushInstruction push) {
+                if(assembly.instructions.get(i + 1) instanceof PopInstruction pop) {
+                    assembly.instructions.remove(i);
+                    assembly.instructions.remove(i);
+                    if(!push.register.equals(pop.register)) {
+                        assembly.instructions.add(i, new Instruction("mov " + pop.register + ", " + push.register));
+                    }
+                }
+            }else if(assembly.instructions.get(i) instanceof PushNumberInstruction push) {
+                if(assembly.instructions.get(i + 1) instanceof PopInstruction pop) {
+                    if(pop.register.startsWith("r")) {
+                        assembly.instructions.remove(i);
+                        assembly.instructions.remove(i);
+                        assembly.instructions.add(i, new Instruction("mov " + pop.register + ", " + push.number));
+                    }
+                }
+            }
+        }
+
+
         outStream.writeBytes(assembly.instructions.stream().map(Instruction::data).collect(Collectors.joining("\n")));
     }
 
