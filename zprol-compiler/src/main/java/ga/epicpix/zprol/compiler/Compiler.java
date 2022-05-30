@@ -255,25 +255,56 @@ public class Compiler {
                 }
 
                 ArrayList<String> candidates = new ArrayList<>();
-                PreFunction exactMatch = null;
+                int closestScore = 0;
+                ArrayList<PreFunction> closest = new ArrayList<>();
                 for(var a : possibleFunctions) {
                     boolean matches = true;
+                    boolean nPrimMatches = true;
+                    int score = 0;
                     for(int i = 0; i<a.parameters.size(); i++) {
-                        if(!data.resolveType(a.parameters.get(i).type).equals(argTypes.get(i))) {
+                        var t = data.resolveType(a.parameters.get(i).type);
+                        if(!t.equals(argTypes.get(i))) {
+                            if(argTypes.get(i) instanceof PrimitiveType && t instanceof PrimitiveType) {
+                                score++;
+                            }else if(!(argTypes.get(i) instanceof PrimitiveType) || !(t instanceof PrimitiveType)) {
+                                nPrimMatches = false;
+                            }
                             matches = false;
+                        }else {
+                            score++;
                         }
                     }
+
+                    if(closestScore < score) {
+                        closest.clear();
+                        closestScore = score;
+                    }
+                    if(closestScore == score && nPrimMatches) closest.add(a);
+
                     if(matches) {
-                        exactMatch = a;
+                        closest.clear();
+                        closest.add(a);
                         break;
                     }
                     candidates.add("(" + a.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")");
                 }
 
-                if(exactMatch != null) {
+                if(closest.size() == 1) {
                     possibleFunctions.clear();
-                    possibleFunctions.add(exactMatch);
+                    possibleFunctions.add(closest.get(0));
                 }else {
+                    if(closest.size() != 0) {
+                        throw new TokenLocatedException(
+                            "Ambiguous function call for arguments (" +
+                                argTypes.stream()
+                                    .map(Type::getName)
+                                    .collect(Collectors.joining(", "))
+                                + ")\nCandidates are:\n" +
+                                closest.stream()
+                                    .map(a -> "(" + a.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")")
+                                    .collect(Collectors.joining("\n")
+                                ), token);
+                    }
                     throw new TokenLocatedException("Cannot find overload for arguments (" + argTypes.stream().map(Type::getName).collect(Collectors.joining(", ")) + ")\nCandidates are:\n" + String.join("\n", candidates), token);
                 }
             }
