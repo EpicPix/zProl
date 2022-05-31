@@ -7,7 +7,6 @@ import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
-import ga.epicpix.zpil.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tokens.TokenType;
@@ -243,7 +242,7 @@ public class Compiler {
             }
 
             if(possibleFunctions.size() == 0) {
-                throw new FunctionNotDefinedException("Unknown function: " + name);
+                throw new TokenLocatedException("Function not defined: " + name, token);
             }else if(possibleFunctions.size() != 1) {
 
                 var garbage = createStorage();

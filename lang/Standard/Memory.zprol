@@ -1,2 +1,5 @@
 namespace zprol.lang.memory;
 
+byte[] malloc0(ulong length) {
+    return (byte[]!) (uint64) 0;
+}

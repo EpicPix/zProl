@@ -13,3 +13,4 @@ out/
 debug/
 target/
 *.jar
+*.ignored

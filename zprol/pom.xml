@@ -77,7 +77,7 @@
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zprol-compiler</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.4</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
