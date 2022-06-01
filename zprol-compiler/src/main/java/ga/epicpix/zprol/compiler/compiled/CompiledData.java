@@ -3,6 +3,7 @@ package ga.epicpix.zprol.compiler.compiled;
 import ga.epicpix.zpil.GeneratedData;
 import ga.epicpix.zpil.bytecode.Bytecode;
 import ga.epicpix.zpil.exceptions.FunctionNotDefinedException;
+import ga.epicpix.zprol.compiler.exceptions.RedefinedFieldException;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.PreCompiledData;
 import ga.epicpix.zprol.compiler.exceptions.RedefinedClassException;
@@ -35,10 +36,15 @@ public class CompiledData {
     }
 
     private final ArrayList<Function> functions = new ArrayList<>();
+    private final ArrayList<Field> fields = new ArrayList<>();
     private final ArrayList<Class> classes = new ArrayList<>();
 
     public ArrayList<Function> getFunctions() {
         return new ArrayList<>(functions);
+    }
+
+    public ArrayList<Field> getFields() {
+        return new ArrayList<>(fields);
     }
 
     public ArrayList<Class> getClasses() {
@@ -64,6 +70,18 @@ public class CompiledData {
             }
         }
 
+        for(var f : fields) {
+            for(var validate : data.fields) {
+                if(!Objects.equals(validate.namespace(), f.namespace())) continue;
+                if(!validate.name().equals(f.name())) continue;
+
+                throw new RedefinedFieldException((f.namespace() != null ? f.namespace() + "." : "") + f.name() + " - " + f.type().normalName());
+
+            }
+            data.fields.add(f);
+            data.constantPool.getOrCreateFieldIndex(f);
+        }
+
         for(var clz : classes) {
             for(var validate : data.classes) {
                 if(!Objects.equals(validate.namespace(), clz.namespace())) continue;
@@ -73,8 +91,6 @@ public class CompiledData {
             }
             data.classes.add(clz);
             data.constantPool.getOrCreateClassIndex(clz);
-            data.constantPool.getOrCreateStringIndex(clz.namespace());
-            data.constantPool.getOrCreateStringIndex(clz.name());
             for(var field : clz.fields()) {
                 data.constantPool.getOrCreateStringIndex(field.name());
                 data.constantPool.getOrCreateStringIndex(field.type().getDescriptor());
@@ -118,6 +134,10 @@ public class CompiledData {
         functions.add(function);
     }
 
+    public void addField(Field field) {
+        fields.add(field);
+    }
+
     public void addClass(Class clazz) {
         classes.add(clazz);
     }
@@ -139,7 +159,7 @@ public class CompiledData {
         String name = type.lastIndexOf('.') != -1 ? type.substring(type.lastIndexOf('.') + 1) : type;
         for(var data : using) {
             if(namespace == null) {
-                if(!Objects.equals(data.namespace, null) && !Objects.equals(data.namespace, "zprol.lang")) continue;
+                if(!Objects.equals(data.namespace, this.namespace) && !Objects.equals(data.namespace, "zprol.lang")) continue;
             }else {
                 if (data.namespace != null && !data.namespace.equals(namespace)) continue;
             }

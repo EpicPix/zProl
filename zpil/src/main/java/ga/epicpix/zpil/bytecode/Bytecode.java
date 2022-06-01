@@ -5,10 +5,8 @@ import ga.epicpix.zpil.exceptions.RedefinedInstructionException;
 import ga.epicpix.zpil.exceptions.UnknownInstructionException;
 import ga.epicpix.zpil.pool.ConstantPool;
 import ga.epicpix.zpil.pool.ConstantPoolEntry;
+import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
-import ga.epicpix.zprol.structures.Function;
-import ga.epicpix.zprol.structures.IBytecodeInstruction;
-import ga.epicpix.zprol.structures.IBytecodeStorage;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -65,6 +63,10 @@ public final class Bytecode implements IBytecode {
         registerInstruction(109, "aload_array");
         registerSizedInstruction(110, "store_array", new int[] {1, 2, 4, 8});
         registerInstruction(114, "astore_array");
+        registerSizedInstruction(115, "load_field", new int[] {1, 2, 4, 8}, BytecodeValueType.FIELD);
+        registerInstruction(119, "aload_field", BytecodeValueType.FIELD);
+        registerSizedInstruction(120, "store_field", new int[] {1, 2, 4, 8}, BytecodeValueType.FIELD);
+        registerInstruction(124, "astore_field", BytecodeValueType.FIELD);
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {
@@ -156,6 +158,9 @@ public final class Bytecode implements IBytecode {
             }else if(type == BytecodeValueType.CLASS) {
                 if(val instanceof Class v) val = pool.getClassIndex(v);
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
+            }else if(type == BytecodeValueType.FIELD) {
+                if(val instanceof Field v) val = pool.getFieldIndex(v);
+                else throw new IllegalArgumentException(val.toString().getClass().getName());
             }
             if(!(val instanceof Number num)) throw new IllegalArgumentException(val.toString().getClass().getName());
             switch (type.getSize()) {
@@ -189,6 +194,8 @@ public final class Bytecode implements IBytecode {
                 args[i] = ((Number) args[i]).intValue();
             }else if(type == BytecodeValueType.CLASS) {
                 args[i] = ((Number) args[i]).intValue();
+            }else if(type == BytecodeValueType.FIELD) {
+                args[i] = ((Number) args[i]).intValue();
             }
         }
         return instructionGenerator.createInstruction(args);
@@ -213,6 +220,13 @@ public final class Bytecode implements IBytecode {
                 var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
                 var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
                 instr.getData()[i] = data.getClass(namespace, name);
+            }else if(values[i] == BytecodeValueType.FIELD) {
+                int index = ((Number) instr.getData()[i]).intValue();
+                var entry = (ConstantPoolEntry.FieldEntry) data.constantPool.entries.get(index - 1);
+                var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
+                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
+                var type = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getType() - 1)).getString();
+                instr.getData()[i] = data.getField(namespace, name, type);
             }
         }
     }

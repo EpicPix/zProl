@@ -15,6 +15,7 @@ import java.util.Objects;
 public class GeneratedData {
 
     public final ArrayList<Function> functions = new ArrayList<>();
+    public final ArrayList<Field> fields = new ArrayList<>();
     public final ArrayList<Class> classes = new ArrayList<>();
     public final ConstantPool constantPool = new ConstantPool();
 
@@ -28,6 +29,18 @@ public class GeneratedData {
             }
         }
         throw new FunctionNotDefinedException((namespace != null ? namespace + "." : "") + name + " - " + signature);
+    }
+
+    public Object getField(String namespace, String name, String type) {
+        for(Field fld : fields) {
+            if(Objects.equals(fld.namespace(), name)) continue;
+            if(!fld.name().equals(name)) continue;
+
+            if(type.equals(fld.type().getDescriptor())) {
+                return fld;
+            }
+        }
+        throw new IllegalArgumentException("Field not found " + (namespace != null ? namespace + "." : "") + name + " - " + type);
     }
 
     public Class getClass(String namespace, String name) {
@@ -83,6 +96,11 @@ public class GeneratedData {
                     }
                 }
             }
+        }
+
+        out.writeInt(data.fields.size());
+        for(Field field : data.fields) {
+            out.writeInt(data.constantPool.getFieldIndex(field));
         }
 
         out.close();
@@ -151,6 +169,15 @@ public class GeneratedData {
                 methods[methodIndex] = method;
             }
             data.classes.add(new Class(namespace, name, fields, methods));
+        }
+
+        int fieldLength = in.readInt();
+        for(int i = 0; i<fieldLength; i++) {
+            var entry = (ConstantPoolEntry.FieldEntry) data.constantPool.entries.get(in.readInt() - 1);
+            var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
+            var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
+            var type = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getType() - 1)).getString();
+            data.fields.add(new Field(namespace, name, Types.getTypeFromDescriptor(type)));
         }
 
         for(var func : data.functions) {

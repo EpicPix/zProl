@@ -7,7 +7,6 @@ import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.generators.Generator;
-import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.zld.ZldParser;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
@@ -282,6 +281,16 @@ public class Start {
                 }
             }
             preCompiledData.get(func.namespace()).functions.add(function);
+        }
+        for(var fld : gen.fields) {
+            compiledData.putIfAbsent(fld.namespace(), new CompiledData(fld.namespace()));
+            preCompiledData.putIfAbsent(fld.namespace(), new PreCompiledData());
+
+            compiledData.get(fld.namespace()).addField(fld);
+            var field = new PreField();
+            field.name = fld.name();
+            field.type = fld.type().getName();
+            preCompiledData.get(fld.namespace()).fields.add(field);
         }
         for(var e : compiledData.entrySet()) includedCompiled.add(e.getValue());
         for(var e : preCompiledData.entrySet()) {

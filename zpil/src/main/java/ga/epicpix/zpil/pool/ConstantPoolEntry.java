@@ -26,6 +26,8 @@ public class ConstantPoolEntry {
             return ClassEntry.read(in);
         }else if(t == 4) {
             return MethodEntry.read(in);
+        }else if(t == 5) {
+            return FieldEntry.read(in);
         }
         throw new RuntimeException("Unknown tag: " + t);
     }
@@ -195,6 +197,47 @@ public class ConstantPoolEntry {
             String mod = Integer.toHexString(modifiers);
             mod = "0".repeat(8 - mod.length()) + mod;
             return "MethodEntry namespace=#" + namespace + " className=#" + className + " name=#" + name + " signature=#" + sig + " modifiers=0x" + mod;
+        }
+    }
+
+    public static class FieldEntry extends ConstantPoolEntry {
+
+        private final int namespace;
+        private final int name;
+        private final int type;
+
+        public FieldEntry(int namespace, int name, int type) {
+            super((byte) 5);
+            this.namespace = namespace;
+            this.name = name;
+            this.type = type;
+        }
+
+        public int getNamespace() {
+            return namespace;
+        }
+
+        public int getName() {
+            return name;
+        }
+
+        public int getType() {
+            return type;
+        }
+
+        public void write(DataOutputStream out) throws IOException {
+            super.write(out);
+            out.writeInt(namespace);
+            out.writeInt(name);
+            out.writeInt(type);
+        }
+
+        public static FieldEntry read(DataInputStream in) throws IOException {
+            return new FieldEntry(in.readInt(), in.readInt(), in.readInt());
+        }
+
+        public String toString() {
+            return "FieldEntry namespace=#" + namespace + " name=#" + name + " type=#" + type;
         }
     }
 

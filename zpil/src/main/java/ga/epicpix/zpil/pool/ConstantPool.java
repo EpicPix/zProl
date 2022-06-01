@@ -1,10 +1,8 @@
 package ga.epicpix.zpil.pool;
 
 import ga.epicpix.zpil.exceptions.LostConstantPoolEntryException;
+import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
-import ga.epicpix.zprol.structures.Function;
-import ga.epicpix.zprol.structures.FunctionModifiers;
-import ga.epicpix.zprol.structures.Method;
 
 import java.util.ArrayList;
 
@@ -74,6 +72,22 @@ public class ConstantPool {
         return entries.size();
     }
 
+    public int getOrCreateFieldIndex(Field fld) {
+        int namespaceIndex = getOrCreateStringIndex(fld.namespace());
+        int nameIndex = getOrCreateStringIndex(fld.name());
+        int typeIndex = getOrCreateStringIndex(fld.type().getDescriptor());
+
+        for(int i = 0; i < entries.size(); i++) {
+            if(entries.get(i) instanceof ConstantPoolEntry.FieldEntry e) {
+                if(e.getNamespace() == namespaceIndex && e.getName() == nameIndex && e.getType() == typeIndex) {
+                    return i + 1;
+                }
+            }
+        }
+        entries.add(new ConstantPoolEntry.FieldEntry(namespaceIndex, nameIndex, typeIndex));
+        return entries.size();
+    }
+
 
 
     public int getFunctionIndex(Function func) {
@@ -132,6 +146,21 @@ public class ConstantPool {
             }
         }
         throw new LostConstantPoolEntryException("Cannot find method ConstantPoolEntry with " + (func.namespace() != null ? func.namespace() + "." : "") + func.name() + " - " + func.signature());
+    }
+
+    public int getFieldIndex(Field fld) {
+        int namespaceIndex = getStringIndex(fld.namespace());
+        int nameIndex = getStringIndex(fld.name());
+        int typeIndex = getStringIndex(fld.type().getDescriptor());
+
+        for(int i = 0; i < entries.size(); i++) {
+            if(entries.get(i) instanceof ConstantPoolEntry.FieldEntry e) {
+                if(e.getNamespace() == namespaceIndex && e.getName() == nameIndex && e.getType() == typeIndex) {
+                    return i + 1;
+                }
+            }
+        }
+        throw new LostConstantPoolEntryException("Cannot find field ConstantPoolEntry with " + (fld.namespace() != null ? fld.namespace() + "." : "") + fld.name() + " " + fld.type().getDescriptor());
     }
 
 }

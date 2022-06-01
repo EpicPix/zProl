@@ -30,6 +30,11 @@ public class PreCompiler {
                     pre.namespace = named.getSingleTokenWithName("DotWord").asWordToken().getWord();
                 }else if(named.name.equals("Function")) {
                     pre.functions.add(parseFunction(named));
+                }else if(named.name.equals("Field")) {
+                    PreField field = new PreField();
+                    field.type = named.getSingleTokenWithName("Type").asWordToken().getWord();
+                    field.name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
+                    pre.fields.add(field);
                 }else if(named.name.equals("Class")) {
                     PreClass clazz = new PreClass();
                     clazz.name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();

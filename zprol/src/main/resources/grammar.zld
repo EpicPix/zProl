@@ -155,6 +155,9 @@ tok Function:
   $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
   $FunctionModifiers $Type $Identifier ( [$ParameterList] ) ;
 
+tok Field:
+  $Type $Identifier ;
+
 def ClassField:
   $Type $Identifier ;
 
