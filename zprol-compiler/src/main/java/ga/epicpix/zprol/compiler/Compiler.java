@@ -274,7 +274,6 @@ public class Compiler {
 
             var possibleFunctions = new ArrayList<PreFunction>();
             for(var using : data.getUsing()) {
-                if(data.namespace != null && !data.namespace.equals(using.namespace)) continue; // currently, method name can only be a string without dots
                 for(var func : using.functions) {
                     if(func.name.equals(name)) {
                         if(func.parameters.size() == arguments.size()) {
@@ -500,7 +499,24 @@ public class Compiler {
     }
 
     public static Type runOperator(Type arg1, Type arg2, NamedToken operator, Token location, Type expectedType, CompiledData data, LocalScopeManager localsManager, ArrayDeque<Type> types, IBytecodeStorage bytecode, IBytecodeStorage arg2bytecode) {
+        var operatorName = operator.tokens[0].asWordToken().getWord();
+
         if(!(arg1 instanceof PrimitiveType prim1) || !(arg2 instanceof PrimitiveType prim2)) {
+            if(arg1 instanceof ClassType class1 && arg2 instanceof ClassType class2) {
+                if(operatorName.equals("==")) {
+                    for(var instr : arg2bytecode.getInstructions()) {
+                        bytecode.pushInstruction(instr);
+                    }
+                    bytecode.pushInstruction(getConstructedInstruction("aeq"));
+                    return new BooleanType();
+                }else if(operatorName.equals("!=")) {
+                    for(var instr : arg2bytecode.getInstructions()) {
+                        bytecode.pushInstruction(instr);
+                    }
+                    bytecode.pushInstruction(getConstructedInstruction("aneq"));
+                    return new BooleanType();
+                }
+            }
             throw new TokenLocatedException("Cannot perform math operation on types " + arg1.getName() + " <-> " + arg2.getName(), location);
         }
         var bigger = prim1.getSize() > prim2.getSize() ? prim1 : prim2;
@@ -517,8 +533,6 @@ public class Compiler {
             }
         }
         var primitive = (PrimitiveType) got;
-
-        var operatorName = operator.tokens[0].asWordToken().getWord();
 
         switch (operatorName) {
             case "+" -> bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "add"));

@@ -67,6 +67,8 @@ public final class Bytecode implements IBytecode {
         registerInstruction(119, "aload_field", BytecodeValueType.FIELD);
         registerSizedInstruction(120, "store_field", new int[] {1, 2, 4, 8}, BytecodeValueType.FIELD);
         registerInstruction(124, "astore_field", BytecodeValueType.FIELD);
+        registerInstruction(125, "aeq");
+        registerInstruction(126, "aneq");
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {

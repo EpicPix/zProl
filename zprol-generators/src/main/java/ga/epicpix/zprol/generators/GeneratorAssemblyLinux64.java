@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class GeneratorAssemblyLinux64 extends Generator {
@@ -320,8 +319,10 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         });
         instructionGenerators.put("ineq", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "xor rax, rax", "cmp ecx, edx", "mov rcx, 1", "cmovne rax, rcx", push("rax")));
         instructionGenerators.put("lneq", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmovne rax, rcx", push("rax")));
+        instructionGenerators.put("aneq", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmovne rax, rcx", push("rax")));
         instructionGenerators.put("ieq", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "xor rax, rax", "cmp ecx, edx", "mov rcx, 1", "cmove rax, rcx", push("rax")));
         instructionGenerators.put("leq", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmove rax, rcx", push("rax")));
+        instructionGenerators.put("aeq", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmove rax, rcx", push("rax")));
         instructionGenerators.put("neqjmp", (i, s, f, lp, instructions) -> instructions.add(pop("rax"), "cmp rax, 0", "je " + getMangledName(f) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())));
         instructionGenerators.put("eqjmp", (i, s, f, lp, instructions) -> instructions.add(pop("rax"), "cmp rax, 0", "jne " + getMangledName(f) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())));
         instructionGenerators.put("jmp", (i, s, f, lp, instructions) -> instructions.add("jmp " + getMangledName(f) + "." + (s.currentIndex() - 1 + ((Number)i.getData()[0]).shortValue())));
