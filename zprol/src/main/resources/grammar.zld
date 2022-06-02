@@ -60,6 +60,7 @@ def ArrayAccessor $ArrayAccessorOpenCharacter $Expression $ArrayAccessorCloseCha
 def AccessorElement:
   . $Identifier
   $ArrayAccessor
+def error AccessorElement Expected an Identifier </> . [$Whitespace] $AnyChar
 
 def Accessor $Identifier { $AccessorElement }
 
@@ -73,11 +74,21 @@ def inline Integer:
 def chars DecimalInteger:
   0
   $NonZeroDecimalDigit { $DecimalDigits }
+def error DecimalInteger Expected a DecimalInteger </> $NonZeroDecimalDigit [$Whitespace] $AnyChar
 
 def chars NonZeroDecimalDigit <1-9>
 def chars DecimalDigits <0-9>
 
 def chars ArrayCharacters <[><]>
+
+def chars AnyChar <^>
+def chars AnyCharButClose <^}>
+def chars AnyCharButOpen <^{>
+def chars AnyCharButOpenP <^(>
+def chars AnyCharButCloseP <^)>
+def chars AnyCharButEquals <^=>
+def chars AnyCharButSemicolon <^;>
+def chars AnyCharButQuotes <^">
 
 def chars IdentifierChars <a-zA-Z_> { <a-zA-Z0-9_> }
 def chars Identifier [$Whitespace] $IdentifierChars
@@ -85,17 +96,29 @@ def chars Type [$Whitespace] { $IdentifierChars <.> } $IdentifierChars { $ArrayC
 def chars clean Whitespace < \t\n> { < \t\n> }
 def chars StringChars <^\n"> { <^\n"> }
 def String " [$StringChars] "
+def error String Expected '"' </> " [$StringChars] $AnyCharButQuotes
 def chars DotWord [$Whitespace] <a-zA-Z_> { <a-zA-Z0-9_.> }
 
 tok Using:
   using $DotWord ;
+  $UsingErrors
+
+def error UsingErrors:
+  Expected a ';' </> using $DotWord [$Whitespace] $AnyChar
+  Expected a namespace </> using [$Whitespace] [$AnyChar]
 
 tok Namespace:
   namespace $DotWord ;
+  $NamespaceErrors
+
+def error NamespaceErrors:
+  Expected a ';' </> namespace $DotWord [$Whitespace] $AnyChar
+  Expected a namespace </> namespace [$Whitespace] [$AnyChar]
 
 def ReturnStatement:
   return $Expression ;
   return ;
+def error ReturnStatement Expected a ';' </> return
 
 def Argument:
   $Expression
@@ -105,9 +128,10 @@ def ArgumentList:
 
 def FunctionCall:
   $Identifier ( [$ArgumentList] )
+def error FunctionCall Expected ')' </> $Identifier ( [$ArgumentList] $AnyCharButCloseP
 
-def Parameter:
-  $Type $Identifier
+def Parameter $Type $Identifier
+def error Parameter Expected an Identifier </> $Type [$Whitespace] [$AnyChar]
 
 def ParameterList:
   $Parameter {, $Parameter}
@@ -116,25 +140,35 @@ def inline keyword FunctionModifier:
   native
 
 def FunctionModifiers:
-  { $FunctionModifier $Whitespace }
+  { $FunctionModifier [$Whitespace] }
 
 def FunctionCallStatement:
   $Identifier ( [$ArgumentList] ) ;
 
 def AssignmentStatement:
   $Accessor = $Expression ;
+def error AssignmentStatement Expected ';' </> $Accessor = $Expression $AnyChar
 
 def CreateAssignmentStatement:
   $Type $Identifier = $Expression ;
+def error CreateAssignmentStatement:
+  Expected '=' </> $Type $Identifier $AnyCharButEquals
+  Expected ';' </> $Type $Identifier = $Expression $AnyChar
 
 def IfStatement:
   if ( $Expression ) $Code [ $ElseStatement ]
+def error IfStatement:
+  Expected '(' </> if [$Whitespace] $AnyCharButOpenP
+  Expected ')' </> if ( $Expression [$Whitespace] $AnyCharButCloseP
 
 def ElseStatement:
   else $Code
 
 def WhileStatement:
   while ( $Expression ) $Code
+def error WhileStatement:
+  Expected '(' </> while [$Whitespace] $AnyCharButOpenP
+  Expected ')' </> while ( $Expression [$Whitespace] $AnyCharButCloseP
 
 def Statement:
   $ReturnStatement
@@ -143,30 +177,39 @@ def Statement:
   $CreateAssignmentStatement
   $IfStatement
   $WhileStatement
+def error Statement Not a Statement </> [$Whitespace] $AnyCharButClose
 
 def inline chars LineCodeChars [$Whitespace] <=> <\>>
 
 def Code:
   \{ {$Statement} \}
   $LineCodeChars $Statement
+def error Code:
+  Expected code </> \{
+  Expected code </> $LineCodeChars
 
 tok Function:
-  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
   $FunctionModifiers $Type $Identifier ( [$ParameterList] ) ;
+  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
+
+def error FieldErrors Expected ';' </> $Type $Identifier [$Whitespace] $AnyCharButOpen
 
 tok Field:
   $Type $Identifier ;
+  $FieldErrors
 
 def ClassField:
   $Type $Identifier ;
+def error ClassField Expected ';' </> $Type $Identifier [$Whitespace] $AnyChar
 
 def ClassMethod:
-  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
   $FunctionModifiers $Type $Identifier ( [$ParameterList] ) ;
+  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
 
 def inline ClassElement:
   $ClassField
   $ClassMethod
+def error ClassElement Expected a Field or a Method </> [$Whitespace] $AnyCharButClose
 
 tok Class:
   class $Identifier \{ {$ClassElement} \}

@@ -35,16 +35,8 @@ public class Parser {
         ArrayList<Token> tokens = new ArrayList<>();
 
         while(parser.seekWord() != null) {
-            ArrayList<LanguageToken> validOptions = new ArrayList<>();
-            for(var tok : LanguageToken.TOKENS) {
-                var loc = parser.saveLocation();
-                if(tok.args()[0].apply(parser) != null) {
-                    validOptions.add(tok);
-                }
-                parser.loadLocation(loc);
-            }
             LanguageToken langToken = null;
-            for (var tok : validOptions) {
+            for (var tok : LanguageToken.TOKENS) {
                 var loc = parser.saveLocation();
                 ArrayList<Token> tTokens = new ArrayList<>();
                 var startLocation = parser.getLocation();

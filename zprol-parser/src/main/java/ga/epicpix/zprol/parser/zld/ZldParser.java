@@ -199,12 +199,30 @@ public class ZldParser {
                     name = parser.nextWord();
                     merge = true;
                 }
+                var error = false;
+                if(name.equals("error")) {
+                    name = parser.nextWord();
+                    error = true;
+                }
                 boolean checkWhitespace = false;
                 if(parser.seekWord().equals(":")) {
                     parser.nextWord();
                     checkWhitespace = true;
                 }
+                StringBuilder errorMessage = new StringBuilder();
+                boolean captureErrorMessage = true;
                 while(parser.hasNext()) {
+                    if(error) {
+                        if(captureErrorMessage) {
+                            if (parser.seekTemplatedWord(new char[]{'<', '/', '>'}).equals("</>")) {
+                                parser.nextTemplateWord(new char[]{'<', '/', '>'});
+                                captureErrorMessage = false;
+                                continue;
+                            }
+                            errorMessage.appendCodePoint(parser.nextChar());
+                            continue;
+                        }
+                    }
                     tokens.add(convert(keyword, chars, parser.nextTemplateWord(tokenCharacters), parser));
                     if(!checkWhitespace) {
                         if(parser.checkNewLine()) {
@@ -220,14 +238,22 @@ public class ZldParser {
                             charGenerator(tokens);
                         }
                         DEFINITIONS.putIfAbsent(name, new ArrayList<>());
+                        if(error) {
+                            tokens.add(new ErrorToken(errorMessage.toString().trim()));
+                        }
                         DEFINITIONS.get(name).add(new LanguageToken(name, inline, keyword, clean, merge, tokens.toArray(new LanguageTokenFragment[0])));
                         tokens.clear();
+                        captureErrorMessage = true;
+                        errorMessage.setLength(0);
                     }
                 }
                 if(chars && !clean) {
                     charGenerator(tokens);
                 }
                 DEFINITIONS.putIfAbsent(name, new ArrayList<>());
+                if(error) {
+                    tokens.add(new ErrorToken(errorMessage.toString().trim()));
+                }
                 DEFINITIONS.get(name).add(new LanguageToken(name, inline, keyword, clean, merge, tokens.toArray(new LanguageTokenFragment[0])));
             } else {
                 throw new ParserException("Unknown grammar file word: " + d, parser);
