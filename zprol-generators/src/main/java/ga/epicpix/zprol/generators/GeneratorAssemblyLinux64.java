@@ -227,6 +227,16 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("istore_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), pop("rax"), "mov [rdx + rcx * 4], eax"));
         instructionGenerators.put("lstore_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), pop("rax"), "mov [rdx + rcx * 8], rax"));
         instructionGenerators.put("astore_array", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), pop("rax"), "mov [rdx + rcx * 8], rax"));
+        instructionGenerators.put("bload_field", (i, s, f, lp, instructions) -> instructions.add("xor cx, cx", "mov cl, [" + getMangledName((Field) i.getData()[0]) + "]", push("cx")));
+        instructionGenerators.put("sload_field", (i, s, f, lp, instructions) -> instructions.add("mov cx, [" + getMangledName((Field) i.getData()[0]) + "]", push("cx")));
+        instructionGenerators.put("iload_field", (i, s, f, lp, instructions) -> instructions.add("mov ecx, [" + getMangledName((Field) i.getData()[0]) + "]", push("rcx")));
+        instructionGenerators.put("lload_field", (i, s, f, lp, instructions) -> instructions.add("mov rcx, [" + getMangledName((Field) i.getData()[0]) + "]", push("rcx")));
+        instructionGenerators.put("aload_field", (i, s, f, lp, instructions) -> instructions.add("mov rcx, [" + getMangledName((Field) i.getData()[0]) + "]", push("rcx")));
+        instructionGenerators.put("bstore_field", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], cl"));
+        instructionGenerators.put("sstore_field", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], cx"));
+        instructionGenerators.put("istore_field", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], ecx"));
+        instructionGenerators.put("lstore_field", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], rcx"));
+        instructionGenerators.put("astore_field", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], rcx"));
         instructionGenerators.put("class_field_load", (i, s, f, lp, instructions) -> {
             var clz = (Class) i.getData()[0];
             var fieldName = (String) i.getData()[1];
@@ -516,6 +526,17 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             index++;
         }
 
+        if(generated.fields.size() != 0) {
+            assembly.add("section .bss");
+            for (var field : generated.fields) {
+                int size = 8;
+                if (field.type() instanceof PrimitiveType prim) {
+                    size = prim.size;
+                }
+                assembly.add(getMangledName(field) + ": resb " + size);
+            }
+        }
+
         // -O embed value return functions
         HashMap<Function, ValueReturnInstruction> valueReturnFunctions = new HashMap<>();
         for(int i = 0; i<assembly.instructions.size(); i++) {
@@ -583,8 +604,16 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         return getMangledName(func.namespace(), func.name(), func.signature());
     }
 
+    public static String getMangledName(Field field) {
+        return getMangledName(field.namespace(), field.name(), field.type());
+    }
+
     public static String getMangledName(String namespace, String name, FunctionSignature signature) {
         return (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + signature.toString().replace("(", "").replace(")", "").replace(";", "").replace("[", "r");
+    }
+
+    public static String getMangledName(String namespace, String name, Type type) {
+        return (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + type.getDescriptor().replace(";", "").replace("[", "r");
     }
 
 }
