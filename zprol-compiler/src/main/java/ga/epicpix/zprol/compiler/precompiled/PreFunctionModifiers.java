@@ -4,8 +4,7 @@ import ga.epicpix.zprol.structures.FunctionModifiers;
 
 public enum PreFunctionModifiers {
 
-    NATIVE("native", true, FunctionModifiers.NATIVE),
-    INLINE("inline", false, FunctionModifiers.EMBED);
+    NATIVE("native", true, FunctionModifiers.NATIVE);
 
     public static final PreFunctionModifiers[] MODIFIERS = values();
 

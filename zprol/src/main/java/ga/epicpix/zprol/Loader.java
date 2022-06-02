@@ -42,7 +42,6 @@ public class Loader {
         registerKeyword("while", "control");
 
         registerKeyword("native", "function_modifier");
-        registerKeyword("inline", "function_modifier");
     }
 
 }

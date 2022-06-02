@@ -4,19 +4,16 @@ import java.util.EnumSet;
 
 public enum FunctionModifiers {
 
-    NATIVE(0x00000003, true, true),
-    EMBED(0x00000002, false, true);
+    NATIVE(0x00000001, true);
 
     public static final FunctionModifiers[] MODIFIERS = values();
 
     private final int bits;
     private final boolean emptyCode;
-    private final boolean embedCode;
 
-    FunctionModifiers(int bits, boolean emptyCode, boolean embedCode) {
+    FunctionModifiers(int bits, boolean emptyCode) {
         this.bits = bits;
         this.emptyCode = emptyCode;
-        this.embedCode = embedCode;
     }
 
     public int getBits() {
@@ -30,19 +27,6 @@ public enum FunctionModifiers {
     public static boolean isEmptyCode(EnumSet<FunctionModifiers> modifiers) {
         for(FunctionModifiers modifier : modifiers) {
             if(modifier.isEmptyCode()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean isEmbedCode() {
-        return embedCode;
-    }
-
-    public static boolean isEmbedCode(EnumSet<FunctionModifiers> modifiers) {
-        for(FunctionModifiers modifier : modifiers) {
-            if(modifier.isEmbedCode()) {
                 return true;
             }
         }

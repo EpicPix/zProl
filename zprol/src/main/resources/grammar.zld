@@ -114,7 +114,6 @@ def ParameterList:
 
 def inline keyword FunctionModifier:
   native
-  inline
 
 def FunctionModifiers:
   { $FunctionModifier $Whitespace }
