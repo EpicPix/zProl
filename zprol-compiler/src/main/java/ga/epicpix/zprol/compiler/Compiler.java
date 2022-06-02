@@ -151,15 +151,28 @@ public class Compiler {
                             }
                         }
                     } else {
-                        var localType = local.type();
-                        if (localType instanceof PrimitiveType primitive) {
-                            queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_local", local.index()));
-                        } else if (localType instanceof BooleanType) {
-                            queue.pushInstruction(getConstructedSizeInstruction(8, "load_local", local.index()));
-                        } else if (localType instanceof VoidType) {
-                            throw new TokenLocatedException("Cannot load void type");
-                        } else {
-                            queue.pushInstruction(getConstructedInstruction("aload_local", local.index()));
+                        if(local != null) {
+                            var useType = local.type();
+                            if (useType instanceof PrimitiveType primitive) {
+                                queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_local", local.index()));
+                            } else if (useType instanceof BooleanType) {
+                                queue.pushInstruction(getConstructedSizeInstruction(8, "load_local", local.index()));
+                            } else if (useType instanceof VoidType) {
+                                throw new TokenLocatedException("Cannot store void type");
+                            } else {
+                                queue.pushInstruction(getConstructedInstruction("aload_local", local.index()));
+                            }
+                        }else {
+                            var useTime = f.type();
+                            if (useTime instanceof PrimitiveType primitive) {
+                                queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_field", f));
+                            } else if (useTime instanceof BooleanType) {
+                                queue.pushInstruction(getConstructedSizeInstruction(8, "load_field", f));
+                            } else if (useTime instanceof VoidType) {
+                                throw new TokenLocatedException("Cannot load void type");
+                            } else {
+                                queue.pushInstruction(getConstructedInstruction("aload_field", f));
+                            }
                         }
                         for (int i = 0; i < accessors.size() - 1; i++) {
                             getAccessor(accessors.get(i), types, data, storage, localsManager);
@@ -446,7 +459,11 @@ public class Compiler {
         }else if(token.name.equals("CastExpression")) {
             var hardCast = token.getTokenWithName("HardCastOperator");
             var castType = data.resolveType((hardCast != null ? hardCast : token.getTokenWithName("CastOperator")).getSingleTokenWithName("Type").asWordToken().getWord());
-            generateInstructionsFromExpression(token.tokens[1].asNamedToken(), null, types, data, localsManager, bytecode, false);
+            if(token.tokens[1].getType() == TokenType.OPEN) {
+                generateInstructionsFromExpression(token.tokens[2].asNamedToken(), null, types, data, localsManager, bytecode, false);
+            }else {
+                generateInstructionsFromExpression(token.tokens[1].asNamedToken(), null, types, data, localsManager, bytecode, false);
+            }
             var from = types.pop();
             if(hardCast != null) {
                 // this will not check sizes of primitive types, this is unsafe
