@@ -6,6 +6,7 @@ on:
       - '**.java'
       - '**.xml'
       - '**.zprol'
+      - '**.zld'
 
 jobs:
   build:
