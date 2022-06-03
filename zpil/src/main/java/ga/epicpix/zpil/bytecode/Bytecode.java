@@ -69,6 +69,14 @@ public final class Bytecode implements IBytecode {
         registerInstruction(124, "astore_field", BytecodeValueType.FIELD);
         registerInstruction(125, "aeq");
         registerInstruction(126, "aneq");
+        registerSizedInstruction(127, "lt", new int[] {1, 2, 4, 8});
+        registerSizedInstruction(131, "ltu", new int[] {1, 2, 4, 8});
+        registerSizedInstruction(135, "le", new int[] {1, 2, 4, 8});
+        registerSizedInstruction(139, "leu", new int[] {1, 2, 4, 8});
+        registerSizedInstruction(143, "gt", new int[] {1, 2, 4, 8});
+        registerSizedInstruction(147, "gtu", new int[] {1, 2, 4, 8});
+        registerSizedInstruction(151, "ge", new int[] {1, 2, 4, 8});
+        registerSizedInstruction(155, "geu", new int[] {1, 2, 4, 8});
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {

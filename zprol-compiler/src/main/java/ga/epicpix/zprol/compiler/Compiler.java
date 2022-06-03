@@ -251,7 +251,7 @@ public class Compiler {
             }else if(prob != null) {
                 types.push(prob);
             }
-        }else if(token.name.equals("MultiplicativeExpression") || token.name.equals("AdditiveExpression") || token.name.equals("InclusiveOrExpression") || token.name.equals("EqualsExpression") || token.name.equals("ShiftExpression") || token.name.equals("InclusiveAndExpression")) {
+        }else if(token.name.equals("MultiplicativeExpression") || token.name.equals("AdditiveExpression") || token.name.equals("InclusiveOrExpression") || token.name.equals("EqualsExpression") || token.name.equals("ShiftExpression") || token.name.equals("InclusiveAndExpression") || token.name.equals("CompareExpression")) {
             types.push(runOperator(token, expectedType, data, localsManager, types, bytecode));
         }else if(token.name.equals("DecimalInteger")) {
            BigInteger number = getDecimalInteger(token.tokens[0]);
@@ -558,7 +558,27 @@ public class Compiler {
                 bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "neq"));
                 got = new BooleanType();
             }
-            default -> throw new TokenLocatedException("Unknown operator '" + operatorName + "'", location);
+            case "<" -> {
+                if(primitive.isUnsigned()) bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "ltu"));
+                else bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "lt"));
+                got = new BooleanType();
+            }
+            case "<=" -> {
+                if(primitive.isUnsigned()) bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "leu"));
+                else bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "le"));
+                got = new BooleanType();
+            }
+            case ">" -> {
+                if(primitive.isUnsigned()) bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "gtu"));
+                else bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "gt"));
+                got = new BooleanType();
+            }
+            case ">=" -> {
+                if(primitive.isUnsigned()) bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "geu"));
+                else bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "ge"));
+                got = new BooleanType();
+            }
+            default -> throw new TokenLocatedException("Unknown operator '" + operatorName + "'", operator);
         }
         return got;
     }
