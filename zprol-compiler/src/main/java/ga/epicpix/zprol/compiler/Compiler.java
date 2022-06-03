@@ -173,7 +173,7 @@ public class Compiler {
                             }
                         }
                         for (int i = 0; i < accessors.size() - 1; i++) {
-                            getAccessor(accessors.get(i), types, data, storage, localsManager);
+                            getAccessor(accessors.get(i), types, data, queue, localsManager);
                         }
                         expected = setAccessor(accessors.get(accessors.size() - 1), types, data, queue, localsManager);
                     }
