@@ -346,9 +346,14 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("sshift_right", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "shr dx, cl", push("dx")));
         instructionGenerators.put("ishift_right", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "shr edx, cl", push("rdx")));
         instructionGenerators.put("lshift_right", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "shr rdx, cl", push("rdx")));
-        instructionGenerators.put("bmul", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "imul cx, dx", push("cx")));
+        instructionGenerators.put("bmul", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "imul cl, dl", push("cx")));
+        instructionGenerators.put("smul", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "imul cx, dx", push("cx")));
+        instructionGenerators.put("imul", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "imul ecx, edx", push("rcx")));
         instructionGenerators.put("lmul", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "imul rcx, rdx", push("rcx")));
-        instructionGenerators.put("lmulu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "mul rcx", push("rdx")));
+        instructionGenerators.put("bmulu", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("ax"), "mul cl", push("ax")));
+        instructionGenerators.put("smulu", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("ax"), "mul cx", push("ax")));
+        instructionGenerators.put("imulu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "mul ecx", push("rax")));
+        instructionGenerators.put("lmulu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "mul rcx", push("rax")));
         instructionGenerators.put("idiv", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "idiv ecx", push("rax")));
         instructionGenerators.put("ldiv", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "idiv rcx", push("rax")));
         instructionGenerators.put("idivu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "div ecx", push("rax")));
