@@ -71,10 +71,8 @@ public class Compiler {
                     }else if(!(sig.returnType() instanceof VoidType)) {
                         storage.pushInstruction(getConstructedInstruction("areturn"));
                     }
-                    if(opens == 0) {
-                        hasReturned = true;
-                        break;
-                    }
+                    hasReturned = true;
+                    break;
                 } else if("FunctionCallStatement".equals(named.name)) {
                     generateInstructionsFromExpression(named, null, new ArrayDeque<>(), data, localsManager, storage, true);
                 } else if("CreateAssignmentStatement".equals(named.name)) {
@@ -126,8 +124,8 @@ public class Compiler {
                     var types = new ArrayDeque<Type>();
                     var queue = createStorage();
                     types.push(expected);
+                    generateInstructionsFromExpression(expression, expected, types, data, localsManager, queue, false);
                     if(accessors.size() == 0) {
-                        generateInstructionsFromExpression(expression, expected, types, data, localsManager, queue, false);
                         var castType = doCast(types.pop(), expected, false, queue, expression);
                         if(local != null) {
                             if (castType instanceof PrimitiveType primitive) {
@@ -179,7 +177,6 @@ public class Compiler {
                         }
                         expected = setAccessor(accessors.get(accessors.size() - 1), types, data, queue, localsManager);
                     }
-                    generateInstructionsFromExpression(expression, expected, types, data, localsManager, storage, false);
                     var got = types.pop();
                     doCast(got, expected, false, storage, expression);
                     for(var instr : queue.getInstructions()) storage.pushInstruction(instr);
