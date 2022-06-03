@@ -13,4 +13,9 @@ public class BooleanType extends Type {
     public String normalName() {
         return "boolean";
     }
+
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o != null && getClass() == o.getClass();
+    }
 }

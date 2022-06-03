@@ -123,10 +123,10 @@ public class Compiler {
                     }
                     var types = new ArrayDeque<Type>();
                     var queue = createStorage();
-                    types.push(expected);
                     generateInstructionsFromExpression(expression, expected, types, data, localsManager, queue, false);
+                    var assignmentType = types.pop();
                     if(accessors.size() == 0) {
-                        var castType = doCast(types.pop(), expected, false, queue, expression);
+                        var castType = doCast(assignmentType, expected, false, queue, expression);
                         if(local != null) {
                             if (castType instanceof PrimitiveType primitive) {
                                 queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
@@ -149,6 +149,7 @@ public class Compiler {
                             }
                         }
                     } else {
+                        var accessorTypes = new ArrayDeque<Type>();
                         if(local != null) {
                             var useType = local.type();
                             if (useType instanceof PrimitiveType primitive) {
@@ -160,25 +161,26 @@ public class Compiler {
                             } else {
                                 queue.pushInstruction(getConstructedInstruction("aload_local", local.index()));
                             }
+                            accessorTypes.push(useType);
                         }else {
-                            var useTime = f.type();
-                            if (useTime instanceof PrimitiveType primitive) {
+                            var useType = f.type();
+                            if (useType instanceof PrimitiveType primitive) {
                                 queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_field", f));
-                            } else if (useTime instanceof BooleanType) {
+                            } else if (useType instanceof BooleanType) {
                                 queue.pushInstruction(getConstructedSizeInstruction(8, "load_field", f));
-                            } else if (useTime instanceof VoidType) {
+                            } else if (useType instanceof VoidType) {
                                 throw new TokenLocatedException("Cannot load void type");
                             } else {
                                 queue.pushInstruction(getConstructedInstruction("aload_field", f));
                             }
+                            accessorTypes.push(useType);
                         }
                         for (int i = 0; i < accessors.size() - 1; i++) {
-                            getAccessor(accessors.get(i), types, data, queue, localsManager);
+                            getAccessor(accessors.get(i), accessorTypes, data, queue, localsManager);
                         }
-                        expected = setAccessor(accessors.get(accessors.size() - 1), types, data, queue, localsManager);
+                        expected = setAccessor(accessors.get(accessors.size() - 1), accessorTypes, data, queue, localsManager);
                     }
-                    var got = types.pop();
-                    doCast(got, expected, false, storage, expression);
+                    doCast(assignmentType, expected, false, storage, expression);
                     for(var instr : queue.getInstructions()) storage.pushInstruction(instr);
                 } else if("IfStatement".equals(named.name)) {
                     var types = new ArrayDeque<Type>();
@@ -233,7 +235,7 @@ public class Compiler {
 
     public static void generateInstructionsFromExpression(NamedToken token, Type expectedType, ArrayDeque<Type> types, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
         if(token.name.equals("Expression")) {
-           generateInstructionsFromExpression(token.tokens[0].asNamedToken(), expectedType, types, data, localsManager, bytecode, expectedType == null && discardValue);
+            generateInstructionsFromExpression(token.tokens[0].asNamedToken(), expectedType, types, data, localsManager, bytecode, expectedType == null && discardValue);
             Type prob = types.size() != 0 ? types.peek() : null;
 
             if(prob != null && discardValue) {
@@ -361,7 +363,7 @@ public class Compiler {
 
             for(int i = 0; i<arguments.size(); i++) {
                 generateInstructionsFromExpression(arguments.get(i).getTokenWithName("Expression"), parameters[i], types, data, localsManager, bytecode, false);
-                types.push(doCast(types.pop(), signature.parameters()[i], false, bytecode, arguments.get(i).getTokenWithName("Expression")));
+                doCast(types.pop(), signature.parameters()[i], false, bytecode, arguments.get(i).getTokenWithName("Expression"));
             }
 
             bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
@@ -489,13 +491,13 @@ public class Compiler {
             generateInstructionsFromExpression(token.tokens[i * 2 + 2].asNamedToken(), expectedType, types, data, localsManager, arg2Storage, false);
             var arg2 = types.pop();
 
-            arg1 = runOperator(arg1, arg2, token.tokens[i * 2 + 1].asNamedToken(), token, expectedType, data, localsManager, types, bytecode, arg2Storage);
+            arg1 = runOperator(arg1, arg2, token.tokens[i * 2 + 1].asNamedToken(), token, bytecode, arg2Storage);
         }
 
         return arg1;
     }
 
-    public static Type runOperator(Type arg1, Type arg2, NamedToken operator, Token location, Type expectedType, CompiledData data, LocalScopeManager localsManager, ArrayDeque<Type> types, IBytecodeStorage bytecode, IBytecodeStorage arg2bytecode) {
+    public static Type runOperator(Type arg1, Type arg2, NamedToken operator, Token location, IBytecodeStorage bytecode, IBytecodeStorage arg2bytecode) {
         var operatorName = operator.tokens[0].asWordToken().getWord();
 
         if(!(arg1 instanceof PrimitiveType prim1) || !(arg2 instanceof PrimitiveType prim2)) {
