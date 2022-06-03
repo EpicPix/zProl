@@ -26,10 +26,10 @@ def inline EqualityOperators:
   $NotEqualOperator
 
 def inline CompareOperators:
-  $LessThanOperator
   $LessEqualThanOperator
-  $GreaterThanOperator
+  $LessThanOperator
   $GreaterEqualThanOperator
+  $GreaterThanOperator
 
 def inline ShiftOperators:
   $ShiftLeftOperator
@@ -43,6 +43,7 @@ def inline MultiplicativeOperators:
 def inline CastOperators:
   $CastOperator
   $HardCastOperator
+def error CastOperators Expected ')' </> ( $Type [$HardCastIndicatorOperator] $AnyCharButCloseP
 
 def inline PostExpression:
   ( $Expression )
@@ -104,7 +105,7 @@ def chars AnyCharButQuotes <^">
 def chars IdentifierChars <a-zA-Z_> { <a-zA-Z0-9_> }
 def chars Identifier [$Whitespace] $IdentifierChars
 def chars Type [$Whitespace] { $IdentifierChars <.> } $IdentifierChars { $ArrayCharacters }
-def chars clean Whitespace < \t\n> { < \t\n> }
+def chars clean Whitespace { < \t\n> }
 def chars StringChars <^\n"> { <^\n"> }
 def String " [$StringChars] "
 def error String Expected '"' </> " [$StringChars] $AnyCharButQuotes
