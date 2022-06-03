@@ -1,5 +1,71 @@
 namespace zprol.lang.memory;
 
-byte[] malloc0(ulong length) {
-    return (byte[]!) (uint64) 0;
+using zprol.lang.linux.amd64;
+using zprol.lang;
+
+class _QuickBinElement {
+    _QuickBinElement next;
+    _QuickBinElement prev;
+    bool nextBlockFree;
 }
+
+_QuickBinElement quickBin;
+
+bool shouldCheckNextBlock(_QuickBinElement current) {
+    if(current.nextBlockFree) {
+        return false;
+    }
+    if(current.next != (_QuickBinElement!) (uint64) 0) {
+        return true;
+    }
+    return false;
+}
+
+byte[] malloc(ulong length) {
+    if(quickBin == (_QuickBinElement!) (uint64) 0) {
+        quickBin = (_QuickBinElement!) mmap(0, 16 * 4096, PROT_READ() | PROT_WRITE(), MAP_PRIVATE() | MAP_ANONYMOUS(), 0, 0);
+        quickBin.nextBlockFree = true;
+    }
+    if(length <= 64) {
+        _QuickBinElement prevElement = quickBin;
+        while(shouldCheckNextBlock(prevElement)) {
+            prevElement = prevElement.next;
+        }
+        _QuickBinElement thisElement = (_QuickBinElement!) ((uint64!) prevElement + 80);
+        thisElement.nextBlockFree = true;
+        prevElement.nextBlockFree = false;
+        if(prevElement.next != (_QuickBinElement!) (uint64) 0) {
+            thisElement.next = prevElement.next;
+            prevElement.next.prev = thisElement;
+        }
+        prevElement.next = thisElement;
+        thisElement.prev = prevElement;
+        return (byte[]!) ((uint64!) thisElement + 16);
+    }else {
+        return (byte[]!) (ulong) 0;
+    }
+    return (byte[]!) quickBin;
+}
+
+void free(byte[] location) {
+    _QuickBinElement element = (_QuickBinElement!) ((uint64!) location - 16);
+    _QuickBinElement null = (_QuickBinElement!) (uint64) 0;
+    if(element.prev != null) {
+        element.prev.next = element.next;
+        element.prev.nextBlockFree = true;
+    }
+    if(element.next != null) {
+        element.next.prev = element.prev;
+    }
+}
+
+
+byte[] mmap(uint64 addr, uint64 length, uint64 protection, uint64 flags, uint64 fd, uint64 offset) => 
+    return (byte[]!) syscall(SYSCALL_MMAP(), addr, length, protection, flags, fd, offset);
+
+int64 PROT_READ() => return 1;
+int64 PROT_WRITE() => return 2;
+
+int64 MAP_PRIVATE() => return 2;
+int64 MAP_SHARED() => return 4;
+int64 MAP_ANONYMOUS() => return 32;
