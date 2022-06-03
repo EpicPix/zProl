@@ -31,7 +31,7 @@ byte[] malloc(ulong length) {
         while(shouldCheckNextBlock(prevElement)) {
             prevElement = prevElement.next;
         }
-        _QuickBinElement thisElement = (_QuickBinElement!) ((uint64!) prevElement + 80);
+        _QuickBinElement thisElement = (_QuickBinElement!) ((uint64!) prevElement + 88);
         thisElement.nextBlockFree = true;
         prevElement.nextBlockFree = false;
         if(prevElement.next != (_QuickBinElement!) (uint64) 0) {
@@ -40,7 +40,7 @@ byte[] malloc(ulong length) {
         }
         prevElement.next = thisElement;
         thisElement.prev = prevElement;
-        return (byte[]!) ((uint64!) thisElement + 16);
+        return (byte[]!) ((uint64!) thisElement + 24);
     }else {
         return (byte[]!) (ulong) 0;
     }
@@ -48,7 +48,7 @@ byte[] malloc(ulong length) {
 }
 
 void free(byte[] location) {
-    _QuickBinElement element = (_QuickBinElement!) ((uint64!) location - 16);
+    _QuickBinElement element = (_QuickBinElement!) ((uint64!) location - 24);
     _QuickBinElement null = (_QuickBinElement!) (uint64) 0;
     if(element.prev != null) {
         element.prev.next = element.next;
