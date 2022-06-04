@@ -472,6 +472,9 @@ public class Compiler {
         }else if(token.name.equals("Boolean")) {
             bytecode.pushInstruction(getConstructedSizeInstruction(8, "push", Boolean.parseBoolean(token.tokens[0].asWordToken().getWord()) ? 1 : 0));
             types.push(new BooleanType());
+        }else if(token.name.equals("Null")) {
+            bytecode.pushInstruction(getConstructedSizeInstruction(8, "push", 0));
+            types.push(new NullType());
         }else {
             throw new TokenLocatedException("Unknown token " + token.name, token);
         }
@@ -501,7 +504,7 @@ public class Compiler {
         var operatorName = operator.tokens[0].asWordToken().getWord();
 
         if(!(arg1 instanceof PrimitiveType prim1) || !(arg2 instanceof PrimitiveType prim2)) {
-            if(arg1 instanceof ClassType class1 && arg2 instanceof ClassType class2) {
+            if((arg1 instanceof ClassType || arg1 instanceof NullType) && (arg2 instanceof ClassType || arg2 instanceof NullType)) {
                 if(operatorName.equals("==")) {
                     for(var instr : arg2bytecode.getInstructions()) {
                         bytecode.pushInstruction(instr);

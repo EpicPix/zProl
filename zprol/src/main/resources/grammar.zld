@@ -50,6 +50,7 @@ def inline PostExpression:
   $Integer
   $Boolean
   $String
+  $Null
   $FunctionCall
   $Accessor
 
@@ -79,6 +80,8 @@ def Accessor $Identifier { $AccessorElement }
 def Boolean:
   true
   false
+
+def Null null
 
 def inline Integer:
   [$Whitespace] $DecimalInteger

@@ -22,7 +22,7 @@ bool shouldCheckNextBlock(_QuickBinElement current) {
 }
 
 byte[] malloc(ulong length) {
-    if(quickBin == (_QuickBinElement!) (uint64) 0) {
+    if(quickBin == null) {
         quickBin = (_QuickBinElement!) mmap(0, 16 * 4096, PROT_READ() | PROT_WRITE(), MAP_PRIVATE() | MAP_ANONYMOUS(), 0, 0);
         quickBin.nextBlockFree = true;
     }
@@ -34,7 +34,7 @@ byte[] malloc(ulong length) {
         _QuickBinElement thisElement = (_QuickBinElement!) ((uint64!) prevElement + 88);
         thisElement.nextBlockFree = true;
         prevElement.nextBlockFree = false;
-        if(prevElement.next != (_QuickBinElement!) (uint64) 0) {
+        if(prevElement.next != null) {
             thisElement.next = prevElement.next;
             prevElement.next.prev = thisElement;
         }
@@ -49,7 +49,6 @@ byte[] malloc(ulong length) {
 
 void free(byte[] location) {
     _QuickBinElement element = (_QuickBinElement!) ((uint64!) location - 24);
-    _QuickBinElement null = (_QuickBinElement!) (uint64) 0;
     if(element.prev != null) {
         element.prev.next = element.next;
         element.prev.nextBlockFree = true;

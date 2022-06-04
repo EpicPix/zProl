@@ -30,6 +30,8 @@ public class Loader {
         registerType(8, true, "uL", "uint64", "ulong");
 
         Types.registerType(new BooleanType(), "bool");
+
+        registerKeyword("null", "type");
     }
 
     public static void registerKeywords() {
