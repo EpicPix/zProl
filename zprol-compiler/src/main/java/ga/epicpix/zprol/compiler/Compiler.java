@@ -123,32 +123,7 @@ public class Compiler {
                     }
                     var types = new ArrayDeque<Type>();
                     var queue = createStorage();
-                    generateInstructionsFromExpression(expression, expected, types, data, localsManager, queue, false);
-                    var assignmentType = types.pop();
-                    if(accessors.size() == 0) {
-                        var castType = doCast(assignmentType, expected, false, queue, expression);
-                        if(local != null) {
-                            if (castType instanceof PrimitiveType primitive) {
-                                queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
-                            } else if (castType instanceof BooleanType) {
-                                queue.pushInstruction(getConstructedSizeInstruction(8, "store_local", local.index()));
-                            } else if (castType instanceof VoidType) {
-                                throw new TokenLocatedException("Cannot store void type");
-                            } else {
-                                queue.pushInstruction(getConstructedInstruction("astore_local", local.index()));
-                            }
-                        }else {
-                            if (castType instanceof PrimitiveType primitive) {
-                                queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_field", f));
-                            } else if (castType instanceof BooleanType) {
-                                queue.pushInstruction(getConstructedSizeInstruction(8, "store_field", f));
-                            } else if (castType instanceof VoidType) {
-                                throw new TokenLocatedException("Cannot store void type");
-                            } else {
-                                queue.pushInstruction(getConstructedInstruction("astore_field", f));
-                            }
-                        }
-                    } else {
+                    if(accessors.size() != 0) {
                         var accessorTypes = new ArrayDeque<Type>();
                         if(local != null) {
                             var useType = local.type();
@@ -179,6 +154,32 @@ public class Compiler {
                             getAccessor(accessors.get(i), accessorTypes, data, queue, localsManager);
                         }
                         expected = setAccessor(accessors.get(accessors.size() - 1), accessorTypes, data, queue, localsManager);
+                    }
+                    generateInstructionsFromExpression(expression, expected, types, data, localsManager, storage, false);
+                    var assignmentType = types.pop();
+                    if(accessors.size() == 0) {
+                        var castType = doCast(assignmentType, expected, false, queue, expression);
+                        if(local != null) {
+                            if (castType instanceof PrimitiveType primitive) {
+                                queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
+                            } else if (castType instanceof BooleanType) {
+                                queue.pushInstruction(getConstructedSizeInstruction(8, "store_local", local.index()));
+                            } else if (castType instanceof VoidType) {
+                                throw new TokenLocatedException("Cannot store void type");
+                            } else {
+                                queue.pushInstruction(getConstructedInstruction("astore_local", local.index()));
+                            }
+                        }else {
+                            if (castType instanceof PrimitiveType primitive) {
+                                queue.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_field", f));
+                            } else if (castType instanceof BooleanType) {
+                                queue.pushInstruction(getConstructedSizeInstruction(8, "store_field", f));
+                            } else if (castType instanceof VoidType) {
+                                throw new TokenLocatedException("Cannot store void type");
+                            } else {
+                                queue.pushInstruction(getConstructedInstruction("astore_field", f));
+                            }
+                        }
                     }
                     doCast(assignmentType, expected, false, storage, expression);
                     for(var instr : queue.getInstructions()) storage.pushInstruction(instr);
