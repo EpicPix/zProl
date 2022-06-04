@@ -85,7 +85,7 @@ public class Compiler {
                     var types = new ArrayDeque<Type>();
                     generateInstructionsFromExpression(expression, type, types, data, localsManager, storage, false);
                     var rType = types.pop();
-                    doCast(type, rType, false, storage, expression);
+                    doCast(rType, type, false, storage, expression);
                     var local = localsManager.defineLocalVariable(name, rType);
                     if(rType instanceof PrimitiveType primitive) {
                         storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
@@ -589,6 +589,9 @@ public class Compiler {
     }
 
     public static Type doCast(Type from, Type to, boolean explicit, IBytecodeStorage bytecode, Token location) {
+        if(from instanceof NullType && to instanceof ClassType) {
+            return to;
+        }
         if(!(from instanceof PrimitiveType primitiveFrom) || !(to instanceof PrimitiveType primitiveTo)) {
             if(!from.equals(to)) {
                 throw new TokenLocatedException("Unsupported cast from " + from.getName() + " to " + to.getName(), location);
