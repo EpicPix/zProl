@@ -77,6 +77,7 @@ public final class Bytecode implements IBytecode {
         registerSizedInstruction(147, "gtu", new int[] {1, 2, 4, 8});
         registerSizedInstruction(151, "ge", new int[] {1, 2, 4, 8});
         registerSizedInstruction(155, "geu", new int[] {1, 2, 4, 8});
+        registerInstruction(159, "invoke_class", BytecodeValueType.METHOD);
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {
@@ -171,6 +172,9 @@ public final class Bytecode implements IBytecode {
             }else if(type == BytecodeValueType.FIELD) {
                 if(val instanceof Field v) val = pool.getFieldIndex(v);
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
+            }else if(type == BytecodeValueType.METHOD) {
+                if(val instanceof Method m) val = pool.getMethodIndex(m);
+                else throw new IllegalArgumentException(val.toString().getClass().getName());
             }
             if(!(val instanceof Number num)) throw new IllegalArgumentException(val.toString().getClass().getName());
             switch (type.getSize()) {
@@ -206,6 +210,8 @@ public final class Bytecode implements IBytecode {
                 args[i] = ((Number) args[i]).intValue();
             }else if(type == BytecodeValueType.FIELD) {
                 args[i] = ((Number) args[i]).intValue();
+            }else if(type == BytecodeValueType.METHOD) {
+                args[i] = ((Number) args[i]).intValue();
             }
         }
         return instructionGenerator.createInstruction(args);
@@ -237,6 +243,14 @@ public final class Bytecode implements IBytecode {
                 var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
                 var type = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getType() - 1)).getString();
                 instr.getData()[i] = data.getField(namespace, name, type);
+            }else if(values[i] == BytecodeValueType.METHOD) {
+                int index = ((Number) instr.getData()[i]).intValue();
+                var entry = (ConstantPoolEntry.MethodEntry) data.constantPool.entries.get(index - 1);
+                var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
+                var className = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getClassName() - 1)).getString();
+                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
+                var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
+                instr.getData()[i] = data.getMethod(namespace, className, name, signature);
             }
         }
     }

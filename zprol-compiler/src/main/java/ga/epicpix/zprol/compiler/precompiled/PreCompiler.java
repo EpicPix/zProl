@@ -37,6 +37,7 @@ public class PreCompiler {
                     pre.fields.add(field);
                 }else if(named.name.equals("Class")) {
                     PreClass clazz = new PreClass();
+                    clazz.namespace = pre.namespace;
                     clazz.name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
 
                     for(var fieldToken : named.getTokensWithName("ClassField")) {

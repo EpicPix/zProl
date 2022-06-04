@@ -31,6 +31,18 @@ public class GeneratedData {
         throw new FunctionNotDefinedException((namespace != null ? namespace + "." : "") + name + " - " + signature);
     }
 
+    public Method getMethod(String namespace, String className, String name, String signature) {
+        Class clazz = getClass(namespace, className);
+        for(Method method : clazz.methods()) {
+            if(!method.name().equals(name)) continue;
+
+            if(method.signature().toString().equals(signature)) {
+                return method;
+            }
+        }
+        throw new FunctionNotDefinedException((namespace != null ? namespace + "." : "") + className + "." + name + " - " + signature);
+    }
+
     public Object getField(String namespace, String name, String type) {
         for(Field fld : fields) {
             if(Objects.equals(fld.namespace(), name)) continue;

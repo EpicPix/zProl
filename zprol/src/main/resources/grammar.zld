@@ -71,6 +71,7 @@ def inline chars ArrayAccessorOpenCharacter [$Whitespace] <[>
 def inline chars ArrayAccessorCloseCharacter [$Whitespace] <]>
 def ArrayAccessor $ArrayAccessorOpenCharacter $Expression $ArrayAccessorCloseCharacter
 def AccessorElement:
+  . $FunctionCall
   . $Identifier
   $ArrayAccessor
 def error AccessorElement Expected an Identifier </> . [$Whitespace] $AnyChar
@@ -130,10 +131,8 @@ def error NamespaceErrors:
   Expected a ';' </> namespace $DotWord [$Whitespace] $AnyChar
   Expected a namespace </> namespace [$Whitespace] [$AnyChar]
 
-def ReturnStatement:
-  return $Expression ;
-  return ;
-def error ReturnStatement Expected a ';' </> return
+def ReturnStatement return [$Expression] ;
+def error ReturnStatement Expected a ';' </> return [$Expression]
 
 def Argument:
   $Expression
@@ -159,6 +158,8 @@ def FunctionModifiers:
 
 def FunctionCallStatement:
   $Identifier ( [$ArgumentList] ) ;
+
+def AccessorStatement $Accessor ;
 
 def AssignmentStatement:
   $Accessor = $Expression ;
@@ -187,11 +188,12 @@ def error WhileStatement:
 
 def Statement:
   $ReturnStatement
-  $FunctionCallStatement
   $AssignmentStatement
   $CreateAssignmentStatement
   $IfStatement
   $WhileStatement
+  $FunctionCallStatement
+  $AccessorStatement
 def error Statement Not a Statement </> [$Whitespace] $AnyCharButClose
 
 def inline chars LineCodeChars [$Whitespace] <=> <\>>
@@ -222,8 +224,8 @@ def ClassMethod:
   $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
 
 def inline ClassElement:
-  $ClassField
   $ClassMethod
+  $ClassField
 def error ClassElement Expected a Field or a Method </> [$Whitespace] $AnyCharButClose
 
 tok Class:

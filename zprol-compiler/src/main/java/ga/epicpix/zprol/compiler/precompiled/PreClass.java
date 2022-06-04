@@ -7,11 +7,14 @@ import java.util.List;
 public class PreClass {
 
     public PreClass() {}
-    public PreClass(String name, PreField[] fields) {
+    public PreClass(String namespace, String name, PreField[] fields, PreFunction[] methods) {
+        this.namespace = namespace;
         this.name = name;
         this.fields = Arrays.asList(fields);
+        this.methods = Arrays.asList(methods);
     }
 
+    public String namespace;
     public String name;
 
     public List<PreField> fields = new ArrayList<>();

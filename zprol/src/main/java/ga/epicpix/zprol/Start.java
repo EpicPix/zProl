@@ -254,10 +254,30 @@ public class Start {
 
             compiledData.get(clazz.namespace()).addClass(clazz);
             var fields = new ArrayList<PreField>();
+            var methods = new ArrayList<PreFunction>();
             for(var f : clazz.fields()) {
                 fields.add(new PreField(f.name(), f.type().normalName()));
             }
-            preCompiledData.get(clazz.namespace()).classes.add(new PreClass(clazz.name(), fields.toArray(new PreField[0])));
+            for(var func : clazz.methods()) {
+                var params = new ArrayList<PreParameter>();
+                for(var f : func.signature().parameters()) {
+                    params.add(new PreParameter(null, f.normalName()));
+                }
+                var function = new PreFunction();
+                function.name = func.name();
+                function.returnType = func.signature().returnType().normalName();
+                function.parameters.addAll(params);
+                for(var v : func.modifiers()) {
+                    for(PreFunctionModifiers m : PreFunctionModifiers.MODIFIERS) {
+                        if(m.getCompiledModifier() == v) {
+                            function.modifiers.add(m);
+                            break;
+                        }
+                    }
+                }
+                methods.add(function);
+            }
+            preCompiledData.get(clazz.namespace()).classes.add(new PreClass(clazz.namespace(), clazz.name(), fields.toArray(new PreField[0]), methods.toArray(new PreFunction[0])));
         }
         for(var func : gen.functions) {
             compiledData.putIfAbsent(func.namespace(), new CompiledData(func.namespace()));

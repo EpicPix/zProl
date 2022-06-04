@@ -16,21 +16,21 @@ import ga.epicpix.zprol.types.*;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.math.BigInteger;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Compiler {
-    public static IBytecodeStorage parseFunctionCode(CompiledData data, SeekIterator<Token> tokens, FunctionSignature sig, String[] names) {
+    public static IBytecodeStorage parseFunctionCode(CompiledData data, PreClass clazz, SeekIterator<Token> tokens, FunctionSignature sig, String[] names) {
         IBytecodeStorage storage = createStorage();
         LocalScopeManager localsManager = new LocalScopeManager();
+        if(clazz != null) {
+            localsManager.defineLocalVariable("this", new ClassType(data.namespace, clazz.name));
+        }
         for(int i = 0; i<names.length; i++) {
             localsManager.defineLocalVariable(names[i], sig.parameters()[i]);
         }
         localsManager.newScope();
-        boolean hasReturned = parseFunctionCode(data, tokens, sig, names, storage, localsManager);
+        boolean hasReturned = parseFunctionCode(data, clazz, tokens, sig, storage, localsManager);
         if(!hasReturned) {
             if(!(sig.returnType() instanceof VoidType)) {
                 throw new TokenLocatedException("Missing return statement in " + sig);
@@ -42,9 +42,8 @@ public class Compiler {
         return storage;
     }
 
-    public static boolean parseFunctionCode(CompiledData data, SeekIterator<Token> tokens, FunctionSignature sig, String[] names, IBytecodeStorage storage, LocalScopeManager localsManager) {
+    public static boolean parseFunctionCode(CompiledData data, PreClass thisClass, SeekIterator<Token> tokens, FunctionSignature sig, IBytecodeStorage storage, LocalScopeManager localsManager) {
         localsManager.newScope();
-        int opens = 0;
         boolean hasReturned = false;
         Token token;
         while(tokens.hasNext()) {
@@ -57,7 +56,7 @@ public class Compiler {
                             throw new TokenLocatedException("Function is not void, expected a return value", named);
                         }
                         var types = new ArrayDeque<Type>();
-                        generateInstructionsFromExpression(named.getTokenWithName("Expression"), sig.returnType(), types, data, localsManager, storage, false);
+                        generateInstructionsFromExpression(named.getTokenWithName("Expression"), thisClass, sig.returnType(), types, data, localsManager, storage, false);
                     }
                     if(sig.returnType() instanceof VoidType) {
                         if(named.getTokenWithName("Expression") != null) {
@@ -74,7 +73,17 @@ public class Compiler {
                     hasReturned = true;
                     break;
                 } else if("FunctionCallStatement".equals(named.name)) {
-                    generateInstructionsFromExpression(named, null, new ArrayDeque<>(), data, localsManager, storage, true);
+                    generateInstructionsFromExpression(named, thisClass, null, new ArrayDeque<>(), data, localsManager, storage, true);
+                } else if("AccessorStatement".equals(named.name)) {
+                    var accessor = named.tokens[0].asNamedToken();
+                    var accessorElements = accessor.getTokensWithName("AccessorElement");
+                    var lastAccessorElement = accessorElements.get(accessorElements.size() - 1);
+                    var lastAccessorType = lastAccessorElement.tokens[lastAccessorElement.tokens.length - 1].asNamedToken();
+
+                    if(!lastAccessorType.name.equals("FunctionCall")) {
+                        throw new TokenLocatedException("Expected a function call", lastAccessorType);
+                    }
+                    generateInstructionsFromExpression(accessor, thisClass, null, new ArrayDeque<>(), data, localsManager, storage, true);
                 } else if("CreateAssignmentStatement".equals(named.name)) {
                     var type = data.resolveType(named.getSingleTokenWithName("Type").asWordToken().getWord());
                     if(type instanceof VoidType) {
@@ -83,7 +92,7 @@ public class Compiler {
                     var name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
                     var expression = named.getTokenWithName("Expression");
                     var types = new ArrayDeque<Type>();
-                    generateInstructionsFromExpression(expression, type, types, data, localsManager, storage, false);
+                    generateInstructionsFromExpression(expression, thisClass, type, types, data, localsManager, storage, false);
                     var rType = types.pop();
                     doCast(rType, type, false, storage, expression);
                     var local = localsManager.defineLocalVariable(name, rType);
@@ -151,11 +160,11 @@ public class Compiler {
                             accessorTypes.push(useType);
                         }
                         for (int i = 0; i < accessors.size() - 1; i++) {
-                            getAccessor(accessors.get(i), accessorTypes, data, queue, localsManager);
+                            getAccessor(accessors.get(i), thisClass, accessorTypes, data, queue, localsManager);
                         }
-                        expected = setAccessor(accessors.get(accessors.size() - 1), accessorTypes, data, queue, localsManager);
+                        expected = setAccessor(accessors.get(accessors.size() - 1), thisClass, accessorTypes, data, queue, localsManager);
                     }
-                    generateInstructionsFromExpression(expression, expected, types, data, localsManager, storage, false);
+                    generateInstructionsFromExpression(expression, thisClass, expected, types, data, localsManager, storage, false);
                     var assignmentType = types.pop();
                     if(accessors.size() == 0) {
                         var castType = doCast(assignmentType, expected, false, queue, expression);
@@ -185,7 +194,7 @@ public class Compiler {
                     for(var instr : queue.getInstructions()) storage.pushInstruction(instr);
                 } else if("IfStatement".equals(named.name)) {
                     var types = new ArrayDeque<Type>();
-                    generateInstructionsFromExpression(named.getTokenWithName("Expression"), null, types, data, localsManager, storage, false);
+                    generateInstructionsFromExpression(named.getTokenWithName("Expression"), thisClass, null, types, data, localsManager, storage, false);
                     var ret = types.pop();
                     if(!(ret instanceof BooleanType)) {
                         throw new TokenLocatedException("Expected boolean expression", named.getTokenWithName("Expression"));
@@ -195,14 +204,14 @@ public class Compiler {
                         statements.add(statement.tokens[0]);
                     }
                     int preInstr = storage.getInstructions().size();
-                    parseFunctionCode(data, new SeekIterator<>(statements), sig, names, storage, localsManager);
+                    parseFunctionCode(data, thisClass, new SeekIterator<>(statements), sig, storage, localsManager);
                     int postInstr = storage.getInstructions().size();
                     if(named.getTokenWithName("ElseStatement") != null) {
                         var elseStatements = new ArrayList<Token>();
                         for(var statement : named.getTokenWithName("ElseStatement").getTokenWithName("Code").getTokensWithName("Statement")) {
                             elseStatements.add(statement.tokens[0]);
                         }
-                        parseFunctionCode(data, new SeekIterator<>(elseStatements), sig, names, storage, localsManager);
+                        parseFunctionCode(data, thisClass, new SeekIterator<>(elseStatements), sig, storage, localsManager);
                         storage.pushInstruction(postInstr, getConstructedInstruction("jmp", storage.getInstructions().size()-postInstr+1));
                         postInstr++;
                     }
@@ -210,7 +219,7 @@ public class Compiler {
                 } else if("WhileStatement".equals(named.name)) {
                     var types = new ArrayDeque<Type>();
                     int preInstr = storage.getInstructions().size();
-                    generateInstructionsFromExpression(named.getTokenWithName("Expression"), null, types, data, localsManager, storage, false);
+                    generateInstructionsFromExpression(named.getTokenWithName("Expression"), thisClass, null, types, data, localsManager, storage, false);
                     var ret = types.pop();
                     if(!(ret instanceof BooleanType)) {
                         throw new TokenLocatedException("Expected boolean expression", named.getTokenWithName("Expression"));
@@ -220,7 +229,7 @@ public class Compiler {
                     for(var statement : named.getTokenWithName("Code").getTokensWithName("Statement")) {
                         statements.add(statement.tokens[0]);
                     }
-                    parseFunctionCode(data, new SeekIterator<>(statements), sig, names, storage, localsManager);
+                    parseFunctionCode(data, thisClass, new SeekIterator<>(statements), sig, storage, localsManager);
                     int postInstr = storage.getInstructions().size() + 1;
 
                     storage.pushInstruction(getConstructedInstruction("jmp", preInstr-postInstr));
@@ -234,9 +243,9 @@ public class Compiler {
         return hasReturned;
     }
 
-    public static void generateInstructionsFromExpression(NamedToken token, Type expectedType, ArrayDeque<Type> types, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
+    public static void generateInstructionsFromExpression(NamedToken token, PreClass thisClass, Type expectedType, ArrayDeque<Type> types, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
         if(token.name.equals("Expression")) {
-            generateInstructionsFromExpression(token.tokens[0].asNamedToken(), expectedType, types, data, localsManager, bytecode, expectedType == null && discardValue);
+            generateInstructionsFromExpression(token.tokens[0].asNamedToken(), thisClass, expectedType, types, data, localsManager, bytecode, expectedType == null && discardValue);
             Type prob = types.size() != 0 ? types.peek() : null;
 
             if(prob != null && discardValue) {
@@ -255,7 +264,7 @@ public class Compiler {
                 types.push(prob);
             }
         }else if(token.name.equals("MultiplicativeExpression") || token.name.equals("AdditiveExpression") || token.name.equals("InclusiveOrExpression") || token.name.equals("EqualsExpression") || token.name.equals("ShiftExpression") || token.name.equals("InclusiveAndExpression") || token.name.equals("CompareExpression")) {
-            types.push(runOperator(token, expectedType, data, localsManager, types, bytecode));
+            types.push(runOperator(token, thisClass, expectedType, data, localsManager, types, bytecode));
         }else if(token.name.equals("DecimalInteger")) {
            BigInteger number = getDecimalInteger(token.tokens[0]);
            if(expectedType instanceof PrimitiveType primitive) {
@@ -272,122 +281,7 @@ public class Compiler {
             var argumentList = token.getTokenWithName("ArgumentList");
             var arguments = argumentList != null ? argumentList.getTokensWithName("Argument") : new ArrayList<NamedToken>();
 
-            var possibleFunctions = new ArrayList<PreFunction>();
-            for(var using : data.getUsing()) {
-                for(var func : using.functions) {
-                    if(func.name.equals(name)) {
-                        if(func.parameters.size() == arguments.size()) {
-                            possibleFunctions.add(func);
-                        }
-                    }
-                }
-            }
-
-            if(possibleFunctions.size() == 0) {
-                throw new TokenLocatedException("Function not defined: " + name, token);
-            }else if(possibleFunctions.size() != 1) {
-
-                var garbage = createStorage();
-                var argTypes = new ArrayList<Type>();
-
-                for(var arg : arguments) {
-                    generateInstructionsFromExpression(arg.tokens[0].asNamedToken(), null, types, data, localsManager, garbage, false);
-                    argTypes.add(types.pop());
-                }
-
-                ArrayList<String> candidates = new ArrayList<>();
-                int closestScore = 0;
-                ArrayList<PreFunction> closest = new ArrayList<>();
-                for(var a : possibleFunctions) {
-                    boolean matches = true;
-                    boolean nPrimMatches = true;
-                    int score = 0;
-                    for(int i = 0; i<a.parameters.size(); i++) {
-                        var t = data.resolveType(a.parameters.get(i).type);
-                        if(!t.equals(argTypes.get(i))) {
-                            if(argTypes.get(i) instanceof PrimitiveType && t instanceof PrimitiveType) {
-                                score++;
-                            }else if(!(argTypes.get(i) instanceof PrimitiveType) || !(t instanceof PrimitiveType)) {
-                                nPrimMatches = false;
-                            }
-                            matches = false;
-                        }else {
-                            score++;
-                        }
-                    }
-
-                    if(closestScore < score) {
-                        closest.clear();
-                        closestScore = score;
-                    }
-                    if(closestScore == score && nPrimMatches) closest.add(a);
-
-                    if(matches) {
-                        closest.clear();
-                        closest.add(a);
-                        break;
-                    }
-                    candidates.add("(" + a.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")");
-                }
-
-                if(closest.size() == 1) {
-                    possibleFunctions.clear();
-                    possibleFunctions.add(closest.get(0));
-                }else {
-                    if(closest.size() != 0) {
-                        throw new TokenLocatedException(
-                            "Ambiguous function call for arguments (" +
-                                argTypes.stream()
-                                    .map(Type::getName)
-                                    .collect(Collectors.joining(", "))
-                                + ")\nCandidates are:\n" +
-                                closest.stream()
-                                    .map(a -> "(" + a.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")")
-                                    .collect(Collectors.joining("\n")
-                                ), token);
-                    }
-                    throw new TokenLocatedException("Cannot find overload for arguments (" + argTypes.stream().map(Type::getName).collect(Collectors.joining(", ")) + ")\nCandidates are:\n" + String.join("\n", candidates), token);
-                }
-            }
-
-            var func = possibleFunctions.get(0);
-            var returnType = data.resolveType(func.returnType);
-            var parameters = new Type[func.parameters.size()];
-            for(int i = 0; i<func.parameters.size(); i++) {
-                parameters[i] = data.resolveType(func.parameters.get(i).type);
-            }
-            FunctionSignature signature = new FunctionSignature(returnType, parameters);
-            EnumSet<FunctionModifiers> modifiers = EnumSet.noneOf(FunctionModifiers.class);
-            for(PreFunctionModifiers modifier : func.modifiers) {
-                modifiers.add(modifier.getCompiledModifier());
-            }
-
-            for(int i = 0; i<arguments.size(); i++) {
-                generateInstructionsFromExpression(arguments.get(i).getTokenWithName("Expression"), parameters[i], types, data, localsManager, bytecode, false);
-                doCast(types.pop(), signature.parameters()[i], false, bytecode, arguments.get(i).getTokenWithName("Expression"));
-            }
-
-            bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
-
-            if(!discardValue && returnType instanceof VoidType) {
-                throw new TokenLocatedException("Cannot store a void type", token);
-            }
-
-            if(discardValue && returnType instanceof PrimitiveType primitive) {
-                bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
-            }else if(discardValue && returnType instanceof BooleanType) {
-                bytecode.pushInstruction(getConstructedSizeInstruction(8, "pop"));
-            }else if(discardValue) {
-                if(!(returnType instanceof VoidType)) {
-                    bytecode.pushInstruction(getConstructedInstruction("apop"));
-                }
-            }else {
-                if (expectedType != null) {
-                    types.push(doCast(returnType, expectedType, false, bytecode, token));
-                } else {
-                    types.push(returnType);
-                }
-            }
+            doFunctionCall(name, thisClass, null, data, discardValue, expectedType, token, arguments, types, localsManager, bytecode);
         } else if(token.name.equals("Accessor")) {
             var accessors = new ArrayList<NamedToken>();
             for(Token t : token.tokens) {
@@ -398,12 +292,29 @@ public class Compiler {
             String firstAccess = token.getSingleTokenWithName("Identifier").asWordToken().getWord();
             var local = localsManager.tryGetLocalVariable(firstAccess);
             if(local == null) {
+                if(thisClass != null) {
+                    Type fieldType = null;
+                    for (var field : thisClass.fields) {
+                        if (field.name.equals(firstAccess)) {
+                            fieldType = data.resolveType(field.type);
+                            break;
+                        }
+                    }
+                    if(fieldType != null) {
+                        var thisVariable = localsManager.getLocalVariable("this");
+                        bytecode.pushInstruction(getConstructedInstruction("aload_local", thisVariable.index()));
+                        bytecode.pushInstruction(getConstructedInstruction("class_field_load", new Class(data.namespace, thisClass.name, null, null), firstAccess));
+                        types.push(fieldType);
+                        return;
+                    }
+                }
+
                 Field useField = null;
-                for(var using : data.getUsing()) {
+                out: for(var using : data.getUsing()) {
                     for(var field : using.fields) {
                         if(field.name.equals(firstAccess)) {
                             useField = new Field(using.namespace, field.name, data.resolveType(field.type));
-                            break;
+                            break out;
                         }
                     }
                 }
@@ -431,7 +342,7 @@ public class Compiler {
 
             }
             for (var accessor : accessors) {
-                getAccessor(accessor, types, data, bytecode, localsManager);
+                getAccessor(accessor, thisClass, types, data, bytecode, localsManager);
             }
         }else if(token.name.equals("ArrayAccessor")) {
             var arrayType = (ArrayType) types.pop();
@@ -439,7 +350,7 @@ public class Compiler {
                 throw new TokenLocatedException("Expected type does not match the array type", token);
             }
             var expr = token.getTokenWithName("Expression");
-            generateInstructionsFromExpression(expr, null, types, data, localsManager, bytecode, false);
+            generateInstructionsFromExpression(expr, thisClass, null, types, data, localsManager, bytecode, false);
             var expressionType = types.pop();
             if(!(expressionType instanceof PrimitiveType)) {
                 throw new TokenLocatedException("Expected a primitive number", expr);
@@ -459,9 +370,9 @@ public class Compiler {
             var hardCast = token.getTokenWithName("HardCastOperator");
             var castType = data.resolveType((hardCast != null ? hardCast : token.getTokenWithName("CastOperator")).getSingleTokenWithName("Type").asWordToken().getWord());
             if(token.tokens[1].getType() == TokenType.OPEN) {
-                generateInstructionsFromExpression(token.tokens[2].asNamedToken(), null, types, data, localsManager, bytecode, false);
+                generateInstructionsFromExpression(token.tokens[2].asNamedToken(), thisClass, null, types, data, localsManager, bytecode, false);
             }else {
-                generateInstructionsFromExpression(token.tokens[1].asNamedToken(), null, types, data, localsManager, bytecode, false);
+                generateInstructionsFromExpression(token.tokens[1].asNamedToken(), thisClass, null, types, data, localsManager, bytecode, false);
             }
             var from = types.pop();
             if(hardCast != null) {
@@ -481,18 +392,18 @@ public class Compiler {
         }
     }
 
-    public static Type runOperator(NamedToken token, Type expectedType, CompiledData data, LocalScopeManager localsManager, ArrayDeque<Type> types, IBytecodeStorage bytecode) {
+    public static Type runOperator(NamedToken token, PreClass thisClass, Type expectedType, CompiledData data, LocalScopeManager localsManager, ArrayDeque<Type> types, IBytecodeStorage bytecode) {
         if (token.tokens[0].getType() == TokenType.OPEN) {
-            generateInstructionsFromExpression(token.tokens[1].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
+            generateInstructionsFromExpression(token.tokens[1].asNamedToken(), thisClass, expectedType, types, data, localsManager, bytecode, false);
             return types.pop();
         }
-        generateInstructionsFromExpression(token.tokens[0].asNamedToken(), expectedType, types, data, localsManager, bytecode, false);
+        generateInstructionsFromExpression(token.tokens[0].asNamedToken(), thisClass, expectedType, types, data, localsManager, bytecode, false);
         var arg1 = types.pop();
 
         int amtOperators = (token.tokens.length - 1) / 2;
         for (int i = 0; i < amtOperators; i++) {
             var arg2Storage = createStorage();
-            generateInstructionsFromExpression(token.tokens[i * 2 + 2].asNamedToken(), expectedType, types, data, localsManager, arg2Storage, false);
+            generateInstructionsFromExpression(token.tokens[i * 2 + 2].asNamedToken(), thisClass, expectedType, types, data, localsManager, arg2Storage, false);
             var arg2 = types.pop();
 
             arg1 = runOperator(arg1, arg2, token.tokens[i * 2 + 1].asNamedToken(), token, bytecode, arg2Storage);
@@ -616,7 +527,145 @@ public class Compiler {
         throw new TokenLocatedException("Unsupported implicit cast from " + from.getName() + " to " + to.getName(), location);
     }
 
-    public static void getAccessor(NamedToken accessor, ArrayDeque<Type> types, CompiledData data, IBytecodeStorage storage, LocalScopeManager localsManager) {
+    public static void doFunctionCall(String name, PreClass thisClass, PreClass clazz, CompiledData data, boolean discardValue, Type expectedType, Token token, ArrayList<NamedToken> arguments, ArrayDeque<Type> types, LocalScopeManager localsManager, IBytecodeStorage bytecode) {
+        var possibleFunctions = new ArrayList<PreFunction>();
+        if(clazz == null) {
+            for (var using : data.getUsing()) {
+                for (var func : using.functions) {
+                    if (func.name.equals(name)) {
+                        if (func.parameters.size() == arguments.size()) {
+                            possibleFunctions.add(func);
+                        }
+                    }
+                }
+            }
+        }else {
+            for (var method : clazz.methods) {
+                if (method.name.equals(name)) {
+                    if (method.parameters.size() == arguments.size()) {
+                        possibleFunctions.add(method);
+                    }
+                }
+            }
+        }
+
+
+        if(possibleFunctions.size() == 0) {
+            if(clazz == null) {
+                throw new TokenLocatedException("Function not defined: " + name, token);
+            }else {
+                throw new TokenLocatedException("Method not defined: " + name, token);
+            }
+        }else if(possibleFunctions.size() != 1) {
+
+            var garbage = createStorage();
+            var argTypes = new ArrayList<Type>();
+
+            for(var arg : arguments) {
+                generateInstructionsFromExpression(arg.tokens[0].asNamedToken(), thisClass, null, types, data, localsManager, garbage, false);
+                argTypes.add(types.pop());
+            }
+
+            ArrayList<String> candidates = new ArrayList<>();
+            int closestScore = 0;
+            ArrayList<PreFunction> closest = new ArrayList<>();
+            for(var a : possibleFunctions) {
+                boolean matches = true;
+                boolean nPrimMatches = true;
+                int score = 0;
+                for(int i = 0; i<a.parameters.size(); i++) {
+                    var t = data.resolveType(a.parameters.get(i).type);
+                    if(!t.equals(argTypes.get(i))) {
+                        if(argTypes.get(i) instanceof PrimitiveType && t instanceof PrimitiveType) {
+                            score++;
+                        }else if(!(argTypes.get(i) instanceof PrimitiveType) || !(t instanceof PrimitiveType)) {
+                            nPrimMatches = false;
+                        }
+                        matches = false;
+                    }else {
+                        score++;
+                    }
+                }
+
+                if(closestScore < score) {
+                    closest.clear();
+                    closestScore = score;
+                }
+                if(closestScore == score && nPrimMatches) closest.add(a);
+
+                if(matches) {
+                    closest.clear();
+                    closest.add(a);
+                    break;
+                }
+                candidates.add("(" + a.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")");
+            }
+
+            if(closest.size() == 1) {
+                possibleFunctions.clear();
+                possibleFunctions.add(closest.get(0));
+            }else {
+                if(closest.size() != 0) {
+                    throw new TokenLocatedException(
+                        "Ambiguous function call for arguments (" +
+                            argTypes.stream()
+                                .map(Type::getName)
+                                .collect(Collectors.joining(", "))
+                            + ")\nCandidates are:\n" +
+                            closest.stream()
+                                .map(a -> "(" + a.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")")
+                                .collect(Collectors.joining("\n")
+                                ), token);
+                }
+                throw new TokenLocatedException("Cannot find overload for arguments (" + argTypes.stream().map(Type::getName).collect(Collectors.joining(", ")) + ")\nCandidates are:\n" + String.join("\n", candidates), token);
+            }
+        }
+
+        var func = possibleFunctions.get(0);
+        var returnType = data.resolveType(func.returnType);
+        var parameters = new Type[func.parameters.size()];
+        for(int i = 0; i<func.parameters.size(); i++) {
+            parameters[i] = data.resolveType(func.parameters.get(i).type);
+        }
+        FunctionSignature signature = new FunctionSignature(returnType, parameters);
+        EnumSet<FunctionModifiers> modifiers = EnumSet.noneOf(FunctionModifiers.class);
+        for(PreFunctionModifiers modifier : func.modifiers) {
+            modifiers.add(modifier.getCompiledModifier());
+        }
+
+        for(int i = 0; i<arguments.size(); i++) {
+            generateInstructionsFromExpression(arguments.get(i).getTokenWithName("Expression"), thisClass, parameters[i], types, data, localsManager, bytecode, false);
+            doCast(types.pop(), signature.parameters()[i], false, bytecode, arguments.get(i).getTokenWithName("Expression"));
+        }
+
+        if(clazz == null) {
+            bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, modifiers, func.name, signature, null)));
+        }else {
+            bytecode.pushInstruction(getConstructedInstruction("invoke_class", new Method(clazz.namespace, modifiers, clazz.name, func.name, signature, null)));
+        }
+
+        if(clazz == null && !discardValue && returnType instanceof VoidType) {
+            throw new TokenLocatedException("Cannot store a void type", token);
+        }
+
+        if(discardValue && returnType instanceof PrimitiveType primitive) {
+            bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
+        }else if(discardValue && returnType instanceof BooleanType) {
+            bytecode.pushInstruction(getConstructedSizeInstruction(8, "pop"));
+        }else if(discardValue) {
+            if(!(returnType instanceof VoidType)) {
+                bytecode.pushInstruction(getConstructedInstruction("apop"));
+            }
+        }else {
+            if (expectedType != null) {
+                types.push(doCast(returnType, expectedType, false, bytecode, token));
+            } else {
+                types.push(returnType);
+            }
+        }
+    }
+
+    public static void getAccessor(NamedToken accessor, PreClass thisClass, ArrayDeque<Type> types, CompiledData data, IBytecodeStorage storage, LocalScopeManager localsManager) {
         var type = types.pop();
         if(accessor.getTokenWithName("Identifier") != null) {
             String field = accessor.getSingleTokenWithName("Identifier").asWordToken().getWord();
@@ -665,17 +714,35 @@ public class Compiler {
                 throw new TokenLocatedException("Expected an array got '" + type.getName() + "'", accessor);
             }
             types.push(type);
-            generateInstructionsFromExpression(accessor.getTokenWithName("ArrayAccessor"), ((ArrayType) type).type, types, data, localsManager, storage, false);
+            generateInstructionsFromExpression(accessor.getTokenWithName("ArrayAccessor"), thisClass, ((ArrayType) type).type, types, data, localsManager, storage, false);
             var got = types.peek();
             if(!((ArrayType) type).type.equals(got)) {
                 throw new TokenLocatedException("Could not get the value", accessor);
             }
+        }else if(accessor.getTokenWithName("FunctionCall") != null) {
+            if(!(type instanceof ClassType classType)) {
+                throw new TokenLocatedException("Expected class type", accessor);
+            }
+            PreClass clazz = null;
+            out: for(PreCompiledData d : data.getUsing()) {
+                if(!Objects.equals(d.namespace, classType.getNamespace())) continue;
+                for(PreClass c : d.classes) {
+                    if(!c.name.equals(classType.getName())) continue;
+                    clazz = c;
+                    break out;
+                }
+            }
+            var token = accessor.getTokenWithName("FunctionCall");
+            var name = token.getSingleTokenWithName("Identifier").asWordToken().getWord();
+            var argumentList = token.getTokenWithName("ArgumentList");
+            var arguments = argumentList != null ? argumentList.getTokensWithName("Argument") : new ArrayList<NamedToken>();
+            doFunctionCall(name, thisClass, clazz, data, false, null, token, arguments, types, localsManager, storage);
         }else {
             throw new TokenLocatedException("Unknown accessor", accessor);
         }
     }
 
-    public static Type setAccessor(NamedToken accessor, ArrayDeque<Type> types, CompiledData data, IBytecodeStorage storage, LocalScopeManager localsManager) {
+    public static Type setAccessor(NamedToken accessor, PreClass thisClass, ArrayDeque<Type> types, CompiledData data, IBytecodeStorage storage, LocalScopeManager localsManager) {
         var type = types.pop();
         if(accessor.getTokenWithName("Identifier") != null) {
             String field = accessor.getSingleTokenWithName("Identifier").asWordToken().getWord();
@@ -725,7 +792,7 @@ public class Compiler {
             }
             types.push(type);
             var expr = accessor.getTokenWithName("ArrayAccessor").getTokenWithName("Expression");
-            generateInstructionsFromExpression(expr, null, types, data, localsManager, storage, false);
+            generateInstructionsFromExpression(expr, thisClass, null, types, data, localsManager, storage, false);
             var got = types.pop();
             if(!(got instanceof PrimitiveType)) {
                 throw new TokenLocatedException("Could not get the index", expr);
@@ -737,6 +804,8 @@ public class Compiler {
             else if(arrayData instanceof ClassType) storage.pushInstruction(getConstructedInstruction("astore_array"));
             else throw new TokenLocatedException("Unsupported type " + arrayData.getClass().getSimpleName(), accessor);
             return arrayData;
+        }else if(accessor.getTokenWithName("FunctionCall") != null) {
+            throw new TokenLocatedException("Cannot assign value to function call", accessor);
         }else {
             throw new TokenLocatedException("Unknown set accessor", accessor);
         }
@@ -757,7 +826,7 @@ public class Compiler {
         FunctionSignature signature = new FunctionSignature(returnType, parameters);
         IBytecodeStorage bytecode = null;
         if(function.hasCode()) {
-            bytecode = parseFunctionCode(data, new SeekIterator<>(function.code), signature, names);
+            bytecode = parseFunctionCode(data, null, new SeekIterator<>(function.code), signature, names);
         }
         EnumSet<FunctionModifiers> modifiers = EnumSet.noneOf(FunctionModifiers.class);
         for(PreFunctionModifiers modifier : function.modifiers) {
@@ -766,7 +835,7 @@ public class Compiler {
         data.addFunction(new Function(data.namespace, modifiers, function.name, signature, bytecode));
     }
 
-    public static Method compileMethod(CompiledData data, String className, PreFunction function) {
+    public static Method compileMethod(CompiledData data, PreClass clazz, PreFunction function) {
         var returnType = data.resolveType(function.returnType);
         var parameters = new Type[function.parameters.size()];
         String[] names = new String[function.parameters.size()];
@@ -781,13 +850,13 @@ public class Compiler {
         FunctionSignature signature = new FunctionSignature(returnType, parameters);
         IBytecodeStorage bytecode = null;
         if(function.hasCode()) {
-            bytecode = parseFunctionCode(data, new SeekIterator<>(function.code), signature, names);
+            bytecode = parseFunctionCode(data, clazz, new SeekIterator<>(function.code), signature, names);
         }
         EnumSet<FunctionModifiers> modifiers = EnumSet.noneOf(FunctionModifiers.class);
         for(PreFunctionModifiers modifier : function.modifiers) {
             modifiers.add(modifier.getCompiledModifier());
         }
-        return new Method(data.namespace, modifiers, className, function.name, signature, bytecode);
+        return new Method(data.namespace, modifiers, clazz.name, function.name, signature, bytecode);
     }
 
     public static void compileClass(CompiledData data, PreClass clazz) {
@@ -803,7 +872,7 @@ public class Compiler {
 
         var methods = new Method[clazz.methods.size()];
         for (int i = 0; i < clazz.methods.size(); i++) {
-            methods[i] = compileMethod(data, clazz.name, clazz.methods.get(i));
+            methods[i] = compileMethod(data, clazz, clazz.methods.get(i));
         }
         data.addClass(new Class(data.namespace, clazz.name, fields, methods));
     }

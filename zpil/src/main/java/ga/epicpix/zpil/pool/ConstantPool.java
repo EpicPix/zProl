@@ -132,11 +132,11 @@ public class ConstantPool {
         throw new LostConstantPoolEntryException("Cannot find class ConstantPoolEntry with " + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name());
     }
 
-    public int getMethodIndex(Method func) {
-        int namespaceIndex = getStringIndex(func.namespace());
-        int classNameIndex = getStringIndex(func.className());
-        int nameIndex = getStringIndex(func.name());
-        int signatureIndex = getStringIndex(func.signature().toString());
+    public int getMethodIndex(Method method) {
+        int namespaceIndex = getStringIndex(method.namespace());
+        int classNameIndex = getStringIndex(method.className());
+        int nameIndex = getStringIndex(method.name());
+        int signatureIndex = getStringIndex(method.signature().toString());
 
         for(int i = 0; i < entries.size(); i++) {
             if(entries.get(i) instanceof ConstantPoolEntry.MethodEntry e) {
@@ -145,7 +145,7 @@ public class ConstantPool {
                 }
             }
         }
-        throw new LostConstantPoolEntryException("Cannot find method ConstantPoolEntry with " + (func.namespace() != null ? func.namespace() + "." : "") + func.name() + " - " + func.signature());
+        throw new LostConstantPoolEntryException("Cannot find method ConstantPoolEntry with " + (method.namespace() != null ? method.namespace() + "." : "") + method.className() + "." + method.name() + " - " + method.signature());
     }
 
     public int getFieldIndex(Field fld) {

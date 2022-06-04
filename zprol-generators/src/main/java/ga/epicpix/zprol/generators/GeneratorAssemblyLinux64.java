@@ -393,25 +393,34 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("bcastl", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), "movsx rcx, cx", push("rcx")));
         instructionGenerators.put("icastl", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), "movsxd rcx, ecx", push("rcx")));
         instructionGenerators.put("lcasts", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), push("cx")));
-        instructionGenerators.put("invoke", (i, s, func, lp, instructions) -> invokeMethod((Function) i.getData()[0], instructions));
+        instructionGenerators.put("invoke", (i, s, func, lp, instructions) -> invokeFunction((Function) i.getData()[0], false, instructions));
+        instructionGenerators.put("invoke_class", (i, s, func, lp, instructions) -> {
+            var method = (Method) i.getData()[0];
+            invokeFunction(new Function(method.namespace(), method.modifiers(), method.className() + "." + method.name(), method.signature(), method.code()), true, instructions);
+        });
     }
 
-    private static void invokeMethod(Function f, InstructionList instructions) {
+    private static void invokeFunction(Function f, boolean methodLike, InstructionList instructions) {
         boolean isSyscall = FunctionModifiers.isEmptyCode(f.modifiers()) && f.name().equals("syscall");
 
         var params = f.signature().parameters();
-        for(int x = params.length - 1; x>=0; x--) {
-            var param = params[x];
-            if(param instanceof PrimitiveType primitive) {
-                if (primitive.getSize() == 1 || primitive.getSize() == 2) {
-                    instructions.add(pop(isSyscall ? SYSCALL_REGISTERS_16[x] : CALL_REGISTERS_16[x]));
-                } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
-                    instructions.add(pop(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]));
-                } else {
-                    throw new NotImplementedException("Not implemented size " + primitive.getSize());
-                }
-            }else {
+        int off = methodLike ? 1 : 0;
+        for(int x = params.length - 1 + off; x>=0; x--) {
+            if(x == params.length && methodLike) {
                 instructions.add(pop(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]));
+            }else {
+                var param = params[x];
+                if (param instanceof PrimitiveType primitive) {
+                    if (primitive.getSize() == 1 || primitive.getSize() == 2) {
+                        instructions.add(pop(isSyscall ? SYSCALL_REGISTERS_16[x] : CALL_REGISTERS_16[x]));
+                    } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
+                        instructions.add(pop(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]));
+                    } else {
+                        throw new NotImplementedException("Not implemented size " + primitive.getSize());
+                    }
+                } else {
+                    instructions.add(pop(isSyscall ? SYSCALL_REGISTERS_64[x] : CALL_REGISTERS_64[x]));
+                }
             }
         }
 
@@ -446,7 +455,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }
     }
 
-    private static void writeFunction(Function function, ConstantPool localConstantPool, InstructionList assembly) {
+    private static void writeFunction(Function function, boolean methodLike, ConstantPool localConstantPool, InstructionList assembly) {
         if(function.code().getLocalsSize() != 0) {
             assembly.add(push("rbp"));
             assembly.add("mov rbp, rsp");
@@ -454,21 +463,27 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }
         int localsIndex = 0;
         var parameters = function.signature().parameters();
-        for (int i = 0; i < parameters.length; i++) {
-            var param = parameters[i];
-            if(param instanceof PrimitiveType primitive) {
-                if (primitive.getSize() == 1 || primitive.getSize() == 2) {
-                    localsIndex += 2;
-                    assembly.add("mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_16[i]);
-                } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
-                    localsIndex += 8;
-                    assembly.add("mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_64[i]);
-                } else {
-                    localsIndex += primitive.getSize();
-                }
-            }else {
+        int off = methodLike ? 1 : 0;
+        for (int i = 0; i < parameters.length + off; i++) {
+            if(methodLike && i == 0) {
                 localsIndex += 8;
                 assembly.add("mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_64[i]);
+            }else {
+                var param = parameters[i - off];
+                if (param instanceof PrimitiveType primitive) {
+                    if (primitive.getSize() == 1 || primitive.getSize() == 2) {
+                        localsIndex += 2;
+                        assembly.add("mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_16[i]);
+                    } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
+                        localsIndex += 8;
+                        assembly.add("mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_64[i]);
+                    } else {
+                        localsIndex += primitive.getSize();
+                    }
+                } else {
+                    localsIndex += 8;
+                    assembly.add("mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_64[i]);
+                }
             }
         }
         var labelList = new ArrayList<Integer>();
@@ -535,7 +550,15 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
 
             assembly.add(new FunctionStartInstruction(function));
-            writeFunction(function, localConstantPool, assembly);
+            writeFunction(function, false, localConstantPool, assembly);
+        }
+        for(var clazz : generated.classes) {
+            for (var method : clazz.methods()) {
+                if (FunctionModifiers.isEmptyCode(method.modifiers())) continue;
+
+                assembly.add(getMangledName(method) + ":");
+                writeFunction(new Function(method.namespace(), method.modifiers(), method.className() + "." + method.name(), method.signature(), method.code()), true, localConstantPool, assembly);
+            }
         }
         int index = 1;
         for(var constantPoolEntry : localConstantPool.entries) {
@@ -626,12 +649,20 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         return getMangledName(func.namespace(), func.name(), func.signature());
     }
 
+    public static String getMangledName(Method func) {
+        return getMangledName(func.namespace(), func.className(), func.name(), func.signature());
+    }
+
     public static String getMangledName(Field field) {
         return getMangledName(field.namespace(), field.name(), field.type());
     }
 
     public static String getMangledName(String namespace, String name, FunctionSignature signature) {
         return (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + signature.toString().replace("(", "").replace(")", "").replace(";", "").replace("[", "r");
+    }
+
+    public static String getMangledName(String namespace, String className, String name, FunctionSignature signature) {
+        return (namespace != null ? namespace.replace('.', '$') + "$" : "") + className + "." + name + "$" + signature.toString().replace("(", "").replace(")", "").replace(";", "").replace("[", "r");
     }
 
     public static String getMangledName(String namespace, String name, Type type) {
