@@ -158,10 +158,8 @@ public class CompiledData {
         String namespace = type.lastIndexOf('.') != -1 ? type.substring(0, type.lastIndexOf('.')) : null;
         String name = type.lastIndexOf('.') != -1 ? type.substring(type.lastIndexOf('.') + 1) : type;
         for(var data : using) {
-            if(namespace == null) {
-                if(!Objects.equals(data.namespace, this.namespace) && !Objects.equals(data.namespace, "zprol.lang")) continue;
-            }else {
-                if (data.namespace != null && !data.namespace.equals(namespace)) continue;
+            if(namespace != null) {
+                if(!Objects.equals(namespace, data.namespace)) continue;
             }
             for(var clz : data.classes) {
                 if(clz.name.equals(name)) {
