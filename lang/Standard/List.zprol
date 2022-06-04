@@ -1,0 +1,67 @@
+namespace zprol.lang.collection;
+
+using zprol.lang.memory;
+
+class List {
+
+    uint64 usedLength;
+    uint64 usableLength;
+    uint64[] pointer;
+
+}
+
+void List_add(List this, uint64 element) {
+    if(this.usedLength + 1 > this.usableLength) {
+        List_resize(this, this.usableLength * 2);
+    }
+    this.pointer[this.usedLength] = element;
+    this.usedLength = this.usedLength + 1;
+}
+
+void List_removeIndex(List this, uint64 index) {
+    this.usedLength = this.usedLength - 1;
+    uint64 currentIndex = 0;
+    while(currentIndex < this.usedLength) {
+        this.pointer[currentIndex] = this.pointer[currentIndex + 1];
+        currentIndex = currentIndex + 1;
+    }
+}
+
+void List_removeElement(List this, uint64 element) => List_removeIndex(this, List_indexOf(this, element));
+
+uint64 List_indexOf(List this, uint64 element) {
+    uint64 index = 0;
+    while(index < this.usedLength) {
+        if(this.pointer[index] == element) {
+            return index;
+        }
+        index = index + 1;
+    }
+    return 0 -1;
+}
+
+void List_resize(List this, uint64 length) {
+    uint64[] newPointer = (uint64[]!) malloc(length * 8);
+    uint64 index = 0;
+    while(index < this.usedLength) {
+        newPointer[index] = this.pointer[index];
+        index = index + 1;
+    }
+    this.usableLength = length;
+    free((byte[]!) this.pointer);
+    this.pointer = newPointer;
+}
+
+uint64 List_get(List this, uint64 index) {
+    return this.pointer[index];
+}
+
+List List_new() => return List_new(8);
+
+List List_new(uint64 length) {
+    List inst = (List!) malloc(24);
+    inst.pointer = (uint64[]!) malloc(length * 8);
+    inst.usableLength = length;
+    inst.usedLength = 0;
+    return inst;
+}
