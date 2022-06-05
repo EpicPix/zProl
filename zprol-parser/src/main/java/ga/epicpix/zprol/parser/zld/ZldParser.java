@@ -8,13 +8,10 @@ import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
 public class ZldParser {
-
-    private static final Token[] EMPTY_TOKENS = new Token[0];
 
     public static final HashMap<String, ArrayList<LanguageToken>> DEFINITIONS = new HashMap<>();
 
@@ -29,33 +26,7 @@ public class ZldParser {
             while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
                 fragmentsList.add(convert(keyword, chars, next, parser));
             }
-            LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
-            String debugName = "{" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "}";
-            return LanguageTokenFragment.createMulti(p -> {
-                ArrayList<Token> tokens = new ArrayList<>();
-                boolean successful = false;
-
-                fLoop: do {
-                    var loc = p.saveLocation();
-                    ArrayList<Token> iterTokens = new ArrayList<>();
-                    for (var frag : fragments) {
-                        var r = frag.apply(p);
-                        if (r == null) {
-                            p.loadLocation(loc);
-                            if (successful) {
-                                break fLoop;
-                            } else {
-                                return EMPTY_TOKENS;
-                            }
-                        }
-                        Collections.addAll(iterTokens, r);
-                    }
-                    successful = true;
-                    tokens.addAll(iterTokens);
-                } while(true);
-                return tokens.toArray(EMPTY_TOKENS);
-            }, debugName);
-
+            return new MultiToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
         }else if(w.equals("$")) {
             return new CallToken(parser.nextTemplateWord(tokenCharacters));
         }else if(w.equals("[")) {
@@ -64,21 +35,7 @@ public class ZldParser {
             while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("]")) {
                 fragmentsList.add(convert(keyword, chars, next, parser));
             }
-            LanguageTokenFragment[] fragments = fragmentsList.toArray(new LanguageTokenFragment[0]);
-            String debugName = "[" + fragmentsList.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "]";
-            return LanguageTokenFragment.createMulti(p -> {
-                var loc = p.saveLocation();
-                ArrayList<Token> iterTokens = new ArrayList<>();
-                for (var frag : fragments) {
-                    var r = frag.apply(p);
-                    if (r == null) {
-                        p.loadLocation(loc);
-                        return EMPTY_TOKENS;
-                    }
-                    Collections.addAll(iterTokens, r);
-                }
-                return iterTokens.toArray(EMPTY_TOKENS);
-            }, debugName);
+            return new OptionalToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
         }else if(w.equals("<") && chars) {
             int next;
             ArrayList<Integer> charactersList = new ArrayList<>();
@@ -110,34 +67,21 @@ public class ZldParser {
             }
             int[] allowedCharacters = new int[cs.stream().map(arr -> arr.length).reduce(0, Integer::sum)];
             int indx = 0;
-            StringBuilder debug = new StringBuilder();
             for (int[] c : cs) {
                 System.arraycopy(c, 0, allowedCharacters, indx, c.length);
                 indx += c.length;
-                for(int cc : c) debug.appendCodePoint(cc);
             }
-            String debugName = "<" + (negate ? "^" : "") + debug + ">";
-            return LanguageTokenFragment.createMulti(p -> {
-                var startLocation = p.getLocation();
-                var loc = p.saveLocation();
-                var res = negate ? p.nextCharNot(allowedCharacters) : p.nextChar(allowedCharacters);
-                if(res == -1) {
-                    p.loadLocation(loc);
-                    return null;
-                }
-                var endLocation = p.getLocation();
-                return new Token[] {new WordToken(Character.toString(res), startLocation, endLocation, p)};
-            }, debugName);
+            return new CharsToken(negate, allowedCharacters);
         }
 
         return switch (w) {
-            case ";" -> LanguageTokenFragment.createSingle((p) -> LanguageTokenFragment.exactTypeGenerator(";", TokenType.END_LINE, p), w);
-            case "," -> LanguageTokenFragment.createSingle((p) -> LanguageTokenFragment.exactTypeGenerator(",", TokenType.COMMA, p), w);
-            case "(" -> LanguageTokenFragment.createSingle((p) -> LanguageTokenFragment.exactTypeGenerator("(", TokenType.OPEN, p), w);
-            case ")" -> LanguageTokenFragment.createSingle((p) -> LanguageTokenFragment.exactTypeGenerator(")", TokenType.CLOSE, p), w);
-            case "{" -> LanguageTokenFragment.createSingle((p) -> LanguageTokenFragment.exactTypeGenerator("{", TokenType.OPEN_SCOPE, p), w);
-            case "}" -> LanguageTokenFragment.createSingle((p) -> LanguageTokenFragment.exactTypeGenerator("}", TokenType.CLOSE_SCOPE, p), w);
-            default -> keyword ? LanguageTokenFragment.createExactKeywordFragment(w, parser) : LanguageTokenFragment.createExactFragment(w);
+            case ";" -> new LanguageTokenFragment(new ExactTypeTokenReader(";", TokenType.END_LINE), w);
+            case "," -> new LanguageTokenFragment(new ExactTypeTokenReader(",", TokenType.COMMA), w);
+            case "(" -> new LanguageTokenFragment(new ExactTypeTokenReader("(", TokenType.OPEN), w);
+            case ")" -> new LanguageTokenFragment(new ExactTypeTokenReader(")", TokenType.CLOSE), w);
+            case "{" -> new LanguageTokenFragment(new ExactTypeTokenReader("{", TokenType.OPEN_SCOPE), w);
+            case "}" -> new LanguageTokenFragment(new ExactTypeTokenReader("}", TokenType.CLOSE_SCOPE), w);
+            default -> new LanguageTokenFragment(keyword ? new ExactKeywordTokenReader(w, parser) : new ExactWordTokenReader(w), w);
         };
 
     }
@@ -272,33 +216,9 @@ public class ZldParser {
     }
 
     private static void charGenerator(ArrayList<LanguageTokenFragment> tokens) {
-        var copy = new ArrayList<>(tokens);
+        var copy = tokens.toArray(new LanguageTokenFragment[0]);
         tokens.clear();
-        String debugName = copy.stream().map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" "));
-        tokens.add(LanguageTokenFragment.createSingle(dataParser -> {
-            StringBuilder builder = new StringBuilder();
-            var start = dataParser.getLocation();
-            for(var c : copy) {
-                var loc = dataParser.saveLocation();
-                var value = c.apply(dataParser);
-                if(value == null) {
-                    dataParser.loadLocation(loc);
-                    return null;
-                }
-                for(var s : value) {
-                    if(s instanceof WordHolder holder) {
-                        builder.append(holder.getWord());
-                    }else if(s instanceof NamedToken named) {
-                        for(var t : named.tokens) {
-                            if(t instanceof WordHolder holder) {
-                                builder.append(holder.getWord());
-                            }
-                        }
-                    }
-                }
-            }
-            return new WordToken(builder.toString(), start, dataParser.getLocation(), dataParser);
-        }, debugName));
+        tokens.add(new CharsWordToken(copy));
     }
 
 }

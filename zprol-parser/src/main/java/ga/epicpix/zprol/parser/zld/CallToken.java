@@ -13,16 +13,16 @@ import static ga.epicpix.zprol.parser.zld.ZldParser.DEFINITIONS;
 
 class CallToken extends LanguageTokenFragment {
 
-    private static final Token[] EMPTY_TOKENS = new Token[0];
+    static final Token[] EMPTY_TOKENS = new Token[0];
 
     CallToken(String use) {
         super(new CallTokenTokenReader(use), "$" + use);
     }
 
 
-    static class CallTokenTokenReader implements Function<DataParser, Token[]> {
+    public static class CallTokenTokenReader implements Function<DataParser, Token[]> {
 
-        private final String use;
+        public final String use;
         private ArrayList<LanguageToken> definitions;
 
         CallTokenTokenReader(String use) {
