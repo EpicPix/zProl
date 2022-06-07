@@ -51,7 +51,6 @@ def inline PostExpression:
   $Boolean
   $String
   $Null
-  $FunctionCall
   $Accessor
 
 def CastExpression $CastOperators $CastExpression
@@ -67,16 +66,25 @@ def merge InclusiveAndExpression $InclusiveOrExpression [ $AndOperator $Inclusiv
 
 def Expression $InclusiveAndExpression
 
+
+def Argument:
+  $Expression
+
+def ArgumentList:
+  $Argument {, $Argument}
+
+def FunctionInvocation:
+  ( [$ArgumentList] )
+
 def inline chars ArrayAccessorOpenCharacter [$Whitespace] <[>
 def inline chars ArrayAccessorCloseCharacter [$Whitespace] <]>
 def ArrayAccessor $ArrayAccessorOpenCharacter $Expression $ArrayAccessorCloseCharacter
 def AccessorElement:
-  . $FunctionCall
-  . $Identifier
+  . $Identifier [$FunctionInvocation]
   $ArrayAccessor
 def error AccessorElement Expected an Identifier </> . [$Whitespace] $AnyChar
 
-def Accessor $Identifier { $AccessorElement }
+def Accessor $Identifier [$FunctionInvocation] { $AccessorElement }
 
 def Boolean:
   true
@@ -134,16 +142,6 @@ def error NamespaceErrors:
 def ReturnStatement return [$Expression] ;
 def error ReturnStatement Expected a ';' </> return [$Expression]
 
-def Argument:
-  $Expression
-
-def ArgumentList:
-  $Argument {, $Argument}
-
-def FunctionCall:
-  $Identifier ( [$ArgumentList] )
-def error FunctionCall Expected ')' </> $Identifier ( [$ArgumentList] $AnyCharButCloseP
-
 def Parameter $Type $Identifier
 def error Parameter Expected an Identifier </> $Type [$Whitespace] [$AnyChar]
 
@@ -155,9 +153,6 @@ def inline keyword FunctionModifier:
 
 def FunctionModifiers:
   { $FunctionModifier [$Whitespace] }
-
-def FunctionCallStatement:
-  $Identifier ( [$ArgumentList] ) ;
 
 def AccessorStatement $Accessor ;
 
@@ -192,7 +187,6 @@ def Statement:
   $CreateAssignmentStatement
   $IfStatement
   $WhileStatement
-  $FunctionCallStatement
   $AccessorStatement
 def error Statement Not a Statement </> [$Whitespace] $AnyCharButClose
 

@@ -1,7 +1,5 @@
 package ga.epicpix.zprol.compiler;
 
-import ga.epicpix.zpil.bytecode.Bytecode;
-import ga.epicpix.zpil.bytecode.IBytecodeInstructionGenerator;
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
@@ -18,6 +16,8 @@ import ga.epicpix.zprol.utils.SeekIterator;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static ga.epicpix.zprol.compiler.CompilerUtils.*;
 
 public class Compiler {
     public static IBytecodeStorage parseFunctionCode(CompiledData data, PreClass clazz, SeekIterator<Token> tokens, FunctionSignature sig, String[] names) {
@@ -77,12 +77,20 @@ public class Compiler {
                 } else if("AccessorStatement".equals(named.name)) {
                     var accessor = named.tokens[0].asNamedToken();
                     var accessorElements = accessor.getTokensWithName("AccessorElement");
-                    var lastAccessorElement = accessorElements.get(accessorElements.size() - 1);
-                    var lastAccessorType = lastAccessorElement.tokens[lastAccessorElement.tokens.length - 1].asNamedToken();
 
-                    if(!lastAccessorType.name.equals("FunctionCall")) {
-                        throw new TokenLocatedException("Expected a function call", lastAccessorType);
+                    if(accessorElements.size() == 0) {
+                        var lastAccessorType = accessor.tokens[accessor.tokens.length - 1].asNamedToken();
+                        if(!lastAccessorType.name.equals("FunctionInvocation")) {
+                            throw new TokenLocatedException("Expected a function call", lastAccessorType);
+                        }
+                    }else {
+                        var lastAccessorElement = accessorElements.get(accessorElements.size() - 1);
+                        var lastAccessorType = lastAccessorElement.tokens[lastAccessorElement.tokens.length - 1].asNamedToken();
+                        if(!lastAccessorType.name.equals("FunctionInvocation")) {
+                            throw new TokenLocatedException("Expected a function call", lastAccessorType);
+                        }
                     }
+
                     generateInstructionsFromExpression(accessor, thisClass, null, new ArrayDeque<>(), data, localsManager, storage, true);
                 } else if("CreateAssignmentStatement".equals(named.name)) {
                     var type = data.resolveType(named.getSingleTokenWithName("Type").asWordToken().getWord());
@@ -893,38 +901,6 @@ public class Compiler {
             data.addField(new Field(data.namespace, field.name, type));
         }
         return data;
-    }
-
-    public static BigInteger getDecimalInteger(Token token) {
-        try {
-            return new BigInteger(token.asWordToken().getWord(), 10);
-        }catch(NumberFormatException e) {
-            throw new TokenLocatedException("Decimal Integer not a valid integer '" + token.asWordToken().getWord() + "'", token);
-        }
-    }
-
-    public static String getInstructionPrefix(int size) {
-        return Bytecode.BYTECODE.getInstructionPrefix(size);
-    }
-
-    public static IBytecodeInstructionGenerator getInstruction(String name) {
-        return Bytecode.BYTECODE.getInstruction(name);
-    }
-
-    public static IBytecodeInstruction getConstructedInstruction(int id, Object... args) {
-        return Bytecode.BYTECODE.getConstructedInstruction(id, args);
-    }
-
-    public static IBytecodeInstruction getConstructedInstruction(String name, Object... args) {
-        return Bytecode.BYTECODE.getConstructedInstruction(name, args);
-    }
-
-    public static IBytecodeInstruction getConstructedSizeInstruction(int size, String name, Object... args) {
-        return getConstructedInstruction(getInstructionPrefix(size) + name, args);
-    }
-
-    public static IBytecodeStorage createStorage() {
-        return Bytecode.BYTECODE.createStorage();
     }
 
 }
