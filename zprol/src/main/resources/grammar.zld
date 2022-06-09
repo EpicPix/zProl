@@ -67,24 +67,22 @@ def merge InclusiveAndExpression $InclusiveOrExpression [ $AndOperator $Inclusiv
 def Expression $InclusiveAndExpression
 
 
-def Argument:
-  $Expression
+def Argument $Expression
+def ArgumentList $Argument {, $Argument}
+def FunctionInvocation ( [$ArgumentList] )
 
-def ArgumentList:
-  $Argument {, $Argument}
-
-def FunctionInvocation:
-  ( [$ArgumentList] )
+def FunctionInvocationAccessor $Identifier $FunctionInvocation
+def inline FunctionInvocationAccessor $Identifier
 
 def inline chars ArrayAccessorOpenCharacter [$Whitespace] <[>
 def inline chars ArrayAccessorCloseCharacter [$Whitespace] <]>
 def ArrayAccessor $ArrayAccessorOpenCharacter $Expression $ArrayAccessorCloseCharacter
 def AccessorElement:
-  . $Identifier [$FunctionInvocation]
+  . $FunctionInvocationAccessor
   $ArrayAccessor
 def error AccessorElement Expected an Identifier </> . [$Whitespace] $AnyChar
 
-def Accessor $Identifier [$FunctionInvocation] { $AccessorElement }
+def Accessor $FunctionInvocationAccessor { $AccessorElement }
 
 def Boolean:
   true
