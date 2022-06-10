@@ -104,7 +104,11 @@ public class Compiler {
                             doFunctionCall(func, context, thisClass, data, null, types, localsManager, tempStorage, false, i == 0);
                         }else if(v instanceof CompilerIdentifierDataField field) {
                             var context = getClassContext(i, thisClass, types, data, v.location);
-                            types.push(field.loadField(context, localsManager, tempStorage, data, i == 0));
+                            var ret = field.loadField(context, localsManager, tempStorage, data, i == 0);
+                            if(ret == null) {
+                                throw new TokenLocatedException("Unknown field " + field.getFieldName(), field.location);
+                            }
+                            types.push(ret);
                         }else if(v instanceof CompilerIdentifierDataArray array) {
                             var currentType = types.pop();
                             if(!(currentType instanceof ArrayType arrType)) throw new TokenLocatedException("Expected an array type", v.location);
@@ -120,6 +124,9 @@ public class Compiler {
                     if(v instanceof CompilerIdentifierDataField field) {
                         var context = getClassContext(accessorData.length - 1, thisClass, types, data, v.location);
                         expectedType = field.storeField(context, localsManager, types.size() != 0 ? types.pop() : null, tempStorage, data, accessorData.length == 1);
+                        if(expectedType == null) {
+                            throw new TokenLocatedException("Unknown field " + field.getFieldName(), field.location);
+                        }
                     }else if(v instanceof CompilerIdentifierDataArray array) {
                         var currentType = types.pop();
                         if(!(currentType instanceof ArrayType arrType)) throw new TokenLocatedException("Expected an array type", v.location);
@@ -236,7 +243,11 @@ public class Compiler {
                     doFunctionCall(func, context, thisClass, data, null, types, localsManager, bytecode, discardValue && i == accessorData.length - 1, i == 0);
                 }else if(v instanceof CompilerIdentifierDataField field) {
                     var context = getClassContext(i, thisClass, types, data, v.location);
-                    types.push(field.loadField(context, localsManager, bytecode, data, i == 0));
+                    var ret = field.loadField(context, localsManager, bytecode, data, i == 0);
+                    if(ret == null) {
+                        throw new TokenLocatedException("Unknown field " + field.getFieldName(), field.location);
+                    }
+                    types.push(ret);
                 }else if(v instanceof CompilerIdentifierDataArray array) {
                     var currentType = types.pop();
                     if(!(currentType instanceof ArrayType arrType)) throw new TokenLocatedException("Expected an array type", v.location);
