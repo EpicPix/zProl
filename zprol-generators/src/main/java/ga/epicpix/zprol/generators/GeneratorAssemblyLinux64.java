@@ -205,6 +205,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }
             instructions.add(push(v));
         });
+        instructionGenerators.put("push_false", (i, s, f, lp, instructions) -> instructions.add(push(0)));
+        instructionGenerators.put("push_true", (i, s, f, lp, instructions) -> instructions.add(push(1)));
+        instructionGenerators.put("null", (i, s, f, lp, instructions) -> instructions.add(push(0)));
         instructionGenerators.put("bload_local", (i, s, f, lp, instructions) -> instructions.add("xor cx, cx", "mov cl, [rbp-" + i.getData()[0] + "]", push("cx")));
         instructionGenerators.put("sload_local", (i, s, f, lp, instructions) -> instructions.add("push word [rbp-" + i.getData()[0] + "]"));
         instructionGenerators.put("iload_local", (i, s, f, lp, instructions) -> instructions.add("xor rcx, rcx", "mov ecx, [rbp-" + i.getData()[0] + "]", push("rcx")));

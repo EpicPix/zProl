@@ -78,6 +78,9 @@ public final class Bytecode implements IBytecode {
         registerSizedInstruction(151, "ge", new int[] {1, 2, 4, 8});
         registerSizedInstruction(155, "geu", new int[] {1, 2, 4, 8});
         registerInstruction(159, "invoke_class", BytecodeValueType.METHOD);
+        registerInstruction(160, "push_false");
+        registerInstruction(161, "push_true");
+        registerInstruction(162, "null");
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {

@@ -265,10 +265,10 @@ public class Compiler {
             }
             types.push(doCast(from, castType, true, bytecode, token.tokens[1]));
         }else if(token.name.equals("Boolean")) {
-            bytecode.pushInstruction(getConstructedSizeInstruction(8, "push", Boolean.parseBoolean(token.tokens[0].asWordToken().getWord()) ? 1 : 0));
+            bytecode.pushInstruction(getConstructedInstruction("push_" + token.tokens[0].asWordToken().getWord()));
             types.push(new BooleanType());
         }else if(token.name.equals("Null")) {
-            bytecode.pushInstruction(getConstructedSizeInstruction(8, "push", 0));
+            bytecode.pushInstruction(getConstructedInstruction("null"));
             types.push(new NullType());
         }else {
             throw new TokenLocatedException("Unknown token " + token.name, token);
