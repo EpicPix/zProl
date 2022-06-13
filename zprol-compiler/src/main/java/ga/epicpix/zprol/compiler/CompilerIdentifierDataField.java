@@ -5,7 +5,6 @@ import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.precompiled.PreClass;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.Token;
-import ga.epicpix.zprol.parser.tokens.WordToken;
 import ga.epicpix.zprol.structures.Class;
 import ga.epicpix.zprol.structures.Field;
 import ga.epicpix.zprol.structures.IBytecodeStorage;
@@ -14,22 +13,20 @@ import ga.epicpix.zprol.types.PrimitiveType;
 import ga.epicpix.zprol.types.Type;
 import ga.epicpix.zprol.types.VoidType;
 
-import java.util.Objects;
-
 import static ga.epicpix.zprol.compiler.Compiler.doCast;
 import static ga.epicpix.zprol.compiler.CompilerUtils.*;
 
 public class CompilerIdentifierDataField extends CompilerIdentifierData {
 
-    public final WordToken identifier;
+    public final String identifier;
 
-    public CompilerIdentifierDataField(Token location, WordToken identifier) {
+    public CompilerIdentifierDataField(Token location, String identifier) {
         super(location);
         this.identifier = identifier;
     }
 
     public String getFieldName() {
-        return identifier.getWord();
+        return identifier;
     }
 
     public Type loadField(PreClass classContext, LocalScopeManager localsManager, IBytecodeStorage bytecode, CompiledData data, boolean searchPublic) {

@@ -5,9 +5,9 @@ import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
+import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
-import ga.epicpix.zprol.parser.tokens.TokenType;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
 import ga.epicpix.zprol.types.*;
@@ -49,8 +49,7 @@ public class Compiler {
         Token token;
         while(tokens.hasNext()) {
             token = tokens.next();
-            if(token.getType() == TokenType.NAMED) {
-                var named = (NamedToken) token;
+            if(token instanceof NamedToken named) {
                 if("ReturnStatement".equals(named.name)) {
                     if(!(sig.returnType() instanceof VoidType)) {
                         if(named.getTokenWithName("Expression") == null) {
@@ -76,11 +75,11 @@ public class Compiler {
                 } else if("AccessorStatement".equals(named.name)) {
                     generateInstructionsFromExpression(named.getTokenWithName("Accessor"), thisClass, null, new ArrayDeque<>(), data, localsManager, storage, true);
                 } else if("CreateAssignmentStatement".equals(named.name)) {
-                    var type = data.resolveType(named.getSingleTokenWithName("Type").asWordToken().getWord());
+                    var type = data.resolveType(named.getTokenAsString("Type"));
                     if(type instanceof VoidType) {
                         throw new TokenLocatedException("Cannot create a variable with void type", named);
                     }
-                    var name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
+                    var name = named.getTokenAsString("Identifier");
                     var expression = named.getTokenWithName("Expression");
                     var types = new ArrayDeque<Type>();
                     generateInstructionsFromExpression(expression, thisClass, type, types, data, localsManager, storage, false);
@@ -257,16 +256,17 @@ public class Compiler {
                 }
             }
         }else if(token.name.equals("String")) {
-            var strChars = token.getSingleTokenWithName("StringChars");
-            bytecode.pushInstruction(getConstructedInstruction("push_string", strChars != null ? strChars.asWordToken().getWord().replace("\\\"", "\"").replace("\\n", "\n").replace("\\0", "\0") : ""));
+            var strChars = token.getTokenAsString("String");
+            bytecode.pushInstruction(getConstructedInstruction("push_string", strChars.substring(1, strChars.length() - 1).replace("\\\"", "\"").replace("\\n", "\n").replace("\\0", "\0")));
             types.push(data.resolveType("zprol.lang.String"));
         }else if(token.name.equals("CastExpression")) {
             var hardCast = token.getTokenWithName("HardCastOperator");
-            var castType = data.resolveType((hardCast != null ? hardCast : token.getTokenWithName("CastOperator")).getSingleTokenWithName("Type").asWordToken().getWord());
-            if(token.tokens[1].getType() == TokenType.OPEN) {
-                generateInstructionsFromExpression(token.tokens[2].asNamedToken(), thisClass, null, types, data, localsManager, bytecode, false);
+            var castType = data.resolveType((hardCast != null ? hardCast : token.getTokenWithName("CastOperator")).getTokenAsString("Type"));
+            var tokens = token.getNonWhitespaceTokens();
+            if(tokens[1] instanceof LexerToken lex && lex.name.equals("OpenParen")) {
+                generateInstructionsFromExpression(tokens[2].asNamedToken(), thisClass, null, types, data, localsManager, bytecode, false);
             }else {
-                generateInstructionsFromExpression(token.tokens[1].asNamedToken(), thisClass, null, types, data, localsManager, bytecode, false);
+                generateInstructionsFromExpression(tokens[1].asNamedToken(), thisClass, null, types, data, localsManager, bytecode, false);
             }
             var from = types.pop();
             if(hardCast != null) {
@@ -276,7 +276,7 @@ public class Compiler {
             }
             types.push(doCast(from, castType, true, bytecode, token.tokens[1]));
         }else if(token.name.equals("Boolean")) {
-            bytecode.pushInstruction(getConstructedInstruction("push_" + token.tokens[0].asWordToken().getWord()));
+            bytecode.pushInstruction(getConstructedInstruction("push_" + token.toStringRaw()));
             types.push(new BooleanType());
         }else if(token.name.equals("Null")) {
             bytecode.pushInstruction(getConstructedInstruction("null"));
@@ -287,27 +287,28 @@ public class Compiler {
     }
 
     public static Type runOperator(NamedToken token, PreClass thisClass, Type expectedType, CompiledData data, LocalScopeManager localsManager, ArrayDeque<Type> types, IBytecodeStorage bytecode) {
-        if (token.tokens[0].getType() == TokenType.OPEN) {
-            generateInstructionsFromExpression(token.tokens[1].asNamedToken(), thisClass, expectedType, types, data, localsManager, bytecode, false);
+        var tokens = token.getNonWhitespaceTokens();
+        if (tokens[0] instanceof LexerToken lexer && lexer.name.equals("OpenParen")) {
+            generateInstructionsFromExpression(tokens[1].asNamedToken(), thisClass, expectedType, types, data, localsManager, bytecode, false);
             return types.pop();
         }
-        generateInstructionsFromExpression(token.tokens[0].asNamedToken(), thisClass, expectedType, types, data, localsManager, bytecode, false);
+        generateInstructionsFromExpression(tokens[0].asNamedToken(), thisClass, expectedType, types, data, localsManager, bytecode, false);
         var arg1 = types.pop();
 
-        int amtOperators = (token.tokens.length - 1) / 2;
+        int amtOperators = (tokens.length - 1) / 2;
         for (int i = 0; i < amtOperators; i++) {
             var arg2Storage = createStorage();
-            generateInstructionsFromExpression(token.tokens[i * 2 + 2].asNamedToken(), thisClass, expectedType, types, data, localsManager, arg2Storage, false);
+            generateInstructionsFromExpression(tokens[i * 2 + 2].asNamedToken(), thisClass, expectedType, types, data, localsManager, arg2Storage, false);
             var arg2 = types.pop();
 
-            arg1 = runOperator(arg1, arg2, token.tokens[i * 2 + 1].asNamedToken(), token, bytecode, arg2Storage);
+            arg1 = runOperator(arg1, arg2, tokens[i * 2 + 1].asLexerToken(), token, bytecode, arg2Storage);
         }
 
         return arg1;
     }
 
-    public static Type runOperator(Type arg1, Type arg2, NamedToken operator, Token location, IBytecodeStorage bytecode, IBytecodeStorage arg2bytecode) {
-        var operatorName = operator.tokens[0].asWordToken().getWord();
+    public static Type runOperator(Type arg1, Type arg2, LexerToken operator, Token location, IBytecodeStorage bytecode, IBytecodeStorage arg2bytecode) {
+        var operatorName = operator.toStringRaw();
 
         if(!(arg1 instanceof PrimitiveType prim1) || !(arg2 instanceof PrimitiveType prim2)) {
             if((arg1 instanceof ClassType || arg1 instanceof NullType) && (arg2 instanceof ClassType || arg2 instanceof NullType)) {
@@ -543,7 +544,7 @@ public class Compiler {
     public static void getAccessor(NamedToken accessor, PreClass thisClass, ArrayDeque<Type> types, CompiledData data, IBytecodeStorage storage, LocalScopeManager localsManager) {
         var type = types.pop();
         if(accessor.getTokenWithName("Identifier") != null) {
-            String field = accessor.getSingleTokenWithName("Identifier").asWordToken().getWord();
+            String field = accessor.getTokenAsString("Identifier");
 
             if (type instanceof PrimitiveType) {
                 throw new TokenLocatedException("Cannot access fields of a primitive type", accessor);
@@ -592,7 +593,7 @@ public class Compiler {
     public static Type setAccessor(NamedToken accessor, PreClass thisClass, ArrayDeque<Type> types, CompiledData data, IBytecodeStorage storage, LocalScopeManager localsManager) {
         var type = types.pop();
         if(accessor.getTokenWithName("Identifier") != null) {
-            String field = accessor.getSingleTokenWithName("Identifier").asWordToken().getWord();
+            String field = accessor.getTokenAsString("Identifier");
 
             if (type instanceof PrimitiveType) {
                 throw new TokenLocatedException("Cannot access fields of a primitive type", accessor);

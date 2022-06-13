@@ -5,17 +5,16 @@ import ga.epicpix.zprol.compiler.precompiled.PreClass;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
-import ga.epicpix.zprol.parser.tokens.WordToken;
 
 import java.util.ArrayList;
 
 public class CompilerIdentifierDataFunction extends CompilerIdentifierData {
 
-    public final WordToken identifier;
+    public final String identifier;
     public final NamedToken functionInvocation;
     public final NamedToken[] arguments;
 
-    public CompilerIdentifierDataFunction(Token location, WordToken identifier, NamedToken functionInvocation) {
+    public CompilerIdentifierDataFunction(Token location, String identifier, NamedToken functionInvocation) {
         super(location);
         this.identifier = identifier;
         this.functionInvocation = functionInvocation;
@@ -36,7 +35,7 @@ public class CompilerIdentifierDataFunction extends CompilerIdentifierData {
     }
 
     public String getFunctionName() {
-        return identifier.getWord();
+        return identifier;
     }
 
     public ArrayList<LookupFunction> lookupFunction(CompiledData data, PreClass classContext, boolean searchPublic) {

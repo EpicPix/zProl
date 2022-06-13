@@ -14,6 +14,12 @@ public class ParserException extends RuntimeException {
         this.location = parser.getLastLocation();
     }
 
+    public ParserException(String message, DataParser parser, ParserLocation loc) {
+        super(message);
+        this.parser = parser;
+        this.location = loc;
+    }
+
     public void printError() {
         int line = location.line();
         int row = location.row();

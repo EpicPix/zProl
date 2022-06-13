@@ -8,34 +8,21 @@ public class Token {
     public final ParserLocation startLocation;
     public final ParserLocation endLocation;
     public final DataParser parser;
+    public final String name;
 
-    private final TokenType type;
-
-    public Token(TokenType type, ParserLocation startLocation, ParserLocation endLocation, DataParser parser) {
-        this.type = type;
+    public Token(String name, ParserLocation startLocation, ParserLocation endLocation, DataParser parser) {
+        this.name = name;
         this.startLocation = startLocation;
         this.endLocation = endLocation;
         this.parser = parser;
-    }
-
-    public WordToken asWordToken() {
-        return (WordToken) this;
-    }
-
-    public KeywordToken asKeywordToken() {
-        return (KeywordToken) this;
     }
 
     public NamedToken asNamedToken() {
         return (NamedToken) this;
     }
 
-    public WordHolder asWordHolder() {
-        return (WordHolder) this;
-    }
-
-    public TokenType getType() {
-        return type;
+    public LexerToken asLexerToken() {
+        return (LexerToken) this;
     }
 
     protected String getData() {
@@ -45,8 +32,12 @@ public class Token {
     public String toString() {
         String data = getData();
         if(data.isEmpty()) {
-            return type.name().toLowerCase();
+            return getClass().getSimpleName();
         }
-        return type.name().toLowerCase() + "(" + data + ")";
+        return getClass().getSimpleName() + "(" + data + ")";
+    }
+
+    public String toStringRaw() {
+        return getData();
     }
 }

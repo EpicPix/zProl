@@ -1,12 +1,11 @@
 package ga.epicpix.zprol.parser.zld;
 
 import ga.epicpix.zprol.parser.DataParser;
-import ga.epicpix.zprol.parser.tokens.Token;
-import ga.epicpix.zprol.parser.tokens.WordToken;
+import ga.epicpix.zprol.parser.lexer.LanguageLexerTokenFragment;
 
 import java.util.function.Function;
 
-class CharsToken extends LanguageTokenFragment {
+class CharsToken extends LanguageLexerTokenFragment {
 
     private static String getDebugName(int[] characters) {
         StringBuilder debug = new StringBuilder();
@@ -20,26 +19,15 @@ class CharsToken extends LanguageTokenFragment {
         super(new CharsTokenTokenReader(negate, characters), "<" + (negate ? "^" : "") + getDebugName(characters) + ">");
     }
 
-    public static class CharsTokenTokenReader implements Function<DataParser, Token[]> {
-
-        public final boolean negate;
-        public final int[] characters;
-
-        CharsTokenTokenReader(boolean negate, int[] characters) {
-            this.negate = negate;
-            this.characters = characters;
-        }
-
-        public Token[] apply(DataParser p) {
-            var startLocation = p.getLocation();
+    public record CharsTokenTokenReader(boolean negate, int[] characters) implements Function<DataParser, String> {
+        public String apply(DataParser p) {
             var loc = p.saveLocation();
             var res = negate ? p.nextCharNot(characters) : p.nextChar(characters);
-            if(res == -1) {
+            if (res == -1) {
                 p.loadLocation(loc);
                 return null;
             }
-            var endLocation = p.getLocation();
-            return new Token[] {new WordToken(Character.toString(res), startLocation, endLocation, p)};
+            return Character.toString(res);
         }
     }
 

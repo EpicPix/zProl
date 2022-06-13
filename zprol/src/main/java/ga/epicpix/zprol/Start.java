@@ -8,11 +8,13 @@ import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.parser.Parser;
+import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.zld.ZldParser;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.structures.FunctionModifiers;
+import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -28,7 +30,6 @@ public class Start {
     public static void main(String[] args) throws UnknownTypeException, IOException {
         try {
             registerTypes();
-            registerKeywords();
 
             long startLoad = System.currentTimeMillis();
             ZldParser.load("grammar.zld", new String(Start.class.getClassLoader().getResourceAsStream("grammar.zld").readAllBytes()));
@@ -180,8 +181,13 @@ public class Start {
             }else {
                 String normalName = file.substring(0, file.lastIndexOf('.') == -1 ? file.length() : file.lastIndexOf('.'));
                 try {
+                    long startLex = System.currentTimeMillis();
+                    ArrayList<LexerToken> lexedTokens = Parser.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
+                    long endLex = System.currentTimeMillis();
+                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to lex\n", file.substring(file.lastIndexOf('/') + 1), endLex - startLex);
+
                     long startToken = System.currentTimeMillis();
-                    ArrayList<Token> tokens = Parser.tokenize(new File(file));
+                    ArrayList<Token> tokens = Parser.tokenize(new SeekIterator<>(lexedTokens));
                     long endToken = System.currentTimeMillis();
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to tokenize\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 

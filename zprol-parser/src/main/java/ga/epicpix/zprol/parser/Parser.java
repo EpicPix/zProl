@@ -1,7 +1,10 @@
 package ga.epicpix.zprol.parser;
 
 import ga.epicpix.zprol.parser.exceptions.ParserException;
+import ga.epicpix.zprol.parser.lexer.LanguageLexerToken;
+import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.tokens.*;
+import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,10 +15,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Parser {
 
-    public static boolean check(ArrayList<Token> tTokens, DataParser parser, LanguageToken token) {
-        ArrayList<Token> added = new ArrayList<>();
+    public static boolean check(ArrayList<String> tTokens, DataParser parser, LanguageLexerToken token) {
         for(var fragment : token.args()) {
             var read = fragment.apply(parser);
+            if (read == null) {
+                return false;
+            }
+            tTokens.add(read);
+        }
+        return true;
+    }
+
+    public static boolean check(ArrayList<Token> tTokens, SeekIterator<LexerToken> tokens, LanguageToken token) {
+        ArrayList<Token> added = new ArrayList<>();
+        for(var fragment : token.args()) {
+            var read = fragment.apply(tokens);
             if (read == null) {
                 return false;
             }
@@ -26,29 +40,47 @@ public class Parser {
     }
 
     public static ArrayList<Token> tokenize(File file) throws IOException {
-        return tokenize(file.getName(), Files.readAllLines(file.toPath()).toArray(new String[0]));
+        var lexed = lex(file.getName(), Files.readAllLines(file.toPath()).toArray(new String[0]));
+        return tokenize(new SeekIterator<>(lexed));
     }
 
-    public static ArrayList<Token> tokenize(String fileName, String[] lines) {
-        DataParser parser = new DataParser(fileName, lines);
+    public static ArrayList<LexerToken> lex(String filename, String[] lines) {
+        DataParser parser = new DataParser(filename, lines);
+        ArrayList<LexerToken> tokens = new ArrayList<>();
+        next: while(parser.hasNext()) {
+            for(var lexerToken : LanguageLexerToken.LEXER_TOKENS) {
+                ArrayList<String> x = new ArrayList<>();
+                var saveStart = parser.saveLocation();
+                var start = parser.getLocation();
+                if(check(x, parser, lexerToken)) {
+                    tokens.add(new LexerToken(lexerToken.name(), x.size() != 0 ? x.get(0) : "", start, parser.getLocation(), parser));
+                    continue next;
+                }
+                parser.loadLocation(saveStart);
+            }
 
+            throw new ParserException("Unknown lexer token", parser, parser.getLocation());
+        }
+        return tokens;
+    }
+
+    public static ArrayList<Token> tokenize(SeekIterator<LexerToken> lexerTokens) {
         ArrayList<Token> tokens = new ArrayList<>();
 
-        while(parser.seekWord() != null) {
+        while(lexerTokens.hasNext()) {
             LanguageToken langToken = null;
             for (var tok : LanguageToken.TOKENS) {
-                var loc = parser.saveLocation();
+                var loc = lexerTokens.currentIndex();
                 ArrayList<Token> tTokens = new ArrayList<>();
-                var startLocation = parser.getLocation();
-                if (check(tTokens, parser, tok)) {
+                if (check(tTokens, lexerTokens, tok)) {
                     langToken = tok;
-                    tokens.add(new NamedToken(tok.name(), startLocation, parser.getLocation(), parser, tTokens.toArray(new Token[0])));
+                    tokens.add(new NamedToken(tok.name(), tTokens.get(0).startLocation, tTokens.get(tTokens.size() - 1).endLocation, lexerTokens.current().parser, tTokens.toArray(new Token[0])));
                     break;
                 }
-                parser.loadLocation(loc);
+                lexerTokens.setIndex(loc);
             }
             if(langToken == null) {
-                throw new ParserException("Failed to parse", parser);
+                throw new ParserException("Failed to parse", lexerTokens.current().parser, lexerTokens.current().startLocation);
             }
         }
         return tokens;
@@ -77,24 +109,11 @@ public class Parser {
                 int num = writeTokenParseTree(t, builder, current);
                 builder.append("  token").append(index).append(" -> token").append(num).append("\n");
             }
-        }else if (token instanceof WordHolder word) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#7F7F7F\",label=\"").append("\\\"").append(word.getWord().replace("\\", "\\\\").replace("\"", "\\\\\\\"")).append("\\\"\"]\n");
-        }else if(token.getType() == TokenType.OPEN) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#FF3F00\",label=\"(\"]\n");
-        }else if(token.getType() == TokenType.CLOSE) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#FF3F00\",label=\")\"]\n");
-        }else if(token.getType() == TokenType.OPEN_SCOPE) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#FF3F00\",label=\"{\"]\n");
-        }else if(token.getType() == TokenType.CLOSE_SCOPE) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#FF3F00\",label=\"}\"]\n");
-        }else if(token.getType() == TokenType.END_LINE) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#FF3F00\",label=\";\"]\n");
-        }else if(token.getType() == TokenType.ACCESSOR) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#FF3F00\",label=\".\"]\n");
-        }else if(token.getType() == TokenType.COMMA) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#FF3F00\",label=\",\"]\n");
-        }else {
-            builder.append("  token").append(index).append("[shape=box,color=\"#FF00FF\",label=\"").append(token.getType().name().toLowerCase()).append("\"]\n");
+        }else if (token instanceof LexerToken lexer) {
+            builder.append("  token").append(index).append("[shape=box,color=\"#007FFF\",label=\"").append("(").append(lexer.name).append(")\"]\n");
+            int indexI = current.getAndIncrement();
+            builder.append("  token").append(indexI).append("[shape=box,color=\"#00FFFF\",label=\"").append(lexer.data).append("\"]\n");
+            builder.append("  token").append(index).append(" -> token").append(indexI).append("\n");
         }
         return index;
     }

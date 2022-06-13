@@ -1,183 +1,164 @@
-def chars AddOperator [$Whitespace] <+>
-def chars SubtractOperator [$Whitespace] <->
-def chars MultiplyOperator [$Whitespace] <*>
-def chars DivideOperator [$Whitespace] </>
-def chars ModuloOperator [$Whitespace] <%>
-def chars InclusiveOrOperator [$Whitespace] <|>
-def chars AndOperator [$Whitespace] <&>
-def chars ShiftLeftOperator [$Whitespace] <\<><\<>
-def chars ShiftRightOperator [$Whitespace] <\>><\>>
-def chars EqualOperator [$Whitespace] <=><=>
-def chars NotEqualOperator [$Whitespace] <!><=>
-def chars LessThanOperator [$Whitespace] <\<>
-def chars LessEqualThanOperator [$Whitespace] <\<><=>
-def chars GreaterThanOperator [$Whitespace] <\>>
-def chars GreaterEqualThanOperator [$Whitespace] <\>><=>
-def inline chars HardCastIndicatorOperator <!>
-def CastOperator ( $Type )
-def HardCastOperator ( $Type $HardCastIndicatorOperator )
+lex chars clean Whitespace < \t\n> { < \t\n> }
+
+lex NamespaceKeyword namespace
+lex UsingKeyword using
+lex ClassKeyword class
+lex ReturnKeyword return
+lex IfKeyword if
+lex ElseKeyword else
+lex WhileKeyword while
+
+lex TrueKeyword true
+lex FalseKeyword false
+lex NullKeyword null
+lex VoidKeyword void
+lex BoolKeyword bool
+
+lex NativeKeyword native
+
+lex Semicolon ;
+lex OpenBracket [
+lex CloseBracket ]
+lex OpenBrace {
+lex CloseBrace }
+lex OpenParen (
+lex CloseParen )
+lex LineCodeChars =>
+
+lex chars DecimalInteger <1-9>{<0-9>}
+lex Zero 0
+lex chars Identifier <a-zA-Z_> { <a-zA-Z0-9_> }
+lex chars String <"> {<^"\n>} <">
+
+lex AccessorOperator .
+lex CommaOperator ,
+lex AddOperator +
+lex SubtractOperator -
+lex MultiplyOperator *
+lex DivideOperator /
+lex ModuloOperator %
+lex InclusiveOrOperator |
+lex AndOperator &
+lex ShiftLeftOperator <<
+lex ShiftRightOperator >>
+lex EqualOperator ==
+lex NotEqualOperator !=
+lex LessEqualThanOperator <=
+lex LessThanOperator <
+lex GreaterEqualThanOperator >=
+lex GreaterThanOperator >
+lex AssignOperator =
+lex HardCastIndicatorOperator !
+
+def CastOperator [$$Whitespace] $$OpenParen $Type [$$Whitespace] $$CloseParen
+def HardCastOperator [$$Whitespace] $$OpenParen $Type [$$Whitespace] $$HardCastIndicatorOperator [$$Whitespace] $$CloseParen
 
 def inline AdditiveOperators:
-  $AddOperator
-  $SubtractOperator
+  $$AddOperator
+  $$SubtractOperator
 
 def inline EqualityOperators:
-  $EqualOperator
-  $NotEqualOperator
+  $$EqualOperator
+  $$NotEqualOperator
 
 def inline CompareOperators:
-  $LessEqualThanOperator
-  $LessThanOperator
-  $GreaterEqualThanOperator
-  $GreaterThanOperator
+  $$LessEqualThanOperator
+  $$LessThanOperator
+  $$GreaterEqualThanOperator
+  $$GreaterThanOperator
 
 def inline ShiftOperators:
-  $ShiftLeftOperator
-  $ShiftRightOperator
+  $$ShiftLeftOperator
+  $$ShiftRightOperator
 
 def inline MultiplicativeOperators:
-  $MultiplyOperator
-  $DivideOperator
-  $ModuloOperator
+  $$MultiplyOperator
+  $$DivideOperator
+  $$ModuloOperator
 
 def inline CastOperators:
   $CastOperator
   $HardCastOperator
-def error CastOperators Expected ')' </> ( $Type [$HardCastIndicatorOperator] $AnyCharButCloseP
 
 def inline PostExpression:
-  ( $Expression )
-  $Integer
-  $Boolean
+  [$$Whitespace] $$OpenParen [$$Whitespace] $Expression [$$Whitespace] $$CloseParen
   $String
   $Null
+  $Integer
+  $Boolean
   $Accessor
 
 def CastExpression $CastOperators $CastExpression
 def inline CastExpression $PostExpression
 
-def merge MultiplicativeExpression $CastExpression [ $MultiplicativeOperators $MultiplicativeExpression ]
-def merge AdditiveExpression $MultiplicativeExpression [ $AdditiveOperators $AdditiveExpression ]
-def merge CompareExpression $AdditiveExpression [ $CompareOperators $CompareExpression ]
-def merge EqualsExpression $CompareExpression [ $EqualityOperators $EqualsExpression ]
-def merge ShiftExpression $EqualsExpression [ $ShiftOperators $ShiftExpression ]
-def merge InclusiveOrExpression $ShiftExpression [ $InclusiveOrOperator $InclusiveOrExpression ]
-def merge InclusiveAndExpression $InclusiveOrExpression [ $AndOperator $InclusiveAndExpression ]
+def merge MultiplicativeExpression $CastExpression [ [$$Whitespace] $MultiplicativeOperators [$$Whitespace] $MultiplicativeExpression ]
+def merge AdditiveExpression $MultiplicativeExpression [ [$$Whitespace] $AdditiveOperators [$$Whitespace] $AdditiveExpression ]
+def merge CompareExpression $AdditiveExpression [ [$$Whitespace] $CompareOperators [$$Whitespace] $CompareExpression ]
+def merge EqualsExpression $CompareExpression [ [$$Whitespace] $EqualityOperators [$$Whitespace] $EqualsExpression ]
+def merge ShiftExpression $EqualsExpression [ [$$Whitespace] $ShiftOperators [$$Whitespace] $ShiftExpression ]
+def merge InclusiveOrExpression $ShiftExpression [ [$$Whitespace] $$InclusiveOrOperator [$$Whitespace] $InclusiveOrExpression ]
+def merge InclusiveAndExpression $InclusiveOrExpression [ [$$Whitespace] $$AndOperator [$$Whitespace] $InclusiveAndExpression ]
 
 def Expression $InclusiveAndExpression
 
 
-def Argument $Expression
-def ArgumentList $Argument {, $Argument}
-def FunctionInvocation ( [$ArgumentList] )
+def Argument [$$Whitespace] $Expression
+def ArgumentList $Argument {[$$Whitespace] $$CommaOperator $Argument}
+def FunctionInvocation [$$Whitespace] $$OpenParen [$ArgumentList] [$$Whitespace] $$CloseParen
 
-def FunctionInvocationAccessor $Identifier $FunctionInvocation
-def inline FunctionInvocationAccessor $Identifier
+def FunctionInvocationAccessor [$$Whitespace] $$Identifier $FunctionInvocation
+def inline FunctionInvocationAccessor [$$Whitespace] $$Identifier
 
-def inline chars ArrayAccessorOpenCharacter [$Whitespace] <[>
-def inline chars ArrayAccessorCloseCharacter [$Whitespace] <]>
-def ArrayAccessor $ArrayAccessorOpenCharacter $Expression $ArrayAccessorCloseCharacter
+def inline ArrayAccessorOpenCharacter [$$Whitespace] $$OpenBracket
+def inline ArrayAccessorCloseCharacter [$$Whitespace] $$CloseBracket
+def ArrayAccessor $ArrayAccessorOpenCharacter [$$Whitespace] $Expression $ArrayAccessorCloseCharacter
 def AccessorElement:
-  . $FunctionInvocationAccessor
+  [$$Whitespace] $$AccessorOperator $FunctionInvocationAccessor
   $ArrayAccessor
-def error AccessorElement Expected an Identifier </> . [$Whitespace] $AnyChar
 
 def Accessor $FunctionInvocationAccessor { $AccessorElement }
 
-def Boolean:
-  true
-  false
+def String $$String
 
-def Null null
+def Boolean:
+  [$$Whitespace] $$TrueKeyword
+  [$$Whitespace] $$FalseKeyword
+
+def Null [$$Whitespace] $$NullKeyword
 
 def inline Integer:
-  [$Whitespace] $DecimalInteger
+  [$$Whitespace] $DecimalInteger
 
-def chars DecimalInteger:
-  0
-  $NonZeroDecimalDigit { $DecimalDigits }
-def error DecimalInteger Expected a DecimalInteger </> $NonZeroDecimalDigit [$Whitespace] $AnyChar
+def DecimalInteger:
+  $$Zero
+  $$DecimalInteger
 
-def chars NonZeroDecimalDigit <1-9>
-def chars DecimalDigits <0-9>
+def ArrayCharacters $ArrayAccessorOpenCharacter $ArrayAccessorCloseCharacter
 
-def chars ArrayCharacters <[><]>
+def Type:
+  { [$$Whitespace] $$Identifier [$$Whitespace] $$AccessorOperator } [$$Whitespace] $$Identifier { $ArrayCharacters }
+  [$$Whitespace] $$BoolKeyword { $ArrayCharacters }
+  [$$Whitespace] $$VoidKeyword
+def NamespaceIdentifier [$$Whitespace] $$Identifier {$$AccessorOperator $$Identifier}
 
-def chars AnyChar <^>
-def chars AnyCharButClose <^}>
-def chars AnyCharButOpen <^{>
-def chars AnyCharButOpenP <^(>
-def chars AnyCharButCloseP <^)>
-def chars AnyCharButEquals <^=>
-def chars AnyCharButSemicolon <^;>
-def chars AnyCharButQuotes <^">
+tok Whitespace $$Whitespace
 
-def chars IdentifierChars <a-zA-Z_> { <a-zA-Z0-9_> }
-def chars Identifier [$Whitespace] $IdentifierChars
-def chars Type [$Whitespace] { $IdentifierChars <.> } $IdentifierChars { $ArrayCharacters }
-def chars clean Whitespace { < \t\n> }
-def chars StringChars <^\n"> { <^\n"> }
-def String " [$StringChars] "
-def error String Expected '"' </> " [$StringChars] $AnyCharButQuotes
-def chars DotWord [$Whitespace] <a-zA-Z_> { <a-zA-Z0-9_.> }
+tok Using [$$Whitespace] $$UsingKeyword $NamespaceIdentifier [$$Whitespace] $$Semicolon
+tok Namespace [$$Whitespace] $$NamespaceKeyword $NamespaceIdentifier [$$Whitespace] $$Semicolon
 
-tok Using:
-  using $DotWord ;
-  $UsingErrors
+def Parameter [$$Whitespace] $Type [$$Whitespace] $$Identifier
+def ParameterList [$$Whitespace] $Parameter {[$$Whitespace] $$CommaOperator $Parameter}
 
-def error UsingErrors:
-  Expected a ';' </> using $DotWord [$Whitespace] $AnyChar
-  Expected a namespace </> using [$Whitespace] [$AnyChar]
+def inline FunctionModifier [$$Whitespace] $$NativeKeyword
+def FunctionModifiers { $FunctionModifier }
 
-tok Namespace:
-  namespace $DotWord ;
-  $NamespaceErrors
-
-def error NamespaceErrors:
-  Expected a ';' </> namespace $DotWord [$Whitespace] $AnyChar
-  Expected a namespace </> namespace [$Whitespace] [$AnyChar]
-
-def ReturnStatement return [$Expression] ;
-def error ReturnStatement Expected a ';' </> return [$Expression]
-
-def Parameter $Type $Identifier
-def error Parameter Expected an Identifier </> $Type [$Whitespace] [$AnyChar]
-
-def ParameterList:
-  $Parameter {, $Parameter}
-
-def inline keyword FunctionModifier:
-  native
-
-def FunctionModifiers:
-  { $FunctionModifier [$Whitespace] }
-
-def AccessorStatement $Accessor ;
-
-def AssignmentStatement:
-  $Accessor = $Expression ;
-def error AssignmentStatement Expected ';' </> $Accessor = $Expression $AnyChar
-
-def CreateAssignmentStatement:
-  $Type $Identifier = $Expression ;
-def error CreateAssignmentStatement:
-  Expected '=' </> $Type $Identifier $AnyCharButEquals
-  Expected ';' </> $Type $Identifier = $Expression $AnyChar
-
-def IfStatement:
-  if ( $Expression ) $Code [ $ElseStatement ]
-def error IfStatement:
-  Expected '(' </> if [$Whitespace] $AnyCharButOpenP
-  Expected ')' </> if ( $Expression [$Whitespace] $AnyCharButCloseP
-
-def ElseStatement:
-  else $Code
-
-def WhileStatement:
-  while ( $Expression ) $Code
-def error WhileStatement:
-  Expected '(' </> while [$Whitespace] $AnyCharButOpenP
-  Expected ')' </> while ( $Expression [$Whitespace] $AnyCharButCloseP
+def ReturnStatement [$$Whitespace] $$ReturnKeyword [[$$Whitespace] $Expression] [$$Whitespace] $$Semicolon
+def AssignmentStatement $Accessor [$$Whitespace] $$AssignOperator [$$Whitespace] $Expression [$$Whitespace] $$Semicolon
+def CreateAssignmentStatement $Type [$$Whitespace] $$Identifier [$$Whitespace] $$AssignOperator [$$Whitespace] $Expression [$$Whitespace] $$Semicolon
+def IfStatement [$$Whitespace] $$IfKeyword [$$Whitespace] $$OpenParen [$$Whitespace] $Expression [$$Whitespace] $$CloseParen $Code [$ElseStatement]
+def ElseStatement [$$Whitespace] $$ElseKeyword $Code
+def WhileStatement [$$Whitespace] $$WhileKeyword [$$Whitespace] $$OpenParen [$$Whitespace] $Expression [$$Whitespace] $$CloseParen $Code
+def AccessorStatement $Accessor [$$Whitespace] $$Semicolon
 
 def Statement:
   $ReturnStatement
@@ -186,39 +167,24 @@ def Statement:
   $IfStatement
   $WhileStatement
   $AccessorStatement
-def error Statement Not a Statement </> [$Whitespace] $AnyCharButClose
-
-def inline chars LineCodeChars [$Whitespace] <=> <\>>
 
 def Code:
-  \{ {$Statement} \}
-  $LineCodeChars $Statement
-def error Code:
-  Expected code </> \{
-  Expected code </> $LineCodeChars
+  [$$Whitespace] $$OpenBrace {$Statement} [$$Whitespace] $$CloseBrace
+  [$$Whitespace] $$LineCodeChars $Statement
 
 tok Function:
-  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) ;
-  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
+  $FunctionModifiers [$$Whitespace] $Type [$$Whitespace] $$Identifier [$$Whitespace] $$OpenParen [$ParameterList] [$$Whitespace] $$CloseParen [$$Whitespace] $$Semicolon
+  $FunctionModifiers [$$Whitespace] $Type [$$Whitespace] $$Identifier [$$Whitespace] $$OpenParen [$ParameterList] [$$Whitespace] $$CloseParen $Code
 
-def error FieldErrors Expected ';' </> $Type $Identifier [$Whitespace] $AnyCharButOpen
+tok Field $Type [$$Whitespace] $$Identifier [$$Whitespace] $$Semicolon
 
-tok Field:
-  $Type $Identifier ;
-  $FieldErrors
 
-def ClassField:
-  $Type $Identifier ;
-def error ClassField Expected ';' </> $Type $Identifier [$Whitespace] $AnyChar
-
+tok Class $$ClassKeyword [$$Whitespace] $$Identifier [$$Whitespace] $$OpenBrace {[$$Whitespace] $ClassElement} [$$Whitespace] $$CloseBrace
+def ClassField $Type [$$Whitespace] $$Identifier [$$Whitespace] $$Semicolon
 def ClassMethod:
-  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) ;
-  $FunctionModifiers $Type $Identifier ( [$ParameterList] ) $Code
+  $FunctionModifiers [$$Whitespace] $Type [$$Whitespace] $$Identifier [$$Whitespace] $$OpenParen [$ParameterList] [$$Whitespace] $$CloseParen [$$Whitespace] $$Semicolon
+  $FunctionModifiers [$$Whitespace] $Type [$$Whitespace] $$Identifier [$$Whitespace] $$OpenParen [$ParameterList] [$$Whitespace] $$CloseParen $Code
 
 def inline ClassElement:
   $ClassMethod
   $ClassField
-def error ClassElement Expected a Field or a Method </> [$Whitespace] $AnyCharButClose
-
-tok Class:
-  class $Identifier \{ {$ClassElement} \}

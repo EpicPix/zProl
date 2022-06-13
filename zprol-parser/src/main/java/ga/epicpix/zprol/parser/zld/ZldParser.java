@@ -2,7 +2,8 @@ package ga.epicpix.zprol.parser.zld;
 
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.LanguageToken;
-import ga.epicpix.zprol.parser.tokens.*;
+import ga.epicpix.zprol.parser.lexer.LanguageLexerToken;
+import ga.epicpix.zprol.parser.lexer.LanguageLexerTokenFragment;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.utils.SeekIterator;
 
@@ -11,32 +12,23 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
+import static ga.epicpix.zprol.parser.lexer.LanguageLexerToken.LEXER_TOKENS;
+
 public class ZldParser {
 
     public static final HashMap<String, ArrayList<LanguageToken>> DEFINITIONS = new HashMap<>();
 
     private static final char[] tokenCharacters = DataParser.joinCharacters(DataParser.nonSpecialCharacters, new char[] {'@', '%', '=', '>', ':'});
 
-    private static LanguageTokenFragment convert(boolean keyword, boolean chars, String w, DataParser parser) {
-        if(w.startsWith("\\")) {
-            w = parser.nextWord();
-        } else if(w.equals("{")) {
-            ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
+    private static LanguageLexerTokenFragment convertLexer(String w, DataParser parser) {
+        if(w.equals("{")) {
+            ArrayList<LanguageLexerTokenFragment> fragmentsList = new ArrayList<>();
             String next;
             while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
-                fragmentsList.add(convert(keyword, chars, next, parser));
+                fragmentsList.add(convertLexer(next, parser));
             }
-            return new MultiToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
-        }else if(w.equals("$")) {
-            return new CallToken(parser.nextTemplateWord(tokenCharacters));
-        }else if(w.equals("[")) {
-            ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
-            String next;
-            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("]")) {
-                fragmentsList.add(convert(keyword, chars, next, parser));
-            }
-            return new OptionalToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
-        }else if(w.equals("<") && chars) {
+            return new MultiLexerToken(fragmentsList.toArray(new LanguageLexerTokenFragment[0]));
+        }else if(w.equals("<")) {
             int next;
             ArrayList<Integer> charactersList = new ArrayList<>();
             while((next = parser.nextChar()) != '>') {
@@ -74,16 +66,36 @@ public class ZldParser {
             return new CharsToken(negate, allowedCharacters);
         }
 
-        return switch (w) {
-            case ";" -> new LanguageTokenFragment(new ExactTypeTokenReader(";", TokenType.END_LINE), w);
-            case "," -> new LanguageTokenFragment(new ExactTypeTokenReader(",", TokenType.COMMA), w);
-            case "(" -> new LanguageTokenFragment(new ExactTypeTokenReader("(", TokenType.OPEN), w);
-            case ")" -> new LanguageTokenFragment(new ExactTypeTokenReader(")", TokenType.CLOSE), w);
-            case "{" -> new LanguageTokenFragment(new ExactTypeTokenReader("{", TokenType.OPEN_SCOPE), w);
-            case "}" -> new LanguageTokenFragment(new ExactTypeTokenReader("}", TokenType.CLOSE_SCOPE), w);
-            default -> new LanguageTokenFragment(keyword ? new ExactKeywordTokenReader(w, parser) : new ExactWordTokenReader(w), w);
-        };
+        throw new ParserException(w, parser);
+    }
 
+    private static LanguageTokenFragment convert(String w, DataParser parser) {
+        if(w.startsWith("\\")) {
+            w = parser.nextWord();
+        } else if(w.equals("{")) {
+            ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
+            String next;
+            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
+                fragmentsList.add(convert(next, parser));
+            }
+            return new MultiToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
+        }else if(w.equals("$")) {
+            String next = parser.nextTemplateWord(tokenCharacters);
+            if(next.equals("$")) {
+                return new LexerCallToken(parser.nextTemplateWord(tokenCharacters));
+            }else {
+                return new CallToken(next);
+            }
+        }else if(w.equals("[")) {
+            ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
+            String next;
+            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("]")) {
+                fragmentsList.add(convert(next, parser));
+            }
+            return new OptionalToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
+        }
+
+        throw new ParserException(w, parser);
     }
 
     public static void load(String fileName, String data) {
@@ -99,7 +111,7 @@ public class ZldParser {
                     checkWhitespace = true;
                 }
                 while(parser.hasNext()) {
-                    tokens.add(convert(false, false, parser.nextTemplateWord(tokenCharacters), parser));
+                    tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
                     if(!checkWhitespace) {
                         if(parser.checkNewLine()) {
                             break;
@@ -107,14 +119,14 @@ public class ZldParser {
                         continue;
                     }
                     if(parser.checkNewLine()) {
-                        if(parser.seekCharacter() != ' ') {
+                        if(parser.seekNextCharacter() != ' ') {
                             break;
                         }
-                        LanguageToken.TOKENS.add(new LanguageToken(name, false, false, false, false, tokens.toArray(new LanguageTokenFragment[0])));
+                        LanguageToken.TOKENS.add(new LanguageToken(name, false, false, tokens.toArray(new LanguageTokenFragment[0])));
                         tokens.clear();
                     }
                 }
-                LanguageToken.TOKENS.add(new LanguageToken(name, false, false, false, false, tokens.toArray(new LanguageTokenFragment[0])));
+                LanguageToken.TOKENS.add(new LanguageToken(name, false, false, tokens.toArray(new LanguageTokenFragment[0])));
             } else if(d.equals("def")) {
                 ArrayList<LanguageTokenFragment> tokens = new ArrayList<>();
                 String name = parser.nextWord();
@@ -123,11 +135,38 @@ public class ZldParser {
                     name = parser.nextWord();
                     inline = true;
                 }
-                var keyword = false;
-                if(name.equals("keyword")) {
+                var merge = false;
+                if(name.equals("merge")) {
                     name = parser.nextWord();
-                    keyword = true;
+                    merge = true;
                 }
+                boolean checkWhitespace = false;
+                if(parser.seekWord().equals(":")) {
+                    parser.nextWord();
+                    checkWhitespace = true;
+                }
+                while(parser.hasNext()) {
+                    tokens.add(convert(parser.nextTemplateWord(tokenCharacters), parser));
+                    if(!checkWhitespace) {
+                        if(parser.checkNewLine()) {
+                            break;
+                        }
+                        continue;
+                    }
+                    if(parser.checkNewLine()) {
+                        if(parser.seekNextCharacter() != ' ') {
+                            break;
+                        }
+                        DEFINITIONS.putIfAbsent(name, new ArrayList<>());
+                        DEFINITIONS.get(name).add(new LanguageToken(name, inline, merge, tokens.toArray(new LanguageTokenFragment[0])));
+                        tokens.clear();
+                    }
+                }
+                DEFINITIONS.putIfAbsent(name, new ArrayList<>());
+                DEFINITIONS.get(name).add(new LanguageToken(name, inline, merge, tokens.toArray(new LanguageTokenFragment[0])));
+            } else if(d.equals("lex")) {
+                var fragments = new ArrayList<LanguageLexerTokenFragment>();
+                var name = parser.nextWord();
                 var chars = false;
                 if(name.equals("chars")) {
                     name = parser.nextWord();
@@ -138,72 +177,30 @@ public class ZldParser {
                     name = parser.nextWord();
                     clean = true;
                 }
-                var merge = false;
-                if(name.equals("merge")) {
-                    name = parser.nextWord();
-                    merge = true;
-                }
-                var error = false;
-                if(name.equals("error")) {
-                    name = parser.nextWord();
-                    error = true;
-                }
-                boolean checkWhitespace = false;
-                if(parser.seekWord().equals(":")) {
-                    parser.nextWord();
-                    checkWhitespace = true;
-                }
-                StringBuilder errorMessage = new StringBuilder();
-                boolean captureErrorMessage = true;
+
+                if(parser.seekCharacter() == ' ') parser.nextChar();
+
                 while(parser.hasNext()) {
-                    if(error) {
-                        if(captureErrorMessage) {
-                            if (parser.seekTemplatedWord(new char[]{'<', '/', '>'}).equals("</>")) {
-                                parser.nextTemplateWord(new char[]{'<', '/', '>'});
-                                captureErrorMessage = false;
-                                continue;
-                            }
-                            errorMessage.appendCodePoint(parser.nextChar());
-                            continue;
-                        }
-                    }
-                    tokens.add(convert(keyword, chars, parser.nextTemplateWord(tokenCharacters), parser));
-                    if(!checkWhitespace) {
-                        if(parser.checkNewLine()) {
-                            break;
-                        }
-                        continue;
+                    if(chars) {
+                        fragments.add(convertLexer(parser.nextTemplateWord(tokenCharacters), parser));
+                    }else {
+                        fragments.add(new CharsToken(false, new int[] {parser.nextChar()}));
                     }
                     if(parser.checkNewLine()) {
-                        if(parser.seekCharacter() != ' ') {
-                            break;
-                        }
-                        if(chars && !clean) {
-                            charGenerator(tokens);
-                        }
-                        DEFINITIONS.putIfAbsent(name, new ArrayList<>());
-                        if(error) {
-                            tokens.add(new ErrorToken(errorMessage.toString().trim()));
-                        }
-                        DEFINITIONS.get(name).add(new LanguageToken(name, inline, keyword, clean, merge, tokens.toArray(new LanguageTokenFragment[0])));
-                        tokens.clear();
-                        captureErrorMessage = true;
-                        errorMessage.setLength(0);
+                        break;
                     }
                 }
-                if(chars && !clean) {
-                    charGenerator(tokens);
-                }
-                DEFINITIONS.putIfAbsent(name, new ArrayList<>());
-                if(error) {
-                    tokens.add(new ErrorToken(errorMessage.toString().trim()));
-                }
-                DEFINITIONS.get(name).add(new LanguageToken(name, inline, keyword, clean, merge, tokens.toArray(new LanguageTokenFragment[0])));
+                LEXER_TOKENS.add(new LanguageLexerToken(name, new CharsWordToken(clean, fragments.toArray(new LanguageLexerTokenFragment[0]))));
             } else {
                 throw new ParserException("Unknown grammar file word: " + d, parser);
             }
         }
         if(Boolean.parseBoolean(System.getProperty("SHOW_LANGUAGE_DATA"))) {
+            System.out.println("--- Lexer Definitions");
+            LEXER_TOKENS.forEach((x) -> {
+                String debugName = Arrays.stream(x.args()).map(LanguageLexerTokenFragment::getDebugName).collect(Collectors.joining(" "));
+                System.out.println("  " + x.name() + ": " + debugName.replace("\n", "\\n").replace("\t", "\\t"));
+            });
             System.out.println("--- Definitions");
             DEFINITIONS.forEach((x, y) -> {
                 System.out.println("  " + x);
@@ -213,12 +210,6 @@ public class ZldParser {
                 });
             });
         }
-    }
-
-    private static void charGenerator(ArrayList<LanguageTokenFragment> tokens) {
-        var copy = tokens.toArray(new LanguageTokenFragment[0]);
-        tokens.clear();
-        tokens.add(new CharsWordToken(copy));
     }
 
 }

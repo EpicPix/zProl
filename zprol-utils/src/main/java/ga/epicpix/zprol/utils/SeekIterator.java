@@ -25,6 +25,7 @@ public class SeekIterator<T> implements ListIterator<T> {
     }
 
     public T current() {
+        if(!hasNext()) return elements[index - 1];
         return elements[index];
     }
 
@@ -71,5 +72,9 @@ public class SeekIterator<T> implements ListIterator<T> {
 
     public void setIndex(int index) {
         this.index = index;
+    }
+
+    public T get(int index) {
+        return elements[index];
     }
 }

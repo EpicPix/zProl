@@ -113,6 +113,10 @@ public class DataParser {
     }
 
     public int seekCharacter() {
+        return data.codePointAt(index);
+    }
+
+    public int seekNextCharacter() {
         return data.codePointAt(index + 1);
     }
 
@@ -127,22 +131,6 @@ public class DataParser {
                 lineRow = 0;
             }
             index++;
-        }
-    }
-
-    private void checkComments() {
-        while(index + 1 < data.length() && data.codePointAt(index) == '/' && data.codePointAt(index + 1) == '/') {
-            index += 2;
-            lineRow += 2;
-            while(index < data.length()) {
-                if(data.codePointAt(index++) == '\n') {
-                    lineNumber++;
-                    lineRow = 0;
-                    ignoreWhitespace();
-                    break;
-                }
-                lineRow++;
-            }
         }
     }
 
@@ -194,7 +182,6 @@ public class DataParser {
         if(!hasNext()) return null;
         StringBuilder word = new StringBuilder();
         while(hasNext() && !Character.isWhitespace(data.codePointAt(index))) {
-            checkComments();
             if(!matchesCharacters(allowedCharacters, data.codePointAt(index))) {
                 if(word.length() == 0) {
                     lineRow++;
@@ -228,45 +215,6 @@ public class DataParser {
         String str = nextTemplateWord(allowedCharacters);
         loadLocation(loc);
         return str;
-    }
-
-    public String nextStringStarted() {
-        lastLocation = getLocation();
-        if(index + 1 >= data.length()) return null;
-        StringBuilder word = new StringBuilder();
-        while(index + 1 < data.length()) {
-            var character = data.codePointAt(index);
-            if(data.codePointAt(index) == '\\') {
-                lineRow++;
-                index++;
-                character = data.codePointAt(index);
-                if(character == '\"') {
-                    lineRow++;
-                    index++;
-                    word.append("\"");
-                }else if(character == 'n') {
-                    lineRow++;
-                    index++;
-                    word.append('\n');
-                }else {
-                    System.err.println("Unknown escape code: \\" + character);
-                }
-                continue;
-            }else if(character == '\"') {
-                lineRow++;
-                index++;
-                break;
-            }else {
-                if(character == '\n') {
-                    lineNumber++;
-                    lineRow = 0;
-                }
-                word.append(data.codePointAt(index));
-            }
-            lineRow++;
-            index++;
-        }
-        return word.toString();
     }
 
 }

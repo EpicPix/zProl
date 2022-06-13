@@ -3,7 +3,6 @@ package ga.epicpix.zprol.compiler.precompiled;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
-import ga.epicpix.zprol.parser.tokens.TokenType;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.util.ArrayList;
@@ -19,31 +18,30 @@ public class PreCompiler {
         boolean usedOther = false;
         while(tokens.hasNext()) {
             Token token = tokens.next();
-            if(!(token.getType() == TokenType.NAMED && token.asNamedToken().name.equals("Namespace"))) usedOther = true;
-            if(token.getType() == TokenType.NAMED) {
-                var named = token.asNamedToken();
+            if(!(token instanceof NamedToken named && named.name.equals("Namespace"))) usedOther = true;
+            if(token instanceof NamedToken named) {
                 if(named.name.equals("Using")) {
-                    pre.using.add(named.getSingleTokenWithName("DotWord").asWordToken().getWord());
+                    pre.using.add(named.getTokenWithName("NamespaceIdentifier").toStringRaw().trim());
                 }else if(named.name.equals("Namespace")) {
                     if(usedOther) throw new TokenLocatedException("Namespace not defined at the top of the file", named);
                     if(pre.namespace != null) throw new TokenLocatedException("Defined namespace for a file multiple times", named);
-                    pre.namespace = named.getSingleTokenWithName("DotWord").asWordToken().getWord();
+                    pre.namespace = named.getTokenWithName("NamespaceIdentifier").toStringRaw().trim();
                 }else if(named.name.equals("Function")) {
                     pre.functions.add(parseFunction(named));
                 }else if(named.name.equals("Field")) {
                     PreField field = new PreField();
-                    field.type = named.getSingleTokenWithName("Type").asWordToken().getWord();
-                    field.name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
+                    field.type = named.getTokenAsString("Type");
+                    field.name = named.getLexerToken("Identifier").data;
                     pre.fields.add(field);
                 }else if(named.name.equals("Class")) {
                     PreClass clazz = new PreClass();
                     clazz.namespace = pre.namespace;
-                    clazz.name = named.getSingleTokenWithName("Identifier").asWordToken().getWord();
+                    clazz.name = named.getLexerToken("Identifier").data;
 
                     for(var fieldToken : named.getTokensWithName("ClassField")) {
                         PreField field = new PreField();
-                        field.type = fieldToken.getSingleTokenWithName("Type").asWordToken().getWord();
-                        field.name = fieldToken.getSingleTokenWithName("Identifier").asWordToken().getWord();
+                        field.type = fieldToken.getTokenAsString("Type");
+                        field.name = fieldToken.getLexerToken("Identifier").data;
                         clazz.fields.add(field);
                     }
 
@@ -52,7 +50,7 @@ public class PreCompiler {
                     }
 
                     pre.classes.add(clazz);
-                } else {
+                } else if(!named.name.equals("Whitespace")) {
                     throw new TokenLocatedException("Unsupported named token \"" + named.name + "\"", named);
                 }
             }else {
@@ -67,21 +65,21 @@ public class PreCompiler {
         var func = new PreFunction();
         if(function.getTokenWithName("FunctionModifiers") != null) {
             for(Token modifier : function.getTokenWithName("FunctionModifiers").tokens) {
-                PreFunctionModifiers modifiers = PreFunctionModifiers.getModifier(modifier.asKeywordToken().getWord());
+                PreFunctionModifiers modifiers = PreFunctionModifiers.getModifier(modifier.toStringRaw());
                 if(func.modifiers.contains(modifiers)) {
                     throw new TokenLocatedException("Duplicate function modifier: '" + modifiers.getName() + "'", modifier);
                 }
                 func.modifiers.add(modifiers);
             }
         }
-        func.returnType = function.getSingleTokenWithName("Type").asWordHolder().getWord();
-        func.name = function.getSingleTokenWithName("Identifier").asWordToken().getWord();
+        func.returnType = function.getTokenAsString("Type");
+        func.name = function.getLexerToken("Identifier").data;
         var paramList = function.getTokenWithName("ParameterList");
         if(paramList != null) {
             for (NamedToken namedToken : paramList.getTokensWithName("Parameter")) {
                 PreParameter param = new PreParameter();
-                param.type = namedToken.getSingleTokenWithName("Type").asWordHolder().getWord();
-                param.name = namedToken.getSingleTokenWithName("Identifier").asWordToken().getWord();
+                param.type = namedToken.getTokenAsString("Type");
+                param.name = namedToken.getLexerToken("Identifier").data;
                 func.parameters.add(param);
             }
         }
