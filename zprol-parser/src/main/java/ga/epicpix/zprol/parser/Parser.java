@@ -75,11 +75,7 @@ public class Parser {
                 ArrayList<Token> tTokens = new ArrayList<>();
                 if (check(tTokens, lexerTokens, tok)) {
                     langToken = tok;
-                    if(tTokens.size() != 0) {
-                        tokens.add(new NamedToken(tok.name(), tTokens.get(0).startLocation, tTokens.get(tTokens.size() - 1).endLocation, lexerTokens.current().parser, tTokens.toArray(new Token[0])));
-                    }else {
-                        throw new TokenLocatedException("Expected at least one token", lexerTokens.get(loc));
-                    }
+                    tokens.add(new NamedToken(tok.name(), tTokens.get(0).startLocation, tTokens.get(tTokens.size() - 1).endLocation, lexerTokens.current().parser, tTokens.toArray(new Token[0])));
                     break;
                 }
                 lexerTokens.setIndex(loc);
