@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.parser;
 
 import ga.epicpix.zprol.parser.exceptions.ParserException;
+import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.lexer.LanguageLexerToken;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.tokens.*;
@@ -77,7 +78,7 @@ public class Parser {
                     if(tTokens.size() != 0) {
                         tokens.add(new NamedToken(tok.name(), tTokens.get(0).startLocation, tTokens.get(tTokens.size() - 1).endLocation, lexerTokens.current().parser, tTokens.toArray(new Token[0])));
                     }else {
-                        tokens.add(new NamedToken(tok.name(), lexerTokens.get(loc).startLocation, lexerTokens.get(loc).endLocation, lexerTokens.get(loc).parser));
+                        throw new TokenLocatedException("Expected at least one token", lexerTokens.get(loc));
                     }
                     break;
                 }
