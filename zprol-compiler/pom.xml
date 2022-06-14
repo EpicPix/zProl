@@ -16,7 +16,7 @@
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zprol-utils</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -28,7 +28,7 @@
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zpil</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.7</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
