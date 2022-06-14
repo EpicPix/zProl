@@ -112,7 +112,7 @@ public class Parser {
         }else if (token instanceof LexerToken lexer) {
             builder.append("  token").append(index).append("[shape=box,color=\"#007FFF\",label=\"").append("(").append(lexer.name).append(")\"]\n");
             int indexI = current.getAndIncrement();
-            builder.append("  token").append(indexI).append("[shape=box,color=\"#00FFFF\",label=\"").append(lexer.data).append("\"]\n");
+            builder.append("  token").append(indexI).append("[shape=box,color=\"#00FFFF\",label=\"").append(lexer.data.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\\\\n")).append("\"]\n");
             builder.append("  token").append(index).append(" -> token").append(indexI).append("\n");
         }
         return index;
