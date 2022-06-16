@@ -3,10 +3,21 @@ namespace zprol.lang.memory;
 using zprol.lang.linux.amd64;
 using zprol.lang;
 
+class _BinElement {
+    ubyte binType;
+}
+
 class _QuickBinElement {
+    ubyte binType;
     _QuickBinElement next;
     _QuickBinElement prev;
     bool nextBlockFree;
+}
+
+class _mmapedBinElement {
+    ubyte binType;
+    uint64 length;
+    uint64 mmapedLength;
 }
 
 _QuickBinElement quickBin;
@@ -15,23 +26,21 @@ bool shouldCheckNextBlock(_QuickBinElement current) {
     if(current.nextBlockFree) {
         return false;
     }
-    if(current.next != (_QuickBinElement!) (uint64) 0) {
-        return true;
-    }
-    return false;
+    return current.next != null;
 }
 
 byte[] malloc(ulong length) {
-    if(quickBin == null) {
-        quickBin = (_QuickBinElement!) mmap(0, 16 * 4096, PROT_READ() | PROT_WRITE(), MAP_PRIVATE() | MAP_ANONYMOUS(), 0, 0);
-        quickBin.nextBlockFree = true;
-    }
     if(length <= 64) {
+        if(quickBin == null) {
+            quickBin = (_QuickBinElement!) mmap(0, 16 * 4096, PROT_READ() | PROT_WRITE(), MAP_PRIVATE() | MAP_ANONYMOUS(), 0, 0);
+            quickBin.nextBlockFree = true;
+        }
         _QuickBinElement prevElement = quickBin;
         while(shouldCheckNextBlock(prevElement)) {
             prevElement = prevElement.next;
         }
-        _QuickBinElement thisElement = (_QuickBinElement!) ((uint64!) prevElement + 88);
+        _QuickBinElement thisElement = (_QuickBinElement!) ((uint64!) prevElement + 64 + 32);
+        thisElement.binType = 0;
         thisElement.nextBlockFree = true;
         prevElement.nextBlockFree = false;
         if(prevElement.next != null) {
@@ -40,27 +49,43 @@ byte[] malloc(ulong length) {
         }
         prevElement.next = thisElement;
         thisElement.prev = prevElement;
-        return (byte[]!) ((uint64!) thisElement + 24);
+        return (byte[]!) ((uint64!) thisElement + 32);
+    }else => if(length >= 16384) {
+        uint64 mmapedLength = (length + 16383 + 24) & 18446744073709535232;
+        _mmapedBinElement thisElement = (_mmapedBinElement!) mmap(0, mmapedLength, PROT_READ() | PROT_WRITE(), MAP_PRIVATE() | MAP_ANONYMOUS(), 0, 0);
+        thisElement.binType = 1;
+        thisElement.length = length;
+        thisElement.mmapedLength = mmapedLength;
+        return (byte[]!) ((uint64!) thisElement + 32);
     }else {
-        return (byte[]!) (ulong) 0;
+        return null;
     }
-    return (byte[]!) quickBin;
+    return null;
 }
 
 void free(byte[] location) {
-    _QuickBinElement element = (_QuickBinElement!) ((uint64!) location - 24);
-    if(element.prev != null) {
-        element.prev.next = element.next;
-        element.prev.nextBlockFree = true;
-    }
-    if(element.next != null) {
-        element.next.prev = element.prev;
+    _BinElement element = (_BinElement!) ((uint64!) location - 32);
+    if(element.binType == 0) {
+        _QuickBinElement qElement = (_QuickBinElement!) element;
+        if(qElement.prev != null) {
+            qElement.prev.next = qElement.next;
+            qElement.prev.nextBlockFree = true;
+        }
+        if(qElement.next != null) {
+            qElement.next.prev = qElement.prev;
+        }
+    }else => if(element.binType == 1) {
+        _mmapedBinElement mElement = (_mmapedBinElement!) element;
+        munmap((uint64!) mElement, mElement.mmapedLength);
     }
 }
 
 
 byte[] mmap(uint64 addr, uint64 length, uint64 protection, uint64 flags, uint64 fd, uint64 offset) => 
     return (byte[]!) syscall(SYSCALL_MMAP(), addr, length, protection, flags, fd, offset);
+
+byte[] munmap(uint64 addr, uint64 length) =>
+    return (byte[]!) syscall(SYSCALL_MUNMAP(), addr, length);
 
 int64 PROT_READ() => return 1;
 int64 PROT_WRITE() => return 2;
