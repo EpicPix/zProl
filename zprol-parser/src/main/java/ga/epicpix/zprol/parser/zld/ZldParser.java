@@ -23,7 +23,7 @@ public class ZldParser {
     private static LanguageLexerTokenFragment convertLexer(String w, DataParser parser) {
         if(w.equals("*")) {
             LanguageLexerTokenFragment fragment = convertLexer(parser.nextTemplateWord(tokenCharacters), parser);
-            return new LanguageLexerTokenFragment(true, fragment.isNegate(), fragment.getCharacters());
+            return new LanguageLexerTokenFragment(true, fragment.negate(), fragment.characters());
         }else if(w.equals("<")) {
             int next;
             ArrayList<Integer> charactersList = new ArrayList<>();

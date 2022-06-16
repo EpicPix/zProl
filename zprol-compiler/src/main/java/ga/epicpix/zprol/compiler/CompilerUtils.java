@@ -38,14 +38,6 @@ public class CompilerUtils {
         return Bytecode.BYTECODE.getInstructionPrefix(size);
     }
 
-    public static IBytecodeInstructionGenerator getInstruction(String name) {
-        return Bytecode.BYTECODE.getInstruction(name);
-    }
-
-    public static IBytecodeInstruction getConstructedInstruction(int id, Object... args) {
-        return Bytecode.BYTECODE.getConstructedInstruction(id, args);
-    }
-
     public static IBytecodeInstruction getConstructedInstruction(String name, Object... args) {
         return Bytecode.BYTECODE.getConstructedInstruction(name, args);
     }

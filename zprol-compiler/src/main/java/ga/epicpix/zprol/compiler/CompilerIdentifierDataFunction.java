@@ -11,13 +11,11 @@ import java.util.ArrayList;
 public class CompilerIdentifierDataFunction extends CompilerIdentifierData {
 
     public final String identifier;
-    public final NamedToken functionInvocation;
     public final NamedToken[] arguments;
 
     public CompilerIdentifierDataFunction(Token location, String identifier, NamedToken functionInvocation) {
         super(location);
         this.identifier = identifier;
-        this.functionInvocation = functionInvocation;
         arguments = loadArguments(functionInvocation);
     }
 

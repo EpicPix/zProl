@@ -201,88 +201,94 @@ public class Compiler {
     }
 
     public static void generateInstructionsFromExpression(NamedToken token, PreClass thisClass, Type expectedType, ArrayDeque<Type> types, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode, boolean discardValue) {
-        if(token.name.equals("Expression")) {
-            generateInstructionsFromExpression(token.tokens[0].asNamedToken(), thisClass, expectedType, types, data, localsManager, bytecode, expectedType == null && discardValue);
-            Type prob = types.size() != 0 ? types.peek() : null;
-
-            if(prob != null && discardValue) {
-                if(prob instanceof PrimitiveType primitive) {
-                    if(primitive.getSize() != 0) {
-                        bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
-                    }else {
-                        types.push(primitive);
+        switch(token.name) {
+            case "Expression" -> {
+                generateInstructionsFromExpression(token.tokens[0].asNamedToken(), thisClass, expectedType, types, data, localsManager, bytecode, expectedType == null && discardValue);
+                Type prob = types.size() != 0 ? types.peek() : null;
+                if(prob != null && discardValue) {
+                    if(prob instanceof PrimitiveType primitive) {
+                        if(primitive.getSize() != 0) {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "pop"));
+                        } else {
+                            types.push(primitive);
+                        }
+                    } else if(prob instanceof BooleanType) {
+                        bytecode.pushInstruction(getConstructedSizeInstruction(8, "pop"));
+                    } else {
+                        bytecode.pushInstruction(getConstructedInstruction("apop"));
                     }
-                }else if(prob instanceof BooleanType) {
-                    bytecode.pushInstruction(getConstructedSizeInstruction(8, "pop"));
-                }else {
-                    bytecode.pushInstruction(getConstructedInstruction("apop"));
-                }
-            }else if(prob != null) {
-                types.push(prob);
-            }
-        }else if(token.name.equals("MultiplicativeExpression") || token.name.equals("AdditiveExpression") || token.name.equals("InclusiveOrExpression") || token.name.equals("EqualsExpression") || token.name.equals("ShiftExpression") || token.name.equals("InclusiveAndExpression") || token.name.equals("CompareExpression")) {
-            types.push(runOperator(token, thisClass, expectedType, data, localsManager, types, bytecode));
-        }else if(token.name.equals("DecimalInteger")) {
-           BigInteger number = getDecimalInteger(token.tokens[0]);
-           if(expectedType instanceof PrimitiveType primitive) {
-               bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "push", number));
-               types.push(primitive);
-           }else if(expectedType == null) {
-               bytecode.pushInstruction(getConstructedSizeInstruction(4, "push", number));
-               types.push(data.resolveType("int32"));
-           }else {
-               throw new TokenLocatedException("Cannot infer size of number from a non-primitive type (" + expectedType.getName() + ")", token);
-           }
-        } else if(token.name.equals("Accessor")) {
-            var accessorData = accessorToData(token);
-            for (int i = 0; i < accessorData.length; i++) {
-                var v = accessorData[i];
-                if(v instanceof CompilerIdentifierDataFunction func) {
-                    var context = getClassContext(i, thisClass, types, data, v.location);
-                    doFunctionCall(func, context, thisClass, data, null, types, localsManager, bytecode, discardValue && i == accessorData.length - 1, i == 0);
-                }else if(v instanceof CompilerIdentifierDataField field) {
-                    var context = getClassContext(i, thisClass, types, data, v.location);
-                    var ret = field.loadField(context, localsManager, bytecode, data, i == 0);
-                    if(ret == null) {
-                        throw new TokenLocatedException("Unknown field " + field.getFieldName(), field.location);
-                    }
-                    types.push(ret);
-                }else if(v instanceof CompilerIdentifierDataArray array) {
-                    var currentType = types.pop();
-                    if(!(currentType instanceof ArrayType arrType)) throw new TokenLocatedException("Expected an array type", v.location);
-                    types.push(array.loadArray(arrType, thisClass, data, localsManager, bytecode));
-                }else {
-                    throw new TokenLocatedException("Unknown compiler identifier data " + v.getClass().getSimpleName(), v.location);
+                } else if(prob != null) {
+                    types.push(prob);
                 }
             }
-        }else if(token.name.equals("String")) {
-            var strChars = token.getTokenAsString("String");
-            bytecode.pushInstruction(getConstructedInstruction("push_string", strChars.substring(1, strChars.length() - 1).replace("\\\"", "\"").replace("\\n", "\n").replace("\\0", "\0")));
-            types.push(data.resolveType("zprol.lang.String"));
-        }else if(token.name.equals("CastExpression")) {
-            var hardCast = token.getTokenWithName("HardCastOperator");
-            var castType = data.resolveType((hardCast != null ? hardCast : token.getTokenWithName("CastOperator")).getTokenAsString("Type"));
-            var tokens = token.getNonWhitespaceTokens();
-            if(tokens[1] instanceof LexerToken lex && lex.name.equals("OpenParen")) {
-                generateInstructionsFromExpression(tokens[2].asNamedToken(), thisClass, null, types, data, localsManager, bytecode, false);
-            }else {
-                generateInstructionsFromExpression(tokens[1].asNamedToken(), thisClass, null, types, data, localsManager, bytecode, false);
+            case "MultiplicativeExpression", "AdditiveExpression", "InclusiveOrExpression", "EqualsExpression", "ShiftExpression", "InclusiveAndExpression", "CompareExpression" -> types.push(runOperator(token, thisClass, expectedType, data, localsManager, types, bytecode));
+            case "DecimalInteger" -> {
+                BigInteger number = getDecimalInteger(token.tokens[0]);
+                if(expectedType instanceof PrimitiveType primitive) {
+                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "push", number));
+                    types.push(primitive);
+                } else if(expectedType == null) {
+                    bytecode.pushInstruction(getConstructedSizeInstruction(4, "push", number));
+                    types.push(data.resolveType("int32"));
+                } else {
+                    throw new TokenLocatedException("Cannot infer size of number from a non-primitive type (" + expectedType.getName() + ")", token);
+                }
             }
-            var from = types.pop();
-            if(hardCast != null) {
-                // this will not check sizes of primitive types, this is unsafe
-                types.push(castType);
-                return;
+            case "Accessor" -> {
+                var accessorData = accessorToData(token);
+                for(int i = 0; i < accessorData.length; i++) {
+                    var v = accessorData[i];
+                    if(v instanceof CompilerIdentifierDataFunction func) {
+                        var context = getClassContext(i, thisClass, types, data, v.location);
+                        doFunctionCall(func, context, thisClass, data, null, types, localsManager, bytecode, discardValue && i == accessorData.length - 1, i == 0);
+                    } else if(v instanceof CompilerIdentifierDataField field) {
+                        var context = getClassContext(i, thisClass, types, data, v.location);
+                        var ret = field.loadField(context, localsManager, bytecode, data, i == 0);
+                        if(ret == null) {
+                            throw new TokenLocatedException("Unknown field " + field.getFieldName(), field.location);
+                        }
+                        types.push(ret);
+                    } else if(v instanceof CompilerIdentifierDataArray array) {
+                        var currentType = types.pop();
+                        if(!(currentType instanceof ArrayType arrType))
+                            throw new TokenLocatedException("Expected an array type", v.location);
+                        types.push(array.loadArray(arrType, thisClass, data, localsManager, bytecode));
+                    } else {
+                        throw new TokenLocatedException("Unknown compiler identifier data " + v.getClass().getSimpleName(), v.location);
+                    }
+                }
             }
-            types.push(doCast(from, castType, true, bytecode, token.tokens[1]));
-        }else if(token.name.equals("Boolean")) {
-            bytecode.pushInstruction(getConstructedInstruction("push_" + token.toStringRaw()));
-            types.push(new BooleanType());
-        }else if(token.name.equals("Null")) {
-            bytecode.pushInstruction(getConstructedInstruction("null"));
-            types.push(new NullType());
-        }else {
-            throw new TokenLocatedException("Unknown token " + token.name, token);
+            case "String" -> {
+                var strChars = token.getTokenAsString("String");
+                bytecode.pushInstruction(getConstructedInstruction("push_string", strChars.substring(1, strChars.length() - 1).replace("\\\"", "\"").replace("\\n", "\n").replace("\\0", "\0")));
+                types.push(data.resolveType("zprol.lang.String"));
+            }
+            case "CastExpression" -> {
+                var hardCast = token.getTokenWithName("HardCastOperator");
+                var castType = data.resolveType((hardCast != null ? hardCast : token.getTokenWithName("CastOperator")).getTokenAsString("Type"));
+                var tokens = token.getNonWhitespaceTokens();
+                if(tokens[1] instanceof LexerToken lex && lex.name.equals("OpenParen")) {
+                    generateInstructionsFromExpression(tokens[2].asNamedToken(), thisClass, null, types, data, localsManager, bytecode, false);
+                } else {
+                    generateInstructionsFromExpression(tokens[1].asNamedToken(), thisClass, null, types, data, localsManager, bytecode, false);
+                }
+                var from = types.pop();
+                if(hardCast != null) {
+                    // this will not check sizes of primitive types, this is unsafe
+                    types.push(castType);
+                    return;
+                }
+                types.push(doCast(from, castType, true, bytecode, token.tokens[1]));
+            }
+            case "Boolean" -> {
+                bytecode.pushInstruction(getConstructedInstruction("push_" + token.toStringRaw()));
+                types.push(new BooleanType());
+            }
+            case "Null" -> {
+                bytecode.pushInstruction(getConstructedInstruction("null"));
+                types.push(new NullType());
+            }
+            default -> throw new TokenLocatedException("Unknown token " + token.name, token);
         }
     }
 
@@ -538,114 +544,6 @@ public class Compiler {
             } else {
                 types.push(returnType);
             }
-        }
-    }
-
-    public static void getAccessor(NamedToken accessor, PreClass thisClass, ArrayDeque<Type> types, CompiledData data, IBytecodeStorage storage, LocalScopeManager localsManager) {
-        var type = types.pop();
-        if(accessor.getTokenWithName("Identifier") != null) {
-            String field = accessor.getTokenAsString("Identifier");
-
-            if (type instanceof PrimitiveType) {
-                throw new TokenLocatedException("Cannot access fields of a primitive type", accessor);
-            } else if (type instanceof BooleanType) {
-                throw new TokenLocatedException("Cannot access fields of a boolean type", accessor);
-            } else if (type instanceof ArrayType) {
-                throw new TokenLocatedException("Cannot access fields of an array", accessor);
-            } else if (type instanceof VoidType) {
-                throw new TokenLocatedException("Cannot access fields of a void type", accessor);
-            } else if (type instanceof ClassType classType) {
-                PreClass clz = classTypeToPreClass(classType, data);
-                if(clz == null) {
-                    throw new TokenLocatedException("Unknown type '" + classType + "'", accessor);
-                }
-
-                PreField found = null;
-                for(var f : clz.fields) {
-                    if(f.name.equals(field)) {
-                        found = f;
-                        break;
-                    }
-                }
-                if(found == null) {
-                    throw new TokenLocatedException("Unable to find field '" + field + "' in '" + clz.name + "'", accessor);
-                }
-                storage.pushInstruction(getConstructedInstruction("class_field_load", new Class(classType.getNamespace(), classType.getName(), null, null), field));
-                types.push(data.resolveType(found.type));
-            } else {
-                throw new TokenLocatedException("Unknown type " + type.getClass().getSimpleName(), accessor);
-            }
-        }else if(accessor.getTokenWithName("ArrayAccessor") != null) {
-            if(!(type instanceof ArrayType)) {
-                throw new TokenLocatedException("Expected an array got '" + type.getName() + "'", accessor);
-            }
-            types.push(type);
-            generateInstructionsFromExpression(accessor.getTokenWithName("ArrayAccessor"), thisClass, ((ArrayType) type).type, types, data, localsManager, storage, false);
-            var got = types.peek();
-            if(!((ArrayType) type).type.equals(got)) {
-                throw new TokenLocatedException("Could not get the value", accessor);
-            }
-        }else {
-            throw new TokenLocatedException("Unknown accessor", accessor);
-        }
-    }
-
-    public static Type setAccessor(NamedToken accessor, PreClass thisClass, ArrayDeque<Type> types, CompiledData data, IBytecodeStorage storage, LocalScopeManager localsManager) {
-        var type = types.pop();
-        if(accessor.getTokenWithName("Identifier") != null) {
-            String field = accessor.getTokenAsString("Identifier");
-
-            if (type instanceof PrimitiveType) {
-                throw new TokenLocatedException("Cannot access fields of a primitive type", accessor);
-            } else if (type instanceof BooleanType) {
-                throw new TokenLocatedException("Cannot access fields of a boolean type", accessor);
-            } else if (type instanceof ArrayType) {
-                throw new TokenLocatedException("Cannot access fields of an array", accessor);
-            } else if (type instanceof VoidType) {
-                throw new TokenLocatedException("Cannot access fields of a void type", accessor);
-            } else if (type instanceof ClassType classType) {
-                PreClass clz = classTypeToPreClass(classType, data);
-                if(clz == null) {
-                    throw new TokenLocatedException("Unknown type '" + classType + "'", accessor);
-                }
-
-                PreField found = null;
-                for(var f : clz.fields) {
-                    if(f.name.equals(field)) {
-                        found = f;
-                        break;
-                    }
-                }
-                if(found == null) {
-                    throw new TokenLocatedException("Unable to find field '" + field + "' in '" + clz.name + "'", accessor);
-                }
-                storage.pushInstruction(getConstructedInstruction("class_field_store", new Class(classType.getNamespace(), classType.getName(), null, null), field));
-                return data.resolveType(found.type);
-            } else {
-                throw new TokenLocatedException("Unknown type " + type.getClass().getSimpleName(), accessor);
-            }
-        }else if(accessor.getTokenWithName("ArrayAccessor") != null) {
-            if(!(type instanceof ArrayType arrType)) {
-                throw new TokenLocatedException("Expected an array got '" + type.getName() + "'", accessor);
-            }
-            types.push(type);
-            var expr = accessor.getTokenWithName("ArrayAccessor").getTokenWithName("Expression");
-            generateInstructionsFromExpression(expr, thisClass, null, types, data, localsManager, storage, false);
-            var got = types.pop();
-            if(!(got instanceof PrimitiveType)) {
-                throw new TokenLocatedException("Could not get the index", expr);
-            }
-            var arrayData = arrType.type;
-            if(arrayData instanceof PrimitiveType primitive) storage.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_array"));
-            else if(arrayData instanceof BooleanType) storage.pushInstruction(getConstructedSizeInstruction(8, "store_array"));
-            else if(arrayData instanceof ArrayType) storage.pushInstruction(getConstructedInstruction("astore_array"));
-            else if(arrayData instanceof ClassType) storage.pushInstruction(getConstructedInstruction("astore_array"));
-            else throw new TokenLocatedException("Unsupported type " + arrayData.getClass().getSimpleName(), accessor);
-            return arrayData;
-        }else if(accessor.getTokenWithName("FunctionCall") != null) {
-            throw new TokenLocatedException("Cannot assign value to function call", accessor);
-        }else {
-            throw new TokenLocatedException("Unknown set accessor", accessor);
         }
     }
 

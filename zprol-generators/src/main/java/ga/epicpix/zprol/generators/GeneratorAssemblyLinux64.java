@@ -259,7 +259,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name() + "'");
             }
 
-            int size = 0;
+            int size;
             if(field.type() instanceof ClassType) size = 8;
             else if(field.type() instanceof BooleanType) size = 8;
             else if(field.type() instanceof ArrayType) size = 8;
@@ -299,7 +299,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name() + "'");
             }
 
-            int size = 0;
+            int size;
             if(field.type() instanceof ClassType) size = 8;
             else if(field.type() instanceof BooleanType) size = 8;
             else if(field.type() instanceof ArrayType) size = 8;

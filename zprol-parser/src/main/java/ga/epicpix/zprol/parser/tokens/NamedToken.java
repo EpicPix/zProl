@@ -63,20 +63,6 @@ public class NamedToken extends Token {
         return null;
     }
 
-    public Token getSingleTokenWithName(String name) {
-        for(Token token : tokens) {
-            if(token instanceof NamedToken named) {
-                if(named.name.equals(name)) {
-                    if(named.tokens.length != 1) {
-                        throw new TokenLocatedException("Expected one token but found multiple", this);
-                    }
-                    return named.tokens[0];
-                }
-            }
-        }
-        return null;
-    }
-
     public Token[] getNonWhitespaceTokens() {
         var tokens = new ArrayList<Token>();
         for(var token : this.tokens) {

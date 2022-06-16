@@ -89,7 +89,7 @@ public final class Bytecode implements IBytecode {
         }
     }
 
-    public void registerInstruction(int id, String name, BytecodeValueType... values) {
+    private void registerInstruction(int id, String name, BytecodeValueType... values) {
         for(BytecodeInstructionData d : data) {
             if(d.id == id) {
                 throw new RedefinedInstructionException("Instruction with id '" + d.id + "' already registered with name '" + d.name + "'");
@@ -205,16 +205,8 @@ public final class Bytecode implements IBytecode {
                 case 8 -> input.readLong();
                 default -> throw new IllegalStateException("Invalid size of bytecode type: " + type.getSize());
             };
-            if(type == BytecodeValueType.STRING) {
-                args[i] = ((Number) args[i]).intValue();
-            }else if(type == BytecodeValueType.FUNCTION) {
-                args[i] = ((Number) args[i]).intValue();
-            }else if(type == BytecodeValueType.CLASS) {
-                args[i] = ((Number) args[i]).intValue();
-            }else if(type == BytecodeValueType.FIELD) {
-                args[i] = ((Number) args[i]).intValue();
-            }else if(type == BytecodeValueType.METHOD) {
-                args[i] = ((Number) args[i]).intValue();
+            switch(type) {
+                case STRING, FUNCTION, CLASS, FIELD, METHOD -> args[i] = ((Number) args[i]).intValue();
             }
         }
         return instructionGenerator.createInstruction(args);

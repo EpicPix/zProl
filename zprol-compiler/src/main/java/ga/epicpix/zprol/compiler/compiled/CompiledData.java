@@ -39,18 +39,6 @@ public class CompiledData {
     private final ArrayList<Field> fields = new ArrayList<>();
     private final ArrayList<Class> classes = new ArrayList<>();
 
-    public ArrayList<Function> getFunctions() {
-        return new ArrayList<>(functions);
-    }
-
-    public ArrayList<Field> getFields() {
-        return new ArrayList<>(fields);
-    }
-
-    public ArrayList<Class> getClasses() {
-        return new ArrayList<>(classes);
-    }
-
     public void includeToGenerated(GeneratedData data) {
         for(var f : functions) {
             for(var validate : data.functions) {
@@ -104,30 +92,6 @@ public class CompiledData {
                 }
             }
         }
-    }
-
-    public Function getFunction(String namespace, String name, FunctionSignature sig) {
-        for(Function func : functions) {
-            if(!func.namespace().equals(namespace)) continue;
-            if(!func.name().equals(name)) continue;
-
-            var signature = func.signature();
-            if(sig.returnType() != null && signature.returnType() != sig.returnType()) continue;
-            var sigParams = sig.parameters();
-            if(signature.parameters().length != sigParams.length) continue;
-
-            boolean success = true;
-            for(int i = 0; i<signature.parameters().length; i++) {
-                if(signature.parameters()[i] != sigParams[i]) {
-                    success = false;
-                    break;
-                }
-            }
-            if(success) {
-                return func;
-            }
-        }
-        throw new FunctionNotDefinedException(name);
     }
 
     public void addFunction(Function function) {

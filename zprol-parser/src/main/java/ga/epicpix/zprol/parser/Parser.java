@@ -17,19 +17,19 @@ public class Parser {
     public static String check(DataParser parser, LanguageLexerToken token) {
         StringBuilder builder = new StringBuilder();
         nextFragment: for(var fragment : token.args()) {
-            if(fragment.isMulti()) {
+            if(fragment.multi()) {
                 fLoop: do {
                     var loc = parser.saveLocation();
                     int cChar = parser.nextChar();
-                    for (int c : fragment.getCharacters()) {
+                    for (int c : fragment.characters()) {
                         if (c == cChar) {
-                            if (!fragment.isNegate()) {
+                            if (!fragment.negate()) {
                                 builder.appendCodePoint(cChar);
                                 continue fLoop;
                             }
                         }
                     }
-                    if (fragment.isNegate()) {
+                    if (fragment.negate()) {
                         builder.appendCodePoint(cChar);
                         continue;
                     }
@@ -39,15 +39,15 @@ public class Parser {
                 }while(true);
             }else {
                 int cChar = parser.nextChar();
-                for(int c : fragment.getCharacters()) {
+                for(int c : fragment.characters()) {
                     if(c==cChar) {
-                        if(!fragment.isNegate()) {
+                        if(!fragment.negate()) {
                             builder.appendCodePoint(cChar);
                             continue nextFragment;
                         }
                     }
                 }
-                if(fragment.isNegate()) {
+                if(fragment.negate()) {
                     builder.appendCodePoint(cChar);
                     continue;
                 }
@@ -59,18 +59,18 @@ public class Parser {
 
     public static boolean checkClean(DataParser parser, LanguageLexerToken token) {
         nextFragment: for(var fragment : token.args()) {
-            if(fragment.isMulti()) {
+            if(fragment.multi()) {
                 fLoop: do {
                     var loc = parser.saveLocation();
                     int cChar = parser.nextChar();
-                    for (int c : fragment.getCharacters()) {
+                    for (int c : fragment.characters()) {
                         if (c == cChar) {
-                            if (!fragment.isNegate()) {
+                            if (!fragment.negate()) {
                                 continue fLoop;
                             }
                         }
                     }
-                    if (fragment.isNegate()) {
+                    if (fragment.negate()) {
                         continue;
                     }
 
@@ -79,14 +79,14 @@ public class Parser {
                 }while(true);
             }else {
                 int cChar = parser.nextChar();
-                for(int c : fragment.getCharacters()) {
+                for(int c : fragment.characters()) {
                     if(c==cChar) {
-                        if(!fragment.isNegate()) {
+                        if(!fragment.negate()) {
                             continue nextFragment;
                         }
                     }
                 }
-                if(fragment.isNegate()) {
+                if(fragment.negate()) {
                     continue;
                 }
             }
@@ -124,15 +124,15 @@ public class Parser {
             int checkChar = parser.nextChar();
             nextToken: for(var lexerToken : LanguageLexerToken.LEXER_TOKENS) {
                 var frag = lexerToken.args()[0];
-                for(int c : frag.getCharacters()) {
+                for(int c : frag.characters()) {
                     if(c==checkChar) {
-                        if(!frag.isNegate()) {
+                        if(!frag.negate()) {
                             possibilities.add(lexerToken);
                             continue nextToken;
                         }
                     }
                 }
-                if(frag.isNegate()) {
+                if(frag.negate()) {
                     possibilities.add(lexerToken);
                 }
             }

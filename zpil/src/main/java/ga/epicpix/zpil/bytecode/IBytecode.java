@@ -5,8 +5,6 @@ import ga.epicpix.zprol.structures.IBytecodeStorage;
 
 public interface IBytecode {
 
-    public void registerInstruction(int id, String name, BytecodeValueType... values);
-
     public String getInstructionPrefix(int size);
 
     public IBytecodeInstructionGenerator getInstruction(int id);
