@@ -141,7 +141,10 @@ public class Parser {
             parser.loadLocation(loc);
 
             if(possibilities.size() != 0) {
-                for (var possibility : possibilities) {
+                LexerToken res = null;
+                DataParser.SavedLocation endLocation = null;
+                for(int i = 0, pSize = possibilities.size(); i < pSize; i++) {
+                    LanguageLexerToken possibility = possibilities.get(i);
                     var saveStart = parser.saveLocation();
                     var start = parser.getLocation();
                     if(possibility.clean()) {
@@ -153,11 +156,18 @@ public class Parser {
                     }else {
                         String result;
                         if ((result = check(parser, possibility)) != null) {
-                            tokens.add(new LexerToken(possibility.name(), result, start, parser.getLocation(), parser));
-                            continue next;
+                            if(res == null || result.length() > res.data.length()) {
+                                endLocation = parser.saveLocation();
+                                res = new LexerToken(possibility.name(), result, start, parser.getLocation(), parser);
+                            }
                         }
                     }
                     parser.loadLocation(saveStart);
+                }
+                if(res != null) {
+                    parser.loadLocation(endLocation);
+                    tokens.add(res);
+                    continue;
                 }
             }
 
