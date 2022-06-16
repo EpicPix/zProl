@@ -30,13 +30,11 @@ public class ZldParser {
             while((next = parser.nextChar()) != '>') {
                 if(next == '\\') {
                     int a = parser.nextChar();
-                    if(a == 'n') {
-                        next = '\n';
-                    }else if(a == 't') {
-                        next = '\t';
-                    }else {
-                        next = a;
-                    }
+                    next = switch(a) {
+                        case 'n' -> '\n';
+                        case 't' -> '\t';
+                        default -> a;
+                    };
                 }
                 charactersList.add(next);
             }

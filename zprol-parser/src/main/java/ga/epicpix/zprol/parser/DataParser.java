@@ -29,12 +29,6 @@ public class DataParser {
         return false;
     }
 
-    public static boolean matchesCharacters(int[] chars, int c) {
-        if(chars == null) return false;
-        for(int t : chars) if(t == c) return true;
-        return false;
-    }
-
     public static boolean matchesCharacters(char[] chars, String c) {
         if(chars == null) return false;
         for(int i = 0; i<c.length(); i++) if(!matchesCharacters(chars, c.codePointAt(i))) return false;
@@ -90,11 +84,6 @@ public class DataParser {
         return new ParserLocation(lineNumber, lineRow);
     }
 
-    public void setLocation(ParserLocation loc) {
-        lineNumber = loc.line();
-        lineRow = loc.row();
-    }
-
     public ParserLocation getLastLocation() {
         return lastLocation;
     }
@@ -146,36 +135,6 @@ public class DataParser {
         return cp;
     }
 
-    public int nextChar(int[] allowedCharacters) {
-        lastLocation = getLocation();
-        if(!hasNext()) return -1;
-        if(!matchesCharacters(allowedCharacters, data.codePointAt(index))) {
-            return -1;
-        }
-        lineRow++;
-        int cp = data.codePointAt(index++);
-        if(cp == '\n') {
-            lineNumber++;
-            lineRow = 0;
-        }
-        return cp;
-    }
-
-    public int nextCharNot(int[] disallowedCharacters) {
-        lastLocation = getLocation();
-        if(!hasNext()) return -1;
-        if(matchesCharacters(disallowedCharacters, data.codePointAt(index))) {
-            return -1;
-        }
-        lineRow++;
-        int cp = data.codePointAt(index++);
-        if(cp == '\n') {
-            lineNumber++;
-            lineRow = 0;
-        }
-        return cp;
-    }
-
     public String nextTemplateWord(char[] allowedCharacters) {
         ignoreWhitespace();
         lastLocation = getLocation();
@@ -206,13 +165,6 @@ public class DataParser {
     public String seekWord() {
         var loc = saveLocation();
         String str = nextWord();
-        loadLocation(loc);
-        return str;
-    }
-
-    public String seekTemplatedWord(char[] allowedCharacters) {
-        var loc = saveLocation();
-        String str = nextTemplateWord(allowedCharacters);
         loadLocation(loc);
         return str;
     }

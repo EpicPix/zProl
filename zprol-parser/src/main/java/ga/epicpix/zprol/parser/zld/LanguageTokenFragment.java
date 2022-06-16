@@ -20,10 +20,6 @@ public class LanguageTokenFragment {
         return tokenReader.apply(tokens);
     }
 
-    public Function<SeekIterator<LexerToken>, Token[]> getTokenReader() {
-        return tokenReader;
-    }
-
     public String getDebugName() {
         return debugName;
     }
