@@ -21,15 +21,19 @@ public class Parser {
                 fLoop: do {
                     var loc = parser.saveLocation();
                     int cChar = parser.nextChar();
+                    if(cChar == -1) continue nextFragment;
                     for (int c : fragment.characters()) {
                         if (c == cChar) {
                             if (!fragment.negate()) {
                                 builder.appendCodePoint(cChar);
                                 continue fLoop;
+                            }else {
+                                parser.loadLocation(loc);
+                                continue nextFragment;
                             }
                         }
                     }
-                    if (fragment.negate()) {
+                    if(fragment.negate()) {
                         builder.appendCodePoint(cChar);
                         continue;
                     }
@@ -38,13 +42,17 @@ public class Parser {
                     continue nextFragment;
                 }while(true);
             }else {
+                var loc = parser.saveLocation();
                 int cChar = parser.nextChar();
+                if(cChar == -1) continue;
                 for(int c : fragment.characters()) {
                     if(c==cChar) {
                         if(!fragment.negate()) {
                             builder.appendCodePoint(cChar);
-                            continue nextFragment;
+                        }else {
+                            parser.loadLocation(loc);
                         }
+                        continue nextFragment;
                     }
                 }
                 if(fragment.negate()) {
@@ -63,14 +71,18 @@ public class Parser {
                 fLoop: do {
                     var loc = parser.saveLocation();
                     int cChar = parser.nextChar();
+                    if(cChar == -1) continue nextFragment;
                     for (int c : fragment.characters()) {
                         if (c == cChar) {
                             if (!fragment.negate()) {
                                 continue fLoop;
+                            }else {
+                                continue nextFragment;
                             }
                         }
                     }
-                    if (fragment.negate()) {
+
+                    if(fragment.negate()) {
                         continue;
                     }
 
@@ -79,11 +91,10 @@ public class Parser {
                 }while(true);
             }else {
                 int cChar = parser.nextChar();
+                if(cChar == -1) continue;
                 for(int c : fragment.characters()) {
                     if(c==cChar) {
-                        if(!fragment.negate()) {
-                            continue nextFragment;
-                        }
+                        continue nextFragment;
                     }
                 }
                 if(fragment.negate()) {
