@@ -1,34 +1,27 @@
 package ga.epicpix.zprol.parser.lexer;
 
-import ga.epicpix.zprol.parser.DataParser;
-import ga.epicpix.zprol.parser.tokens.Token;
-
-import java.util.function.Function;
-
 public class LanguageLexerTokenFragment {
 
-    private final Function<DataParser, String> tokenReader;
-    private final String debugName;
+    private final int[] characters;
+    private final boolean multi;
+    private final boolean negate;
 
-    protected LanguageLexerTokenFragment(Function<DataParser, String> tokenReader, String debugName) {
-        this.tokenReader = tokenReader;
-        this.debugName = debugName;
+    public LanguageLexerTokenFragment(boolean multi, boolean negate, int... characters) {
+        this.characters = characters;
+        this.multi = multi;
+        this.negate = negate;
     }
 
-    public String apply(DataParser parser) {
-        return tokenReader.apply(parser);
+    public int[] getCharacters() {
+        return characters;
     }
 
-    public Function<DataParser, String> getTokenReader() {
-        return tokenReader;
+    public boolean isMulti() {
+        return multi;
     }
 
-    public String getDebugName() {
-        return debugName;
-    }
-
-    public String toString() {
-        return debugName;
+    public boolean isNegate() {
+        return negate;
     }
 
 }

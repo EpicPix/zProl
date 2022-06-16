@@ -1,4 +1,4 @@
-lex chars clean Whitespace < \t\n> { < \t\n> }
+lex chars clean Whitespace < \t\n> *< \t\n>
 
 lex NamespaceKeyword namespace
 lex UsingKeyword using
@@ -25,10 +25,10 @@ lex OpenParen (
 lex CloseParen )
 lex LineCodeChars =>
 
-lex chars DecimalInteger <1-9>{<0-9>}
+lex chars DecimalInteger <1-9> *<0-9>
 lex Zero 0
-lex chars Identifier <a-zA-Z_> { <a-zA-Z0-9_> }
-lex chars String <"> {<^"\n>} <">
+lex chars Identifier <a-zA-Z_> *<a-zA-Z0-9_>
+lex chars String <"> *<^"\n> <">
 
 lex AccessorOperator .
 lex CommaOperator ,

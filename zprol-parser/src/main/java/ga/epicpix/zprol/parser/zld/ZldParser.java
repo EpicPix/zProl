@@ -21,13 +21,9 @@ public class ZldParser {
     private static final char[] tokenCharacters = DataParser.joinCharacters(DataParser.nonSpecialCharacters, new char[] {'@', '%', '=', '>', ':'});
 
     private static LanguageLexerTokenFragment convertLexer(String w, DataParser parser) {
-        if(w.equals("{")) {
-            ArrayList<LanguageLexerTokenFragment> fragmentsList = new ArrayList<>();
-            String next;
-            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
-                fragmentsList.add(convertLexer(next, parser));
-            }
-            return new MultiLexerToken(fragmentsList.toArray(new LanguageLexerTokenFragment[0]));
+        if(w.equals("*")) {
+            LanguageLexerTokenFragment fragment = convertLexer(parser.nextTemplateWord(tokenCharacters), parser);
+            return new LanguageLexerTokenFragment(true, fragment.isNegate(), fragment.getCharacters());
         }else if(w.equals("<")) {
             int next;
             ArrayList<Integer> charactersList = new ArrayList<>();
@@ -63,7 +59,7 @@ public class ZldParser {
                 System.arraycopy(c, 0, allowedCharacters, indx, c.length);
                 indx += c.length;
             }
-            return new CharsToken(negate, allowedCharacters);
+            return new LanguageLexerTokenFragment(false, negate, allowedCharacters);
         }
 
         throw new ParserException(w, parser);
@@ -184,23 +180,18 @@ public class ZldParser {
                     if(chars) {
                         fragments.add(convertLexer(parser.nextTemplateWord(tokenCharacters), parser));
                     }else {
-                        fragments.add(new CharsToken(false, new int[] {parser.nextChar()}));
+                        fragments.add(new LanguageLexerTokenFragment(false, false, parser.nextChar()));
                     }
                     if(parser.checkNewLine()) {
                         break;
                     }
                 }
-                LEXER_TOKENS.add(new LanguageLexerToken(name, new CharsWordToken(clean, fragments.toArray(new LanguageLexerTokenFragment[0]))));
+                LEXER_TOKENS.add(new LanguageLexerToken(name, clean, fragments.toArray(new LanguageLexerTokenFragment[0])));
             } else {
                 throw new ParserException("Unknown grammar file word: " + d, parser);
             }
         }
         if(Boolean.parseBoolean(System.getProperty("SHOW_LANGUAGE_DATA"))) {
-            System.out.println("--- Lexer Definitions");
-            LEXER_TOKENS.forEach((x) -> {
-                String debugName = Arrays.stream(x.args()).map(LanguageLexerTokenFragment::getDebugName).collect(Collectors.joining(" "));
-                System.out.println("  " + x.name() + ": " + debugName.replace("\n", "\\n").replace("\t", "\\t"));
-            });
             System.out.println("--- Definitions");
             DEFINITIONS.forEach((x, y) -> {
                 System.out.println("  " + x);

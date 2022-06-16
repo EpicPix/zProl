@@ -1,7 +1,6 @@
 package ga.epicpix.zprol.parser;
 
 import ga.epicpix.zprol.parser.exceptions.ParserException;
-import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.lexer.LanguageLexerToken;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.tokens.*;
@@ -16,13 +15,83 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Parser {
 
-    public static boolean check(ArrayList<String> tTokens, DataParser parser, LanguageLexerToken token) {
-        for(var fragment : token.args()) {
-            var read = fragment.apply(parser);
-            if (read == null) {
-                return false;
+    public static String check(DataParser parser, LanguageLexerToken token) {
+        StringBuilder builder = new StringBuilder();
+        nextFragment: for(var fragment : token.args()) {
+            if(fragment.isMulti()) {
+                fLoop: do {
+                    var loc = parser.saveLocation();
+                    int cChar = parser.nextChar();
+                    for (int c : fragment.getCharacters()) {
+                        if (c == cChar) {
+                            if (!fragment.isNegate()) {
+                                builder.appendCodePoint(cChar);
+                                continue fLoop;
+                            }
+                        }
+                    }
+                    if (fragment.isNegate()) {
+                        builder.appendCodePoint(cChar);
+                        continue;
+                    }
+
+                    parser.loadLocation(loc);
+                    continue nextFragment;
+                }while(true);
+            }else {
+                int cChar = parser.nextChar();
+                for(int c : fragment.getCharacters()) {
+                    if(c==cChar) {
+                        if(!fragment.isNegate()) {
+                            builder.appendCodePoint(cChar);
+                            continue nextFragment;
+                        }
+                    }
+                }
+                if(fragment.isNegate()) {
+                    builder.appendCodePoint(cChar);
+                    continue;
+                }
             }
-            tTokens.add(read);
+            return null;
+        }
+        return builder.toString();
+    }
+
+    public static boolean checkClean(DataParser parser, LanguageLexerToken token) {
+        nextFragment: for(var fragment : token.args()) {
+            if(fragment.isMulti()) {
+                fLoop: do {
+                    var loc = parser.saveLocation();
+                    int cChar = parser.nextChar();
+                    for (int c : fragment.getCharacters()) {
+                        if (c == cChar) {
+                            if (!fragment.isNegate()) {
+                                continue fLoop;
+                            }
+                        }
+                    }
+                    if (fragment.isNegate()) {
+                        continue;
+                    }
+
+                    parser.loadLocation(loc);
+                    continue nextFragment;
+                }while(true);
+            }else {
+                int cChar = parser.nextChar();
+                for(int c : fragment.getCharacters()) {
+                    if(c==cChar) {
+                        if(!fragment.isNegate()) {
+                            continue nextFragment;
+                        }
+                    }
+                }
+                if(fragment.isNegate()) {
+                    continue;
+                }
+            }
+            return false;
         }
         return true;
     }
@@ -49,15 +118,47 @@ public class Parser {
         DataParser parser = new DataParser(filename, lines);
         ArrayList<LexerToken> tokens = new ArrayList<>();
         next: while(parser.hasNext()) {
-            for(var lexerToken : LanguageLexerToken.LEXER_TOKENS) {
-                ArrayList<String> x = new ArrayList<>();
-                var saveStart = parser.saveLocation();
-                var start = parser.getLocation();
-                if(check(x, parser, lexerToken)) {
-                    tokens.add(new LexerToken(lexerToken.name(), x.size() != 0 ? x.get(0) : "", start, parser.getLocation(), parser));
-                    continue next;
+            ArrayList<LanguageLexerToken> possibilities = new ArrayList<>();
+
+            var loc = parser.saveLocation();
+
+            int checkChar = parser.nextChar();
+            nextToken: for(var lexerToken : LanguageLexerToken.LEXER_TOKENS) {
+                var frag = lexerToken.args()[0];
+                for(int c : frag.getCharacters()) {
+                    if(c==checkChar) {
+                        if(!frag.isNegate()) {
+                            possibilities.add(lexerToken);
+                            continue nextToken;
+                        }
+                    }
                 }
-                parser.loadLocation(saveStart);
+                if(frag.isNegate()) {
+                    possibilities.add(lexerToken);
+                }
+            }
+
+            parser.loadLocation(loc);
+
+            if(possibilities.size() != 0) {
+                for (var possibility : possibilities) {
+                    var saveStart = parser.saveLocation();
+                    var start = parser.getLocation();
+                    if(possibility.clean()) {
+                        boolean result = checkClean(parser, possibility);
+                        if(result) {
+                            tokens.add(new LexerToken(possibility.name(), "", start, parser.getLocation(), parser));
+                            continue next;
+                        }
+                    }else {
+                        String result;
+                        if ((result = check(parser, possibility)) != null) {
+                            tokens.add(new LexerToken(possibility.name(), result, start, parser.getLocation(), parser));
+                            continue next;
+                        }
+                    }
+                    parser.loadLocation(saveStart);
+                }
             }
 
             throw new ParserException("Unknown lexer token", parser, parser.getLocation());
