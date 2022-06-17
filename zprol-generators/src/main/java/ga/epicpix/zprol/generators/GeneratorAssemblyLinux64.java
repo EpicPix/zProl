@@ -202,6 +202,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             if(v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
                 instructions.add("mov rax, " + v);
                 instructions.add(push("rax"));
+                return;
             }
             instructions.add(push(v));
         });
@@ -309,12 +310,12 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             instructions.add(pop("rcx"));
             if(size == 1) {
                 instructions.add(pop("dx"));
-                instructions.add("mov dl, [rcx+" + offset + "]");
+                instructions.add("mov [rcx+" + offset + "], dl");
             }
             else if(size == 2) instructions.add("pop word [rcx+" + offset + "]");
             else if(size == 4) {
                 instructions.add(pop("rdx"));
-                instructions.add("mov edx, [rcx+" + offset + "]");
+                instructions.add("mov [rcx+" + offset + "], edx");
             }
             else if(size == 8) instructions.add("pop qword [rcx+" + offset + "]");
             else throw new IllegalStateException("Unsupported size " + size);
