@@ -269,10 +269,12 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
             instructions.add(pop("rcx"));
             if(size == 1) {
+                instructions.add("xor dx, dx");
                 instructions.add("mov dl, [rcx+" + offset + "]");
                 instructions.add(push("dx"));
             } else if(size == 2) instructions.add("push word [rcx+" + offset + "]");
             else if(size == 4) {
+                instructions.add("xor edx, edx");
                 instructions.add("mov edx, [rcx+" + offset + "]");
                 instructions.add(push("rdx"));
             }
@@ -504,7 +506,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 assembly.add(new Instruction(getMangledName(function) + "." + instructions.currentIndex() + ":"));
             }
             var instruction = instructions.next();
-//            assembly.add(new Instruction("; " + instruction.getName()));
+            assembly.add(new Instruction("; " + instruction.getName()));
             var generator = instructionGenerators.get(instruction.getName());
             if(generator != null) {
                 generator.generateInstruction(instruction, instructions, function, localConstantPool, assembly);
@@ -586,64 +588,66 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }
         }
 
-        // -O embed value return functions
-        HashMap<Function, ValueReturnInstruction> valueReturnFunctions = new HashMap<>();
-        for(int i = 0; i<assembly.instructions.size(); i++) {
-            if(assembly.instructions.get(i) instanceof FunctionStartInstruction func) {
-                if(func.function.signature().parameters().length == 0 && func.function.signature().returnType() instanceof PrimitiveType prim && prim.getSize() == 8) {
-                    if (assembly.instructions.get(i + 1) instanceof PushNumberInstruction push) {
-                        if (assembly.instructions.get(i + 2) instanceof PopInstruction pop) {
-                            if (pop.register.equals("rax")) {
-                                if (assembly.instructions.get(i + 3) instanceof ReturnInstruction) {
-                                    assembly.instructions.remove(i);
-                                    assembly.instructions.remove(i);
-                                    assembly.instructions.remove(i);
-                                    assembly.instructions.remove(i);
-                                    i -= 4;
-                                    valueReturnFunctions.put(func.function, new ValueReturnInstruction(push.number));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        for(int i = 0; i<assembly.instructions.size(); i++) {
-            if(assembly.instructions.get(i) instanceof CallInstruction call) {
-                var v = valueReturnFunctions.get(call.function);
-                if(v != null) {
-                    if(assembly.instructions.get(i + 1) instanceof PushInstruction push && push.register.equals("rax")) {
-                        assembly.instructions.remove(i + 1);
-                        assembly.instructions.remove(i);
-                        assembly.instructions.add(i, new Instruction("push " + v.value));
-                    }else {
-                        assembly.instructions.remove(i);
-                        assembly.instructions.add(i, new Instruction("mov rax, " + v.value));
-                    }
-                }
-            }
-        }
-
-        // -O merge pop,push to mov
-        for(int i = 0; i<assembly.instructions.size(); i++) {
-            if(assembly.instructions.get(i) instanceof PushInstruction push) {
-                if(assembly.instructions.get(i + 1) instanceof PopInstruction pop) {
-                    assembly.instructions.remove(i);
-                    assembly.instructions.remove(i);
-                    if(!push.register.equals(pop.register)) {
-                        assembly.instructions.add(i, new Instruction("mov " + pop.register + ", " + push.register));
-                    }
-                }
-            }else if(assembly.instructions.get(i) instanceof PushNumberInstruction push) {
-                if(assembly.instructions.get(i + 1) instanceof PopInstruction pop) {
-                    if(pop.register.startsWith("r")) {
-                        assembly.instructions.remove(i);
-                        assembly.instructions.remove(i);
-                        assembly.instructions.add(i, new Instruction("mov " + pop.register + ", " + push.number));
-                    }
-                }
-            }
-        }
+//        // -O embed value return functions
+//        HashMap<Function, ValueReturnInstruction> valueReturnFunctions = new HashMap<>();
+//        for(int i = 0; i<assembly.instructions.size(); i++) {
+//            if(assembly.instructions.get(i) instanceof FunctionStartInstruction func) {
+//                if(func.function.signature().parameters().length == 0 && func.function.signature().returnType() instanceof PrimitiveType prim && prim.getSize() == 8) {
+//                    if (assembly.instructions.get(i + 1) instanceof PushNumberInstruction push) {
+//                        if (assembly.instructions.get(i + 2) instanceof PopInstruction pop) {
+//                            if (pop.register.equals("rax")) {
+//                                if (assembly.instructions.get(i + 3) instanceof ReturnInstruction) {
+//                                    assembly.instructions.remove(i);
+//                                    assembly.instructions.remove(i);
+//                                    assembly.instructions.remove(i);
+//                                    assembly.instructions.remove(i);
+//                                    i -= 4;
+//                                    valueReturnFunctions.put(func.function, new ValueReturnInstruction(push.number));
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        for(int i = 0; i<assembly.instructions.size(); i++) {
+//            if(assembly.instructions.get(i) instanceof CallInstruction call) {
+//                var v = valueReturnFunctions.get(call.function);
+//                if(v != null) {
+//                    if(assembly.instructions.get(i + 1) instanceof PushInstruction push && push.register.equals("rax")) {
+//                        assembly.instructions.remove(i + 1);
+//                        assembly.instructions.remove(i);
+//                        assembly.instructions.add(i, new Instruction("push " + v.value));
+//                    }else {
+//                        assembly.instructions.remove(i);
+//                        assembly.instructions.add(i, new Instruction("mov rax, " + v.value));
+//                    }
+//                }
+//            }
+//        }
+//
+//        // -O merge pop,push to mov
+//        for(int i = 0; i<assembly.instructions.size(); i++) {
+//            if(assembly.instructions.get(i) instanceof PushInstruction push) {
+//                if(assembly.instructions.get(i + 1) instanceof PopInstruction pop) {
+//                    if(pop.register.startsWith("r")) {
+//                        assembly.instructions.remove(i);
+//                        assembly.instructions.remove(i);
+//                        if(!push.register.equals(pop.register)) {
+//                            assembly.instructions.add(i, new Instruction("mov " + pop.register + ", " + push.register));
+//                        }
+//                    }
+//                }
+//            }else if(assembly.instructions.get(i) instanceof PushNumberInstruction push) {
+//                if(assembly.instructions.get(i + 1) instanceof PopInstruction pop) {
+//                    if(pop.register.startsWith("r")) {
+//                        assembly.instructions.remove(i);
+//                        assembly.instructions.remove(i);
+//                        assembly.instructions.add(i, new Instruction("mov " + pop.register + ", " + push.number));
+//                    }
+//                }
+//            }
+//        }
 
 
         outStream.writeBytes(assembly.instructions.stream().map(Instruction::data).collect(Collectors.joining("\n")));
