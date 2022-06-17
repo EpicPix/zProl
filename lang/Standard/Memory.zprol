@@ -51,7 +51,7 @@ byte[] malloc(ulong length) {
         thisElement.prev = prevElement;
         return (byte[]!) ((uint64!) thisElement + 32);
     }else => if(length >= 16384) {
-        uint64 mmapedLength = (length + 16383 + 24) & 18446744073709535232;
+        uint64 mmapedLength = (length + 16383 + 32) & 0xFFFFFFFFFFFFC000;
         _mmapedBinElement thisElement = (_mmapedBinElement!) mmap(0, mmapedLength, PROT_READ() | PROT_WRITE(), MAP_PRIVATE() | MAP_ANONYMOUS(), 0, 0);
         thisElement.binType = 1;
         thisElement.length = length;

@@ -27,6 +27,7 @@ lex CloseParen )
 lex LineCodeChars =>
 
 lex chars DecimalInteger <1-9> *<0-9>
+lex chars HexInteger <0><x><0-9a-fA-F> *<0-9a-fA-F>
 lex Zero 0
 lex chars Identifier <a-zA-Z_> *<a-zA-Z0-9_>
 lex chars String <"> *<^"\n> <">
@@ -133,8 +134,10 @@ def Boolean:
 def Null [$Whitespace] $$NullKeyword
 
 def inline Integer:
+  [$Whitespace] $HexInteger
   [$Whitespace] $DecimalInteger
 
+def HexInteger $$HexInteger
 def DecimalInteger:
   $$Zero
   $$DecimalInteger

@@ -34,6 +34,14 @@ public class CompilerUtils {
         }
     }
 
+    public static BigInteger getHexInteger(Token token) {
+        try {
+            return new BigInteger(token.toStringRaw().substring(2), 16);
+        }catch(NumberFormatException e) {
+            throw new TokenLocatedException("Hex Integer not valid hex '" + token.toStringRaw() + "'", token);
+        }
+    }
+
     public static String getInstructionPrefix(int size) {
         return Bytecode.BYTECODE.getInstructionPrefix(size);
     }

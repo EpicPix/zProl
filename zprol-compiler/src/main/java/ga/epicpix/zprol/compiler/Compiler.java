@@ -222,8 +222,12 @@ public class Compiler {
                 }
             }
             case "MultiplicativeExpression", "AdditiveExpression", "InclusiveOrExpression", "EqualsExpression", "ShiftExpression", "InclusiveAndExpression", "CompareExpression" -> types.push(runOperator(token, thisClass, expectedType, data, localsManager, types, bytecode));
-            case "DecimalInteger" -> {
-                BigInteger number = getDecimalInteger(token.tokens[0]);
+            case "DecimalInteger", "HexInteger" -> {
+                BigInteger number = switch(token.name) {
+                    case "DecimalInteger" -> getDecimalInteger(token.tokens[0]);
+                    case "HexInteger" -> getHexInteger(token.tokens[0]);
+                    default -> throw new TokenLocatedException("Impossible case", token);
+                };
                 if(expectedType instanceof PrimitiveType primitive) {
                     bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "push", number));
                     types.push(primitive);
