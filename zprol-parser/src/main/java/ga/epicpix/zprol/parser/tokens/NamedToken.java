@@ -66,7 +66,7 @@ public class NamedToken extends Token {
     public Token[] getNonWhitespaceTokens() {
         var tokens = new ArrayList<Token>();
         for(var token : this.tokens) {
-            if(!(token instanceof LexerToken lexer && lexer.name.equals("Whitespace"))) {
+            if(!(token.name.equals("Whitespace"))) {
                 tokens.add(token);
             }
         }
