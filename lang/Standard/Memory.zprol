@@ -38,31 +38,52 @@ class _bigBinElement { // 26 bytes total
     _bigBinElement prev;
 }
 
-_QuickBinElement quickBin;
+List quickBinList;
 List mmapedList;
 
 byte[] malloc(ulong length) {
     if(length <= 64) {
-        if(quickBin == null) {
-            quickBin = (_QuickBinElement!) mmap_alloc(16 * 4096);
+        if(quickBinList == null) {
+            quickBinList = (List!) mmap_alloc(4096);
+            quickBinList.pointer = (uint64[]!) ((uint64!) quickBinList + 24);
+            quickBinList.usedLength = 0;
+            quickBinList.usableLength = 509;
+            _QuickBinElement quickBin = (_QuickBinElement!) mmap_alloc(32768);
             quickBin.nextBlockFree = true;
+            quickBinList.add((ulong!) quickBin);
             // first element is never actually used
         }
-        _QuickBinElement prevElement = quickBin;
-        while(prevElement.nextBlockFree == false) {
-            if(prevElement.next == null) => break;
-            prevElement = prevElement.next;
+        _QuickBinElement useElement = null;
+        ulong index = 0;
+        while(index < quickBinList.usedLength) {
+            _QuickBinElement start = (_QuickBinElement!) quickBinList.get(index);
+            _QuickBinElement element = start;
+//            stdout("1\n");
+            while(element.nextBlockFree == false) {
+                if(element.next == null) => break;
+                element = element.next;
+            }
+            if((ulong!) element + 96 <= (ulong!) start + 32768) {
+                useElement = element;
+                break;
+            }else => if(index == quickBinList.usedLength - 1) {
+                _QuickBinElement quickBin = (_QuickBinElement!) mmap_alloc(32768);
+                quickBin.nextBlockFree = true;
+                quickBinList.add((ulong!) quickBin);
+            }
+            index = index + 1;
         }
-        _QuickBinElement thisElement = (_QuickBinElement!) ((uint64!) prevElement + 64 + 32);
+
+        _QuickBinElement thisElement = (_QuickBinElement!) ((uint64!) useElement + 64 + 32);
         thisElement.binType = 0;
         thisElement.nextBlockFree = true;
-        prevElement.nextBlockFree = false;
-        if(prevElement.next != null) {
-            thisElement.next = prevElement.next;
-            prevElement.next.prev = thisElement;
+        useElement.nextBlockFree = false;
+        if(useElement.next != null) {
+            thisElement.next = useElement.next;
+            useElement.next.prev = thisElement;
         }
-        prevElement.next = thisElement;
-        thisElement.prev = prevElement;
+        useElement.next = thisElement;
+        thisElement.prev = useElement;
         return (byte[]!) ((uint64!) thisElement + 32);
     }else => if(length >= 0x10000) {
         uint64 mmapedLength = (length + 0xffff + 32) & 0xFFFFFFFFFFFF0000;
@@ -82,7 +103,10 @@ byte[] malloc(ulong length) {
                     _bigBinElement check = current;
                     ulong usedAmount = 32 + length;
                     if((ulong!) check + usedAmount <= area.mmapStart + area.size) {
-                        if(current.next != null) => if((ulong!) check + usedAmount >= (ulong!) current.next) => continue;
+                        if(current.next != null) => if((ulong!) check + usedAmount >= (ulong!) current.next) {
+                            current = current.next;
+                            continue;
+                        }
                         check.flags = check.flags & 0xfd;
                         bool canFragment = (ulong!) check + (ulong)64 + usedAmount <= area.mmapStart + area.size;
                         if(canFragment) {
