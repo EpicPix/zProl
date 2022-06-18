@@ -17,13 +17,14 @@ public class FunctionCodeScope {
     public final PreClass thisClass;
 
     public final ArrayList<Integer> breakLocations;
+    public final ArrayList<Integer> continueLocations;
 
     public FunctionCodeScope(LocalScopeManager localsManager, PreClass thisClass) {
         scopeType = ScopeType.MAIN;
         previous = null;
         this.localsManager = localsManager;
         this.thisClass = thisClass;
-        breakLocations = null;
+        breakLocations = continueLocations = null;
     }
 
     public FunctionCodeScope(ScopeType scopeType, FunctionCodeScope previous) {
@@ -33,8 +34,9 @@ public class FunctionCodeScope {
         thisClass = previous.thisClass;
         if(scopeType == ScopeType.WHILE) {
             breakLocations = new ArrayList<>();
+            continueLocations = new ArrayList<>();
         }else {
-            breakLocations = null;
+            breakLocations = continueLocations = null;
         }
     }
 
@@ -51,6 +53,14 @@ public class FunctionCodeScope {
             breakLocations.add(location);
         }else {
             throw new IllegalStateException("Cannot add break location when the scope type is not while");
+        }
+    }
+
+    public void addContinueLocation(int location) {
+        if(scopeType == ScopeType.WHILE) {
+            continueLocations.add(location);
+        }else {
+            throw new IllegalStateException("Cannot add continue location when the scope type is not while");
         }
     }
 

@@ -186,6 +186,10 @@ public class Compiler {
                         bytecode.replaceInstruction(location, getConstructedInstruction("jmp", postInstr-location+1));
                     }
 
+                    for(int location : fscope.continueLocations) {
+                        bytecode.replaceInstruction(location, getConstructedInstruction("jmp", location-postInstr));
+                    }
+
                 }  else if("BreakStatement".equals(named.name)) {
                     var whileLoc = scope;
                     while(whileLoc != null) {
@@ -199,6 +203,20 @@ public class Compiler {
                         bytecode.pushInstruction(getConstructedInstruction("int"));
                     }else {
                         throw new TokenLocatedException("Cannot use `break` without a `while` loop", named.getLexerToken("BreakKeyword"));
+                    }
+                }  else if("ContinueStatement".equals(named.name)) {
+                    var whileLoc = scope;
+                    while(whileLoc != null) {
+                        if(whileLoc.scopeType == FunctionCodeScope.ScopeType.WHILE) {
+                            break;
+                        }
+                        whileLoc = whileLoc.previous;
+                    }
+                    if(whileLoc != null) {
+                        whileLoc.addContinueLocation(bytecode.getInstructionsLength());
+                        bytecode.pushInstruction(getConstructedInstruction("int"));
+                    }else {
+                        throw new TokenLocatedException("Cannot use `continue` without a `while` loop", named.getLexerToken("ContinueKeyword"));
                     }
                 } else {
                     throw new TokenLocatedException("Not implemented language feature: " + named.name + " / " + Arrays.toString(named.tokens), named);

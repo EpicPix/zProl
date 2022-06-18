@@ -9,6 +9,7 @@ lex IfKeyword if
 lex ElseKeyword else
 lex WhileKeyword while
 lex BreakKeyword break
+lex ContinueKeyword continue
 
 lex TrueKeyword true
 lex FalseKeyword false
@@ -164,6 +165,7 @@ def FunctionModifiers { $FunctionModifier }
 
 def ReturnStatement [$Whitespace] $$ReturnKeyword [[$Whitespace] $Expression] [$Whitespace] $$Semicolon
 def BreakStatement [$Whitespace] $$BreakKeyword [$Whitespace] $$Semicolon
+def ContinueStatement [$Whitespace] $$ContinueKeyword [$Whitespace] $$Semicolon
 def AssignmentStatement $Accessor [$Whitespace] $$AssignOperator [$Whitespace] $Expression [$Whitespace] $$Semicolon
 def CreateAssignmentStatement $Type [$Whitespace] $$Identifier [$Whitespace] $$AssignOperator [$Whitespace] $Expression [$Whitespace] $$Semicolon
 def IfStatement [$Whitespace] $$IfKeyword [$Whitespace] $$OpenParen [$Whitespace] $Expression [$Whitespace] $$CloseParen $Code [$ElseStatement]
@@ -174,6 +176,7 @@ def AccessorStatement $Accessor [$Whitespace] $$Semicolon
 def Statement:
   $ReturnStatement
   $BreakStatement
+  $ContinueStatement
   $AssignmentStatement
   $CreateAssignmentStatement
   $IfStatement
