@@ -336,6 +336,21 @@ public class Compiler {
                     return new BooleanType();
                 }
             }
+            if(arg1 instanceof BooleanType && arg2 instanceof BooleanType) {
+                if(operatorName.equals("==")) {
+                    for(var instr : arg2bytecode.getInstructions()) {
+                        bytecode.pushInstruction(instr);
+                    }
+                    bytecode.pushInstruction(getConstructedInstruction("beq"));
+                    return new BooleanType();
+                }else if(operatorName.equals("!=")) {
+                    for(var instr : arg2bytecode.getInstructions()) {
+                        bytecode.pushInstruction(instr);
+                    }
+                    bytecode.pushInstruction(getConstructedInstruction("bneq"));
+                    return new BooleanType();
+                }
+            }
             throw new TokenLocatedException("Cannot perform math operation on types " + arg1.getName() + " <-> " + arg2.getName(), location);
         }
         var bigger = prim1.getSize() > prim2.getSize() ? prim1 : prim2;
