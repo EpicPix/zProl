@@ -30,7 +30,7 @@ public class LocalScopeManager {
         if(currentScope.parent == null) {
             throw new IllegalArgumentException("Cannot leave scope, no scopes available!");
         }
-        currentScope.parent.setUsed(currentScope.getLocalUsed() + currentScope.getUsed());
+        currentScope.parent.updateIndex(currentScope.getIndex());
         currentScope = currentScope.parent;
     }
 

@@ -12,8 +12,7 @@ public class LocalScope {
     public final LocalScope parent;
 
     private final ArrayList<LocalVariable> localVariables = new ArrayList<>();
-    private int localVariableSizeIndex = 0;
-    private int used = 0;
+    private int index = 0;
 
     public LocalScope() {
         this.parent = null;
@@ -21,6 +20,7 @@ public class LocalScope {
 
     public LocalScope(LocalScope parent) {
         this.parent = parent;
+        this.index = parent.index;
     }
 
     public LocalVariable defineLocalVariable(String name, Type type) {
@@ -28,9 +28,9 @@ public class LocalScope {
             throw new VariableAlreadyDefinedException(name);
         }
         if(type instanceof PrimitiveType primitive) {
-            localVariableSizeIndex += primitive.getSize();
+            index += primitive.getSize();
         }else {
-            localVariableSizeIndex += 8;
+            index += 8;
         }
         LocalVariable localVar = new LocalVariable(name, type, getLocalVariablesSize());
         localVariables.add(localVar);
@@ -67,22 +67,17 @@ public class LocalScope {
         return null;
     }
 
-    public int getLocalUsed() {
-        return localVariableSizeIndex;
-    }
-
-    public int getUsed() {
-        return used;
+    public int getIndex() {
+        return index;
     }
 
     public int getLocalVariablesSize() {
-        if(parent != null) return parent.getLocalVariablesSize() + localVariableSizeIndex + used;
-        return localVariableSizeIndex + used;
+        return index;
     }
 
-    public void setUsed(int used) {
-        if(this.used < used) {
-            this.used = used;
+    public void updateIndex(int index) {
+        if(this.index < index) {
+            this.index = index;
         }
     }
 }
