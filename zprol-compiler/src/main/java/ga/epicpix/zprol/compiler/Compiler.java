@@ -187,7 +187,7 @@ public class Compiler {
                     }
 
                     for(int location : fscope.continueLocations) {
-                        bytecode.replaceInstruction(location, getConstructedInstruction("jmp", location-postInstr));
+                        bytecode.replaceInstruction(location, getConstructedInstruction("jmp", location-preInstr));
                     }
 
                 }  else if("BreakStatement".equals(named.name)) {

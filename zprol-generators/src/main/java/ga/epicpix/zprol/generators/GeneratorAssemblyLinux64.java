@@ -388,6 +388,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         instructionGenerators.put("lmod", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "idiv rcx", push("rdx")));
         instructionGenerators.put("imodu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "div ecx", push("rdx")));
         instructionGenerators.put("lmodu", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rax"), "xor rdx, rdx", "div rcx", push("rdx")));
+        instructionGenerators.put("bor", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "or cl, dl", push("cx")));
+        instructionGenerators.put("sor", (i, s, f, lp, instructions) -> instructions.add(pop("cx"), pop("dx"), "or cx, dx", push("cx")));
+        instructionGenerators.put("ior", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "or ecx, edx", push("rcx")));
         instructionGenerators.put("lor", (i, s, f, lp, instructions) -> instructions.add(pop("rcx"), pop("rdx"), "or rcx, rdx", push("rcx")));
         instructionGenerators.put("bpop", (i, s, f, lp, instructions) -> instructions.add("add rsp, 2"));
         instructionGenerators.put("spop", (i, s, f, lp, instructions) -> instructions.add("add rsp, 2"));
