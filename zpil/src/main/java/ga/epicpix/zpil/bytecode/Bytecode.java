@@ -81,6 +81,8 @@ public final class Bytecode implements IBytecode {
         registerInstruction(160, "push_false");
         registerInstruction(161, "push_true");
         registerInstruction(162, "null");
+
+        registerInstruction(-1, "int"); // internal usage, should not be in zpil files
     }
 
     private void registerSizedInstruction(int id, String name, int[] sizes, BytecodeValueType... values) {

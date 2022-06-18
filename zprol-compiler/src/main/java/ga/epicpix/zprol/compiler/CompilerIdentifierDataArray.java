@@ -24,9 +24,9 @@ public class CompilerIdentifierDataArray extends CompilerIdentifierData {
         this.expression = expression;
     }
 
-    public Type loadArray(ArrayType arrayType, PreClass thisClass, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode) {
+    public Type loadArray(ArrayType arrayType, CompiledData data, FunctionCodeScope scope, IBytecodeStorage bytecode) {
         var types = new ArrayDeque<Type>();
-        generateInstructionsFromExpression(expression, thisClass, null, types, data, localsManager, bytecode, false);
+        generateInstructionsFromExpression(expression, null, types, data, scope, bytecode, false);
         var expressionType = types.pop();
         if(!(expressionType instanceof PrimitiveType)) {
             throw new TokenLocatedException("Expected a primitive number", location);
@@ -40,9 +40,9 @@ public class CompilerIdentifierDataArray extends CompilerIdentifierData {
         return arrayType.type;
     }
 
-    public Type storeArray(ArrayType arrayType, PreClass thisClass, CompiledData data, LocalScopeManager localsManager, IBytecodeStorage bytecode) {
+    public Type storeArray(ArrayType arrayType, CompiledData data, FunctionCodeScope scope, IBytecodeStorage bytecode) {
         var types = new ArrayDeque<Type>();
-        generateInstructionsFromExpression(expression, thisClass, null, types, data, localsManager, bytecode, false);
+        generateInstructionsFromExpression(expression, null, types, data, scope, bytecode, false);
         var expressionType = types.pop();
         if(!(expressionType instanceof PrimitiveType)) {
             throw new TokenLocatedException("Expected a primitive number", location);

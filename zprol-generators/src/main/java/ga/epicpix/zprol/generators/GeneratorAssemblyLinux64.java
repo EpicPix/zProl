@@ -323,9 +323,13 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             else throw new IllegalStateException("Unsupported size " + size);
 
         });
+        instructionGenerators.put("bneq", (i, s, f, lp, instructions) -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cl, dl", "mov cx, 1", "cmovne ax, cx", push("ax")));
+        instructionGenerators.put("sneq", (i, s, f, lp, instructions) -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cx, dx", "mov cx, 1", "cmovne ax, cx", push("ax")));
         instructionGenerators.put("ineq", (i, s, f, lp, instructions) -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp ecx, edx", "mov rcx, 1", "cmovne rax, rcx", push("rax")));
         instructionGenerators.put("lneq", (i, s, f, lp, instructions) -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmovne rax, rcx", push("rax")));
         instructionGenerators.put("aneq", (i, s, f, lp, instructions) -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmovne rax, rcx", push("rax")));
+        instructionGenerators.put("beq", (i, s, f, lp, instructions) -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cl, dl", "mov cx, 1", "cmove ax, cx", push("ax")));
+        instructionGenerators.put("seq", (i, s, f, lp, instructions) -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cx, dx", "mov cx, 1", "cmove ax, cx", push("ax")));
         instructionGenerators.put("ieq", (i, s, f, lp, instructions) -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp ecx, edx", "mov rcx, 1", "cmove rax, rcx", push("rax")));
         instructionGenerators.put("leq", (i, s, f, lp, instructions) -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmove rax, rcx", push("rax")));
         instructionGenerators.put("aeq", (i, s, f, lp, instructions) -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmove rax, rcx", push("rax")));
@@ -629,12 +633,14 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         // -O merge pop,push to mov
         for(int i = 0; i<assembly.instructions.size(); i++) {
             if(assembly.instructions.get(i) instanceof PushInstruction push) {
-                if(assembly.instructions.get(i + 1) instanceof PopInstruction pop) {
-                    if(pop.register.startsWith("r")) {
-                        assembly.instructions.remove(i);
-                        assembly.instructions.remove(i);
-                        if(!push.register.equals(pop.register)) {
-                            assembly.instructions.add(i, new Instruction("mov " + pop.register + ", " + push.register));
+                if(push.register.startsWith("r")) {
+                    if(assembly.instructions.get(i + 1) instanceof PopInstruction pop) {
+                        if(pop.register.startsWith("r")) {
+                            assembly.instructions.remove(i);
+                            assembly.instructions.remove(i);
+                            if(!push.register.equals(pop.register)) {
+                                assembly.instructions.add(i, new Instruction("mov " + pop.register + ", " + push.register));
+                            }
                         }
                     }
                 }
