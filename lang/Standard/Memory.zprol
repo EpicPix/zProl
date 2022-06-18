@@ -1,42 +1,56 @@
 namespace zprol.lang.memory;
 
 using zprol.lang.linux.amd64;
+using zprol.lang.collection;
 using zprol.lang;
 
 class _BinElement {
     ubyte binType;
 }
 
-class _QuickBinElement {
+class _QuickBinElement { // 25 bytes total
     ubyte binType;
     _QuickBinElement next;
     _QuickBinElement prev;
     bool nextBlockFree;
 }
 
-class _mmapedBinElement {
+class _mmapedBinElement { // 17 bytes total
     ubyte binType;
     uint64 length;
     uint64 mmapedLength;
 }
 
-_QuickBinElement quickBin;
-
-bool shouldCheckNextBlock(_QuickBinElement current) {
-    if(current.nextBlockFree) {
-        return false;
-    }
-    return current.next != null;
+class mmapedArea { // 24 bytes total
+    _bigBinElement startElement;
+    ulong mmapStart;
+    ulong size;
 }
+
+class _bigBinElement { // 26 bytes total
+    ubyte binType;
+    ubyte flags;
+    // xxxx xxx1 - previous element is available
+    // xxxx xx1x - element is freed
+
+    ulong length;
+    _bigBinElement next;
+    _bigBinElement prev;
+}
+
+_QuickBinElement quickBin;
+List mmapedList;
 
 byte[] malloc(ulong length) {
     if(length <= 64) {
         if(quickBin == null) {
             quickBin = (_QuickBinElement!) mmap_alloc(16 * 4096);
             quickBin.nextBlockFree = true;
+            // first element is never actually used
         }
         _QuickBinElement prevElement = quickBin;
-        while(shouldCheckNextBlock(prevElement)) {
+        while(prevElement.nextBlockFree == false) {
+            if(prevElement.next == null) => break;
             prevElement = prevElement.next;
         }
         _QuickBinElement thisElement = (_QuickBinElement!) ((uint64!) prevElement + 64 + 32);
@@ -50,17 +64,87 @@ byte[] malloc(ulong length) {
         prevElement.next = thisElement;
         thisElement.prev = prevElement;
         return (byte[]!) ((uint64!) thisElement + 32);
-    }else => if(length >= 16384) {
-        uint64 mmapedLength = (length + 16383 + 32) & 0xFFFFFFFFFFFFC000;
+    }else => if(length >= 0x10000) {
+        uint64 mmapedLength = (length + 0xffff + 32) & 0xFFFFFFFFFFFF0000;
         _mmapedBinElement thisElement = (_mmapedBinElement!) mmap_alloc(mmapedLength);
         thisElement.binType = 1;
         thisElement.length = length;
         thisElement.mmapedLength = mmapedLength;
         return (byte[]!) ((uint64!) thisElement + 32);
     }else {
-        return null;
+        if(mmapedList == null) => mmapedList = List_new(4);
+        long index = 0;
+        while(index < mmapedList.usedLength) {
+            mmapedArea area = (mmapedArea!) mmapedList.get(index);
+            _bigBinElement current = area.startElement;
+            while(current != null) {
+                if((current.flags & 0x02) != 0) {
+                    _bigBinElement check = current;
+                    ulong usedAmount = 32 + length;
+                    if((ulong!) check + usedAmount <= area.mmapStart + area.size) {
+                        if(current.next != null) => if((ulong!) check + usedAmount >= (ulong!) current.next) => continue;
+                        check.flags = check.flags & 0xfd;
+                        bool canFragment = (ulong!) check + (ulong)64 + usedAmount <= area.mmapStart + area.size;
+                        if(canFragment) {
+                            _bigBinElement fragment = check;
+                            check = (_bigBinElement!) ((ulong!) check + check.length - usedAmount);
+                            fragment.binType = 2;
+                            fragment.next = check;
+                            check.prev = fragment;
+                            fragment.length = fragment.length - usedAmount;
+                            fragment.flags = 0x02;
+                            if(fragment.prev != null) {
+                                fragment.prev.next = fragment;
+                                if((fragment.prev.flags & 0x02) != 0) => fragment.flags = fragment.flags | 0x01;
+                            }
+                            if((fragment.flags & 0x02) != 0) => check.flags = check.flags | 0x01;
+                            if(check.next != null) => check.next.prev = check;
+                        }else {
+                            if(check.prev != null) => check.prev.next = check;
+                            if(check.next != null) => check.next.flags = check.next.flags & 0xfe;
+                        }
+                        check.binType = 2;
+                        check.length = length;
+                        return (_bigBinElement!) ((ulong!) check + 32);
+                    }
+                }else => if((current.flags & 0x01) != 0) {
+                    _bigBinElement check = current.prev;
+                    ulong usedAmount = 32 + length;
+                    if((ulong!) check + usedAmount <= area.mmapStart + area.size) {
+                        if((ulong!) check + usedAmount < (ulong!) current) {
+                            check.flags = check.flags & 0xfc;
+                            if(check.prev != null) {
+                                check.prev.next = check;
+                                if((check.prev.flags & 0x02) != 0) => check.flags = check.flags | 0x01;
+                            }
+                            check.next = current;
+                            current.prev = check;
+                            check.length = length;
+                            current.flags = current.flags & 0xfe;
+                            check.binType = 2;
+                            return (_bigBinElement!) ((ulong!) check + 32);
+                        }
+                    }
+                }
+                current = current.next;
+            }
+            index = index + 1;
+        }
+
+        mmapedArea area = (mmapedArea!) malloc(24);
+        area.size = 0x40000;
+        area.mmapStart = (ulong!) mmap_alloc(0x40000);
+        _bigBinElement element = (_bigBinElement!) area.mmapStart;
+        element.binType = 2;
+        element.flags = 0x02;
+        element.length = area.size;
+        element.next = null;
+        element.prev = null;
+        area.startElement = element;
+        mmapedList.add((uint64!) area);
+        return malloc(length);
     }
-    return null;
+    return null; // unreachable
 }
 
 void free(byte[] location) {
@@ -77,12 +161,25 @@ void free(byte[] location) {
     }else => if(element.binType == 1) {
         _mmapedBinElement mElement = (_mmapedBinElement!) element;
         munmap((uint64!) mElement, mElement.mmapedLength);
+    }else => if(element.binType == 2) {
+        _bigBinElement bElement = (_bigBinElement!) element;
+        bElement.flags = bElement.flags | 0x02;
+        if(bElement.next != null) {
+            bElement.next = bElement.next.next;
+            if(bElement.next.next != null) => bElement.next.next.prev = bElement;
+            bElement.length = bElement.length + 32 + bElement.next.length;
+        }
+        if((bElement.flags & 0x01) != 0) {
+            if(bElement.next != null) => bElement.next.prev = bElement.prev;
+            bElement.prev.next = bElement.next;
+            bElement.prev.length = bElement.prev.length + 32 + bElement.length;
+        }
     }
 }
 
 byte[] mmap_alloc(uint64 length) => return mmap(0, length, PROT_READ() | PROT_WRITE(), MAP_PRIVATE() | MAP_ANONYMOUS(), 0, 0);
 
-byte[] mmap(uint64 addr, uint64 length, uint64 protection, uint64 flags, uint64 fd, uint64 offset) => 
+byte[] mmap(uint64 addr, uint64 length, uint64 protection, uint64 flags, uint64 fd, uint64 offset) =>
     return (byte[]!) syscall(SYSCALL_MMAP(), addr, length, protection, flags, fd, offset);
 
 void munmap(uint64 addr, uint64 length) => syscall(SYSCALL_MUNMAP(), addr, length);
