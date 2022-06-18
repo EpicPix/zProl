@@ -73,18 +73,18 @@ public class Compiler {
                 } else if("AccessorStatement".equals(named.name)) {
                     generateInstructionsFromExpression(named.getTokenWithName("Accessor"), null, new ArrayDeque<>(), data, scope, bytecode, true);
                 } else if("CreateAssignmentStatement".equals(named.name)) {
-                    var scopeType = data.resolveType(named.getTokenAsString("Type"));
-                    if(scopeType instanceof VoidType) {
-                        throw new TokenLocatedException("Cannot create a variable with void scopeType", named);
+                    var type = data.resolveType(named.getTokenAsString("Type"));
+                    if(type instanceof VoidType) {
+                        throw new TokenLocatedException("Cannot create a variable with void type", named);
                     }
                     var name = named.getTokenAsString("Identifier");
                     var expression = named.getTokenWithName("Expression");
                     var types = new ArrayDeque<Type>();
-                    generateInstructionsFromExpression(expression, scopeType, types, data, scope, bytecode, false);
+                    generateInstructionsFromExpression(expression, type, types, data, scope, bytecode, false);
                     var rType = types.pop();
-                    doCast(rType, scopeType, false, bytecode, expression);
-                    var local = scope.localsManager.defineLocalVariable(name, rType);
-                    if(rType instanceof PrimitiveType primitive) {
+                    doCast(rType, type, false, bytecode, expression);
+                    var local = scope.localsManager.defineLocalVariable(name, type);
+                    if(type instanceof PrimitiveType primitive) {
                         bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
                     }else {
                         bytecode.pushInstruction(getConstructedInstruction("astore_local", local.index()));
@@ -108,7 +108,7 @@ public class Compiler {
                             types.push(ret);
                         }else if(v instanceof CompilerIdentifierDataArray array) {
                             var currentType = types.pop();
-                            if(!(currentType instanceof ArrayType arrType)) throw new TokenLocatedException("Expected an array scopeType", v.location);
+                            if(!(currentType instanceof ArrayType arrType)) throw new TokenLocatedException("Expected an array type", v.location);
                             types.push(array.loadArray(arrType, data, scope, tempStorage));
                         }else {
                             throw new TokenLocatedException("Unknown compiler identifier data " + v.getClass().getSimpleName(), v.location);
@@ -126,7 +126,7 @@ public class Compiler {
                         }
                     }else if(v instanceof CompilerIdentifierDataArray array) {
                         var currentType = types.pop();
-                        if(!(currentType instanceof ArrayType arrType)) throw new TokenLocatedException("Expected an array scopeType", v.location);
+                        if(!(currentType instanceof ArrayType arrType)) throw new TokenLocatedException("Expected an array type", v.location);
                         expectedType = array.storeArray(arrType, data, scope, tempStorage);
                     }else {
                         throw new TokenLocatedException("Unknown compiler identifier data " + v.getClass().getSimpleName(), v.location);
@@ -232,7 +232,7 @@ public class Compiler {
             if(types.size() != 0 && types.peek() instanceof ClassType) {
                 return classTypeToPreClass((ClassType) types.pop(), data);
             }else {
-                throw new TokenLocatedException("Expected a class scopeType", location);
+                throw new TokenLocatedException("Expected a class type", location);
             }
         }else {
             return thisClass;
@@ -274,7 +274,7 @@ public class Compiler {
                     bytecode.pushInstruction(getConstructedSizeInstruction(4, "push", number));
                     types.push(data.resolveType("int32"));
                 } else {
-                    throw new TokenLocatedException("Cannot infer size of number from a non-primitive scopeType (" + expectedType.getName() + ")", token);
+                    throw new TokenLocatedException("Cannot infer size of number from a non-primitive type (" + expectedType.getName() + ")", token);
                 }
             }
             case "Accessor" -> {
@@ -294,7 +294,7 @@ public class Compiler {
                     } else if(v instanceof CompilerIdentifierDataArray array) {
                         var currentType = types.pop();
                         if(!(currentType instanceof ArrayType arrType))
-                            throw new TokenLocatedException("Expected an array scopeType", v.location);
+                            throw new TokenLocatedException("Expected an array type", v.location);
                         types.push(array.loadArray(arrType, data, scope, bytecode));
                     } else {
                         throw new TokenLocatedException("Unknown compiler identifier data " + v.getClass().getSimpleName(), v.location);
@@ -585,7 +585,7 @@ public class Compiler {
         }
 
         if(!discardValue && returnType instanceof VoidType) {
-            throw new TokenLocatedException("Cannot store a void scopeType", func.location);
+            throw new TokenLocatedException("Cannot store a void type", func.location);
         }
 
         if(discardValue && returnType instanceof PrimitiveType primitive) {
@@ -613,7 +613,7 @@ public class Compiler {
             PreParameter param = function.parameters.get(i);
             parameters[i] = data.resolveType(param.type);
             if(parameters[i] instanceof VoidType) {
-                throw new TokenLocatedException("Cannot use 'void' scopeType for arguments");
+                throw new TokenLocatedException("Cannot use 'void' type for arguments");
             }
             names[i] = param.name;
         }
@@ -637,7 +637,7 @@ public class Compiler {
             PreParameter param = function.parameters.get(i);
             parameters[i] = data.resolveType(param.type);
             if(parameters[i] instanceof VoidType) {
-                throw new TokenLocatedException("Cannot use 'void' scopeType for arguments");
+                throw new TokenLocatedException("Cannot use 'void' type for arguments");
             }
             names[i] = param.name;
         }
@@ -657,11 +657,11 @@ public class Compiler {
         var fields = new ClassField[clazz.fields.size()];
         for (int i = 0; i < clazz.fields.size(); i++) {
             var field = clazz.fields.get(i);
-            var scopeType = data.resolveType(field.type);
-            if(scopeType instanceof VoidType) {
-                throw new TokenLocatedException("Cannot create a field with void scopeType");
+            var type = data.resolveType(field.type);
+            if(type instanceof VoidType) {
+                throw new TokenLocatedException("Cannot create a field with void type");
             }
-            fields[i] = new ClassField(field.name, scopeType);
+            fields[i] = new ClassField(field.name, type);
         }
 
         var methods = new Method[clazz.methods.size()];
@@ -680,11 +680,11 @@ public class Compiler {
         for(var clazz : preCompiled.classes) compileClass(data, clazz);
         for(var function : preCompiled.functions) compileFunction(data, function);
         for(var field : preCompiled.fields) {
-            var scopeType = data.resolveType(field.type);
-            if(scopeType instanceof VoidType) {
-                throw new TokenLocatedException("Cannot create a field with void scopeType");
+            var type = data.resolveType(field.type);
+            if(type instanceof VoidType) {
+                throw new TokenLocatedException("Cannot create a field with void type");
             }
-            data.addField(new Field(data.namespace, field.name, scopeType));
+            data.addField(new Field(data.namespace, field.name, type));
         }
         return data;
     }

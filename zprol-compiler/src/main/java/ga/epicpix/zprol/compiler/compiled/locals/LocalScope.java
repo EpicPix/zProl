@@ -2,6 +2,7 @@ package ga.epicpix.zprol.compiler.compiled.locals;
 
 import ga.epicpix.zprol.compiler.exceptions.VariableAlreadyDefinedException;
 import ga.epicpix.zprol.compiler.exceptions.VariableNotDefinedException;
+import ga.epicpix.zprol.types.NullType;
 import ga.epicpix.zprol.types.PrimitiveType;
 import ga.epicpix.zprol.types.Type;
 
@@ -24,6 +25,7 @@ public class LocalScope {
     }
 
     public LocalVariable defineLocalVariable(String name, Type type) {
+        if(type instanceof NullType) throw new IllegalArgumentException("Cannot define local variable with null type");
         if(findLocalVariable(name) != null) {
             throw new VariableAlreadyDefinedException(name);
         }
