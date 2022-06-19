@@ -58,12 +58,11 @@ byte[] malloc(ulong length) {
         while(index < quickBinList.usedLength) {
             _QuickBinElement start = (_QuickBinElement!) quickBinList.get(index);
             _QuickBinElement element = start;
-//            stdout("1\n");
             while(element.nextBlockFree == false) {
                 if(element.next == null) => break;
                 element = element.next;
             }
-            if((ulong!) element + 96 <= (ulong!) start + 32768) {
+            if((ulong!) element + 192 <= (ulong!) start + 32768) {
                 useElement = element;
                 break;
             }else => if(index == quickBinList.usedLength - 1) {
