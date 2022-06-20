@@ -4,7 +4,7 @@ Z Programming Language
 
 For actual usage check the [wiki](https://github.com/EpicPix/zProl/wiki).
 
-I made this language only because I got bored, and I work on it when I have nothing else to do.
+Ideas/Proposals for this language create at https://zprol.epicpix.ga/
 
 ## Maven Repository
 
