@@ -554,6 +554,11 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
         assembly.add("global _entry");
         assembly.add("_entry:");
+        for(var function : generated.functions) {
+            if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
+            if(!function.name().equals(".init")) continue;
+            assembly.add("call " + getMangledName(function));
+        }
         assembly.add("call " + getMangledName(null, "main", new FunctionSignature(Types.getTypeFromDescriptor("V"))));
         assembly.add("mov rax, 60");
         assembly.add("mov rdi, 0");
