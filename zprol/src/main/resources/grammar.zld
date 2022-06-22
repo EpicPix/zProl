@@ -199,9 +199,7 @@ tok Field:
 
 
 tok Class $$ClassKeyword [$Whitespace] $$Identifier [$Whitespace] $$OpenBrace {[$Whitespace] $ClassElement} [$Whitespace] $$CloseBrace
-def ClassField:
-  $$ConstKeyword [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$AssignOperator [$Whitespace] $Expression [$Whitespace] $$Semicolon
-  $Type [$Whitespace] $$Identifier [$Whitespace] $$Semicolon
+def ClassField $Type [$Whitespace] $$Identifier [$Whitespace] $$Semicolon
 def ClassMethod:
   $FunctionModifiers [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$OpenParen [$ParameterList] [$Whitespace] $$CloseParen [$Whitespace] $$Semicolon
   $FunctionModifiers [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$OpenParen [$ParameterList] [$Whitespace] $$CloseParen $Code
