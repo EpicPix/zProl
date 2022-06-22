@@ -19,6 +19,8 @@ lex BoolKeyword bool
 
 lex NativeKeyword native
 
+lex ConstKeyword const
+
 lex Semicolon ;
 lex OpenBracket [
 lex CloseBracket ]
@@ -191,11 +193,15 @@ tok Function:
   $FunctionModifiers [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$OpenParen [$ParameterList] [$Whitespace] $$CloseParen [$Whitespace] $$Semicolon
   $FunctionModifiers [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$OpenParen [$ParameterList] [$Whitespace] $$CloseParen $Code
 
-tok Field $Type [$Whitespace] $$Identifier [$Whitespace] $$Semicolon
+tok Field:
+  $$ConstKeyword [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$AssignOperator [$Whitespace] $Expression [$Whitespace] $$Semicolon
+  $Type [$Whitespace] $$Identifier [$Whitespace] $$Semicolon
 
 
 tok Class $$ClassKeyword [$Whitespace] $$Identifier [$Whitespace] $$OpenBrace {[$Whitespace] $ClassElement} [$Whitespace] $$CloseBrace
-def ClassField $Type [$Whitespace] $$Identifier [$Whitespace] $$Semicolon
+def ClassField:
+  $$ConstKeyword [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$AssignOperator [$Whitespace] $Expression [$Whitespace] $$Semicolon
+  $Type [$Whitespace] $$Identifier [$Whitespace] $$Semicolon
 def ClassMethod:
   $FunctionModifiers [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$OpenParen [$ParameterList] [$Whitespace] $$CloseParen [$Whitespace] $$Semicolon
   $FunctionModifiers [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$OpenParen [$ParameterList] [$Whitespace] $$CloseParen $Code
