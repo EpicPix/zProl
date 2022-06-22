@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import static ga.epicpix.zprol.compiler.CompilerIdentifierData.accessorToData;
 import static ga.epicpix.zprol.compiler.CompilerUtils.*;
+import static ga.epicpix.zprol.compiler.FieldCompiler.compileField;
 
 public class Compiler {
     public static IBytecodeStorage parseFunctionCode(CompiledData data, PreClass clazz, SeekIterator<Token> tokens, FunctionSignature sig, String[] names) {
@@ -656,12 +657,7 @@ public class Compiler {
     public static void compileClass(CompiledData data, PreClass clazz) {
         var fields = new ClassField[clazz.fields.size()];
         for (int i = 0; i < clazz.fields.size(); i++) {
-            var field = clazz.fields.get(i);
-            var type = data.resolveType(field.type);
-            if(type instanceof VoidType) {
-                throw new TokenLocatedException("Cannot create a field with void type");
-            }
-            fields[i] = new ClassField(field.name, type);
+            fields[i] = (ClassField) compileField(data, clazz.fields.get(i), clazz);
         }
 
         var methods = new Method[clazz.methods.size()];
@@ -680,11 +676,7 @@ public class Compiler {
         for(var clazz : preCompiled.classes) compileClass(data, clazz);
         for(var function : preCompiled.functions) compileFunction(data, function);
         for(var field : preCompiled.fields) {
-            var type = data.resolveType(field.type);
-            if(type instanceof VoidType) {
-                throw new TokenLocatedException("Cannot create a field with void type");
-            }
-            data.addField(new Field(data.namespace, field.name, type));
+            data.addField((Field) compileField(data, field, null));
         }
         return data;
     }
