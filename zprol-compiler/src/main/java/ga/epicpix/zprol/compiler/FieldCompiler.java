@@ -1,19 +1,20 @@
 package ga.epicpix.zprol.compiler;
 
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
+import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.precompiled.PreClass;
 import ga.epicpix.zprol.compiler.precompiled.PreField;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
-import ga.epicpix.zprol.structures.ClassField;
-import ga.epicpix.zprol.structures.Field;
-import ga.epicpix.zprol.structures.FieldModifiers;
-import ga.epicpix.zprol.types.BooleanType;
-import ga.epicpix.zprol.types.ClassType;
-import ga.epicpix.zprol.types.PrimitiveType;
-import ga.epicpix.zprol.types.VoidType;
+import ga.epicpix.zprol.structures.*;
+import ga.epicpix.zprol.types.*;
 
+import java.util.ArrayDeque;
 import java.util.EnumSet;
 import java.util.Objects;
+
+import static ga.epicpix.zprol.compiler.Compiler.doCast;
+import static ga.epicpix.zprol.compiler.Compiler.generateInstructionsFromExpression;
+import static ga.epicpix.zprol.compiler.CompilerUtils.*;
 
 public class FieldCompiler {
 
@@ -30,6 +31,7 @@ public class FieldCompiler {
         if(thisClass != null) {
             return new ClassField(field.name, type);
         }
+        var f = new Field(data.namespace, modifiers, field.name, type);
         if(field.isConst()) {
             var value = field.defaultValue;
             if(value.getTokenWithName("DecimalInteger") != null) {
@@ -53,10 +55,35 @@ public class FieldCompiler {
                 }
 
             }else {
-                throw new TokenLocatedException("TODO: Allow non integers", value);
+                var bytecode = createStorage();
+                var got = new ArrayDeque<Type>();
+                generateInstructionsFromExpression(value, null, got, data, new FunctionCodeScope(new LocalScopeManager(), thisClass), bytecode, false);
+                doCast(got.pop(), type, false, bytecode, value);
+                if(type instanceof PrimitiveType primitive) {
+                    bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_field", f));
+                } else if(type instanceof BooleanType) {
+                    bytecode.pushInstruction(getConstructedSizeInstruction(8, "store_field", f));
+                } else {
+                    bytecode.pushInstruction(getConstructedInstruction("astore_field", f));
+                }
+                Function initFunction = null;
+                for(var func : data.functions) {
+                    if(!Objects.equals(func.namespace(), data.namespace)) continue;
+                    if(!func.name().equals(".init")) continue;
+                    if(!func.signature().validateFunctionSignature(new FunctionSignature(data.resolveType("void")))) continue;
+                    initFunction = func;
+                    break;
+                }
+                if(initFunction == null) {
+                    initFunction = new Function(data.namespace, EnumSet.noneOf(FunctionModifiers.class), ".init", new FunctionSignature(data.resolveType("void")), bytecode);
+                    data.functions.add(initFunction);
+                }else {
+                    var code = initFunction.code();
+                    for(var i : bytecode.getInstructions()) code.pushInstruction(i);
+                }
             }
         }
-        return new Field(data.namespace, modifiers, field.name, type);
+        return f;
     }
 
 }

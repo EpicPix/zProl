@@ -35,9 +35,9 @@ public class CompiledData {
         return using;
     }
 
-    private final ArrayList<Function> functions = new ArrayList<>();
-    private final ArrayList<Field> fields = new ArrayList<>();
-    private final ArrayList<Class> classes = new ArrayList<>();
+    public final ArrayList<Function> functions = new ArrayList<>();
+    public final ArrayList<Field> fields = new ArrayList<>();
+    public final ArrayList<Class> classes = new ArrayList<>();
 
     public void includeToGenerated(GeneratedData data) {
         for(var f : functions) {
