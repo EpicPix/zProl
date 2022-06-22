@@ -316,6 +316,14 @@ public class Start {
             var field = new PreField();
             field.name = fld.name();
             field.type = fld.type().getName();
+            for(var v : fld.modifiers()) {
+                for(var m : PreFieldModifiers.MODIFIERS) {
+                    if(m.getCompiledModifier() == v) {
+                        field.modifiers.add(m);
+                        break;
+                    }
+                }
+            }
             preCompiledData.get(fld.namespace()).fields.add(field);
         }
         for(var e : compiledData.entrySet()) includedCompiled.add(e.getValue());
@@ -343,6 +351,18 @@ public class Start {
                 for(var instruction : func.code().getInstructions()) {
                     System.out.println("        " + instruction);
                 }
+            }
+        }
+
+        System.out.println("Fields:");
+        for(var fld : data.fields) {
+            System.out.println("  Field");
+            System.out.println("    Namespace: \"" + (fld.namespace() != null ? fld.namespace() : "") + "\"");
+            System.out.println("    Name: \"" + fld.name() + "\"");
+            System.out.println("    Type: \"" + fld.type().getDescriptor() + "\"");
+            System.out.println("    Modifiers (" + fld.modifiers().size() + "):");
+            for(var modifier : fld.modifiers()) {
+                System.out.println("      " + modifier);
             }
         }
 

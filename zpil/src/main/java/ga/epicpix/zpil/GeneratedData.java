@@ -189,7 +189,8 @@ public class GeneratedData {
             var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
             var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
             var type = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getType() - 1)).getString();
-            data.fields.add(new Field(namespace, name, Types.getTypeFromDescriptor(type)));
+            var modifiers = FieldModifiers.getModifiers(entry.getModifiers());
+            data.fields.add(new Field(namespace, modifiers, name, Types.getTypeFromDescriptor(type)));
         }
 
         for(var func : data.functions) {

@@ -84,7 +84,7 @@ public class ConstantPool {
                 }
             }
         }
-        entries.add(new ConstantPoolEntry.FieldEntry(namespaceIndex, nameIndex, typeIndex));
+        entries.add(new ConstantPoolEntry.FieldEntry(namespaceIndex, nameIndex, typeIndex, FieldModifiers.toBits(fld.modifiers())));
         return entries.size();
     }
 

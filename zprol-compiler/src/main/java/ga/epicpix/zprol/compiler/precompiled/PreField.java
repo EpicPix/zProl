@@ -1,5 +1,7 @@
 package ga.epicpix.zprol.compiler.precompiled;
 
+import java.util.ArrayList;
+
 public class PreField {
 
     public PreField() {}
@@ -10,5 +12,6 @@ public class PreField {
 
     public String type;
     public String name;
+    public final ArrayList<PreFieldModifiers> modifiers = new ArrayList<>();
 
 }

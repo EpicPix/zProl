@@ -32,6 +32,9 @@ public class PreCompiler {
                     PreField field = new PreField();
                     field.type = named.getTokenAsString("Type");
                     field.name = named.getLexerToken("Identifier").data;
+                    if(named.getLexerToken("ConstKeyword") != null) {
+                        field.modifiers.add(PreFieldModifiers.CONST);
+                    }
                     pre.fields.add(field);
                 }else if(named.name.equals("Class")) {
                     PreClass clazz = new PreClass();
