@@ -262,7 +262,7 @@ public class Start {
             var fields = new ArrayList<PreField>();
             var methods = new ArrayList<PreFunction>();
             for(var f : clazz.fields()) {
-                fields.add(new PreField(f.name(), f.type().normalName()));
+                fields.add(new PreField(f.name(), f.type().normalName(), null));
             }
             for(var func : clazz.methods()) {
                 var params = new ArrayList<PreParameter>();
@@ -313,7 +313,7 @@ public class Start {
             preCompiledData.putIfAbsent(fld.namespace(), new PreCompiledData());
 
             compiledData.get(fld.namespace()).addField(fld);
-            var field = new PreField();
+            var field = new PreField(null);
             field.name = fld.name();
             field.type = fld.type().getName();
             for(var v : fld.modifiers()) {
