@@ -142,6 +142,7 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
                         modifiers.add(modifier.getCompiledModifier());
                     }
                     var f = new Field(using.namespace, modifiers, field.name, fieldType, null);
+                    if(modifiers.contains(FieldModifiers.CONST)) throw new TokenLocatedException("Cannot assign to const value");
                     if(type != null) doCast(fieldType, type, false, bytecode, location);
                     if(fieldType instanceof PrimitiveType primitive) {
                         bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_field", f));
