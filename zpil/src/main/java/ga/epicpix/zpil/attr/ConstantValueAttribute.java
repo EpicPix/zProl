@@ -24,7 +24,7 @@ public class ConstantValueAttribute extends Attribute {
         int type = input.readUnsignedByte();
         switch(type) {
             case 'n' -> value = null;
-            case 's' -> value = ((ConstantPoolEntry.StringEntry) pool.entries.get(input.readInt())).getString();
+            case 's' -> value = ((ConstantPoolEntry.StringEntry) pool.entries.get(input.readInt() - 1)).getString();
             case 'b' -> value = input.readBoolean();
             case 'B' -> value = input.readByte();
             case 'S' -> value = input.readShort();
