@@ -11,18 +11,10 @@ public class ConstantValueAttribute extends Attribute {
 
     private Object value;
 
-    private ConstantValueAttribute(Object value){
+    public ConstantValueAttribute(Object value){
         super("ConstantValue");
         this.value = value;
     }
-
-    public ConstantValueAttribute()   { this(null); }
-    public ConstantValueAttribute(boolean value) { this((Object) value); }
-    public ConstantValueAttribute(byte value)    { this((Object) value); }
-    public ConstantValueAttribute(short value)   { this((Object) value); }
-    public ConstantValueAttribute(int value)     { this((Object) value); }
-    public ConstantValueAttribute(long value)    { this((Object) value); }
-    public ConstantValueAttribute(String value)  { this((Object) value); }
 
     public Object getValue() {
         return value;

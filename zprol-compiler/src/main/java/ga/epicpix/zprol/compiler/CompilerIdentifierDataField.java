@@ -76,7 +76,7 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
                     for(var modifier : field.modifiers) {
                         modifiers.add(modifier.getCompiledModifier());
                     }
-                    var f = new Field(using.namespace, modifiers, field.name, fieldType);
+                    var f = new Field(using.namespace, modifiers, field.name, fieldType, null);
 
                     if(fieldType instanceof PrimitiveType primitive) {
                         bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_field", f));
@@ -141,7 +141,7 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
                     for(var modifier : field.modifiers) {
                         modifiers.add(modifier.getCompiledModifier());
                     }
-                    var f = new Field(using.namespace, modifiers, field.name, fieldType);
+                    var f = new Field(using.namespace, modifiers, field.name, fieldType, null);
                     if(type != null) doCast(fieldType, type, false, bytecode, location);
                     if(fieldType instanceof PrimitiveType primitive) {
                         bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_field", f));

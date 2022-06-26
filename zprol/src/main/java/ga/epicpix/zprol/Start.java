@@ -360,6 +360,13 @@ public class Start {
             System.out.println("    Namespace: \"" + (fld.namespace() != null ? fld.namespace() : "") + "\"");
             System.out.println("    Name: \"" + fld.name() + "\"");
             System.out.println("    Type: \"" + fld.type().getDescriptor() + "\"");
+            if(fld.defaultValue() != null) {
+                if(fld.defaultValue().value() != null) {
+                    System.out.println("    Constant Value: " + fld.defaultValue().value().getClass().getSimpleName() + " " + fld.defaultValue().value());
+                }else {
+                    System.out.println("    Constant Value: null");
+                }
+            }
             System.out.println("    Modifiers (" + fld.modifiers().size() + "):");
             for(var modifier : fld.modifiers()) {
                 System.out.println("      " + modifier);

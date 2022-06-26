@@ -23,7 +23,7 @@ public abstract class Attribute {
         byte[] data = new byte[length];
         for(int i = 0; i<length; i++) data[i] = input.readByte();
         Attribute inst = switch(name) {
-            case "ConstantValue" -> new ConstantValueAttribute();
+            case "ConstantValue" -> new ConstantValueAttribute(null);
             default -> null;
         };
         if(inst == null) return null;

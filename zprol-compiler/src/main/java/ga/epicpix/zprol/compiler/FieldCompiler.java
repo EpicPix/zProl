@@ -31,7 +31,7 @@ public class FieldCompiler {
         if(thisClass != null) {
             return new ClassField(field.name, type);
         }
-        var f = new Field(data.namespace, modifiers, field.name, type);
+        var f = new Field(data.namespace, modifiers, field.name, type, null);
         if(field.isConst()) {
             var value = field.defaultValue;
             if(value.getTokenWithName("DecimalInteger") != null) {

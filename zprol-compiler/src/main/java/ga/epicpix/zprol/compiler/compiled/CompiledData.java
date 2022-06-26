@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.compiler.compiled;
 
 import ga.epicpix.zpil.GeneratedData;
+import ga.epicpix.zpil.attr.ConstantValueAttribute;
 import ga.epicpix.zpil.bytecode.Bytecode;
 import ga.epicpix.zpil.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.compiler.exceptions.RedefinedFieldException;
@@ -68,6 +69,9 @@ public class CompiledData {
             }
             data.fields.add(f);
             data.constantPool.getOrCreateFieldIndex(f);
+            if(f.defaultValue() != null) {
+                new ConstantValueAttribute(f.defaultValue().value()).prepareConstantPool(data.constantPool);
+            }
         }
 
         for(var clz : classes) {

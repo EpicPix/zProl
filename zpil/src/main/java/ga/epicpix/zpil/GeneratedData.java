@@ -1,9 +1,12 @@
 package ga.epicpix.zpil;
 
+import ga.epicpix.zpil.attr.Attribute;
+import ga.epicpix.zpil.attr.ConstantValueAttribute;
 import ga.epicpix.zpil.bytecode.Bytecode;
 import ga.epicpix.zpil.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zpil.pool.ConstantPool;
 import ga.epicpix.zpil.pool.ConstantPoolEntry;
+import ga.epicpix.zprol.data.ConstantValue;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
 import ga.epicpix.zprol.types.Types;
@@ -113,6 +116,14 @@ public class GeneratedData {
         out.writeInt(data.fields.size());
         for(Field field : data.fields) {
             out.writeInt(data.constantPool.getFieldIndex(field));
+
+            int attributeCount = 0;
+            if(field.defaultValue() != null) attributeCount++;
+            out.writeInt(attributeCount);
+
+            if(field.defaultValue() != null) {
+                out.write(new ConstantValueAttribute(field.defaultValue().value()).write(data.constantPool));
+            }
         }
 
         out.close();
@@ -190,7 +201,17 @@ public class GeneratedData {
             var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
             var type = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getType() - 1)).getString();
             var modifiers = FieldModifiers.getModifiers(entry.getModifiers());
-            data.fields.add(new Field(namespace, modifiers, name, Types.getTypeFromDescriptor(type)));
+
+            int attrCount = in.readInt();
+            ConstantValue constantValue = null;
+            for(int j = 0; j<attrCount; j++) {
+                var attr = Attribute.read(in, data.constantPool);
+                if(attr instanceof ConstantValueAttribute cvalue) {
+                    constantValue = new ConstantValue(cvalue.getValue());
+                }
+            }
+
+            data.fields.add(new Field(namespace, modifiers, name, Types.getTypeFromDescriptor(type), constantValue));
         }
 
         for(var func : data.functions) {
