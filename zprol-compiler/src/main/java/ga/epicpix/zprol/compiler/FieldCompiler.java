@@ -4,10 +4,12 @@ import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.precompiled.PreClass;
 import ga.epicpix.zprol.compiler.precompiled.PreField;
+import ga.epicpix.zprol.data.ConstantValue;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.types.*;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.EnumSet;
 import java.util.Objects;
@@ -32,28 +34,28 @@ public class FieldCompiler {
             return new ClassField(field.name, type);
         }
         var f = new Field(data.namespace, modifiers, field.name, type, null);
+        ConstantValue defaultValue = null;
         if(field.isConst()) {
             var value = field.defaultValue;
-            if(value.getTokenWithName("DecimalInteger") != null) {
-                if(!(type instanceof PrimitiveType)) {
+            if(value.getTokenWithName("DecimalInteger") != null || value.getTokenWithName("HexInteger") != null) {
+                if(!(type instanceof PrimitiveType prim)) {
                     throw new TokenLocatedException("Expected " + type.normalName() + ", got an integer", value);
                 }
-
-            }else if(value.getTokenWithName("HexInteger") != null) {
-                if(!(type instanceof PrimitiveType)) {
-                    throw new TokenLocatedException("Expected " + type.normalName() + ", got an integer", value);
-                }
-
+                var n = value.getTokenWithName("DecimalInteger") != null ? getDecimalInteger(value) : getHexInteger(value);
+                if(prim.getSize() == 1) defaultValue = new ConstantValue(n.byteValue());
+                else if(prim.getSize() == 2) defaultValue = new ConstantValue(n.shortValue());
+                else if(prim.getSize() == 4) defaultValue = new ConstantValue(n.intValue());
+                else if(prim.getSize() == 8) defaultValue = new ConstantValue(n.longValue());
             }else if(value.getTokenWithName("Boolean") != null) {
                 if(!(type instanceof BooleanType)) {
                     throw new TokenLocatedException("Expected " + type.normalName() + ", got a boolean", value);
                 }
-
+                defaultValue = new ConstantValue(Boolean.parseBoolean(value.toStringRaw()));
             }else if(value.getTokenWithName("String") != null) {
                 if(!(type instanceof ClassType clzType) || !(Objects.equals(clzType.getNamespace(), "zprol.lang") || clzType.getName().equals("String"))) {
                     throw new TokenLocatedException("Expected " + type.normalName() + ", got a string", value);
                 }
-
+                defaultValue = new ConstantValue(convertToLanguageString(value));
             }else {
                 var bytecode = createStorage();
                 var got = new ArrayDeque<Type>();
@@ -83,7 +85,7 @@ public class FieldCompiler {
                 }
             }
         }
-        return f;
+        return new Field(data.namespace, modifiers, field.name, type, defaultValue);
     }
 
 }

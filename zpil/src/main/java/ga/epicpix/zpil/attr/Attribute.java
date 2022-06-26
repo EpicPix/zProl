@@ -18,7 +18,7 @@ public abstract class Attribute {
     }
 
     public static Attribute read(DataInput input, ConstantPool pool) throws IOException {
-        String name = ((ConstantPoolEntry.StringEntry) pool.entries.get(input.readInt())).getString();
+        String name = ((ConstantPoolEntry.StringEntry) pool.entries.get(input.readInt() - 1)).getString();
         int length = input.readInt();
         byte[] data = new byte[length];
         for(int i = 0; i<length; i++) data[i] = input.readByte();

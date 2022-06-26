@@ -303,8 +303,7 @@ public class Compiler {
                 }
             }
             case "String" -> {
-                var strChars = token.getTokenAsString("String");
-                bytecode.pushInstruction(getConstructedInstruction("push_string", strChars.substring(1, strChars.length() - 1).replace("\\\"", "\"").replace("\\n", "\n").replace("\\0", "\0")));
+                bytecode.pushInstruction(getConstructedInstruction("push_string", convertToLanguageString(token)));
                 types.push(data.resolveType("zprol.lang.String"));
             }
             case "CastExpression" -> {
