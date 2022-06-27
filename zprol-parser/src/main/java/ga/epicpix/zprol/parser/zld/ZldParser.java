@@ -64,9 +64,7 @@ public class ZldParser {
     }
 
     private static LanguageTokenFragment convert(String w, DataParser parser) {
-        if(w.startsWith("\\")) {
-            w = parser.nextWord();
-        } else if(w.equals("{")) {
+        if(w.equals("{")) {
             ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
             String next;
             while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
@@ -74,12 +72,7 @@ public class ZldParser {
             }
             return new MultiToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
         }else if(w.equals("$")) {
-            String next = parser.nextTemplateWord(tokenCharacters);
-            if(next.equals("$")) {
-                return new LexerCallToken(parser.nextTemplateWord(tokenCharacters));
-            }else {
-                return new CallToken(next);
-            }
+            return new LexerCallToken(parser.nextTemplateWord(tokenCharacters));
         }else if(w.equals("[")) {
             ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
             String next;
@@ -88,8 +81,22 @@ public class ZldParser {
             }
             return new OptionalToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
         }
+        if(parser.hasNext()) {
+            int seek = parser.seekCharacter();
+            if(seek == '?') {
+                parser.nextChar();
+                return new OptionalToken(new LanguageTokenFragment[] {
+                    convert(w, parser)
+                });
+            }else if(seek == '*') {
+                parser.nextChar();
+                return new MultiToken(new LanguageTokenFragment[] {
+                    convert(w, parser)
+                });
+            }
+        }
 
-        throw new ParserException(w, parser);
+        return new CallToken(w);
     }
 
     public static void load(String fileName, String data) {

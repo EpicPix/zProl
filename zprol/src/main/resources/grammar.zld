@@ -55,151 +55,151 @@ lex AssignOperator =
 lex HardCastIndicatorOperator !
 
 def WhitespaceElement:
-  $$Whitespace
-  $$Comment
-def Whitespace $WhitespaceElement{$WhitespaceElement}
+  $Whitespace
+  $Comment
+def Whitespace WhitespaceElement{WhitespaceElement}
 
-def CastOperator [$Whitespace] $$OpenParen $Type [$Whitespace] $$CloseParen
-def HardCastOperator [$Whitespace] $$OpenParen $Type [$Whitespace] $$HardCastIndicatorOperator [$Whitespace] $$CloseParen
+def CastOperator $OpenParen Type Whitespace? $CloseParen
+def HardCastOperator $OpenParen Type Whitespace? $HardCastIndicatorOperator Whitespace? $CloseParen
 
 def inline AdditiveOperators:
-  $$AddOperator
-  $$SubtractOperator
+  $AddOperator
+  $SubtractOperator
 
 def inline EqualityOperators:
-  $$EqualOperator
-  $$NotEqualOperator
+  $EqualOperator
+  $NotEqualOperator
 
 def inline CompareOperators:
-  $$LessEqualThanOperator
-  $$LessThanOperator
-  $$GreaterEqualThanOperator
-  $$GreaterThanOperator
+  $LessEqualThanOperator
+  $LessThanOperator
+  $GreaterEqualThanOperator
+  $GreaterThanOperator
 
 def inline ShiftOperators:
-  $$ShiftLeftOperator
-  $$ShiftRightOperator
+  $ShiftLeftOperator
+  $ShiftRightOperator
 
 def inline MultiplicativeOperators:
-  $$MultiplyOperator
-  $$DivideOperator
-  $$ModuloOperator
+  $MultiplyOperator
+  $DivideOperator
+  $ModuloOperator
 
 def inline CastOperators:
-  $CastOperator
-  $HardCastOperator
+  CastOperator
+  HardCastOperator
 
 def inline PostExpression:
-  [$Whitespace] $$OpenParen [$Whitespace] $Expression [$Whitespace] $$CloseParen
-  $String
-  $Null
-  $Integer
-  $Boolean
-  $Accessor
+  $OpenParen Whitespace? Expression Whitespace? $CloseParen
+  String
+  Null
+  Integer
+  Boolean
+  Accessor
 
-def CastExpression $CastOperators $CastExpression
-def inline CastExpression $PostExpression
+def CastExpression CastOperators Whitespace? CastExpression
+def inline CastExpression PostExpression
 
-def merge MultiplicativeExpression $CastExpression [ [$Whitespace] $MultiplicativeOperators [$Whitespace] $MultiplicativeExpression ]
-def merge AdditiveExpression $MultiplicativeExpression [ [$Whitespace] $AdditiveOperators [$Whitespace] $AdditiveExpression ]
-def merge CompareExpression $AdditiveExpression [ [$Whitespace] $CompareOperators [$Whitespace] $CompareExpression ]
-def merge EqualsExpression $CompareExpression [ [$Whitespace] $EqualityOperators [$Whitespace] $EqualsExpression ]
-def merge ShiftExpression $EqualsExpression [ [$Whitespace] $ShiftOperators [$Whitespace] $ShiftExpression ]
-def merge InclusiveOrExpression $ShiftExpression [ [$Whitespace] $$InclusiveOrOperator [$Whitespace] $InclusiveOrExpression ]
-def merge InclusiveAndExpression $InclusiveOrExpression [ [$Whitespace] $$AndOperator [$Whitespace] $InclusiveAndExpression ]
+def merge MultiplicativeExpression Whitespace? CastExpression [ Whitespace? MultiplicativeOperators Whitespace? MultiplicativeExpression ]
+def merge AdditiveExpression MultiplicativeExpression [ Whitespace? AdditiveOperators Whitespace? AdditiveExpression ]
+def merge CompareExpression AdditiveExpression [ Whitespace? CompareOperators Whitespace? CompareExpression ]
+def merge EqualsExpression CompareExpression [ Whitespace? EqualityOperators Whitespace? EqualsExpression ]
+def merge ShiftExpression EqualsExpression [ Whitespace? ShiftOperators Whitespace? ShiftExpression ]
+def merge InclusiveOrExpression ShiftExpression [ Whitespace? $InclusiveOrOperator Whitespace? InclusiveOrExpression ]
+def merge InclusiveAndExpression InclusiveOrExpression [ Whitespace? $AndOperator Whitespace? InclusiveAndExpression ]
 
-def Expression $InclusiveAndExpression
+def Expression InclusiveAndExpression
 
 
-def Argument [$Whitespace] $Expression
-def ArgumentList $Argument {[$Whitespace] $$CommaOperator $Argument}
-def FunctionInvocation [$Whitespace] $$OpenParen [$ArgumentList] [$Whitespace] $$CloseParen
+def Argument Whitespace? Expression
+def ArgumentList Argument {Whitespace? $CommaOperator Argument}
+def FunctionInvocation Whitespace? $OpenParen ArgumentList? Whitespace? $CloseParen
 
-def FunctionInvocationAccessor [$Whitespace] $$Identifier $FunctionInvocation
-def inline FunctionInvocationAccessor [$Whitespace] $$Identifier
+def FunctionInvocationAccessor Whitespace? $Identifier FunctionInvocation
+def inline FunctionInvocationAccessor Whitespace? $Identifier
 
-def inline ArrayAccessorOpenCharacter [$Whitespace] $$OpenBracket
-def inline ArrayAccessorCloseCharacter [$Whitespace] $$CloseBracket
-def ArrayAccessor $ArrayAccessorOpenCharacter [$Whitespace] $Expression $ArrayAccessorCloseCharacter
+def inline ArrayAccessorOpenCharacter Whitespace? $OpenBracket
+def inline ArrayAccessorCloseCharacter Whitespace? $CloseBracket
+def ArrayAccessor ArrayAccessorOpenCharacter Whitespace? Expression ArrayAccessorCloseCharacter
 def AccessorElement:
-  [$Whitespace] $$AccessorOperator $FunctionInvocationAccessor
-  $ArrayAccessor
+  Whitespace? $AccessorOperator FunctionInvocationAccessor
+  ArrayAccessor
 
-def Accessor $FunctionInvocationAccessor { $AccessorElement }
+def Accessor FunctionInvocationAccessor AccessorElement*
 
-def String $$String
+def String $String
 
 def Boolean:
-  [$Whitespace] $$TrueKeyword
-  [$Whitespace] $$FalseKeyword
+  $TrueKeyword
+  $FalseKeyword
 
-def Null [$Whitespace] $$NullKeyword
+def Null $NullKeyword
 
 def inline Integer:
-  [$Whitespace] $HexInteger
-  [$Whitespace] $DecimalInteger
+  HexInteger
+  DecimalInteger
 
-def HexInteger $$HexInteger
+def HexInteger $HexInteger
 def DecimalInteger:
-  $$Zero
-  $$DecimalInteger
+  $Zero
+  $DecimalInteger
 
-def ArrayCharacters $ArrayAccessorOpenCharacter $ArrayAccessorCloseCharacter
+def ArrayCharacters ArrayAccessorOpenCharacter ArrayAccessorCloseCharacter
 
 def Type:
-  { [$Whitespace] $$Identifier [$Whitespace] $$AccessorOperator } [$Whitespace] $$Identifier { $ArrayCharacters }
-  [$Whitespace] $$BoolKeyword { $ArrayCharacters }
-  [$Whitespace] $$VoidKeyword
-def NamespaceIdentifier [$Whitespace] $$Identifier {$$AccessorOperator $$Identifier}
+  { Whitespace? $Identifier Whitespace? $AccessorOperator } Whitespace? $Identifier ArrayCharacters*
+  Whitespace? $BoolKeyword ArrayCharacters*
+  Whitespace? $VoidKeyword
+def NamespaceIdentifier Whitespace? $Identifier {$AccessorOperator $Identifier}
 
-tok Whitespace $Whitespace
+tok Whitespace Whitespace
 
-tok Using [$Whitespace] $$UsingKeyword $NamespaceIdentifier [$Whitespace] $$Semicolon
-tok Namespace [$Whitespace] $$NamespaceKeyword $NamespaceIdentifier [$Whitespace] $$Semicolon
+tok Using Whitespace? $UsingKeyword NamespaceIdentifier Whitespace? $Semicolon
+tok Namespace Whitespace? $NamespaceKeyword NamespaceIdentifier Whitespace? $Semicolon
 
-def Parameter [$Whitespace] $Type [$Whitespace] $$Identifier
-def ParameterList [$Whitespace] $Parameter {[$Whitespace] $$CommaOperator $Parameter}
+def Parameter Whitespace? Type Whitespace? $Identifier
+def ParameterList Whitespace? Parameter {Whitespace? $CommaOperator Parameter}
 
-def inline FunctionModifier [$Whitespace] $$NativeKeyword
-def FunctionModifiers { $FunctionModifier }
+def inline FunctionModifier Whitespace? $NativeKeyword
+def FunctionModifiers FunctionModifier*
 
-def ReturnStatement [$Whitespace] $$ReturnKeyword [[$Whitespace] $Expression] [$Whitespace] $$Semicolon
-def BreakStatement [$Whitespace] $$BreakKeyword [$Whitespace] $$Semicolon
-def ContinueStatement [$Whitespace] $$ContinueKeyword [$Whitespace] $$Semicolon
-def AssignmentStatement $Accessor [$Whitespace] $$AssignOperator [$Whitespace] $Expression [$Whitespace] $$Semicolon
-def CreateAssignmentStatement $Type [$Whitespace] $$Identifier [$Whitespace] $$AssignOperator [$Whitespace] $Expression [$Whitespace] $$Semicolon
-def IfStatement [$Whitespace] $$IfKeyword [$Whitespace] $$OpenParen [$Whitespace] $Expression [$Whitespace] $$CloseParen $Code [$ElseStatement]
-def ElseStatement [$Whitespace] $$ElseKeyword $Code
-def WhileStatement [$Whitespace] $$WhileKeyword [$Whitespace] $$OpenParen [$Whitespace] $Expression [$Whitespace] $$CloseParen $Code
-def AccessorStatement $Accessor [$Whitespace] $$Semicolon
+def ReturnStatement Whitespace? $ReturnKeyword [Whitespace? Expression] Whitespace? $Semicolon
+def BreakStatement Whitespace? $BreakKeyword Whitespace? $Semicolon
+def ContinueStatement Whitespace? $ContinueKeyword Whitespace? $Semicolon
+def AssignmentStatement Accessor Whitespace? $AssignOperator Whitespace? Expression Whitespace? $Semicolon
+def CreateAssignmentStatement Type Whitespace? $Identifier Whitespace? $AssignOperator Whitespace? Expression Whitespace? $Semicolon
+def IfStatement Whitespace? $IfKeyword Whitespace? $OpenParen Whitespace? Expression Whitespace? $CloseParen Code ElseStatement?
+def ElseStatement Whitespace? $ElseKeyword Code
+def WhileStatement Whitespace? $WhileKeyword Whitespace? $OpenParen Whitespace? Expression Whitespace? $CloseParen Code
+def AccessorStatement Accessor Whitespace? $Semicolon
 
 def Statement:
-  $ReturnStatement
-  $BreakStatement
-  $ContinueStatement
-  $AssignmentStatement
-  $CreateAssignmentStatement
-  $IfStatement
-  $WhileStatement
-  $AccessorStatement
+  ReturnStatement
+  BreakStatement
+  ContinueStatement
+  AssignmentStatement
+  CreateAssignmentStatement
+  IfStatement
+  WhileStatement
+  AccessorStatement
 
 def Code:
-  [$Whitespace] $$OpenBrace {$Statement} [$Whitespace] $$CloseBrace
-  [$Whitespace] $$LineCodeChars $Statement
+  Whitespace? $OpenBrace Statement* Whitespace? $CloseBrace
+  Whitespace? $LineCodeChars Statement
 
 tok Function:
-  $FunctionModifiers [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$OpenParen [$ParameterList] [$Whitespace] $$CloseParen [$Whitespace] $$Semicolon
-  $FunctionModifiers [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$OpenParen [$ParameterList] [$Whitespace] $$CloseParen $Code
+  FunctionModifiers Whitespace? Type Whitespace? $Identifier Whitespace? $OpenParen ParameterList? Whitespace? $CloseParen Whitespace? $Semicolon
+  FunctionModifiers Whitespace? Type Whitespace? $Identifier Whitespace? $OpenParen ParameterList? Whitespace? $CloseParen Code
 
-tok Field $Type [$Whitespace] $$Identifier [$Whitespace] $$Semicolon
+tok Field Type Whitespace? $Identifier Whitespace? $Semicolon
 
 
-tok Class $$ClassKeyword [$Whitespace] $$Identifier [$Whitespace] $$OpenBrace {[$Whitespace] $ClassElement} [$Whitespace] $$CloseBrace
-def ClassField $Type [$Whitespace] $$Identifier [$Whitespace] $$Semicolon
+tok Class $ClassKeyword Whitespace? $Identifier Whitespace? $OpenBrace {Whitespace? ClassElement} Whitespace? $CloseBrace
+def ClassField Type Whitespace? $Identifier Whitespace? $Semicolon
 def ClassMethod:
-  $FunctionModifiers [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$OpenParen [$ParameterList] [$Whitespace] $$CloseParen [$Whitespace] $$Semicolon
-  $FunctionModifiers [$Whitespace] $Type [$Whitespace] $$Identifier [$Whitespace] $$OpenParen [$ParameterList] [$Whitespace] $$CloseParen $Code
+  FunctionModifiers Whitespace? Type Whitespace? $Identifier Whitespace? $OpenParen ParameterList? Whitespace? $CloseParen Whitespace? $Semicolon
+  FunctionModifiers Whitespace? Type Whitespace? $Identifier Whitespace? $OpenParen ParameterList? Whitespace? $CloseParen Code
 
 def inline ClassElement:
-  $ClassMethod
-  $ClassField
+  ClassMethod
+  ClassField
