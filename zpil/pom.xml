@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>zpil</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
 
     <build>
         <plugins>
@@ -58,7 +58,7 @@
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zprol-types</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.7</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
