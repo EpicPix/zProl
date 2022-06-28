@@ -1,0 +1,9 @@
+namespace zprol.lang.io.direct;
+
+native void outb(uint16 port, uint8 data);
+native void outs(uint16 port, uint16 data);
+native void outw(uint16 port, uint32 data);
+
+native uint8 inb(uint16 port);
+native uint16 ins(uint16 port);
+native uint32 inw(uint16 port);

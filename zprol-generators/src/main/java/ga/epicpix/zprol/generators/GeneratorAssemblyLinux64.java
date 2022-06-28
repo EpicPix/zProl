@@ -415,7 +415,21 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     }
 
     private static void invokeFunction(Function f, boolean methodLike, InstructionList instructions) {
-        boolean isSyscall = FunctionModifiers.isEmptyCode(f.modifiers()) && f.name().equals("syscall");
+        if(FunctionModifiers.isEmptyCode(f.modifiers())) {
+            boolean notFound = false;
+            if(Objects.equals(f.namespace(), "zprol.lang.io.direct")) {
+                if(f.name().equals("inb") && f.signature().toString().equals("uB(uS)")) instructions.add("pop dx").add("in al, dx").add("push ax");
+                else if(f.name().equals("ins") && f.signature().toString().equals("uS(uS)")) instructions.add("pop dx").add("in ax, dx").add("push ax");
+                else if(f.name().equals("inw") && f.signature().toString().equals("uI(uS)")) instructions.add("pop dx").add("in eax, dx").add("push rax");
+                else if(f.name().equals("outb") && f.signature().toString().equals("V(uSuB)")) instructions.add("pop ax").add("pop dx").add("out dx, al");
+                else if(f.name().equals("outs") && f.signature().toString().equals("V(uSuS)")) instructions.add("pop ax").add("pop dx").add("out dx, ax");
+                else if(f.name().equals("outw") && f.signature().toString().equals("V(uSuI)")) instructions.add("pop rax").add("pop dx").add("out dx, eax");
+                else notFound = true;
+            }
+            if(!notFound) return;
+        }
+
+        boolean isSyscall = FunctionModifiers.isEmptyCode(f.modifiers()) && Objects.equals(f.namespace(), "zprol.lang.linux.amd64") && f.name().equals("syscall");
 
         var params = f.signature().parameters();
         int off = methodLike ? 1 : 0;
