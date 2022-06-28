@@ -48,6 +48,7 @@ public class Compiler {
         while(tokens.hasNext()) {
             token = tokens.next();
             if(token instanceof NamedToken named) {
+                if("Whitespace".equals(named.name)) continue;
                 if("ReturnStatement".equals(named.name)) {
                     if(!(sig.returnType() instanceof VoidType)) {
                         if(named.getTokenWithName("Expression") == null) {
