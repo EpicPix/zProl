@@ -29,9 +29,12 @@ public class PreCompiler {
                 }else if(named.name.equals("Function")) {
                     pre.functions.add(parseFunction(named));
                 }else if(named.name.equals("Field")) {
-                    PreField field = new PreField();
+                    PreField field = new PreField(named.getTokenWithName("Expression"));
                     field.type = named.getTokenAsString("Type");
                     field.name = named.getLexerToken("Identifier").data;
+                    if(named.getLexerToken("ConstKeyword") != null) {
+                        field.modifiers.add(PreFieldModifiers.CONST);
+                    }
                     pre.fields.add(field);
                 }else if(named.name.equals("Class")) {
                     PreClass clazz = new PreClass();
@@ -39,7 +42,7 @@ public class PreCompiler {
                     clazz.name = named.getLexerToken("Identifier").data;
 
                     for(var fieldToken : named.getTokensWithName("ClassField")) {
-                        PreField field = new PreField();
+                        PreField field = new PreField(named.getTokenWithName("Expression"));
                         field.type = fieldToken.getTokenAsString("Type");
                         field.name = fieldToken.getLexerToken("Identifier").data;
                         clazz.fields.add(field);

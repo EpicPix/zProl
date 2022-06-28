@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.compiler.compiled;
 
 import ga.epicpix.zpil.GeneratedData;
+import ga.epicpix.zpil.attr.ConstantValueAttribute;
 import ga.epicpix.zpil.bytecode.Bytecode;
 import ga.epicpix.zpil.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.compiler.exceptions.RedefinedFieldException;
@@ -35,9 +36,9 @@ public class CompiledData {
         return using;
     }
 
-    private final ArrayList<Function> functions = new ArrayList<>();
-    private final ArrayList<Field> fields = new ArrayList<>();
-    private final ArrayList<Class> classes = new ArrayList<>();
+    public final ArrayList<Function> functions = new ArrayList<>();
+    public final ArrayList<Field> fields = new ArrayList<>();
+    public final ArrayList<Class> classes = new ArrayList<>();
 
     public void includeToGenerated(GeneratedData data) {
         for(var f : functions) {
@@ -68,6 +69,9 @@ public class CompiledData {
             }
             data.fields.add(f);
             data.constantPool.getOrCreateFieldIndex(f);
+            if(f.defaultValue() != null) {
+                new ConstantValueAttribute(f.defaultValue().value()).prepareConstantPool(data.constantPool);
+            }
         }
 
         for(var clz : classes) {

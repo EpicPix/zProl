@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class GeneratorAssemblyLinux64 extends Generator {
@@ -554,6 +555,11 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
         assembly.add("global _entry");
         assembly.add("_entry:");
+        for(var function : generated.functions) {
+            if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
+            if(!function.name().equals(".init")) continue;
+            assembly.add("call " + getMangledName(function));
+        }
         assembly.add("call " + getMangledName(null, "main", new FunctionSignature(Types.getTypeFromDescriptor("V"))));
         assembly.add("mov rax, 60");
         assembly.add("mov rdi, 0");
@@ -573,6 +579,13 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 writeFunction(new Function(method.namespace(), method.modifiers(), method.className() + "." + method.name(), method.signature(), method.code()), true, localConstantPool, assembly);
             }
         }
+
+        for (var field : generated.fields) {
+            if(field.defaultValue() == null) continue;
+            if(field.type() instanceof ClassType clz && clz.normalName().equals("zprol.lang.String")) {
+                localConstantPool.getOrCreateStringIndex((String) field.defaultValue().value());
+            }
+        }
         int index = 1;
         for(var constantPoolEntry : localConstantPool.entries) {
             if(constantPoolEntry instanceof ConstantPoolEntry.StringEntry str) {
@@ -585,13 +598,52 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }
 
         if(generated.fields.size() != 0) {
-            assembly.add("section .bss");
+            boolean shownBSS = false;
             for (var field : generated.fields) {
+                if(field.defaultValue() != null) continue;
                 int size = 8;
                 if (field.type() instanceof PrimitiveType prim) {
                     size = prim.size;
                 }
+                if(!shownBSS) {
+                    assembly.add("section .bss");
+                    shownBSS = true;
+                }
                 assembly.add(getMangledName(field) + ": resb " + size);
+            }
+
+            boolean shownROData = false;
+            for (var field : generated.fields) {
+                if(field.defaultValue() == null) continue;
+                if(!shownROData) {
+                    assembly.add("section .rodata");
+                    shownROData = true;
+                }
+                if (field.type() instanceof PrimitiveType prim) {
+                    int size = prim.size;
+                    switch(size) {
+                        case 1 -> assembly.add(getMangledName(field) + ": db " + field.defaultValue().value());
+                        case 2 -> assembly.add(getMangledName(field) + ": dw " + field.defaultValue().value());
+                        case 4 -> assembly.add(getMangledName(field) + ": dd " + field.defaultValue().value());
+                        case 8 -> assembly.add(getMangledName(field) + ": dq " + field.defaultValue().value());
+                    }
+                }else if(field.type() instanceof NullType) {
+                    assembly.add(getMangledName(field) + ": dq 0");
+                }else if(field.type() instanceof ClassType clz && clz.normalName().equals("zprol.lang.String")) {
+                    var s = (String) field.defaultValue().value();
+                    index = 1;
+                    for(var constantPoolEntry : localConstantPool.entries) {
+                        if(constantPoolEntry instanceof ConstantPoolEntry.StringEntry str) {
+                            if(str.getString().equals(s)) {
+                                assembly.add(getMangledName(field) + ": dq _string" + index);
+                                break;
+                            }
+                        }
+                        index++;
+                    }
+                }else {
+                    throw new IllegalStateException("Unexpected type: " + field.type());
+                }
             }
         }
 
@@ -675,15 +727,27 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     }
 
     public static String getMangledName(String namespace, String name, FunctionSignature signature) {
-        return (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + signature.toString().replace("(", "").replace(")", "").replace(";", "").replace("[", "r");
+        String r = (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + signature.toString().replace("(", "").replace(")", "").replace(";", "").replace("[", "r");
+        if(r.startsWith(".")) {
+            return "@" + r;
+        }
+        return r;
     }
 
     public static String getMangledName(String namespace, String className, String name, FunctionSignature signature) {
-        return (namespace != null ? namespace.replace('.', '$') + "$" : "") + className + "." + name + "$" + signature.toString().replace("(", "").replace(")", "").replace(";", "").replace("[", "r");
+        String r = (namespace != null ? namespace.replace('.', '$') + "$" : "") + className + "." + name + "$" + signature.toString().replace("(", "").replace(")", "").replace(";", "").replace("[", "r");
+        if(r.startsWith(".")) {
+            return "@" + r;
+        }
+        return r;
     }
 
     public static String getMangledName(String namespace, String name, Type type) {
-        return (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + type.getDescriptor().replace(";", "").replace("[", "r");
+        String r = (namespace != null ? namespace.replace('.', '$') + "$" : "") + name + "$" + type.getDescriptor().replace(";", "").replace("[", "r");
+        if(r.startsWith(".")) {
+            return "@" + r;
+        }
+        return r;
     }
 
 }

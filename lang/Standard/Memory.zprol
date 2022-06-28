@@ -200,16 +200,16 @@ void free(byte[] location) {
     }
 }
 
-byte[] mmap_alloc(uint64 length) => return mmap(0, length, PROT_READ() | PROT_WRITE(), MAP_PRIVATE() | MAP_ANONYMOUS(), 0, 0);
+byte[] mmap_alloc(uint64 length) => return mmap(0, length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 
 byte[] mmap(uint64 addr, uint64 length, uint64 protection, uint64 flags, uint64 fd, uint64 offset) =>
-    return (byte[]!) syscall(SYSCALL_MMAP(), addr, length, protection, flags, fd, offset);
+    return (byte[]!) syscall(SYSCALL_MMAP, addr, length, protection, flags, fd, offset);
 
-void munmap(uint64 addr, uint64 length) => syscall(SYSCALL_MUNMAP(), addr, length);
+void munmap(uint64 addr, uint64 length) => syscall(SYSCALL_MUNMAP, addr, length);
 
-int64 PROT_READ() => return 1;
-int64 PROT_WRITE() => return 2;
+const int64 PROT_READ = 1;
+const int64 PROT_WRITE = 2;
 
-int64 MAP_PRIVATE() => return 2;
-int64 MAP_SHARED() => return 4;
-int64 MAP_ANONYMOUS() => return 32;
+const int64 MAP_PRIVATE = 2;
+const int64 MAP_SHARED = 4;
+const int64 MAP_ANONYMOUS = 32;

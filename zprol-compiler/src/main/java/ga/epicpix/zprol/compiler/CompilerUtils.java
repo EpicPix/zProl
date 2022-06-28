@@ -42,6 +42,11 @@ public class CompilerUtils {
         }
     }
 
+    public static String convertToLanguageString(Token value) {
+        var strChars = value.toStringRaw();
+        return strChars.substring(1, strChars.length() - 1).replace("\\\"", "\"").replace("\\n", "\n").replace("\\0", "\0");
+    }
+
     public static String getInstructionPrefix(int size) {
         return Bytecode.BYTECODE.getInstructionPrefix(size);
     }

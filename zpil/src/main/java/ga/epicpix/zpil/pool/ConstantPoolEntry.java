@@ -201,12 +201,14 @@ public class ConstantPoolEntry {
         private final int namespace;
         private final int name;
         private final int type;
+        private final int modifiers;
 
-        public FieldEntry(int namespace, int name, int type) {
+        public FieldEntry(int namespace, int name, int type, int modifiers) {
             super((byte) 5);
             this.namespace = namespace;
             this.name = name;
             this.type = type;
+            this.modifiers = modifiers;
         }
 
         public int getNamespace() {
@@ -221,15 +223,20 @@ public class ConstantPoolEntry {
             return type;
         }
 
+        public int getModifiers() {
+            return modifiers;
+        }
+
         public void write(DataOutputStream out) throws IOException {
             super.write(out);
             out.writeInt(namespace);
             out.writeInt(name);
             out.writeInt(type);
+            out.writeInt(modifiers);
         }
 
         public static FieldEntry read(DataInputStream in) throws IOException {
-            return new FieldEntry(in.readInt(), in.readInt(), in.readInt());
+            return new FieldEntry(in.readInt(), in.readInt(), in.readInt(), in.readInt());
         }
 
         public String toString() {

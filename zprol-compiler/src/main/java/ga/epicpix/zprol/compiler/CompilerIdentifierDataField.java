@@ -7,11 +7,14 @@ import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.structures.Class;
 import ga.epicpix.zprol.structures.Field;
+import ga.epicpix.zprol.structures.FieldModifiers;
 import ga.epicpix.zprol.structures.IBytecodeStorage;
 import ga.epicpix.zprol.types.BooleanType;
 import ga.epicpix.zprol.types.PrimitiveType;
 import ga.epicpix.zprol.types.Type;
 import ga.epicpix.zprol.types.VoidType;
+
+import java.util.EnumSet;
 
 import static ga.epicpix.zprol.compiler.Compiler.doCast;
 import static ga.epicpix.zprol.compiler.CompilerUtils.*;
@@ -68,7 +71,12 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
                 for(var field : using.fields) {
                     if(!field.name.equals(fieldName)) continue;
                     var fieldType = data.resolveType(field.type);
-                    var f = new Field(using.namespace, field.name, fieldType);
+
+                    var modifiers = EnumSet.noneOf(FieldModifiers.class);
+                    for(var modifier : field.modifiers) {
+                        modifiers.add(modifier.getCompiledModifier());
+                    }
+                    var f = new Field(using.namespace, modifiers, field.name, fieldType, null);
 
                     if(fieldType instanceof PrimitiveType primitive) {
                         bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_field", f));
@@ -129,7 +137,12 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
                 for(var field : using.fields) {
                     if(!field.name.equals(fieldName)) continue;
                     var fieldType = data.resolveType(field.type);
-                    var f = new Field(using.namespace, field.name, fieldType);
+                    var modifiers = EnumSet.noneOf(FieldModifiers.class);
+                    for(var modifier : field.modifiers) {
+                        modifiers.add(modifier.getCompiledModifier());
+                    }
+                    var f = new Field(using.namespace, modifiers, field.name, fieldType, null);
+                    if(modifiers.contains(FieldModifiers.CONST)) throw new TokenLocatedException("Cannot assign to const value");
                     if(type != null) doCast(fieldType, type, false, bytecode, location);
                     if(fieldType instanceof PrimitiveType primitive) {
                         bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_field", f));

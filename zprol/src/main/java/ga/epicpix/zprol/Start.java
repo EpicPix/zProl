@@ -262,7 +262,7 @@ public class Start {
             var fields = new ArrayList<PreField>();
             var methods = new ArrayList<PreFunction>();
             for(var f : clazz.fields()) {
-                fields.add(new PreField(f.name(), f.type().normalName()));
+                fields.add(new PreField(f.name(), f.type().normalName(), null));
             }
             for(var func : clazz.methods()) {
                 var params = new ArrayList<PreParameter>();
@@ -313,9 +313,17 @@ public class Start {
             preCompiledData.putIfAbsent(fld.namespace(), new PreCompiledData());
 
             compiledData.get(fld.namespace()).addField(fld);
-            var field = new PreField();
+            var field = new PreField(null);
             field.name = fld.name();
             field.type = fld.type().getName();
+            for(var v : fld.modifiers()) {
+                for(var m : PreFieldModifiers.MODIFIERS) {
+                    if(m.getCompiledModifier() == v) {
+                        field.modifiers.add(m);
+                        break;
+                    }
+                }
+            }
             preCompiledData.get(fld.namespace()).fields.add(field);
         }
         for(var e : compiledData.entrySet()) includedCompiled.add(e.getValue());
@@ -343,6 +351,25 @@ public class Start {
                 for(var instruction : func.code().getInstructions()) {
                     System.out.println("        " + instruction);
                 }
+            }
+        }
+
+        System.out.println("Fields:");
+        for(var fld : data.fields) {
+            System.out.println("  Field");
+            System.out.println("    Namespace: \"" + (fld.namespace() != null ? fld.namespace() : "") + "\"");
+            System.out.println("    Name: \"" + fld.name() + "\"");
+            System.out.println("    Type: \"" + fld.type().getDescriptor() + "\"");
+            if(fld.defaultValue() != null) {
+                if(fld.defaultValue().value() != null) {
+                    System.out.println("    Constant Value: " + fld.defaultValue().value().getClass().getSimpleName() + " " + fld.defaultValue().value());
+                }else {
+                    System.out.println("    Constant Value: null");
+                }
+            }
+            System.out.println("    Modifiers (" + fld.modifiers().size() + "):");
+            for(var modifier : fld.modifiers()) {
+                System.out.println("      " + modifier);
             }
         }
 

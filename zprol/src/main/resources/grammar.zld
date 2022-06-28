@@ -19,6 +19,8 @@ lex BoolKeyword bool
 
 lex NativeKeyword native
 
+lex ConstKeyword const
+
 lex Semicolon ;
 lex OpenBracket [
 lex CloseBracket ]
@@ -133,7 +135,9 @@ def Code Whitespace? ('{' Statement* Whitespace? '}')|('=>' Statement)
 
 tok Function FunctionModifiers Whitespace? Type Whitespace? $Identifier Whitespace? '(' ParameterList? Whitespace? ')' Whitespace? ';'|Code
 
-tok Field Type Whitespace? $Identifier Whitespace? ';'
+tok Field:
+  'const' Type Whitespace? $Identifier Whitespace? '=' Whitespace? Expression Whitespace? ';'
+  Type Whitespace? $Identifier Whitespace? ';'
 
 
 tok Class 'class' Whitespace? $Identifier Whitespace? '{' (Whitespace? ClassElement)* Whitespace? '}'
