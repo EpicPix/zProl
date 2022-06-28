@@ -14,30 +14,28 @@ import static ga.epicpix.zprol.parser.zld.CallToken.EMPTY_TOKENS;
 
 class MultiToken extends LanguageTokenFragment {
 
-    MultiToken(LanguageTokenFragment[] fragments) {
-        super(new MultiTokenTokenReader(fragments), Arrays.stream(fragments).map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "*");
+    MultiToken(LanguageTokenFragment fragment) {
+        super(new MultiTokenTokenReader(fragment), fragment.getDebugName() + "*");
     }
 
-    public record MultiTokenTokenReader(LanguageTokenFragment[] fragments) implements Function<SeekIterator<LexerToken>, Token[]> {
+    public record MultiTokenTokenReader(LanguageTokenFragment fragment) implements Function<SeekIterator<LexerToken>, Token[]> {
         public Token[] apply(SeekIterator<LexerToken> p) {
             ArrayList<Token> tokens = new ArrayList<>();
             boolean successful = false;
 
-            fLoop: do {
+            do {
                 var loc = p.currentIndex();
                 ArrayList<Token> iterTokens = new ArrayList<>();
-                for (var frag : fragments) {
-                    var r = frag.apply(p);
-                    if (r == null) {
-                        p.setIndex(loc);
-                        if (successful) {
-                            break fLoop;
-                        } else {
-                            return EMPTY_TOKENS;
-                        }
+                var r = fragment.apply(p);
+                if (r == null) {
+                    p.setIndex(loc);
+                    if (successful) {
+                        break;
+                    } else {
+                        return EMPTY_TOKENS;
                     }
-                    Collections.addAll(iterTokens, r);
                 }
+                Collections.addAll(iterTokens, r);
                 successful = true;
                 tokens.addAll(iterTokens);
             } while (true);

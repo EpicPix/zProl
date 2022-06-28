@@ -79,14 +79,10 @@ public class ZldParser {
             int seek = parser.seekCharacter();
             if(seek == '?') {
                 parser.nextChar();
-                return new OptionalToken(new LanguageTokenFragment[] {
-                    res == null ? convert(w, parser) : res
-                });
+                return new OptionalToken(res == null ? convert(w, parser) : res);
             }else if(seek == '*') {
                 parser.nextChar();
-                return new MultiToken(new LanguageTokenFragment[] {
-                    res == null ? convert(w, parser) : res
-                });
+                return new MultiToken(res == null ? convert(w, parser) : res);
             }
         }
 
