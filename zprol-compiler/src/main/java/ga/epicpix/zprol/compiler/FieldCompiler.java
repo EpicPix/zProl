@@ -78,10 +78,11 @@ public class FieldCompiler {
                 }
                 if(initFunction == null) {
                     initFunction = new Function(data.namespace, EnumSet.noneOf(FunctionModifiers.class), ".init", new FunctionSignature(data.resolveType("void")), bytecode);
+                    bytecode.pushInstruction(getConstructedInstruction("vreturn"));
                     data.functions.add(initFunction);
                 }else {
                     var code = initFunction.code();
-                    for(var i : bytecode.getInstructions()) code.pushInstruction(i);
+                    for(var i : bytecode.getInstructions()) code.pushInstruction(code.getInstructionsLength() - 1, i);
                 }
             }
         }
