@@ -17,7 +17,7 @@ class CallToken extends LanguageTokenFragment {
     static final Token[] EMPTY_TOKENS = new Token[0];
 
     CallToken(String use) {
-        super(new CallTokenTokenReader(use), "$" + use);
+        super(new CallTokenTokenReader(use), use);
     }
 
 

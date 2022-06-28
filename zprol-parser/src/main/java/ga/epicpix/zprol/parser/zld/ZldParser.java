@@ -18,7 +18,7 @@ public class ZldParser {
 
     public static final HashMap<String, ArrayList<LanguageToken>> DEFINITIONS = new HashMap<>();
 
-    private static final char[] tokenCharacters = DataParser.joinCharacters(DataParser.nonSpecialCharacters, new char[] {'@', '%', '=', '>', ':'});
+    private static final char[] tokenCharacters = DataParser.nonSpecialCharacters;
 
     private static LanguageLexerTokenFragment convertLexer(String w, DataParser parser) {
         if(w.equals("*")) {
@@ -64,32 +64,54 @@ public class ZldParser {
     }
 
     private static LanguageTokenFragment convert(String w, DataParser parser) {
-        if(w.startsWith("\\")) {
-            w = parser.nextWord();
-        } else if(w.equals("{")) {
+        LanguageTokenFragment res = null;
+        if(w.equals("$")) {
+            res = new LexerCallToken(parser.nextTemplateWord(tokenCharacters));
+        }else if(w.equals("(")) {
             ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
             String next;
-            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
+            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals(")")) {
                 fragmentsList.add(convert(next, parser));
             }
-            return new MultiToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
-        }else if(w.equals("$")) {
-            String next = parser.nextTemplateWord(tokenCharacters);
-            if(next.equals("$")) {
-                return new LexerCallToken(parser.nextTemplateWord(tokenCharacters));
-            }else {
-                return new CallToken(next);
+            res = new AllToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
+        }else if(w.equals("'")) {
+            StringBuilder name = new StringBuilder();
+            int next;
+            while((next = parser.nextChar()) != '\'') {
+                name.appendCodePoint(next);
             }
-        }else if(w.equals("[")) {
-            ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
-            String next;
-            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("]")) {
-                fragmentsList.add(convert(next, parser));
+            nextLT: for(var lt : LEXER_TOKENS) {
+                if(lt.clean()) continue;
+                StringBuilder str = new StringBuilder();
+                for(var arg : lt.args()) {
+                    if(arg.multi() || arg.negate() || arg.characters().length != 1) continue nextLT;
+                    str.appendCodePoint(arg.characters()[0]);
+                }
+                if(name.toString().equals(str.toString())) {
+                    res = new ExactLexerCallToken(lt, str.toString());
+                    break;
+                }
             }
-            return new OptionalToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
+            if(res == null) throw new ParserException("Cannot find exact lexer token: " + name, parser);
+        }
+        if(parser.hasNext()) {
+            var loc = parser.saveLocation();
+            int seek = parser.nextChar();
+            if(seek == '?') {
+                return new OptionalToken(res == null ? convert(w, parser) : res);
+            }else if(seek == '*') {
+                return new MultiToken(res == null ? convert(w, parser) : res);
+            }else if(seek == '|') {
+                return new OrToken(res == null ? convert(w, parser) : res, convert(parser.nextTemplateWord(tokenCharacters), parser));
+            }
+            parser.loadLocation(loc);
         }
 
-        throw new ParserException(w, parser);
+        if(res != null) {
+            return res;
+        }
+
+        return new CallToken(w);
     }
 
     public static void load(String fileName, String data) {

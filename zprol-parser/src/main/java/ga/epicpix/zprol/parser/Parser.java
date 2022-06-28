@@ -160,7 +160,7 @@ public class Parser {
                     if(possibility.clean()) {
                         boolean result = checkClean(parser, possibility);
                         if(result) {
-                            tokens.add(new LexerToken(possibility.name(), "", start, parser.getLocation(), parser));
+                            tokens.add(new LexerToken(possibility.name(), "", possibility, start, parser.getLocation(), parser));
                             continue next;
                         }
                     }else {
@@ -168,7 +168,7 @@ public class Parser {
                         if ((result = check(parser, possibility)) != null) {
                             if(res == null || result.length() > res.data.length()) {
                                 endLocation = parser.saveLocation();
-                                res = new LexerToken(possibility.name(), result, start, parser.getLocation(), parser);
+                                res = new LexerToken(possibility.name(), result, possibility, start, parser.getLocation(), parser);
                             }
                         }
                     }

@@ -14,23 +14,19 @@ import static ga.epicpix.zprol.parser.zld.CallToken.EMPTY_TOKENS;
 
 class OptionalToken extends LanguageTokenFragment {
 
-    OptionalToken(LanguageTokenFragment[] fragments) {
-        super(new OptionalTokenTokenReader(fragments), "[" + Arrays.stream(fragments).map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "]");
+    OptionalToken(LanguageTokenFragment fragment) {
+        super(new OptionalTokenTokenReader(fragment), fragment.getDebugName() + "?");
     }
 
-    public record OptionalTokenTokenReader(LanguageTokenFragment[] fragments) implements Function<SeekIterator<LexerToken>, Token[]> {
+    public record OptionalTokenTokenReader(LanguageTokenFragment fragment) implements Function<SeekIterator<LexerToken>, Token[]> {
         public Token[] apply(SeekIterator<LexerToken> p) {
             var loc = p.currentIndex();
-            ArrayList<Token> iterTokens = new ArrayList<>();
-            for (var frag : fragments) {
-                var r = frag.apply(p);
-                if (r == null) {
-                    p.setIndex(loc);
-                    return EMPTY_TOKENS;
-                }
-                Collections.addAll(iterTokens, r);
+            var r = fragment.apply(p);
+            if (r == null) {
+                p.setIndex(loc);
+                return EMPTY_TOKENS;
             }
-            return iterTokens.toArray(EMPTY_TOKENS);
+            return r;
         }
     }
 }
