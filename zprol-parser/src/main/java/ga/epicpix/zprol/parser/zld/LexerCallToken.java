@@ -9,7 +9,7 @@ import java.util.function.Function;
 class LexerCallToken extends LanguageTokenFragment {
 
     LexerCallToken(String use) {
-        super(new LexerCallTokenTokenReader(use), "$$" + use);
+        super(new LexerCallTokenTokenReader(use), "$" + use);
     }
 
 

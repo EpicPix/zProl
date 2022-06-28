@@ -15,7 +15,7 @@ import static ga.epicpix.zprol.parser.zld.CallToken.EMPTY_TOKENS;
 class MultiToken extends LanguageTokenFragment {
 
     MultiToken(LanguageTokenFragment[] fragments) {
-        super(new MultiTokenTokenReader(fragments), "{" + Arrays.stream(fragments).map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "}");
+        super(new MultiTokenTokenReader(fragments), Arrays.stream(fragments).map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "*");
     }
 
     public record MultiTokenTokenReader(LanguageTokenFragment[] fragments) implements Function<SeekIterator<LexerToken>, Token[]> {

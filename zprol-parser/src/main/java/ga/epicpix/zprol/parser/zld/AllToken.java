@@ -12,13 +12,13 @@ import java.util.stream.Collectors;
 
 import static ga.epicpix.zprol.parser.zld.CallToken.EMPTY_TOKENS;
 
-class OptionalToken extends LanguageTokenFragment {
+class AllToken extends LanguageTokenFragment {
 
-    OptionalToken(LanguageTokenFragment[] fragments) {
-        super(new OptionalTokenTokenReader(fragments), Arrays.stream(fragments).map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + "?");
+    AllToken(LanguageTokenFragment[] fragments) {
+        super(new AllTokenTokenReader(fragments), "(" + Arrays.stream(fragments).map(LanguageTokenFragment::getDebugName).collect(Collectors.joining(" ")) + ")");
     }
 
-    public record OptionalTokenTokenReader(LanguageTokenFragment[] fragments) implements Function<SeekIterator<LexerToken>, Token[]> {
+    public record AllTokenTokenReader(LanguageTokenFragment[] fragments) implements Function<SeekIterator<LexerToken>, Token[]> {
         public Token[] apply(SeekIterator<LexerToken> p) {
             var loc = p.currentIndex();
             ArrayList<Token> iterTokens = new ArrayList<>();
@@ -26,11 +26,12 @@ class OptionalToken extends LanguageTokenFragment {
                 var r = frag.apply(p);
                 if (r == null) {
                     p.setIndex(loc);
-                    return EMPTY_TOKENS;
+                    return null;
                 }
                 Collections.addAll(iterTokens, r);
             }
-            return iterTokens.toArray(EMPTY_TOKENS);
+            return iterTokens.toArray(new Token[0]);
         }
     }
+
 }

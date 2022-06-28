@@ -64,36 +64,34 @@ public class ZldParser {
     }
 
     private static LanguageTokenFragment convert(String w, DataParser parser) {
-        if(w.equals("{")) {
+        LanguageTokenFragment res = null;
+        if(w.equals("$")) {
+            res = new LexerCallToken(parser.nextTemplateWord(tokenCharacters));
+        }else if(w.equals("(")) {
             ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
             String next;
-            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("}")) {
+            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals(")")) {
                 fragmentsList.add(convert(next, parser));
             }
-            return new MultiToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
-        }else if(w.equals("$")) {
-            return new LexerCallToken(parser.nextTemplateWord(tokenCharacters));
-        }else if(w.equals("[")) {
-            ArrayList<LanguageTokenFragment> fragmentsList = new ArrayList<>();
-            String next;
-            while(!(next = parser.nextTemplateWord(tokenCharacters)).equals("]")) {
-                fragmentsList.add(convert(next, parser));
-            }
-            return new OptionalToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
+            res = new AllToken(fragmentsList.toArray(new LanguageTokenFragment[0]));
         }
         if(parser.hasNext()) {
             int seek = parser.seekCharacter();
             if(seek == '?') {
                 parser.nextChar();
                 return new OptionalToken(new LanguageTokenFragment[] {
-                    convert(w, parser)
+                    res == null ? convert(w, parser) : res
                 });
             }else if(seek == '*') {
                 parser.nextChar();
                 return new MultiToken(new LanguageTokenFragment[] {
-                    convert(w, parser)
+                    res == null ? convert(w, parser) : res
                 });
             }
+        }
+
+        if(res != null) {
+            return res;
         }
 
         return new CallToken(w);

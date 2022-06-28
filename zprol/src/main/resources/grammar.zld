@@ -57,7 +57,7 @@ lex HardCastIndicatorOperator !
 def WhitespaceElement:
   $Whitespace
   $Comment
-def Whitespace WhitespaceElement{WhitespaceElement}
+def Whitespace WhitespaceElement WhitespaceElement*
 
 def CastOperator $OpenParen Type Whitespace? $CloseParen
 def HardCastOperator $OpenParen Type Whitespace? $HardCastIndicatorOperator Whitespace? $CloseParen
@@ -100,19 +100,19 @@ def inline PostExpression:
 def CastExpression CastOperators Whitespace? CastExpression
 def inline CastExpression PostExpression
 
-def merge MultiplicativeExpression Whitespace? CastExpression [ Whitespace? MultiplicativeOperators Whitespace? MultiplicativeExpression ]
-def merge AdditiveExpression MultiplicativeExpression [ Whitespace? AdditiveOperators Whitespace? AdditiveExpression ]
-def merge CompareExpression AdditiveExpression [ Whitespace? CompareOperators Whitespace? CompareExpression ]
-def merge EqualsExpression CompareExpression [ Whitespace? EqualityOperators Whitespace? EqualsExpression ]
-def merge ShiftExpression EqualsExpression [ Whitespace? ShiftOperators Whitespace? ShiftExpression ]
-def merge InclusiveOrExpression ShiftExpression [ Whitespace? $InclusiveOrOperator Whitespace? InclusiveOrExpression ]
-def merge InclusiveAndExpression InclusiveOrExpression [ Whitespace? $AndOperator Whitespace? InclusiveAndExpression ]
+def merge MultiplicativeExpression Whitespace? CastExpression (Whitespace? MultiplicativeOperators Whitespace? MultiplicativeExpression)?
+def merge AdditiveExpression MultiplicativeExpression (Whitespace? AdditiveOperators Whitespace? AdditiveExpression)?
+def merge CompareExpression AdditiveExpression (Whitespace? CompareOperators Whitespace? CompareExpression)?
+def merge EqualsExpression CompareExpression (Whitespace? EqualityOperators Whitespace? EqualsExpression)?
+def merge ShiftExpression EqualsExpression (Whitespace? ShiftOperators Whitespace? ShiftExpression)?
+def merge InclusiveOrExpression ShiftExpression (Whitespace? $InclusiveOrOperator Whitespace? InclusiveOrExpression)?
+def merge InclusiveAndExpression InclusiveOrExpression (Whitespace? $AndOperator Whitespace? InclusiveAndExpression)?
 
 def Expression InclusiveAndExpression
 
 
 def Argument Whitespace? Expression
-def ArgumentList Argument {Whitespace? $CommaOperator Argument}
+def ArgumentList Argument (Whitespace? $CommaOperator Argument)*
 def FunctionInvocation Whitespace? $OpenParen ArgumentList? Whitespace? $CloseParen
 
 def FunctionInvocationAccessor Whitespace? $Identifier FunctionInvocation
@@ -147,10 +147,10 @@ def DecimalInteger:
 def ArrayCharacters ArrayAccessorOpenCharacter ArrayAccessorCloseCharacter
 
 def Type:
-  { Whitespace? $Identifier Whitespace? $AccessorOperator } Whitespace? $Identifier ArrayCharacters*
+  (Whitespace? $Identifier Whitespace? $AccessorOperator)* Whitespace? $Identifier ArrayCharacters*
   Whitespace? $BoolKeyword ArrayCharacters*
   Whitespace? $VoidKeyword
-def NamespaceIdentifier Whitespace? $Identifier {$AccessorOperator $Identifier}
+def NamespaceIdentifier Whitespace? $Identifier ($AccessorOperator $Identifier)*
 
 tok Whitespace Whitespace
 
@@ -158,12 +158,12 @@ tok Using Whitespace? $UsingKeyword NamespaceIdentifier Whitespace? $Semicolon
 tok Namespace Whitespace? $NamespaceKeyword NamespaceIdentifier Whitespace? $Semicolon
 
 def Parameter Whitespace? Type Whitespace? $Identifier
-def ParameterList Whitespace? Parameter {Whitespace? $CommaOperator Parameter}
+def ParameterList Whitespace? Parameter (Whitespace? $CommaOperator Parameter)*
 
 def inline FunctionModifier Whitespace? $NativeKeyword
 def FunctionModifiers FunctionModifier*
 
-def ReturnStatement Whitespace? $ReturnKeyword [Whitespace? Expression] Whitespace? $Semicolon
+def ReturnStatement Whitespace? $ReturnKeyword (Whitespace? Expression)? Whitespace? $Semicolon
 def BreakStatement Whitespace? $BreakKeyword Whitespace? $Semicolon
 def ContinueStatement Whitespace? $ContinueKeyword Whitespace? $Semicolon
 def AssignmentStatement Accessor Whitespace? $AssignOperator Whitespace? Expression Whitespace? $Semicolon
@@ -194,7 +194,7 @@ tok Function:
 tok Field Type Whitespace? $Identifier Whitespace? $Semicolon
 
 
-tok Class $ClassKeyword Whitespace? $Identifier Whitespace? $OpenBrace {Whitespace? ClassElement} Whitespace? $CloseBrace
+tok Class $ClassKeyword Whitespace? $Identifier Whitespace? $OpenBrace (Whitespace? ClassElement)* Whitespace? $CloseBrace
 def ClassField Type Whitespace? $Identifier Whitespace? $Semicolon
 def ClassMethod:
   FunctionModifiers Whitespace? Type Whitespace? $Identifier Whitespace? $OpenParen ParameterList? Whitespace? $CloseParen Whitespace? $Semicolon
