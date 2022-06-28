@@ -16,7 +16,7 @@ public class CompilerIdentifierData {
     }
 
     public static CompilerIdentifierData[] accessorToData(NamedToken accessor) {
-        var tokens = accessor.getNonWhitespaceTokens();
+        var tokens = accessor.tokens;
         var list = new ArrayList<CompilerIdentifierData>();
         if(tokens[0] instanceof LexerToken lexer) {
             if(lexer.name.equals("Identifier")) {

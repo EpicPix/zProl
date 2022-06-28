@@ -49,7 +49,6 @@ public class Compiler {
         while(tokens.hasNext()) {
             token = tokens.next();
             if(token instanceof NamedToken named) {
-                if("Whitespace".equals(named.name)) continue;
                 if("ReturnStatement".equals(named.name)) {
                     if(!(sig.returnType() instanceof VoidType)) {
                         if(named.getTokenWithName("Expression") == null) {
@@ -311,7 +310,7 @@ public class Compiler {
                 var op = token.getTokenWithName("CastOperator");
                 boolean isHardCast = op.getLexerToken("HardCastIndicatorOperator") != null;
                 var castType = data.resolveType(op.getTokenAsString("Type"));
-                var tokens = token.getNonWhitespaceTokens();
+                var tokens = token.tokens;
                 if(tokens[1] instanceof LexerToken lex && lex.name.equals("OpenParen")) {
                     generateInstructionsFromExpression(tokens[2].asNamedToken(), null, types, data, scope, bytecode, false);
                 } else {
@@ -338,7 +337,7 @@ public class Compiler {
     }
 
     public static Type runOperator(NamedToken token, Type expectedType, CompiledData data, FunctionCodeScope scope, ArrayDeque<Type> types, IBytecodeStorage bytecode) {
-        var tokens = token.getNonWhitespaceTokens();
+        var tokens = token.tokens;
         if (tokens[0] instanceof LexerToken lexer && lexer.name.equals("OpenParen")) {
             generateInstructionsFromExpression(tokens[1].asNamedToken(), expectedType, types, data, scope, bytecode, false);
             return types.pop();

@@ -100,6 +100,8 @@ public class ZldParser {
             int seek = parser.nextChar();
             if(seek == '?') {
                 return new OptionalToken(res == null ? convert(w, parser) : res);
+            }else if(seek == '&') {
+                return new IgnoredToken(res == null ? convert(w, parser) : res);
             }else if(seek == '*') {
                 return new MultiToken(res == null ? convert(w, parser) : res);
             }else if(seek == '|') {

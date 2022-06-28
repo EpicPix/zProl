@@ -56,44 +56,44 @@ $AssignOperator =
 $HardCastIndicatorOperator !
 
 
-file := Whitespace* Namespace? (Using|Function|Field|Class|Whitespace)*
+file := Whitespace& Namespace? (Using|Function|Field|Class|Whitespace)*
 
-Namespace := Whitespace? 'namespace' NamespaceIdentifier Whitespace? ';'
-Using := Whitespace? 'using' NamespaceIdentifier Whitespace? ';'
-Function := FunctionModifier* Type Whitespace? $Identifier Whitespace? '(' ParameterList? Whitespace? ')' Whitespace? ';'|Code
-Field := 'const' Type Whitespace? $Identifier Whitespace? '=' Expression Whitespace? ';'
-Field := Type Whitespace? $Identifier Whitespace? ';'
-Class := 'class' Whitespace? $Identifier Whitespace? '{' ClassElement* Whitespace? '}'
+Namespace := Whitespace& 'namespace' NamespaceIdentifier Whitespace& ';'
+Using := Whitespace& 'using' NamespaceIdentifier Whitespace& ';'
+Function := FunctionModifier* Type Whitespace& $Identifier Whitespace& '(' ParameterList? Whitespace& ')' Whitespace& ';'|Code
+Field := 'const' Type Whitespace& $Identifier Whitespace& '=' Expression Whitespace& ';'
+Field := Type Whitespace& $Identifier Whitespace& ';'
+Class := 'class' Whitespace& $Identifier Whitespace& '{' ClassElement* Whitespace& '}'
 
 
 WhitespaceElement inline := $Whitespace|$Comment
 Whitespace := WhitespaceElement WhitespaceElement*
 
-PostExpression inline := ('(' Whitespace? Expression Whitespace? ')')|String|Null|HexInteger|DecimalInteger|Boolean|Accessor
+PostExpression inline := ('(' Whitespace& Expression Whitespace& ')')|String|Null|HexInteger|DecimalInteger|Boolean|Accessor
 
-CastOperator := '(' Type '!'? Whitespace? ')'
-CastExpression := CastOperator Whitespace? CastExpression
+CastOperator := '(' Type '!'? Whitespace& ')'
+CastExpression := CastOperator Whitespace& CastExpression
 CastExpression inline := PostExpression
 
-MultiplicativeExpression merge := Whitespace? CastExpression (Whitespace? '*'|'/'|'%' MultiplicativeExpression)?
-AdditiveExpression merge := Whitespace? MultiplicativeExpression (Whitespace? '+'|'-' AdditiveExpression)?
-CompareExpression merge := Whitespace? AdditiveExpression (Whitespace? '<='|'<'|'>='|'>' CompareExpression)?
-EqualsExpression merge := Whitespace? CompareExpression (Whitespace? '=='|'!=' EqualsExpression)?
-ShiftExpression merge := Whitespace? EqualsExpression (Whitespace? '<<'|'>>' ShiftExpression)?
-InclusiveOrExpression merge := Whitespace? ShiftExpression (Whitespace? '|' InclusiveOrExpression)?
-InclusiveAndExpression merge := Whitespace? InclusiveOrExpression (Whitespace? '&' InclusiveAndExpression)?
+MultiplicativeExpression merge := Whitespace& CastExpression (Whitespace& '*'|'/'|'%' MultiplicativeExpression)?
+AdditiveExpression merge := Whitespace& MultiplicativeExpression (Whitespace& '+'|'-' AdditiveExpression)?
+CompareExpression merge := Whitespace& AdditiveExpression (Whitespace& '<='|'<'|'>='|'>' CompareExpression)?
+EqualsExpression merge := Whitespace& CompareExpression (Whitespace& '=='|'!=' EqualsExpression)?
+ShiftExpression merge := Whitespace& EqualsExpression (Whitespace& '<<'|'>>' ShiftExpression)?
+InclusiveOrExpression merge := Whitespace& ShiftExpression (Whitespace& '|' InclusiveOrExpression)?
+InclusiveAndExpression merge := Whitespace& InclusiveOrExpression (Whitespace& '&' InclusiveAndExpression)?
 
 Expression := InclusiveAndExpression
 
 Argument := Expression
-ArgumentList := Argument (Whitespace? ',' Whitespace? Argument)*
-FunctionInvocation := Whitespace? '(' ArgumentList? Whitespace? ')'
+ArgumentList := Argument (Whitespace& ',' Whitespace& Argument)*
+FunctionInvocation := Whitespace& '(' ArgumentList? Whitespace& ')'
 
-FunctionInvocationAccessor := Whitespace? $Identifier FunctionInvocation
-FunctionInvocationAccessor inline := Whitespace? $Identifier
+FunctionInvocationAccessor := Whitespace& $Identifier FunctionInvocation
+FunctionInvocationAccessor inline := Whitespace& $Identifier
 
-ArrayAccessor := Whitespace? '[' Expression Whitespace? ']'
-AccessorElement := Whitespace? '.' FunctionInvocationAccessor
+ArrayAccessor := Whitespace& '[' Expression Whitespace& ']'
+AccessorElement := Whitespace& '.' FunctionInvocationAccessor
 AccessorElement := ArrayAccessor
 
 Accessor := FunctionInvocationAccessor AccessorElement*
@@ -106,31 +106,31 @@ DecimalInteger := '0'|$DecimalInteger
 
 ArrayCharacters := '[' ']'
 
-Type := (Whitespace? $Identifier Whitespace? '.')* Whitespace? $Identifier ArrayCharacters*
-Type := Whitespace? 'bool' ArrayCharacters*
-Type := Whitespace? 'void'
-NamespaceIdentifier := Whitespace? $Identifier ('.' $Identifier)*
+Type := (Whitespace& $Identifier Whitespace& '.')* Whitespace& $Identifier ArrayCharacters*
+Type := Whitespace& 'bool' ArrayCharacters*
+Type := Whitespace& 'void'
+NamespaceIdentifier := Whitespace& $Identifier ('.' $Identifier)*
 
-Parameter := Type Whitespace? $Identifier
-ParameterList := Whitespace? Parameter (Whitespace? ',' Parameter)*
+Parameter := Type Whitespace& $Identifier
+ParameterList := Whitespace& Parameter (Whitespace& ',' Parameter)*
 
-FunctionModifier := Whitespace? 'native'
+FunctionModifier := Whitespace& 'native'
 
-ReturnStatement := 'return' Expression? Whitespace? ';'
-BreakStatement := 'break' Whitespace? ';'
-ContinueStatement := 'continue' Whitespace? ';'
-AssignmentStatement := Accessor Whitespace? '=' Expression Whitespace? ';'
-CreateAssignmentStatement := Type Whitespace? $Identifier Whitespace? '=' Expression Whitespace? ';'
-IfStatement := 'if' Whitespace? '(' Expression Whitespace? ')' Code (Whitespace? ElseStatement)?
+ReturnStatement := 'return' Expression? Whitespace& ';'
+BreakStatement := 'break' Whitespace& ';'
+ContinueStatement := 'continue' Whitespace& ';'
+AssignmentStatement := Accessor Whitespace& '=' Expression Whitespace& ';'
+CreateAssignmentStatement := Type Whitespace& $Identifier Whitespace& '=' Expression Whitespace& ';'
+IfStatement := 'if' Whitespace& '(' Expression Whitespace& ')' Code (Whitespace& ElseStatement)?
 ElseStatement := 'else' Code
-WhileStatement := 'while' Whitespace? '(' Expression Whitespace? ')' Code
-AccessorStatement := Accessor Whitespace? ';'
+WhileStatement := 'while' Whitespace& '(' Expression Whitespace& ')' Code
+AccessorStatement := Accessor Whitespace& ';'
 
-Statement := Whitespace? ReturnStatement|BreakStatement|ContinueStatement|AssignmentStatement|CreateAssignmentStatement|IfStatement|WhileStatement|AccessorStatement
+Statement := Whitespace& ReturnStatement|BreakStatement|ContinueStatement|AssignmentStatement|CreateAssignmentStatement|IfStatement|WhileStatement|AccessorStatement
 
-Code := Whitespace? ('{' Statement* Whitespace? '}')|('=>' Statement)
+Code := Whitespace& ('{' Statement* Whitespace& '}')|('=>' Statement)
 
-ClassField := Type Whitespace? $Identifier Whitespace? ';'
-ClassMethod := FunctionModifier* Type Whitespace? $Identifier Whitespace? '(' ParameterList? Whitespace? ')' Whitespace? ';'|Code
+ClassField := Type Whitespace& $Identifier Whitespace& ';'
+ClassMethod := FunctionModifier* Type Whitespace& $Identifier Whitespace& '(' ParameterList? Whitespace& ')' Whitespace& ';'|Code
 
-ClassElement inline := Whitespace? ClassMethod|ClassField
+ClassElement inline := Whitespace& ClassMethod|ClassField

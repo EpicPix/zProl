@@ -63,16 +63,6 @@ public class NamedToken extends Token {
         return null;
     }
 
-    public Token[] getNonWhitespaceTokens() {
-        var tokens = new ArrayList<Token>();
-        for(var token : this.tokens) {
-            if(!(token.name.equals("Whitespace"))) {
-                tokens.add(token);
-            }
-        }
-        return tokens.toArray(new Token[0]);
-    }
-
     public String getTokenAsString(String name) {
         for(Token token : tokens) {
             if(token instanceof NamedToken named) {
