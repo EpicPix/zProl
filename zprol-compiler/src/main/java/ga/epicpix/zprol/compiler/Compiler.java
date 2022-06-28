@@ -308,8 +308,9 @@ public class Compiler {
                 types.push(data.resolveType("zprol.lang.String"));
             }
             case "CastExpression" -> {
-                var hardCast = token.getTokenWithName("HardCastOperator");
-                var castType = data.resolveType((hardCast != null ? hardCast : token.getTokenWithName("CastOperator")).getTokenAsString("Type"));
+                var op = token.getTokenWithName("CastOperator");
+                boolean isHardCast = op.getLexerToken("HardCastIndicatorOperator") != null;
+                var castType = data.resolveType(op.getTokenAsString("Type"));
                 var tokens = token.getNonWhitespaceTokens();
                 if(tokens[1] instanceof LexerToken lex && lex.name.equals("OpenParen")) {
                     generateInstructionsFromExpression(tokens[2].asNamedToken(), null, types, data, scope, bytecode, false);
@@ -317,7 +318,7 @@ public class Compiler {
                     generateInstructionsFromExpression(tokens[1].asNamedToken(), null, types, data, scope, bytecode, false);
                 }
                 var from = types.pop();
-                if(hardCast != null) {
+                if(isHardCast) {
                     // this will not check sizes of primitive types, this is unsafe
                     types.push(castType);
                     return;

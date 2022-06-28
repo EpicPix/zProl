@@ -3,6 +3,7 @@ package ga.epicpix.zprol.parser;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.lexer.LanguageLexerToken;
 import ga.epicpix.zprol.parser.tokens.*;
+import ga.epicpix.zprol.parser.zld.ZldParser;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.io.File;
@@ -187,26 +188,14 @@ public class Parser {
     }
 
     public static ArrayList<Token> tokenize(SeekIterator<LexerToken> lexerTokens) {
-        ArrayList<Token> tokens = new ArrayList<>();
-
-        while(lexerTokens.hasNext()) {
-            LanguageToken langToken = null;
-            for (var tok : LanguageToken.TOKENS) {
-                var loc = lexerTokens.currentIndex();
-                ArrayList<Token> tTokens = new ArrayList<>();
-                if (check(tTokens, lexerTokens, tok)) {
-                    langToken = tok;
-                    tokens.add(new NamedToken(tok.name(), tTokens.get(0).startLocation, tTokens.get(tTokens.size() - 1).endLocation, lexerTokens.current().parser, tTokens.toArray(new Token[0])));
-                    break;
-                }
-                lexerTokens.setIndex(loc);
+        ArrayList<Token> tTokens = new ArrayList<>();
+        if(check(tTokens, lexerTokens, ZldParser.root)) {
+            if(lexerTokens.hasNext()) {
+                throw new ParserException("Not everything has been read from the file", lexerTokens.current().parser);
             }
-            if(langToken == null) {
-                throw new ParserException("Failed to parse", lexerTokens.current().parser, lexerTokens.current().startLocation);
-            }
+            return tTokens;
         }
-        return tokens;
-
+        throw new ParserException("Could not parse", lexerTokens.current().parser);
     }
 
     public static String generateParseTree(ArrayList<Token> tokens) {

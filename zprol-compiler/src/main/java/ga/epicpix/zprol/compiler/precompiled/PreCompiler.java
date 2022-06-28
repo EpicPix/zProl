@@ -66,14 +66,12 @@ public class PreCompiler {
 
     private static PreFunction parseFunction(NamedToken function) {
         var func = new PreFunction();
-        if(function.getTokenWithName("FunctionModifiers") != null) {
-            for(Token modifier : function.getTokenWithName("FunctionModifiers").tokens) {
-                PreFunctionModifiers modifiers = PreFunctionModifiers.getModifier(modifier.toStringRaw());
-                if(func.modifiers.contains(modifiers)) {
-                    throw new TokenLocatedException("Duplicate function modifier: '" + modifiers.getName() + "'", modifier);
-                }
-                func.modifiers.add(modifiers);
+        for(Token modifier : function.getTokensWithName("FunctionModifier")) {
+            PreFunctionModifiers modifiers = PreFunctionModifiers.getModifier(modifier.toStringRaw());
+            if(func.modifiers.contains(modifiers)) {
+                throw new TokenLocatedException("Duplicate function modifier: '" + modifiers.getName() + "'", modifier);
             }
+            func.modifiers.add(modifiers);
         }
         func.returnType = function.getTokenAsString("Type");
         func.name = function.getLexerToken("Identifier").data;

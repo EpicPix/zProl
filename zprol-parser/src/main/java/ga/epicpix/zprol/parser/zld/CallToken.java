@@ -37,6 +37,9 @@ class CallToken extends LanguageTokenFragment {
             if(definitions == null) {
                 throw new NullPointerException("Definition '" + use + "' is not defined");
             }
+            if(!tokens.hasNext()) {
+                return null;
+            }
             var startIndex = tokens.currentIndex();
 
             fLoop: for(LanguageToken def : definitions) {
