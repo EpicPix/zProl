@@ -37,7 +37,7 @@ public class DataParser {
 
     public static final char[] nonSpecialCharacters = joinCharacters(genCharacters('a', 'z'), genCharacters('A', 'Z'), genCharacters('0', '9'), new char[] {'_'});
 
-    private final String data;
+    public final String data;
     private final String fileName;
     private final String[] lines;
     private int index;
@@ -51,6 +51,29 @@ public class DataParser {
         this.fileName = fileName;
         this.lines = lines;
         data = String.join("\n", lines);
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public ParserLocation getLocation(int index) {
+        if(index < 0 || index > data.length()) throw new IllegalArgumentException("Index out of range");
+        var line = 0;
+        var len = 0;
+        while(len <= index) {
+            if(line == lines.length) {
+                line = lines.length - 1;
+                break;
+            }else {
+                if (lines[line].length() + len >= index) {
+                    break;
+                }
+            }
+            len += lines[line].length();
+            line++;
+        }
+        return new ParserLocation(line + 1, index - len + 1);
     }
 
     public static class SavedLocation {
@@ -105,10 +128,6 @@ public class DataParser {
         return data.codePointAt(index);
     }
 
-    public int seekNextCharacter() {
-        return data.codePointAt(index + 1);
-    }
-
     public void ignoreWhitespace() {
         while(index + 1 < data.length()) {
             if(!Character.isWhitespace(data.codePointAt(index)) && data.codePointAt(index) != '\n') {
@@ -121,6 +140,16 @@ public class DataParser {
             }
             index++;
         }
+    }
+
+    public void goBack() {
+        if(index <= 0) throw new IllegalStateException("Index is 0, cannot go further back");
+        index--;
+        lineRow--;
+        if(lineRow != -1) return;
+        lineNumber--;
+        lineRow = lines[lineNumber].length() - 1;
+        lastLocation = getLocation();
     }
 
     public int nextChar() {

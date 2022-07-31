@@ -5,6 +5,7 @@ import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.utils.SeekIterator;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 class ExactLexerCallToken extends LanguageTokenFragment {
@@ -18,7 +19,7 @@ class ExactLexerCallToken extends LanguageTokenFragment {
             if (!tokens.hasNext()) {
                 return null;
             }
-            if (tokens.seek().lToken != token) {
+            if (!tokens.seek().name.equals(token.name())) {
                 return null;
             }
             return new Token[]{tokens.next()};

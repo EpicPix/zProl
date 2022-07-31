@@ -7,6 +7,7 @@ import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.generators.Generator;
+import ga.epicpix.zprol.parser.Lexer;
 import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.zld.ZldParser;
@@ -182,7 +183,7 @@ public class Start {
                 String normalName = file.substring(0, file.lastIndexOf('.') == -1 ? file.length() : file.lastIndexOf('.'));
                 try {
                     long startLex = System.currentTimeMillis();
-                    ArrayList<LexerToken> lexedTokens = Parser.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
+                    ArrayList<LexerToken> lexedTokens = Lexer.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
                     long endLex = System.currentTimeMillis();
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to lex\n", file.substring(file.lastIndexOf('/') + 1), endLex - startLex);
 

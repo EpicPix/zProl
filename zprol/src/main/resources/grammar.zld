@@ -30,9 +30,7 @@ $OpenParen (
 $CloseParen )
 $LineCodeChars =>
 
-$DecimalInteger chars <1-9> *<0-9>
-$HexInteger chars <0><x><0-9a-fA-F> *<0-9a-fA-F>
-$Zero 0
+$Integer removed
 $Identifier chars <a-zA-Z_> *<a-zA-Z0-9_>
 $String chars <"> *<^"\n> <">
 $AccessorOperator .
@@ -69,7 +67,9 @@ Class := 'class' Whitespace& $Identifier Whitespace& '{' ClassElement* Whitespac
 WhitespaceElement inline := $Whitespace|$Comment
 Whitespace := WhitespaceElement WhitespaceElement*
 
-PostExpression inline := ('(' Whitespace& Expression Whitespace& ')')|String|Null|HexInteger|DecimalInteger|Boolean|Accessor
+PostExpression inline := ('(' Whitespace& Expression Whitespace& ')')|String|Null|Integer|Boolean|Accessor
+
+Integer := $Integer
 
 CastOperator := '(' Type '!'? Whitespace& ')'
 CastExpression := CastOperator Whitespace& CastExpression
@@ -100,9 +100,6 @@ Accessor := FunctionInvocationAccessor AccessorElement*
 String := $String
 Boolean := 'true'|'false'
 Null := 'null'
-
-HexInteger := $HexInteger
-DecimalInteger := '0'|$DecimalInteger
 
 ArrayCharacters := '[' ']'
 

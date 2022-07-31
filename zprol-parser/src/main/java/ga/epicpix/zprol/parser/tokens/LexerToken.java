@@ -15,6 +15,12 @@ public class LexerToken extends Token {
         this.lToken = lToken;
     }
 
+    public LexerToken(String name, String data, int start, int end, DataParser parser) {
+        super(name, parser.getLocation(start), parser.getLocation(end), parser);
+        this.data = data;
+        this.lToken = null;
+    }
+
     public String getData() {
         return data;
     }
