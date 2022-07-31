@@ -97,6 +97,8 @@ public class Lexer {
                         str.append("\n");
                     }else if(check == 't') {
                         str.append("\t");
+                    }else if(check == '0') {
+                        str.append("\0");
                     }else {
                         parser.goBack();
                         throw new ParserException("Unexpected escape sequence", parser);
