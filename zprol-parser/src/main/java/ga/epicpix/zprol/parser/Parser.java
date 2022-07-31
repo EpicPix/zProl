@@ -14,35 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Parser {
 
-    public static boolean check(ArrayList<Token> tTokens, SeekIterator<LexerToken> tokens, LanguageToken token) {
-        ArrayList<Token> added = new ArrayList<>();
-        for(var fragment : token.args()) {
-            var read = fragment.apply(tokens);
-            if (read == null) {
-                return false;
-            }
-            Collections.addAll(added, read);
-        }
-        tTokens.addAll(added);
-        return true;
-    }
-
-    public static ArrayList<Token> tokenize(File file) throws IOException {
-        var lexed = Lexer.lex(file.getName(), Files.readAllLines(file.toPath()).toArray(new String[0]));
-        return tokenize(new SeekIterator<>(lexed));
-    }
-
-    public static ArrayList<Token> tokenize(SeekIterator<LexerToken> lexerTokens) {
-        ArrayList<Token> tTokens = new ArrayList<>();
-        if(check(tTokens, lexerTokens, ZldParser.root)) {
-            if(lexerTokens.hasNext()) {
-                throw new ParserException("Not everything has been read from the file", lexerTokens.current().parser);
-            }
-            return tTokens;
-        }
-        throw new ParserException("Could not parse", lexerTokens.current().parser);
-    }
-
     public static String generateParseTree(ArrayList<Token> tokens) {
         StringBuilder builder = new StringBuilder();
         builder.append("digraph {\n");

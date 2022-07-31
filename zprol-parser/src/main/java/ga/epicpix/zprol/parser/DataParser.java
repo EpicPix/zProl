@@ -67,7 +67,7 @@ public class DataParser {
             len += lines[line].length();
             line++;
         }
-        return new ParserLocation(line + 1, index - len + 1);
+        return new ParserLocation(line, index - len);
     }
 
     public static class SavedLocation {
