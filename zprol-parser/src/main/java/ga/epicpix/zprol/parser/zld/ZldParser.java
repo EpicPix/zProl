@@ -14,7 +14,7 @@ public class ZldParser {
     public static LanguageToken root = null;
     public static final HashMap<String, ArrayList<LanguageToken>> DEFINITIONS = new HashMap<>();
 
-    private static final char[] tokenCharacters = DataParser.joinCharacters(DataParser.nonSpecialCharacters, new char[] {':', '='});
+    private static final int[] tokenCharacters = DataParser.joinCharacters(DataParser.nonSpecialCharacters, new int[] {':', '='});
 
     private static LanguageTokenFragment convert(String w, DataParser parser) {
         LanguageTokenFragment res = null;

@@ -2,40 +2,34 @@ package ga.epicpix.zprol.parser;
 
 public class DataParser {
 
-    public static char[] genCharacters(char from, char to) {
-        char[] out = new char[to-from+1];
-        for(char i = from; i <= to; i++) out[i-from] = i;
-        return out;
-    }
-
     public static int[] genCharacters(int from, int to) {
         int[] out = new int[to-from+1];
         for(int i = from; i <= to; i++) out[i-from] = i;
         return out;
     }
 
-    public static char[] joinCharacters(char[]... chars) {
+    public static int[] joinCharacters(int[]... chars) {
         int requiredSpace = 0;
-        for(char[] c : chars) requiredSpace += c.length;
-        char[] c = new char[requiredSpace];
+        for(int[] c : chars) requiredSpace += c.length;
+        int[] c = new int[requiredSpace];
         int current = 0;
-        for(char[] a : chars) for(char b : a) c[current++] = b;
+        for(int[] a : chars) for(int b : a) c[current++] = b;
         return c;
     }
 
-    public static boolean matchesCharacters(char[] chars, int c) {
+    public static boolean matchesCharacters(int[] chars, int c) {
         if(chars == null) return false;
         for(int t : chars) if(t == c) return true;
         return false;
     }
 
-    public static boolean matchesCharacters(char[] chars, String c) {
+    public static boolean matchesCharacters(int[] chars, String c) {
         if(chars == null) return false;
         for(int i = 0; i<c.length(); i++) if(!matchesCharacters(chars, c.codePointAt(i))) return false;
         return true;
     }
 
-    public static final char[] nonSpecialCharacters = joinCharacters(genCharacters('a', 'z'), genCharacters('A', 'Z'), genCharacters('0', '9'), new char[] {'_'});
+    public static final int[] nonSpecialCharacters = joinCharacters(genCharacters('a', 'z'), genCharacters('A', 'Z'), genCharacters('0', '9'), new int[] {'_'});
 
     public final String data;
     private final String fileName;
@@ -124,10 +118,6 @@ public class DataParser {
         return data.codePointAt(index) == '\n';
     }
 
-    public int seekCharacter() {
-        return data.codePointAt(index);
-    }
-
     public void ignoreWhitespace() {
         while(index + 1 < data.length()) {
             if(!Character.isWhitespace(data.codePointAt(index)) && data.codePointAt(index) != '\n') {
@@ -164,7 +154,7 @@ public class DataParser {
         return cp;
     }
 
-    public String nextTemplateWord(char[] allowedCharacters) {
+    public String nextTemplateWord(int[] allowedCharacters) {
         ignoreWhitespace();
         lastLocation = getLocation();
         if(!hasNext()) return null;
