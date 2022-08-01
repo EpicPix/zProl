@@ -8,8 +8,8 @@ import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.parser.Lexer;
+import ga.epicpix.zprol.parser.ParserOld;
 import ga.epicpix.zprol.parser.Parser;
-import ga.epicpix.zprol.parser.Tokenizer;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.zld.ZldParser;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
@@ -189,14 +189,14 @@ public class Start {
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to lex\n", file.substring(file.lastIndexOf('/') + 1), endLex - startLex);
 
                     long startToken = System.currentTimeMillis();
-                    ArrayList<Token> tokens = Tokenizer.tokenize(new SeekIterator<>(lexedTokens));
+                    ArrayList<Token> tokens = Parser.tokenize(new SeekIterator<>(lexedTokens));
                     long endToken = System.currentTimeMillis();
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to tokenize\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 
                     if(Boolean.parseBoolean(System.getProperty("PARSE_TREE"))) {
                         long startAst = System.currentTimeMillis();
                         DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".dot"));
-                        out.write(Parser.generateParseTree(tokens).getBytes(StandardCharsets.UTF_8));
+                        out.write(ParserOld.generateParseTree(tokens).getBytes(StandardCharsets.UTF_8));
                         out.close();
                         long endAst = System.currentTimeMillis();
                         if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to save parser parse tree\n", file.substring(file.lastIndexOf('/') + 1), endAst - startAst);

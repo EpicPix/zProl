@@ -21,7 +21,7 @@ public class TokenLocatedException extends RuntimeException {
             var start = token.getStartLocation();
             var end = token.getEndLocation();
 
-            System.err.println(getMessage() + ", error at " + token.parser.getFileName() + ":" + (end.line() + 1) + ":" + (end.row() + 1));
+            System.err.println(getMessage() + ", error at " + token.parser.getFileName() + ":" + (end.line() + 1) + ":" + (start.row() + 1));
 
             String l = token.parser.getLines()[end.line()];
             System.err.println(l);

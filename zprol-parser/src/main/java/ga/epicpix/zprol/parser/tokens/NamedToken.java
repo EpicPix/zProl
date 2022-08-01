@@ -1,20 +1,23 @@
 package ga.epicpix.zprol.parser.tokens;
 
-import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.ParserLocation;
-import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public final class NamedToken extends Token {
 
     public final Token[] tokens;
 
-    public NamedToken(String name, DataParser parser, Token... tokens) {
-        super(name, parser);
+    public NamedToken(String name, Token... tokens) {
+        super(name, tokens[0].parser);
         this.tokens = tokens;
+    }
+
+    public NamedToken(String name, List<Token> tokens) {
+        this(name, tokens.toArray(new Token[0]));
     }
 
     public ArrayList<NamedToken> getTokensWithName(String name) {

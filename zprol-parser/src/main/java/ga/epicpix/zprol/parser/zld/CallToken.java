@@ -66,8 +66,7 @@ class CallToken extends LanguageTokenFragment {
                     }
                 }
                 if(def.inline() || (def.merge() && rl == 1)) return iterTokens.toArray(EMPTY_TOKENS);
-                // will break
-                return new Token[]{new NamedToken(use, tokens.current().parser, iterTokens.toArray(EMPTY_TOKENS))};
+                return new Token[]{new NamedToken(use, iterTokens.toArray(EMPTY_TOKENS))};
             }
             return null;
         }

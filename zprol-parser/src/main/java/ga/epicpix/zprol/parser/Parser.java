@@ -1,48 +1,82 @@
 package ga.epicpix.zprol.parser;
 
-import ga.epicpix.zprol.parser.exceptions.ParserException;
-import ga.epicpix.zprol.parser.tokens.*;
-import ga.epicpix.zprol.parser.zld.ZldParser;
+import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
+import ga.epicpix.zprol.parser.tokens.LexerToken;
+import ga.epicpix.zprol.parser.tokens.NamedToken;
+import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.utils.SeekIterator;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicInteger;
 
-public class Parser {
+public final class Parser {
 
-    public static String generateParseTree(ArrayList<Token> tokens) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("digraph {\n");
-        AtomicInteger current = new AtomicInteger();
-        int root = current.getAndIncrement();
-        builder.append("  token").append(root).append("[shape=box,color=\"#007FFF\",label=\"<root>\"]\n");
-        for(var t : tokens) {
-            int num = writeTokenParseTree(t, builder, current);
-            builder.append("  token").append(root).append(" -> token").append(num).append("\n");
-        }
-        builder.append("}");
-        return builder.toString();
+    private final SeekIterator<LexerToken> lexerTokens;
+    private Parser(SeekIterator<LexerToken> lexerTokens) {
+        this.lexerTokens = lexerTokens;
     }
 
-    private static int writeTokenParseTree(Token token, StringBuilder builder, AtomicInteger current) {
-        int index = current.getAndIncrement();
-        if (token instanceof NamedToken named) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#FF7F00\",label=\"").append("(").append(named.name).append(")\"]\n");
-            for(var t : named.tokens) {
-                int num = writeTokenParseTree(t, builder, current);
-                builder.append("  token").append(index).append(" -> token").append(num).append("\n");
+    public static ArrayList<Token> tokenize(SeekIterator<LexerToken> lexerTokens) {
+        return new Parser(lexerTokens).tokenize();
+    }
+
+    public ArrayList<Token> tokenize() {
+        var tokens = new ArrayList<Token>();
+        while(skipWhitespace()) {
+            var next = lexerTokens.next();
+            if(next.name.equals("NamespaceKeyword")) {
+                tokens.add(new NamedToken("Namespace", next, readNamespaceIdentifier(), wexpect("Semicolon")));
+                continue;
             }
-        }else if (token instanceof LexerToken lexer) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#007FFF\",label=\"").append("(").append(lexer.name).append(")\"]\n");
-            int indexI = current.getAndIncrement();
-            builder.append("  token").append(indexI).append("[shape=box,color=\"#00FFFF\",label=\"").append(lexer.data.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\\\\n")).append("\"]\n");
-            builder.append("  token").append(index).append(" -> token").append(indexI).append("\n");
+            throw new TokenLocatedException("Unexpected token", next);
         }
-        return index;
+        return tokens;
+    }
+
+    public NamedToken readNamespaceIdentifier() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(wexpect("Identifier"));
+        LexerToken seperator;
+        while((seperator = optional("AccessorOperator")) != null) {
+            tokens.add(seperator);
+            tokens.add(expect("Identifier"));
+        }
+        return new NamedToken("NamespaceIdentifier", tokens.toArray(new Token[0]));
+    }
+
+
+    // ---- Helper Methods ----
+
+    public boolean skipWhitespace() {
+        while(lexerTokens.hasNext() && lexerTokens.seek().name.equals("Whitespace")) {
+            lexerTokens.next();
+        }
+        return lexerTokens.hasNext();
+    }
+
+    public LexerToken expect(String name) {
+        if(!lexerTokens.hasNext()) {
+            throw new TokenLocatedException("Expected '" + name + "' got end of file", lexerTokens.current());
+        }
+        var next = lexerTokens.next();
+        if(next.name.equals(name)) {
+            return next;
+        }
+        throw new TokenLocatedException("Expected '" + name + "', got '" + next.name + "'", next);
+    }
+
+    public LexerToken wexpect(String name) {
+        skipWhitespace();
+        return expect(name);
+    }
+
+    public LexerToken optional(String name) {
+        if(!lexerTokens.hasNext()) {
+            return null;
+        }
+        if(lexerTokens.seek().name.equals(name)) {
+            return lexerTokens.next();
+        }
+        return null;
     }
 
 }
