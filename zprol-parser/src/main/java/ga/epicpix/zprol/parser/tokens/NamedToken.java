@@ -8,12 +8,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class NamedToken extends Token {
+public final class NamedToken extends Token {
 
     public final Token[] tokens;
 
-    public NamedToken(String name, ParserLocation startLocation, ParserLocation endLocation, DataParser parser, Token... tokens) {
-        super(name, startLocation, endLocation, parser);
+    public NamedToken(String name, DataParser parser, Token... tokens) {
+        super(name, parser);
         this.tokens = tokens;
     }
 
@@ -38,18 +38,6 @@ public class NamedToken extends Token {
             }
         }
         return null;
-    }
-
-    public ArrayList<LexerToken> getLexerTokens(String name) {
-        ArrayList<LexerToken> t = new ArrayList<>();
-        for(Token token : tokens) {
-            if(token instanceof LexerToken lex) {
-                if(lex.name.equals(name)) {
-                    t.add(lex);
-                }
-            }
-        }
-        return t;
     }
 
     public LexerToken getLexerToken(String name) {
@@ -88,5 +76,13 @@ public class NamedToken extends Token {
             out.append(t.toStringRaw());
         }
         return out.toString();
+    }
+
+    public ParserLocation getStartLocation() {
+        return tokens[0].getStartLocation();
+    }
+
+    public ParserLocation getEndLocation() {
+        return tokens[tokens.length - 1].getEndLocation();
     }
 }

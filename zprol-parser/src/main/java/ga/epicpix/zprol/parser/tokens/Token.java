@@ -3,17 +3,13 @@ package ga.epicpix.zprol.parser.tokens;
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.ParserLocation;
 
-public class Token {
+public abstract sealed class Token permits LexerToken, NamedToken {
 
-    public final ParserLocation startLocation;
-    public final ParserLocation endLocation;
     public final DataParser parser;
     public final String name;
 
-    public Token(String name, ParserLocation startLocation, ParserLocation endLocation, DataParser parser) {
+    public Token(String name, DataParser parser) {
         this.name = name;
-        this.startLocation = startLocation;
-        this.endLocation = endLocation;
         this.parser = parser;
     }
 
@@ -40,4 +36,7 @@ public class Token {
     public String toStringRaw() {
         return getData();
     }
+
+    public abstract ParserLocation getStartLocation();
+    public abstract ParserLocation getEndLocation();
 }

@@ -2,6 +2,7 @@ package ga.epicpix.zprol.parser;
 
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
+import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.utils.SeekIterator;
 

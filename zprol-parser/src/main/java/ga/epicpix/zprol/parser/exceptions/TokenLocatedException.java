@@ -18,17 +18,17 @@ public class TokenLocatedException extends RuntimeException {
 
     public void printError() {
         if(token != null) {
-            int line = token.endLocation.line();
-            int row = token.endLocation.row();
+            var start = token.getStartLocation();
+            var end = token.getEndLocation();
 
-            System.err.println(getMessage() + ", error at " + token.parser.getFileName() + ":" + (line + 1) + ":" + (row + 1));
+            System.err.println(getMessage() + ", error at " + token.parser.getFileName() + ":" + (end.line() + 1) + ":" + (end.row() + 1));
 
-            String l = token.parser.getLines()[line];
+            String l = token.parser.getLines()[end.line()];
             System.err.println(l);
 
-            int offset = token.startLocation.line() == line ? row - token.startLocation.row() : row;
+            int offset = start.line() == end.line() ? end.row() - start.row() : end.row();
 
-            System.err.println(" ".repeat(row - offset) + "^".repeat(offset));
+            System.err.println(" ".repeat(end.row() - offset) + "^".repeat(offset));
             if (Boolean.parseBoolean(System.getProperty("SHOW_STACK_TRACE"))) {
                 System.err.println("DEBUG INFO:");
                 StackTraceElement[] trace = getStackTrace();
