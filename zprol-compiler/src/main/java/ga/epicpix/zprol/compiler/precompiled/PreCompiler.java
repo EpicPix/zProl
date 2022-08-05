@@ -41,14 +41,14 @@ public class PreCompiler {
                     clazz.namespace = pre.namespace;
                     clazz.name = named.getLexerToken("Identifier").data;
 
-                    for(var fieldToken : named.getTokensWithName("ClassField")) {
+                    for(var fieldToken : named.getTokensWithName("Field")) {
                         PreField field = new PreField(named.getTokenWithName("Expression"));
                         field.type = fieldToken.getTokenAsString("Type");
                         field.name = fieldToken.getLexerToken("Identifier").data;
                         clazz.fields.add(field);
                     }
 
-                    for(var methodToken : named.getTokensWithName("ClassMethod")) {
+                    for(var methodToken : named.getTokensWithName("Method")) {
                         clazz.methods.add(parseFunction(methodToken));
                     }
 

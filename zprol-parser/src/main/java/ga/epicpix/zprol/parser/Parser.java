@@ -186,6 +186,18 @@ public final class Parser {
         return new NamedToken("ReturnStatement", tokens.toArray(new Token[0]));
     }
 
+    public NamedToken readWhileStatement() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(wexpect("WhileKeyword"));
+        tokens.add(wexpect("OpenParen"));
+        tokens.add(readExpression());
+        tokens.add(wexpect("CloseParen"));
+        tokens.add(wexpect("OpenBrace"));
+        tokens.add(readCode());
+        tokens.add(wexpect("CloseBrace"));
+        return new NamedToken("WhileStatement", tokens.toArray(new Token[0]));
+    }
+
     public NamedToken readIfStatement() {
         ArrayList<Token> tokens = new ArrayList<>();
         tokens.add(wexpect("IfKeyword"));
@@ -195,7 +207,19 @@ public final class Parser {
         tokens.add(wexpect("OpenBrace"));
         tokens.add(readCode());
         tokens.add(wexpect("CloseBrace"));
+        skipWhitespace();
+        if(isNext("ElseKeyword")) {
+            tokens.add(readElseStatement());
+        }
         return new NamedToken("IfStatement", tokens.toArray(new Token[0]));
+    }
+
+    public NamedToken readElseStatement() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(wexpect("OpenBrace"));
+        tokens.add(readCode());
+        tokens.add(wexpect("CloseBrace"));
+        return new NamedToken("ElseStatement", tokens.toArray(new Token[0]));
     }
 
     public NamedToken readStatement() {
@@ -203,6 +227,8 @@ public final class Parser {
         skipWhitespace();
         if(isNext("IfKeyword")) {
             tokens.add(readIfStatement());
+        }else if(isNext("WhileKeyword")) {
+            tokens.add(readWhileStatement());
         }else if(isNext("BreakKeyword")) {
             tokens.add(readBreakStatement());
         }else if(isNext("ContinueKeyword")) {
