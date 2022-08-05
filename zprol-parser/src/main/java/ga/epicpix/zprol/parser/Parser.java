@@ -161,8 +161,34 @@ public final class Parser {
         return new NamedToken("Code", tokens.toArray(new Token[0]));
     }
 
+    public NamedToken readBreakStatement() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(wexpect("BreakKeyword"));
+        tokens.add(wexpect("Semicolon"));
+        return new NamedToken("BreakStatement", tokens.toArray(new Token[0]));
+    }
+
+    public NamedToken readContinueStatement() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(wexpect("ContinueKeyword"));
+        tokens.add(wexpect("Semicolon"));
+        return new NamedToken("ContinueStatement", tokens.toArray(new Token[0]));
+    }
+
+    public NamedToken readReturnStatement() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(wexpect("ReturnKeyword"));
+        skipWhitespace();
+        if(!isNext("Semicolon")) {
+            tokens.add(readExpression());
+        }
+        tokens.add(wexpect("Semicolon"));
+        return new NamedToken("ReturnStatement", tokens.toArray(new Token[0]));
+    }
+
     public NamedToken readIfStatement() {
         ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(wexpect("IfKeyword"));
         tokens.add(wexpect("OpenParen"));
         tokens.add(readExpression());
         tokens.add(wexpect("CloseParen"));
@@ -177,6 +203,12 @@ public final class Parser {
         skipWhitespace();
         if(isNext("IfKeyword")) {
             tokens.add(readIfStatement());
+        }else if(isNext("BreakKeyword")) {
+            tokens.add(readBreakStatement());
+        }else if(isNext("ContinueKeyword")) {
+            tokens.add(readContinueStatement());
+        }else if(isNext("ReturnKeyword")) {
+            tokens.add(readReturnStatement());
         }else {
             throw new TokenLocatedException("Unknown statement", lexerTokens.current());
         }
