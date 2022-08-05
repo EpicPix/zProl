@@ -26,9 +26,7 @@ public class TokenLocatedException extends RuntimeException {
             String l = token.parser.getLines()[end.line()];
             System.err.println(l);
 
-            int offset = start.line() == end.line() ? end.row() - start.row() : end.row();
-
-            System.err.println(" ".repeat(end.row() - offset) + "^".repeat(offset));
+            System.err.println(" ".repeat(start.row()) + "^".repeat(end.row() - start.row()));
             if (Boolean.parseBoolean(System.getProperty("SHOW_STACK_TRACE"))) {
                 System.err.println("DEBUG INFO:");
                 StackTraceElement[] trace = getStackTrace();

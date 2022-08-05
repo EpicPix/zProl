@@ -60,7 +60,7 @@ public class DataParser {
                 line = lines.length - 1;
                 break;
             }else {
-                if (lines[line].length() + len >= index) {
+                if (lines[line].length() + len + line >= index) {
                     break;
                 }
             }

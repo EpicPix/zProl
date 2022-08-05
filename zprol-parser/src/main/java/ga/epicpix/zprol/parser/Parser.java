@@ -26,8 +26,14 @@ public final class Parser {
             if(next.name.equals("NamespaceKeyword")) {
                 tokens.add(new NamedToken("Namespace", next, readNamespaceIdentifier(), wexpect("Semicolon")));
                 continue;
+            }else if(next.name.equals("UsingKeyword")) {
+                tokens.add(new NamedToken("Using", next, readNamespaceIdentifier(), wexpect("Semicolon")));
+                continue;
+            }else if(next.name.equals("ClassKeyword")) {
+                tokens.add(readClass(next));
+                continue;
             }
-            throw new TokenLocatedException("Unexpected token", next);
+            throw new TokenLocatedException("Expected 'namespace' or 'using' or 'class'", next);
         }
         return tokens;
     }
@@ -41,6 +47,16 @@ public final class Parser {
             tokens.add(expect("Identifier"));
         }
         return new NamedToken("NamespaceIdentifier", tokens.toArray(new Token[0]));
+    }
+
+    public NamedToken readClass(LexerToken classKeyword) {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(classKeyword);
+        tokens.add(wexpect("Identifier"));
+        tokens.add(wexpect("OpenBrace"));
+
+        tokens.add(wexpect("CloseBrace"));
+        return new NamedToken("Class", tokens.toArray(new Token[0]));
     }
 
 
