@@ -64,7 +64,23 @@ public final class Parser {
     }
 
     public NamedToken readMethod(ArrayList<Token> tokens) {
-        throw new TokenLocatedException("Cannot read methods yet!", lexerTokens.current());
+        tokens.add(readParameterList("CloseParen"));
+        wexpect("CloseParen");
+        skipWhitespace();
+        if(optional("Semicolon", tokens)) {
+            return new NamedToken("Function", tokens.toArray(new Token[0]));
+        }
+        if(optional("LineCodeChars", tokens)) {
+            tokens.add(readStatement());
+            tokens.add(wexpect("Semicolon"));
+            return new NamedToken("Function", tokens.toArray(new Token[0]));
+        }
+        tokens.add(expect("OpenBrace"));
+        while(skipWhitespace() && !optional("CloseBrace", tokens)) {
+            tokens.add(readStatement());
+        }
+        tokens.add(wexpect("CloseBrace"));
+        return new NamedToken("Function", tokens.toArray(new Token[0]));
     }
 
     public NamedToken readField(ArrayList<Token> tokens) {
@@ -77,6 +93,7 @@ public final class Parser {
         if(skipWhitespace() && optional("ConstKeyword", tokens)) {
             tokens.add(wexpect("Identifier"));
             tokens.add(wexpect("AssignOperator"));
+            tokens.add(readExpression());
             tokens.add(wexpect("Semicolon"));
             return new NamedToken("Field", tokens.toArray(new Token[0]));
         }
@@ -118,6 +135,32 @@ public final class Parser {
             }
         }
         return new NamedToken("Type", tokens);
+    }
+
+    public NamedToken readParameterList(String endToken) {
+        ArrayList<Token> tokens = new ArrayList<>();
+        skipWhitespace();
+        if(isNext(endToken)) {
+            return new NamedToken("ParameterList");
+        }
+        tokens.add(readParameter());
+        while(skipWhitespace() && !isNext(endToken)) {
+            tokens.add(expect("CommaOperator"));
+            tokens.add(readParameter());
+        }
+        return new NamedToken("ParameterList", tokens.toArray(new Token[0]));
+    }
+
+    public NamedToken readParameter() {
+        return new NamedToken("Parameter", readType(), wexpect("Identifier"));
+    }
+
+    public NamedToken readStatement() {
+        throw new TokenLocatedException("Cannot read statements yet", lexerTokens.current());
+    }
+
+    public NamedToken readExpression() {
+        throw new TokenLocatedException("Cannot read expressions yet", lexerTokens.current());
     }
 
     // ---- Helper Methods ----
