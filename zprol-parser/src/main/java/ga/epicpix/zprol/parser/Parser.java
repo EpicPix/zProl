@@ -75,11 +75,7 @@ public final class Parser {
             tokens.add(wexpect("Semicolon"));
             return new NamedToken("Function", tokens.toArray(new Token[0]));
         }
-        tokens.add(expect("OpenBrace"));
-        while(skipWhitespace() && !optional("CloseBrace", tokens)) {
-            tokens.add(readStatement());
-        }
-        tokens.add(wexpect("CloseBrace"));
+        tokens.add(readCode());
         return new NamedToken("Function", tokens.toArray(new Token[0]));
     }
 
@@ -155,8 +151,36 @@ public final class Parser {
         return new NamedToken("Parameter", readType(), wexpect("Identifier"));
     }
 
+    public NamedToken readCode() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(expect("OpenBrace"));
+        while(skipWhitespace() && !optional("CloseBrace", tokens)) {
+            tokens.add(readStatement());
+        }
+        tokens.add(wexpect("CloseBrace"));
+        return new NamedToken("Code", tokens.toArray(new Token[0]));
+    }
+
+    public NamedToken readIfStatement() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(wexpect("OpenParen"));
+        tokens.add(readExpression());
+        tokens.add(wexpect("CloseParen"));
+        tokens.add(wexpect("OpenBrace"));
+        tokens.add(readCode());
+        tokens.add(wexpect("CloseBrace"));
+        return new NamedToken("IfStatement", tokens.toArray(new Token[0]));
+    }
+
     public NamedToken readStatement() {
-        throw new TokenLocatedException("Cannot read statements yet", lexerTokens.current());
+        ArrayList<Token> tokens = new ArrayList<>();
+        skipWhitespace();
+        if(isNext("IfKeyword")) {
+            tokens.add(readIfStatement());
+        }else {
+            throw new TokenLocatedException("Unknown statement", lexerTokens.current());
+        }
+        return new NamedToken("Statement", tokens.toArray(new Token[0]));
     }
 
     public NamedToken readExpression() {
