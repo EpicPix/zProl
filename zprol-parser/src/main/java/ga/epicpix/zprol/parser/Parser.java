@@ -25,15 +25,14 @@ public final class Parser {
             var next = lexerTokens.next();
             if(next.name.equals("NamespaceKeyword")) {
                 tokens.add(new NamedToken("Namespace", next, readNamespaceIdentifier(), wexpect("Semicolon")));
-                continue;
             }else if(next.name.equals("UsingKeyword")) {
                 tokens.add(new NamedToken("Using", next, readNamespaceIdentifier(), wexpect("Semicolon")));
-                continue;
             }else if(next.name.equals("ClassKeyword")) {
                 tokens.add(readClass(next));
-                continue;
+            }else {
+                lexerTokens.previous();
+                tokens.add(readFieldOrMethod());
             }
-            throw new TokenLocatedException("Expected 'namespace' or 'using' or 'class'", next);
         }
         return tokens;
     }
@@ -54,16 +53,77 @@ public final class Parser {
         tokens.add(classKeyword);
         tokens.add(wexpect("Identifier"));
         tokens.add(wexpect("OpenBrace"));
-
-        tokens.add(wexpect("CloseBrace"));
+        LexerToken close;
+        skipWhitespace();
+        while((close = optional("CloseBrace")) == null) {
+            tokens.add(readFieldOrMethod());
+            skipWhitespace();
+        }
+        tokens.add(close);
         return new NamedToken("Class", tokens.toArray(new Token[0]));
     }
 
+    public NamedToken readMethod(ArrayList<Token> tokens) {
+        throw new TokenLocatedException("Cannot read methods yet!", lexerTokens.current());
+    }
+
+    public NamedToken readField(ArrayList<Token> tokens) {
+        tokens.add(wexpect("Semicolon"));
+        return new NamedToken("Field", tokens.toArray(new Token[0]));
+    }
+
+    public NamedToken readFieldOrMethod() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        if(skipWhitespace() && optional("ConstKeyword", tokens)) {
+            tokens.add(wexpect("Identifier"));
+            tokens.add(wexpect("AssignOperator"));
+            tokens.add(wexpect("Semicolon"));
+            return new NamedToken("Field", tokens.toArray(new Token[0]));
+        }
+        tokens.addAll(readFunctionModifiers());
+        if(tokens.size() != 0) {
+            return readMethod(tokens);
+        }
+        tokens.add(readType());
+        tokens.add(wexpect("Identifier"));
+        skipWhitespace();
+        if(optional("OpenParen", tokens)) {
+            return readMethod(tokens);
+        }
+        return readField(tokens);
+    }
+
+    public ArrayList<Token> readFunctionModifiers() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        while(skipWhitespace()) {
+            if(!optional("NativeKeyword", tokens)) {
+                break;
+            }
+        }
+        return tokens;
+    }
+
+    public NamedToken readType() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        skipWhitespace();
+        if(!optional("VoidKeyword", tokens)) {
+            if(!optional("BoolKeyword", tokens)) {
+                tokens.add(expect("Identifier"));
+                while(optional("AccessorOperator", tokens)) {
+                    tokens.add(expect("Identifier"));
+                }
+            }
+            while(isNext("OpenBracket")) {
+                tokens.add(new NamedToken("ArrayCharacters", expect("OpenBracket"), expect("CloseBracket")));
+            }
+        }
+        return new NamedToken("Type", tokens);
+    }
 
     // ---- Helper Methods ----
 
     public boolean skipWhitespace() {
-        while(lexerTokens.hasNext() && lexerTokens.seek().name.equals("Whitespace")) {
+        while(lexerTokens.hasNext() && (lexerTokens.seek().name.equals("Whitespace") || lexerTokens.seek().name.equals("Comment"))) {
             lexerTokens.next();
         }
         return lexerTokens.hasNext();
@@ -80,9 +140,34 @@ public final class Parser {
         throw new TokenLocatedException("Expected '" + name + "', got '" + next.name + "'", next);
     }
 
+    public LexerToken expect(String... names) {
+        if(!lexerTokens.hasNext()) {
+            throw new TokenLocatedException("Expected " + String.join(", ", names) + " got end of file", lexerTokens.current());
+        }
+        var next = lexerTokens.next();
+        for(String name : names) {
+            if(next.name.equals(name)) {
+                return next;
+            }
+        }
+        throw new TokenLocatedException("Expected " + String.join(", ", names) + " got '" + next.name + "'", next);
+    }
+
     public LexerToken wexpect(String name) {
         skipWhitespace();
         return expect(name);
+    }
+
+    public LexerToken wexpect(String... names) {
+        skipWhitespace();
+        return expect(names);
+    }
+
+    public boolean isNext(String name) {
+        if(!lexerTokens.hasNext()) {
+            return false;
+        }
+        return lexerTokens.seek().name.equals(name);
     }
 
     public LexerToken optional(String name) {
@@ -93,6 +178,13 @@ public final class Parser {
             return lexerTokens.next();
         }
         return null;
+    }
+
+    public boolean optional(String name, ArrayList<Token> tokens) {
+        var opt = optional(name);
+        if(opt == null) return false;
+        tokens.add(opt);
+        return true;
     }
 
 }
