@@ -15,11 +15,11 @@ public final class Parser {
         this.lexerTokens = lexerTokens;
     }
 
-    public static ArrayList<Token> tokenize(SeekIterator<LexerToken> lexerTokens) {
-        return new Parser(lexerTokens).tokenize();
+    public static ArrayList<Token> parse(SeekIterator<LexerToken> lexerTokens) {
+        return new Parser(lexerTokens).parse();
     }
 
-    public ArrayList<Token> tokenize() {
+    public ArrayList<Token> parse() {
         var tokens = new ArrayList<Token>();
         while(skipWhitespace()) {
             var next = lexerTokens.next();
@@ -64,7 +64,8 @@ public final class Parser {
     }
 
     public NamedToken readMethod(ArrayList<Token> tokens) {
-        tokens.add(readParameterList("CloseParen"));
+        tokens.add(wexpect("OpenParen"));
+        readParameterList("CloseParen", tokens);
         wexpect("CloseParen");
         skipWhitespace();
         if(optional("Semicolon", tokens)) {
@@ -82,6 +83,7 @@ public final class Parser {
     public NamedToken readFieldOrMethod() {
         ArrayList<Token> tokens = new ArrayList<>();
         if(skipWhitespace() && optional("ConstKeyword", tokens)) {
+            tokens.add(readType());
             tokens.add(wexpect("Identifier"));
             tokens.add(wexpect("AssignOperator"));
             tokens.add(readExpression());
@@ -90,12 +92,14 @@ public final class Parser {
         }
         tokens.addAll(readFunctionModifiers());
         if(tokens.size() != 0) {
+            tokens.add(readType());
+            tokens.add(wexpect("Identifier"));
             return readMethod(tokens);
         }
         tokens.add(readType());
         tokens.add(wexpect("Identifier"));
         skipWhitespace();
-        if(optional("OpenParen", tokens)) {
+        if(isNext("OpenParen")) {
             return readMethod(tokens);
         }
         return readField(tokens);
@@ -104,6 +108,10 @@ public final class Parser {
     public ArrayList<Token> readFunctionModifiers() {
         ArrayList<Token> tokens = new ArrayList<>();
         while(skipWhitespace()) {
+            if(isNext("NativeKeyword")) {
+                tokens.add(new NamedToken("FunctionModifier", expect("NativeKeyword")));
+                continue;
+            }
             if(!optional("NativeKeyword", tokens)) {
                 break;
             }
@@ -128,18 +136,18 @@ public final class Parser {
         return new NamedToken("Type", tokens);
     }
 
-    public NamedToken readParameterList(String endToken) {
+    public void readParameterList(String endToken, ArrayList<Token> output) {
         ArrayList<Token> tokens = new ArrayList<>();
         skipWhitespace();
         if(isNext(endToken)) {
-            return new NamedToken("ParameterList");
+            return;
         }
         tokens.add(readParameter());
         while(skipWhitespace() && !isNext(endToken)) {
             tokens.add(expect("CommaOperator"));
             tokens.add(readParameter());
         }
-        return new NamedToken("ParameterList", tokens.toArray(new Token[0]));
+        tokens.add(new NamedToken("ParameterList", tokens.toArray(new Token[0])));
     }
 
     public NamedToken readParameter() {
@@ -152,10 +160,10 @@ public final class Parser {
         if(!isNext("OpenBrace")) {
             tokens.add(expect("LineCodeChars"));
             tokens.add(readStatement());
-            return new NamedToken("Function", tokens.toArray(new Token[0]));
+            return new NamedToken("Code", tokens.toArray(new Token[0]));
         }
         tokens.add(expect("OpenBrace"));
-        while(skipWhitespace() && !optional("CloseBrace", tokens)) {
+        while(skipWhitespace() && !isNext("CloseBrace")) {
             tokens.add(readStatement());
         }
         tokens.add(wexpect("CloseBrace"));
@@ -193,9 +201,7 @@ public final class Parser {
         tokens.add(wexpect("OpenParen"));
         tokens.add(readExpression());
         tokens.add(wexpect("CloseParen"));
-        tokens.add(wexpect("OpenBrace"));
         tokens.add(readCode());
-        tokens.add(wexpect("CloseBrace"));
         return new NamedToken("WhileStatement", tokens.toArray(new Token[0]));
     }
 
@@ -215,10 +221,19 @@ public final class Parser {
 
     public NamedToken readElseStatement() {
         ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(wexpect("OpenBrace"));
+        tokens.add(wexpect("ElseKeyword"));
         tokens.add(readCode());
-        tokens.add(wexpect("CloseBrace"));
         return new NamedToken("ElseStatement", tokens.toArray(new Token[0]));
+    }
+
+    public NamedToken readCreateAssignmentStatement(Token type) {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(type);
+        tokens.add(wexpect("Identifier"));
+        tokens.add(wexpect("AssignOperator"));
+        tokens.add(readExpression());
+        tokens.add(wexpect("Semicolon"));
+        return new NamedToken("CreateAssignmentStatement", tokens.toArray(new Token[0]));
     }
 
     public NamedToken readStatement() {
@@ -234,8 +249,34 @@ public final class Parser {
             tokens.add(readContinueStatement());
         }else if(isNext("ReturnKeyword")) {
             tokens.add(readReturnStatement());
+        }else if(isNext("Identifier")) {
+            ArrayList<Token> statement = new ArrayList<>();
+            int start = lexerTokens.currentIndex();
+            try {
+                statement.add(readType());
+            }catch(TokenLocatedException e) {
+                lexerTokens.setIndex(start);
+                statement.add(readAccessor());
+            }
+            skipWhitespace();
+            if(!isNext("Identifier")) {
+                lexerTokens.setIndex(start);
+                statement.clear();
+                statement.add(readAccessor());
+                skipWhitespace();
+                if(optional("AssignOperator", statement)) {
+                    statement.add(readExpression());
+                    statement.add(wexpect("Semicolon"));
+                    tokens.add(new NamedToken("AssignmentStatement", statement.toArray(new Token[0])));
+                }else {
+                    statement.add(wexpect("Semicolon"));
+                    tokens.add(new NamedToken("AccessorStatement", statement.toArray(new Token[0])));
+                }
+            }else {
+                tokens.add(readCreateAssignmentStatement(statement.get(0)));
+            }
         }else {
-            throw new TokenLocatedException("Unknown statement", lexerTokens.current());
+            tokens.add(readCreateAssignmentStatement(readType()));
         }
         return new NamedToken("Statement", tokens.toArray(new Token[0]));
     }
@@ -364,6 +405,7 @@ public final class Parser {
                 tokens.add(readExpression());
                 tokens.add(wexpect("CloseBracket"));
             }else {
+                tokens.add(expect("AccessorOperator"));
                 tokens.add(readFunctionInvocationAccessor());
             }
         }
@@ -375,25 +417,25 @@ public final class Parser {
         tokens.add(wexpect("Identifier"));
         skipWhitespace();
         if(optional("OpenParen", tokens)) {
-            tokens.add(readArgumentList("CloseParen"));
+            readArgumentList("CloseParen", tokens);
             tokens.add(wexpect("CloseParen"));
             return new NamedToken("FunctionInvocationAccessor", new NamedToken("FunctionInvocation", tokens.toArray(new Token[0])));
         }
         return tokens.get(0);
     }
 
-    public NamedToken readArgumentList(String endToken) {
+    public void readArgumentList(String endToken, ArrayList<Token> output) {
         ArrayList<Token> tokens = new ArrayList<>();
         skipWhitespace();
         if(isNext(endToken)) {
-            return new NamedToken("ArgumentList");
+            return;
         }
-        tokens.add(readParameter());
+        tokens.add(readExpression());
         while(skipWhitespace() && !isNext(endToken)) {
             tokens.add(expect("CommaOperator"));
             tokens.add(readExpression());
         }
-        return new NamedToken("ArgumentList", tokens.toArray(new Token[0]));
+        output.add(new NamedToken("ArgumentList", tokens.toArray(new Token[0])));
     }
 
     // ---- Helper Methods ----

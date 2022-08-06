@@ -189,9 +189,9 @@ public class Start {
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to lex\n", file.substring(file.lastIndexOf('/') + 1), endLex - startLex);
 
                     long startToken = System.currentTimeMillis();
-                    ArrayList<Token> tokens = Parser.tokenize(new SeekIterator<>(lexedTokens));
+                    ArrayList<Token> tokens = Parser.parse(new SeekIterator<>(lexedTokens));
                     long endToken = System.currentTimeMillis();
-                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to tokenize\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
+                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to parse\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 
                     if(Boolean.parseBoolean(System.getProperty("PARSE_TREE"))) {
                         long startAst = System.currentTimeMillis();

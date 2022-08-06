@@ -71,6 +71,7 @@ public class Lexer {
                 }
                 if(parser.getIndex() - start <= 2) throw new ParserException("Expected a hex number after '0x'", parser);
             }else {
+                parser.goBack();
                 while((value = parser.nextChar()) != -1) {
                     if(!(value >= '0' && value <= '9')) {
                         parser.goBack();
@@ -78,7 +79,7 @@ public class Lexer {
                     }
                 }
             }
-            return new LexerToken("Integer", "", start, parser.getIndex(), parser);
+            return new LexerToken("Integer", parser.data.substring(start, parser.getIndex()), start, parser.getIndex(), parser);
         }else if(first == '"') {
             int value;
             StringBuilder str = new StringBuilder();
