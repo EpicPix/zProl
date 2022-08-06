@@ -2,35 +2,6 @@ package ga.epicpix.zprol.parser;
 
 public class DataParser {
 
-    public static int[] genCharacters(int from, int to) {
-        int[] out = new int[to-from+1];
-        for(int i = from; i <= to; i++) out[i-from] = i;
-        return out;
-    }
-
-    public static int[] joinCharacters(int[]... chars) {
-        int requiredSpace = 0;
-        for(int[] c : chars) requiredSpace += c.length;
-        int[] c = new int[requiredSpace];
-        int current = 0;
-        for(int[] a : chars) for(int b : a) c[current++] = b;
-        return c;
-    }
-
-    public static boolean matchesCharacters(int[] chars, int c) {
-        if(chars == null) return false;
-        for(int t : chars) if(t == c) return true;
-        return false;
-    }
-
-    public static boolean matchesCharacters(int[] chars, String c) {
-        if(chars == null) return false;
-        for(int i = 0; i<c.length(); i++) if(!matchesCharacters(chars, c.codePointAt(i))) return false;
-        return true;
-    }
-
-    public static final int[] nonSpecialCharacters = joinCharacters(genCharacters('a', 'z'), genCharacters('A', 'Z'), genCharacters('0', '9'), new int[] {'_'});
-
     public final String data;
     private final String fileName;
     private final String[] lines;
@@ -113,25 +84,6 @@ public class DataParser {
         return index < data.length();
     }
 
-    public boolean checkNewLine() {
-        if(!hasNext()) return false;
-        return data.codePointAt(index) == '\n';
-    }
-
-    public void ignoreWhitespace() {
-        while(index + 1 < data.length()) {
-            if(!Character.isWhitespace(data.codePointAt(index)) && data.codePointAt(index) != '\n') {
-                break;
-            }
-            lineRow++;
-            if(data.codePointAt(index) == '\n') {
-                lineNumber++;
-                lineRow = 0;
-            }
-            index++;
-        }
-    }
-
     public void goBack() {
         if(index <= 0) throw new IllegalStateException("Index is 0, cannot go further back");
         index--;
@@ -152,40 +104,6 @@ public class DataParser {
             lineRow = 0;
         }
         return cp;
-    }
-
-    public String nextTemplateWord(int[] allowedCharacters) {
-        ignoreWhitespace();
-        lastLocation = getLocation();
-        if(!hasNext()) return null;
-        StringBuilder word = new StringBuilder();
-        while(hasNext() && !Character.isWhitespace(data.codePointAt(index))) {
-            if(!matchesCharacters(allowedCharacters, data.codePointAt(index))) {
-                if(word.length() == 0) {
-                    lineRow++;
-                    word.appendCodePoint(data.codePointAt(index++));
-                }
-                return word.toString();
-            }else {
-                if(!matchesCharacters(allowedCharacters, word.toString())) {
-                    return word.toString();
-                }
-            }
-            lineRow++;
-            word.appendCodePoint(data.codePointAt(index++));
-        }
-        return word.toString();
-    }
-
-    public String nextWord() {
-        return nextTemplateWord(nonSpecialCharacters);
-    }
-
-    public String seekWord() {
-        var loc = saveLocation();
-        String str = nextWord();
-        loadLocation(loc);
-        return str;
     }
 
 }
