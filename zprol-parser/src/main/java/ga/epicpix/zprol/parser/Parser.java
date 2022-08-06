@@ -242,7 +242,125 @@ public final class Parser {
     }
 
     public NamedToken readExpression() {
-        throw new TokenLocatedException("Cannot read expressions yet", lexerTokens.current());
+        return readInclusiveAndExpression();
+    }
+
+    public NamedToken readInclusiveAndExpression() {
+        skipWhitespace();
+        readInclusiveOrExpression();
+        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+    }
+
+    public NamedToken readInclusiveOrExpression() {
+        skipWhitespace();
+        readShiftExpression();
+        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+    }
+
+    public NamedToken readShiftExpression() {
+        skipWhitespace();
+        readEqualsExpression();
+        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+    }
+
+
+    public NamedToken readEqualsExpression() {
+        skipWhitespace();
+        readCompareExpression();
+        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+    }
+
+
+    public NamedToken readCompareExpression() {
+        skipWhitespace();
+        readAdditiveExpression();
+        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+    }
+
+
+    public NamedToken readAdditiveExpression() {
+        skipWhitespace();
+        readMultiplicativeExpression();
+        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+    }
+
+
+    public NamedToken readMultiplicativeExpression() {
+        skipWhitespace();
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(readPostExpression());
+        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+    }
+
+
+    public NamedToken readPostExpression() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        skipWhitespace();
+        if(optional("OpenParen", tokens)) {
+            var start = lexerTokens.currentIndex();
+            ArrayList<Token> cast = new ArrayList<>();
+            try {
+                cast.add(readType());
+                optional("HardCastIndicatorOperator", cast);
+                cast.add(wexpect("CloseParen"));
+            }catch(TokenLocatedException e) {
+                lexerTokens.setIndex(start);
+                tokens.add(readExpression());
+                tokens.add(wexpect("CloseParen"));
+                return new NamedToken("PostExpression", tokens.toArray(new Token[0]));
+            }
+            cast.add(readPostExpression());
+            tokens.addAll(cast);
+            return new NamedToken("CastOperator", tokens.toArray(new Token[0]));
+        }
+        skipWhitespace();
+        if(isNext("Identifier")) {
+            tokens.add(readAccessor());
+            return new NamedToken("PostExpression", tokens.toArray(new Token[0]));
+        }
+        tokens.add(expect("String", "NullKeyword", "Integer", "TrueKeyword", "FalseKeyword"));
+        return new NamedToken("PostExpression", tokens.toArray(new Token[0]));
+    }
+
+    public NamedToken readAccessor() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(readFunctionInvocationAccessor());
+        while(skipWhitespace() && (isNext("OpenBracket") || isNext("AccessorOperator"))) {
+            if(isNext("OpenBracket")) {
+                tokens.add(expect("OpenBracket"));
+                tokens.add(readExpression());
+                tokens.add(wexpect("CloseBracket"));
+            }else {
+                tokens.add(readFunctionInvocationAccessor());
+            }
+        }
+        return new NamedToken("Accessor", tokens.toArray(new Token[0]));
+    }
+
+    public Token readFunctionInvocationAccessor() {
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(wexpect("Identifier"));
+        skipWhitespace();
+        if(optional("OpenParen", tokens)) {
+            tokens.add(readArgumentList("CloseParen"));
+            tokens.add(wexpect("CloseParen"));
+            return new NamedToken("FunctionInvocationAccessor", new NamedToken("FunctionInvocation", tokens.toArray(new Token[0])));
+        }
+        return tokens.get(0);
+    }
+
+    public NamedToken readArgumentList(String endToken) {
+        ArrayList<Token> tokens = new ArrayList<>();
+        skipWhitespace();
+        if(isNext(endToken)) {
+            return new NamedToken("ArgumentList");
+        }
+        tokens.add(readParameter());
+        while(skipWhitespace() && !isNext(endToken)) {
+            tokens.add(expect("CommaOperator"));
+            tokens.add(readExpression());
+        }
+        return new NamedToken("ArgumentList", tokens.toArray(new Token[0]));
     }
 
     // ---- Helper Methods ----
