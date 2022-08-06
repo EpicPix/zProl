@@ -2,42 +2,7 @@ package ga.epicpix.zprol.parser;
 
 public class DataParser {
 
-    public static char[] genCharacters(char from, char to) {
-        char[] out = new char[to-from+1];
-        for(char i = from; i <= to; i++) out[i-from] = i;
-        return out;
-    }
-
-    public static int[] genCharacters(int from, int to) {
-        int[] out = new int[to-from+1];
-        for(int i = from; i <= to; i++) out[i-from] = i;
-        return out;
-    }
-
-    public static char[] joinCharacters(char[]... chars) {
-        int requiredSpace = 0;
-        for(char[] c : chars) requiredSpace += c.length;
-        char[] c = new char[requiredSpace];
-        int current = 0;
-        for(char[] a : chars) for(char b : a) c[current++] = b;
-        return c;
-    }
-
-    public static boolean matchesCharacters(char[] chars, int c) {
-        if(chars == null) return false;
-        for(int t : chars) if(t == c) return true;
-        return false;
-    }
-
-    public static boolean matchesCharacters(char[] chars, String c) {
-        if(chars == null) return false;
-        for(int i = 0; i<c.length(); i++) if(!matchesCharacters(chars, c.codePointAt(i))) return false;
-        return true;
-    }
-
-    public static final char[] nonSpecialCharacters = joinCharacters(genCharacters('a', 'z'), genCharacters('A', 'Z'), genCharacters('0', '9'), new char[] {'_'});
-
-    private final String data;
+    public final String data;
     private final String fileName;
     private final String[] lines;
     private int index;
@@ -51,6 +16,29 @@ public class DataParser {
         this.fileName = fileName;
         this.lines = lines;
         data = String.join("\n", lines);
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public ParserLocation getLocation(int index) {
+        if(index < 0 || index > data.length()) throw new IllegalArgumentException("Index out of range");
+        var line = 0;
+        var len = 0;
+        while(len <= index) {
+            if(line == lines.length) {
+                line = lines.length - 1;
+                break;
+            }else {
+                if (lines[line].length() + len + line >= index) {
+                    break;
+                }
+            }
+            len += lines[line].length();
+            line++;
+        }
+        return new ParserLocation(line, index - len - line);
     }
 
     public static class SavedLocation {
@@ -96,31 +84,14 @@ public class DataParser {
         return index < data.length();
     }
 
-    public boolean checkNewLine() {
-        if(!hasNext()) return false;
-        return data.codePointAt(index) == '\n';
-    }
-
-    public int seekCharacter() {
-        return data.codePointAt(index);
-    }
-
-    public int seekNextCharacter() {
-        return data.codePointAt(index + 1);
-    }
-
-    public void ignoreWhitespace() {
-        while(index + 1 < data.length()) {
-            if(!Character.isWhitespace(data.codePointAt(index)) && data.codePointAt(index) != '\n') {
-                break;
-            }
-            lineRow++;
-            if(data.codePointAt(index) == '\n') {
-                lineNumber++;
-                lineRow = 0;
-            }
-            index++;
-        }
+    public void goBack() {
+        if(index <= 0) throw new IllegalStateException("Index is 0, cannot go further back");
+        index--;
+        lineRow--;
+        if(lineRow != -1) return;
+        lineNumber--;
+        lineRow = lines[lineNumber].length() - 1;
+        lastLocation = getLocation();
     }
 
     public int nextChar() {
@@ -133,40 +104,6 @@ public class DataParser {
             lineRow = 0;
         }
         return cp;
-    }
-
-    public String nextTemplateWord(char[] allowedCharacters) {
-        ignoreWhitespace();
-        lastLocation = getLocation();
-        if(!hasNext()) return null;
-        StringBuilder word = new StringBuilder();
-        while(hasNext() && !Character.isWhitespace(data.codePointAt(index))) {
-            if(!matchesCharacters(allowedCharacters, data.codePointAt(index))) {
-                if(word.length() == 0) {
-                    lineRow++;
-                    word.appendCodePoint(data.codePointAt(index++));
-                }
-                return word.toString();
-            }else {
-                if(!matchesCharacters(allowedCharacters, word.toString())) {
-                    return word.toString();
-                }
-            }
-            lineRow++;
-            word.appendCodePoint(data.codePointAt(index++));
-        }
-        return word.toString();
-    }
-
-    public String nextWord() {
-        return nextTemplateWord(nonSpecialCharacters);
-    }
-
-    public String seekWord() {
-        var loc = saveLocation();
-        String str = nextWord();
-        loadLocation(loc);
-        return str;
     }
 
 }

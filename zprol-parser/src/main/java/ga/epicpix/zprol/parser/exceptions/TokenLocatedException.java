@@ -18,24 +18,25 @@ public class TokenLocatedException extends RuntimeException {
 
     public void printError() {
         if(token != null) {
-            int line = token.endLocation.line();
-            int row = token.endLocation.row();
+            try {
+                var start = token.getStartLocation();
+                var end = token.getEndLocation();
 
-            System.err.println(getMessage() + ", error at " + token.parser.getFileName() + ":" + (line + 1) + ":" + (row + 1));
+                System.err.println(getMessage() + ", error at " + token.parser.getFileName() + ":" + (end.line() + 1) + ":" + (start.row() + 1));
 
-            String l = token.parser.getLines()[line];
-            System.err.println(l);
+                String l = token.parser.getLines()[end.line()];
+                System.err.println(l);
 
-            int offset = token.startLocation.line() == line ? row - token.startLocation.row() : row;
-
-            System.err.println(" ".repeat(row - offset) + "^".repeat(offset));
-            if (Boolean.parseBoolean(System.getProperty("SHOW_STACK_TRACE"))) {
-                System.err.println("DEBUG INFO:");
-                StackTraceElement[] trace = getStackTrace();
-                for (StackTraceElement traceElement : trace)
-                    System.err.println("\tat " + traceElement);
+                System.err.println(" ".repeat(start.row()) + "^".repeat(end.row() - start.row()));
+            } finally {
+                if(Boolean.parseBoolean(System.getProperty("SHOW_STACK_TRACE"))) {
+                    System.err.println("DEBUG INFO:");
+                    StackTraceElement[] trace = getStackTrace();
+                    for(StackTraceElement traceElement : trace)
+                        System.err.println("\tat " + traceElement);
+                }
             }
-        }else {
+        } else {
             printStackTrace();
         }
     }

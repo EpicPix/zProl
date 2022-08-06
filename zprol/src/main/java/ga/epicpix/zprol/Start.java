@@ -7,9 +7,9 @@ import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.generators.Generator;
+import ga.epicpix.zprol.parser.Lexer;
 import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
-import ga.epicpix.zprol.parser.zld.ZldParser;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.Token;
@@ -28,18 +28,7 @@ public class Start {
     public static final boolean SHOW_TIMINGS = !Boolean.parseBoolean(System.getProperty("HIDE_TIMINGS"));
 
     public static void main(String[] args) throws UnknownTypeException, IOException {
-        try {
-            registerTypes();
-
-            long startLoad = System.currentTimeMillis();
-            ZldParser.load("grammar.zld", new String(Start.class.getClassLoader().getResourceAsStream("grammar.zld").readAllBytes()));
-            long endLoad = System.currentTimeMillis();
-            if(SHOW_TIMINGS) System.out.printf("Took %d ms load grammar\n", endLoad - startLoad);
-        }catch(ParserException e) {
-            e.printError();
-            System.exit(1);
-            return;
-        }
+        registerTypes();
         Generator.initGenerators();
 
         boolean p = false;
@@ -158,7 +147,7 @@ public class Start {
         ArrayList<PreCompiledData> included = new ArrayList<>();
         ArrayList<CompiledData> includedCompiled = new ArrayList<>();
         if(!unloadStd) {
-            var stdReader = ZldParser.class.getClassLoader().getResourceAsStream("std.zpil");
+            var stdReader = Start.class.getClassLoader().getResourceAsStream("std.zpil");
             if (stdReader != null) {
                 loadGenerated(GeneratedData.load(stdReader.readAllBytes()), includedCompiled, included);
             } else {
@@ -182,14 +171,14 @@ public class Start {
                 String normalName = file.substring(0, file.lastIndexOf('.') == -1 ? file.length() : file.lastIndexOf('.'));
                 try {
                     long startLex = System.currentTimeMillis();
-                    ArrayList<LexerToken> lexedTokens = Parser.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
+                    ArrayList<LexerToken> lexedTokens = Lexer.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
                     long endLex = System.currentTimeMillis();
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to lex\n", file.substring(file.lastIndexOf('/') + 1), endLex - startLex);
 
                     long startToken = System.currentTimeMillis();
-                    ArrayList<Token> tokens = Parser.tokenize(new SeekIterator<>(lexedTokens));
+                    ArrayList<Token> tokens = Parser.parse(new SeekIterator<>(lexedTokens));
                     long endToken = System.currentTimeMillis();
-                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to tokenize\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
+                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to parse\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 
                     if(Boolean.parseBoolean(System.getProperty("PARSE_TREE"))) {
                         long startAst = System.currentTimeMillis();

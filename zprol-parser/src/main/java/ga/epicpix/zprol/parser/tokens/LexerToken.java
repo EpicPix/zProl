@@ -2,17 +2,19 @@ package ga.epicpix.zprol.parser.tokens;
 
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.ParserLocation;
-import ga.epicpix.zprol.parser.lexer.LanguageLexerToken;
 
-public class LexerToken extends Token {
+public final class LexerToken extends Token {
+
+    private final int start;
+    private final int end;
 
     public final String data;
-    public final LanguageLexerToken lToken;
 
-    public LexerToken(String name, String data, LanguageLexerToken lToken, ParserLocation startLocation, ParserLocation endLocation, DataParser parser) {
-        super(name, startLocation, endLocation, parser);
+    public LexerToken(String name, String data, int start, int end, DataParser parser) {
+        super(name, parser);
+        this.start = start;
+        this.end = end;
         this.data = data;
-        this.lToken = lToken;
     }
 
     public String getData() {
@@ -21,5 +23,13 @@ public class LexerToken extends Token {
 
     public String toStringRaw() {
         return data;
+    }
+
+    public ParserLocation getStartLocation() {
+        return parser.getLocation(start);
+    }
+
+    public ParserLocation getEndLocation() {
+        return parser.getLocation(end);
     }
 }
