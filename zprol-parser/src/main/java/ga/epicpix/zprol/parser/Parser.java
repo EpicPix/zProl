@@ -70,11 +70,6 @@ public final class Parser {
         if(optional("Semicolon", tokens)) {
             return new NamedToken("Function", tokens.toArray(new Token[0]));
         }
-        if(optional("LineCodeChars", tokens)) {
-            tokens.add(readStatement());
-            tokens.add(wexpect("Semicolon"));
-            return new NamedToken("Function", tokens.toArray(new Token[0]));
-        }
         tokens.add(readCode());
         return new NamedToken("Function", tokens.toArray(new Token[0]));
     }
@@ -153,6 +148,12 @@ public final class Parser {
 
     public NamedToken readCode() {
         ArrayList<Token> tokens = new ArrayList<>();
+        skipWhitespace();
+        if(!isNext("OpenBrace")) {
+            tokens.add(expect("LineCodeChars"));
+            tokens.add(readStatement());
+            return new NamedToken("Function", tokens.toArray(new Token[0]));
+        }
         tokens.add(expect("OpenBrace"));
         while(skipWhitespace() && !optional("CloseBrace", tokens)) {
             tokens.add(readStatement());
@@ -204,9 +205,7 @@ public final class Parser {
         tokens.add(wexpect("OpenParen"));
         tokens.add(readExpression());
         tokens.add(wexpect("CloseParen"));
-        tokens.add(wexpect("OpenBrace"));
         tokens.add(readCode());
-        tokens.add(wexpect("CloseBrace"));
         skipWhitespace();
         if(isNext("ElseKeyword")) {
             tokens.add(readElseStatement());
@@ -241,55 +240,89 @@ public final class Parser {
         return new NamedToken("Statement", tokens.toArray(new Token[0]));
     }
 
-    public NamedToken readExpression() {
+    public Token readExpression() {
         return readInclusiveAndExpression();
     }
 
-    public NamedToken readInclusiveAndExpression() {
+    public Token readInclusiveAndExpression() {
         skipWhitespace();
-        readInclusiveOrExpression();
-        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(readInclusiveOrExpression());
+        if(skipWhitespace() && optional("AndOperator", tokens)) {
+            tokens.add(readInclusiveAndExpression());
+        }
+        if(tokens.size() == 1) return tokens.get(0);
+        return new NamedToken("InclusiveAndExpression", tokens.toArray(new Token[0]));
     }
 
-    public NamedToken readInclusiveOrExpression() {
+    public Token readInclusiveOrExpression() {
         skipWhitespace();
-        readShiftExpression();
-        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(readShiftExpression());
+        if(skipWhitespace() && optional("InclusiveOrOperator", tokens)) {
+            tokens.add(readInclusiveOrExpression());
+        }
+        if(tokens.size() == 1) return tokens.get(0);
+        return new NamedToken("InclusiveOrExpression", tokens.toArray(new Token[0]));
     }
 
-    public NamedToken readShiftExpression() {
+    public Token readShiftExpression() {
         skipWhitespace();
-        readEqualsExpression();
-        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
-    }
-
-
-    public NamedToken readEqualsExpression() {
-        skipWhitespace();
-        readCompareExpression();
-        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
-    }
-
-
-    public NamedToken readCompareExpression() {
-        skipWhitespace();
-        readAdditiveExpression();
-        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
-    }
-
-
-    public NamedToken readAdditiveExpression() {
-        skipWhitespace();
-        readMultiplicativeExpression();
-        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(readEqualsExpression());
+        if(skipWhitespace() && optional(tokens, "ShiftLeftOperator", "ShiftRightOperator")) {
+            tokens.add(readShiftExpression());
+        }
+        if(tokens.size() == 1) return tokens.get(0);
+        return new NamedToken("ShiftExpression", tokens.toArray(new Token[0]));
     }
 
 
-    public NamedToken readMultiplicativeExpression() {
+    public Token readEqualsExpression() {
+        skipWhitespace();
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(readCompareExpression());
+        if(skipWhitespace() && optional(tokens, "EqualOperator", "NotEqualOperator")) {
+            tokens.add(readEqualsExpression());
+        }
+        if(tokens.size() == 1) return tokens.get(0);
+        return new NamedToken("EqualsExpression", tokens.toArray(new Token[0]));
+    }
+
+
+    public Token readCompareExpression() {
+        skipWhitespace();
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(readAdditiveExpression());
+        if(skipWhitespace() && optional(tokens, "LessEqualThanOperator", "LessThanOperator", "GreaterEqualThanOperator", "GreaterThanOperator")) {
+            tokens.add(readCompareExpression());
+        }
+        if(tokens.size() == 1) return tokens.get(0);
+        return new NamedToken("CompareExpression", tokens.toArray(new Token[0]));
+    }
+
+
+    public Token readAdditiveExpression() {
+        skipWhitespace();
+        ArrayList<Token> tokens = new ArrayList<>();
+        tokens.add(readMultiplicativeExpression());
+        if(skipWhitespace() && optional(tokens, "AddOperator", "SubtractOperator")) {
+            tokens.add(readAdditiveExpression());
+        }
+        if(tokens.size() == 1) return tokens.get(0);
+        return new NamedToken("AdditiveExpression", tokens.toArray(new Token[0]));
+    }
+
+
+    public Token readMultiplicativeExpression() {
         skipWhitespace();
         ArrayList<Token> tokens = new ArrayList<>();
         tokens.add(readPostExpression());
-        throw new TokenLocatedException("Not implemented yet", lexerTokens.current());
+        if(skipWhitespace() && optional(tokens, "MultiplyOperator", "DivideOperator", "ModuloOperator")) {
+            tokens.add(readMultiplicativeExpression());
+        }
+        if(tokens.size() == 1) return tokens.get(0);
+        return new NamedToken("MultiplicativeExpression", tokens.toArray(new Token[0]));
     }
 
 
@@ -428,6 +461,16 @@ public final class Parser {
         if(opt == null) return false;
         tokens.add(opt);
         return true;
+    }
+
+    public boolean optional(ArrayList<Token> tokens, String... names) {
+        for(String name : names) {
+            var opt = optional(name);
+            if(opt == null) continue;
+            tokens.add(opt);
+            return true;
+        }
+        return false;
     }
 
 }
