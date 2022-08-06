@@ -23,15 +23,14 @@ public final class Parser {
         var tokens = new ArrayList<Token>();
         while(skipWhitespace()) {
             var next = lexerTokens.next();
-            if(next.name.equals("NamespaceKeyword")) {
-                tokens.add(new NamedToken("Namespace", next, readNamespaceIdentifier(), wexpect("Semicolon")));
-            }else if(next.name.equals("UsingKeyword")) {
-                tokens.add(new NamedToken("Using", next, readNamespaceIdentifier(), wexpect("Semicolon")));
-            }else if(next.name.equals("ClassKeyword")) {
-                tokens.add(readClass(next));
-            }else {
-                lexerTokens.previous();
-                tokens.add(readFieldOrMethod());
+            switch(next.name) {
+                case "NamespaceKeyword" -> tokens.add(new NamedToken("Namespace", next, readNamespaceIdentifier(), wexpect("Semicolon")));
+                case "UsingKeyword" -> tokens.add(new NamedToken("Using", next, readNamespaceIdentifier(), wexpect("Semicolon")));
+                case "ClassKeyword" -> tokens.add(readClass(next));
+                default -> {
+                    lexerTokens.previous();
+                    tokens.add(readFieldOrMethod());
+                }
             }
         }
         return tokens;
@@ -147,7 +146,7 @@ public final class Parser {
             tokens.add(expect("CommaOperator"));
             tokens.add(readParameter());
         }
-        tokens.add(new NamedToken("ParameterList", tokens.toArray(new Token[0])));
+        output.add(new NamedToken("ParameterList", tokens.toArray(new Token[0])));
     }
 
     public NamedToken readParameter() {
@@ -282,7 +281,7 @@ public final class Parser {
     }
 
     public Token readExpression() {
-        return readInclusiveAndExpression();
+        return new NamedToken("Expression", readInclusiveAndExpression());
     }
 
     public Token readInclusiveAndExpression() {
@@ -367,7 +366,7 @@ public final class Parser {
     }
 
 
-    public NamedToken readPostExpression() {
+    public Token readPostExpression() {
         ArrayList<Token> tokens = new ArrayList<>();
         skipWhitespace();
         if(optional("OpenParen", tokens)) {
@@ -379,21 +378,18 @@ public final class Parser {
                 cast.add(wexpect("CloseParen"));
             }catch(TokenLocatedException e) {
                 lexerTokens.setIndex(start);
-                tokens.add(readExpression());
+                var expr = readExpression();
                 tokens.add(wexpect("CloseParen"));
-                return new NamedToken("PostExpression", tokens.toArray(new Token[0]));
+                return expr;
             }
-            cast.add(readPostExpression());
             tokens.addAll(cast);
-            return new NamedToken("CastOperator", tokens.toArray(new Token[0]));
+            return new NamedToken("CastExpression", new NamedToken("CastOperator", tokens.toArray(new Token[0])), readPostExpression());
         }
         skipWhitespace();
         if(isNext("Identifier")) {
-            tokens.add(readAccessor());
-            return new NamedToken("PostExpression", tokens.toArray(new Token[0]));
+            return readAccessor();
         }
-        tokens.add(expect("String", "NullKeyword", "Integer", "TrueKeyword", "FalseKeyword"));
-        return new NamedToken("PostExpression", tokens.toArray(new Token[0]));
+        return expect("String", "NullKeyword", "Integer", "TrueKeyword", "FalseKeyword");
     }
 
     public NamedToken readAccessor() {
@@ -401,27 +397,24 @@ public final class Parser {
         tokens.add(readFunctionInvocationAccessor());
         while(skipWhitespace() && (isNext("OpenBracket") || isNext("AccessorOperator"))) {
             if(isNext("OpenBracket")) {
-                tokens.add(expect("OpenBracket"));
-                tokens.add(readExpression());
-                tokens.add(wexpect("CloseBracket"));
+                tokens.add(new NamedToken("AccessorElement", new NamedToken("ArrayAccessor", expect("OpenBracket"), readExpression(), wexpect("CloseBracket"))));
             }else {
-                tokens.add(expect("AccessorOperator"));
-                tokens.add(readFunctionInvocationAccessor());
+                tokens.add(new NamedToken("AccessorElement", expect("AccessorOperator"), readFunctionInvocationAccessor()));
             }
         }
         return new NamedToken("Accessor", tokens.toArray(new Token[0]));
     }
 
     public Token readFunctionInvocationAccessor() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(wexpect("Identifier"));
+        var ident = wexpect("Identifier");
         skipWhitespace();
+        ArrayList<Token> tokens = new ArrayList<>();
         if(optional("OpenParen", tokens)) {
             readArgumentList("CloseParen", tokens);
             tokens.add(wexpect("CloseParen"));
-            return new NamedToken("FunctionInvocationAccessor", new NamedToken("FunctionInvocation", tokens.toArray(new Token[0])));
+            return new NamedToken("FunctionInvocationAccessor", ident, new NamedToken("FunctionInvocation", tokens.toArray(new Token[0])));
         }
-        return tokens.get(0);
+        return ident;
     }
 
     public void readArgumentList(String endToken, ArrayList<Token> output) {
@@ -474,11 +467,6 @@ public final class Parser {
     public LexerToken wexpect(String name) {
         skipWhitespace();
         return expect(name);
-    }
-
-    public LexerToken wexpect(String... names) {
-        skipWhitespace();
-        return expect(names);
     }
 
     public boolean isNext(String name) {

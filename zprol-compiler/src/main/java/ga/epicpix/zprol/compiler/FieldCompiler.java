@@ -37,11 +37,11 @@ public class FieldCompiler {
         ConstantValue defaultValue = null;
         if(field.isConst()) {
             var value = field.defaultValue;
-            if(value.getTokenWithName("DecimalInteger") != null || value.getTokenWithName("HexInteger") != null) {
+            if(value.getTokenWithName("Integer") != null) {
                 if(!(type instanceof PrimitiveType prim)) {
                     throw new TokenLocatedException("Expected " + type.normalName() + ", got an integer", value);
                 }
-                var n = value.getTokenWithName("DecimalInteger") != null ? getDecimalInteger(value) : getHexInteger(value);
+                var n = getInteger(value);
                 if(prim.getSize() == 1) defaultValue = new ConstantValue(n.byteValue());
                 else if(prim.getSize() == 2) defaultValue = new ConstantValue(n.shortValue());
                 else if(prim.getSize() == 4) defaultValue = new ConstantValue(n.intValue());
@@ -55,7 +55,7 @@ public class FieldCompiler {
                 if(!(type instanceof ClassType clzType) || !(Objects.equals(clzType.getNamespace(), "zprol.lang") || clzType.getName().equals("String"))) {
                     throw new TokenLocatedException("Expected " + type.normalName() + ", got a string", value);
                 }
-                defaultValue = new ConstantValue(convertToLanguageString(value));
+                defaultValue = new ConstantValue(value.toStringRaw());
             }else {
                 var bytecode = createStorage();
                 var got = new ArrayDeque<Type>();

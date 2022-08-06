@@ -48,7 +48,7 @@ public class PreCompiler {
                         clazz.fields.add(field);
                     }
 
-                    for(var methodToken : named.getTokensWithName("Method")) {
+                    for(var methodToken : named.getTokensWithName("Function")) {
                         clazz.methods.add(parseFunction(methodToken));
                     }
 

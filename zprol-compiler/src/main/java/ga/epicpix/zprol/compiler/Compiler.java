@@ -240,10 +240,11 @@ public class Compiler {
         }
     }
 
-    public static void generateInstructionsFromExpression(NamedToken token, Type expectedType, ArrayDeque<Type> types, CompiledData data, FunctionCodeScope scope, IBytecodeStorage bytecode, boolean discardValue) {
+    public static void generateInstructionsFromExpression(Token token, Type expectedType, ArrayDeque<Type> types, CompiledData data, FunctionCodeScope scope, IBytecodeStorage bytecode, boolean discardValue) {
         switch(token.name) {
             case "Expression" -> {
-                generateInstructionsFromExpression(token.tokens[0].asNamedToken(), expectedType, types, data, scope, bytecode, expectedType == null && discardValue);
+                if(!(token instanceof NamedToken named)) throw new TokenLocatedException("Expression expected to be a named token", token);
+                generateInstructionsFromExpression(named.tokens[0], expectedType, types, data, scope, bytecode, expectedType == null && discardValue);
                 Type prob = types.size() != 0 ? types.peek() : null;
                 if(prob != null && discardValue) {
                     if(prob instanceof PrimitiveType primitive) {
@@ -262,12 +263,8 @@ public class Compiler {
                 }
             }
             case "MultiplicativeExpression", "AdditiveExpression", "InclusiveOrExpression", "EqualsExpression", "ShiftExpression", "InclusiveAndExpression", "CompareExpression" -> types.push(runOperator(token, expectedType, data, scope, types, bytecode));
-            case "DecimalInteger", "HexInteger" -> {
-                BigInteger number = switch(token.name) {
-                    case "DecimalInteger" -> getDecimalInteger(token.tokens[0]);
-                    case "HexInteger" -> getHexInteger(token.tokens[0]);
-                    default -> throw new TokenLocatedException("Impossible case", token);
-                };
+            case "Integer" -> {
+                BigInteger number = getInteger(token);
                 if(expectedType instanceof PrimitiveType primitive) {
                     bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "push", number));
                     types.push(primitive);
@@ -279,7 +276,8 @@ public class Compiler {
                 }
             }
             case "Accessor" -> {
-                var accessorData = accessorToData(token);
+                if(!(token instanceof NamedToken named)) throw new TokenLocatedException("Expression expected to be a named token", token);
+                var accessorData = accessorToData(named);
                 for(int i = 0; i < accessorData.length; i++) {
                     var v = accessorData[i];
                     if(v instanceof CompilerIdentifierDataFunction func) {
@@ -303,18 +301,19 @@ public class Compiler {
                 }
             }
             case "String" -> {
-                bytecode.pushInstruction(getConstructedInstruction("push_string", convertToLanguageString(token)));
+                bytecode.pushInstruction(getConstructedInstruction("push_string", token.toStringRaw()));
                 types.push(data.resolveType("zprol.lang.String"));
             }
             case "CastExpression" -> {
-                var op = token.getTokenWithName("CastOperator");
+                if(!(token instanceof NamedToken named)) throw new TokenLocatedException("Expression expected to be a named token", token);
+                var op = named.getTokenWithName("CastOperator");
                 boolean isHardCast = op.getLexerToken("HardCastIndicatorOperator") != null;
                 var castType = data.resolveType(op.getTokenAsString("Type"));
-                var tokens = token.tokens;
+                var tokens = named.tokens;
                 if(tokens[1] instanceof LexerToken lex && lex.name.equals("OpenParen")) {
-                    generateInstructionsFromExpression(tokens[2].asNamedToken(), null, types, data, scope, bytecode, false);
+                    generateInstructionsFromExpression(tokens[2], null, types, data, scope, bytecode, false);
                 } else {
-                    generateInstructionsFromExpression(tokens[1].asNamedToken(), null, types, data, scope, bytecode, false);
+                    generateInstructionsFromExpression(tokens[1], null, types, data, scope, bytecode, false);
                 }
                 var from = types.pop();
                 if(isHardCast) {
@@ -322,13 +321,17 @@ public class Compiler {
                     types.push(castType);
                     return;
                 }
-                types.push(doCast(from, castType, true, bytecode, token.tokens[1]));
+                types.push(doCast(from, castType, true, bytecode, named.tokens[1]));
             }
-            case "Boolean" -> {
-                bytecode.pushInstruction(getConstructedInstruction("push_" + token.toStringRaw()));
+            case "TrueKeyword" -> {
+                bytecode.pushInstruction(getConstructedInstruction("push_true"));
                 types.push(new BooleanType());
             }
-            case "Null" -> {
+            case "FalseKeyword" -> {
+                bytecode.pushInstruction(getConstructedInstruction("push_false"));
+                types.push(new BooleanType());
+            }
+            case "NullKeyword" -> {
                 bytecode.pushInstruction(getConstructedInstruction("null"));
                 types.push(new NullType());
             }
@@ -336,19 +339,20 @@ public class Compiler {
         }
     }
 
-    public static Type runOperator(NamedToken token, Type expectedType, CompiledData data, FunctionCodeScope scope, ArrayDeque<Type> types, IBytecodeStorage bytecode) {
-        var tokens = token.tokens;
+    public static Type runOperator(Token token, Type expectedType, CompiledData data, FunctionCodeScope scope, ArrayDeque<Type> types, IBytecodeStorage bytecode) {
+        if(!(token instanceof NamedToken named)) throw new TokenLocatedException("Expression expected to be a named token", token);
+        var tokens = named.tokens;
         if (tokens[0] instanceof LexerToken lexer && lexer.name.equals("OpenParen")) {
-            generateInstructionsFromExpression(tokens[1].asNamedToken(), expectedType, types, data, scope, bytecode, false);
+            generateInstructionsFromExpression(tokens[1], expectedType, types, data, scope, bytecode, false);
             return types.pop();
         }
-        generateInstructionsFromExpression(tokens[0].asNamedToken(), expectedType, types, data, scope, bytecode, false);
+        generateInstructionsFromExpression(tokens[0], expectedType, types, data, scope, bytecode, false);
         var arg1 = types.pop();
 
         int amtOperators = (tokens.length - 1) / 2;
         for (int i = 0; i < amtOperators; i++) {
             var arg2Storage = createStorage();
-            generateInstructionsFromExpression(tokens[i * 2 + 2].asNamedToken(), expectedType, types, data, scope, arg2Storage, false);
+            generateInstructionsFromExpression(tokens[i * 2 + 2], expectedType, types, data, scope, arg2Storage, false);
             var arg2 = types.pop();
 
             arg1 = runOperator(arg1, arg2, tokens[i * 2 + 1].asLexerToken(), token, bytecode, arg2Storage);
