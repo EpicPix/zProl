@@ -106,20 +106,14 @@ public final class Parser {
             return new FieldTree(true, type, name, expression);
         }
         ModifiersTree mods = readFunctionModifiers();
-        if(mods.modifiers().length != 0) {
-            TypeTree type = readType();
-            LexerToken name = wexpect("Identifier");
+        TypeTree type = readType();
+        LexerToken name = wexpect("Identifier");
+        skipWhitespace();
+        if(mods.modifiers().length != 0 || isNext("OpenParen")) {
             return readFunction(mods, type, name);
         }
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        tokens.add(readType());
-//        tokens.add(wexpect("Identifier"));
-//        skipWhitespace();
-//        if(isNext("OpenParen")) {
-//            return readMethod(tokens);
-//        }
-//        tokens.add(wexpect("Semicolon"));
-//        return new NamedToken("Field", tokens.toArray(new Token[0]));
+        wexpect("Semicolon");
+        return new FieldTree(false, type, name, null);
     }
 
     public ModifiersTree readFunctionModifiers() {
@@ -143,9 +137,11 @@ public final class Parser {
         skipWhitespace();
         ParserState.pushLocation();
         int arrays = 0;
-        LexerToken token;
-        if((token = optional("VoidKeyword")) != null) {
-            if((token = optional("BoolKeyword")) != null) {
+        if(isNext("VoidKeyword")) {
+            return new TypeTree(expect("VoidKeyword"), 0);
+        }else {
+            LexerToken token;
+            if((token = optional("BoolKeyword")) == null) {
                 token = expect("Identifier");
             }
             while(isNext("OpenBracket")) {
@@ -153,8 +149,8 @@ public final class Parser {
                 expect("CloseBracket");
                 arrays++;
             }
+            return new TypeTree(token, arrays);
         }
-        return new TypeTree(token, arrays);
     }
 
     public ParametersTree readParameterList(String endToken) {
