@@ -412,33 +412,43 @@ public final class Parser {
 
 
     public IExpression readPostExpression() {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        skipWhitespace();
-//        if(optional("OpenParen", tokens)) {
-//            var start = lexerTokens.currentIndex();
-//            ArrayList<Token> cast = new ArrayList<>();
-//            try {
-//                cast.add(readType());
-//                optional("HardCastIndicatorOperator", cast);
-//                cast.add(wexpect("CloseParen"));
-//            }catch(TokenLocatedException e) {
-//                lexerTokens.setIndex(start);
-//                var expr = readExpression();
-//                tokens.add(wexpect("CloseParen"));
-//                return expr;
-//            }
-//            tokens.addAll(cast);
-//            return new NamedToken("CastExpression", new NamedToken("CastOperator", tokens.toArray(new Token[0])), readPostExpression());
-//        }
-//        skipWhitespace();
-//        if(isNext("Identifier")) {
-//            return readAccessor();
-//        }
-//        return expect("String", "NullKeyword", "Integer", "TrueKeyword", "FalseKeyword");
+        skipWhitespace();
+        ParserState.pushLocation();
+        if(optional("OpenParen") != null) {
+            var start = lexerTokens.currentIndex();
+            TypeTree type;
+            boolean hardCast;
+            try {
+                type = readType();
+                hardCast = optional("HardCastIndicatorOperator") != null;
+                wexpect("CloseParen");
+            }catch(TokenLocatedException e) {
+                lexerTokens.setIndex(start);
+                var expr = readExpression();
+                wexpect("CloseParen");
+                return expr;
+            }
+            return new CastTree(type, hardCast, readPostExpression());
+        }
+        skipWhitespace();
+        if(isNext("Identifier")) {
+            return readAccessor();
+        }
+        if(isNext("String")) {
+            return new LiteralTree(LiteralType.STRING, expect("String").data);
+        }else if(isNext("NullKeyword")) {
+            return new LiteralTree(LiteralType.NULL, null);
+        }else if(isNext("Integer")) {
+            return new LiteralTree(LiteralType.INTEGER, ParserUtils.getInteger(expect("Integer")));
+        }else if(isNext("TrueKeyword")) {
+            return new LiteralTree(LiteralType.BOOLEAN, true);
+        }else if(isNext("FalseKeyword")) {
+            return new LiteralTree(LiteralType.BOOLEAN, false);
+        }
+        throw new TokenLocatedException("Expected an expression got " + lexerTokens.current().name, lexerTokens.current());
     }
 
-    public NamedToken readAccessor() {
+    public IExpression readAccessor() {
         throw new TokenLocatedException("TODO", lexerTokens.current());
 //        ArrayList<Token> tokens = new ArrayList<>();
 //        tokens.add(readFunctionInvocationAccessor());
