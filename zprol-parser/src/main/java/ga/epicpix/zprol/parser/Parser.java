@@ -83,24 +83,20 @@ public final class Parser {
         return new ClassTree(name, declarations);
     }
 
-    public NamedToken readMethod(ArrayList<Token> tokens) {
-        tokens.add(wexpect("OpenParen"));
-        readParameterList("CloseParen", tokens);
+    public FunctionTree readFunction(ModifiersTree mods, TypeTree type, LexerToken name) {
+        wexpect("OpenParen");
+        ParametersTree params = readParameterList("CloseParen");
         wexpect("CloseParen");
         skipWhitespace();
-        if(optional("Semicolon", tokens)) {
-            return new NamedToken("Function", tokens.toArray(new Token[0]));
+        if(optional("Semicolon") != null) {
+            return new FunctionTree(mods, type, name, params, null);
         }
-        tokens.add(readCode());
-        return new NamedToken("Function", tokens.toArray(new Token[0]));
-    }
-
-    public NamedToken readField(ArrayList<Token> tokens) {
-        tokens.add(wexpect("Semicolon"));
-        return new NamedToken("Field", tokens.toArray(new Token[0]));
+        CodeTree code = readCode();
+        return new FunctionTree(mods, type, name, params, code);
     }
 
     public IDeclaration readFieldOrMethod() {
+        ParserState.pushLocation();
         if(skipWhitespace() && optional("ConstKeyword") != null) {
             TypeTree type = readType();
             LexerToken name = wexpect("Identifier");
@@ -109,35 +105,38 @@ public final class Parser {
             wexpect("Semicolon");
             return new FieldTree(true, type, name, expression);
         }
+        ModifiersTree mods = readFunctionModifiers();
+        if(mods.modifiers().length != 0) {
+            TypeTree type = readType();
+            LexerToken name = wexpect("Identifier");
+            return readFunction(mods, type, name);
+        }
         throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        tokens.addAll(readFunctionModifiers());
-//        if(tokens.size() != 0) {
-//            tokens.add(readType());
-//            tokens.add(wexpect("Identifier"));
-//            return readMethod(tokens);
-//        }
 //        tokens.add(readType());
 //        tokens.add(wexpect("Identifier"));
 //        skipWhitespace();
 //        if(isNext("OpenParen")) {
 //            return readMethod(tokens);
 //        }
-//        return readField(tokens);
+//        tokens.add(wexpect("Semicolon"));
+//        return new NamedToken("Field", tokens.toArray(new Token[0]));
     }
 
-    public ArrayList<Token> readFunctionModifiers() {
-        ArrayList<Token> tokens = new ArrayList<>();
+    public ModifiersTree readFunctionModifiers() {
+        ArrayList<ModifierTree> mods = new ArrayList<>();
+        ParserState.pushLocation();
         while(skipWhitespace()) {
             if(isNext("NativeKeyword")) {
-                tokens.add(new NamedToken("FunctionModifier", expect("NativeKeyword")));
+                ParserState.pushLocation();
+                expect("NativeKeyword");
+                mods.add(new ModifierTree(ModifierTree.NATIVE));
                 continue;
             }
-            if(!optional("NativeKeyword", tokens)) {
+            if(!isNext("NativeKeyword")) {
                 break;
             }
         }
-        return tokens;
+        return new ModifiersTree(mods.toArray(new ModifierTree[0]));
     }
 
     public TypeTree readType() {
@@ -158,39 +157,44 @@ public final class Parser {
         return new TypeTree(token, arrays);
     }
 
-    public void readParameterList(String endToken, ArrayList<Token> output) {
-        ArrayList<Token> tokens = new ArrayList<>();
+    public ParametersTree readParameterList(String endToken) {
         skipWhitespace();
+        ParserState.pushLocation();
         if(isNext(endToken)) {
-            return;
+            return new ParametersTree(new ParameterTree[0]);
         }
-        tokens.add(readParameter());
+        ArrayList<ParameterTree> params = new ArrayList<>();
+        params.add(readParameter());
         while(skipWhitespace() && !isNext(endToken)) {
-            tokens.add(expect("CommaOperator"));
-            tokens.add(readParameter());
+            expect("CommaOperator");
+            params.add(readParameter());
         }
-        output.add(new NamedToken("ParameterList", tokens.toArray(new Token[0])));
+        return new ParametersTree(params.toArray(new ParameterTree[0]));
     }
 
-    public NamedToken readParameter() {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        return new NamedToken("Parameter", readType(), wexpect("Identifier"));
-    }
-
-    public NamedToken readCode() {
-        ArrayList<Token> tokens = new ArrayList<>();
+    public ParameterTree readParameter() {
         skipWhitespace();
-        if(!isNext("OpenBrace")) {
-            tokens.add(expect("LineCodeChars"));
-            tokens.add(readStatement());
-            return new NamedToken("Code", tokens.toArray(new Token[0]));
-        }
-        tokens.add(expect("OpenBrace"));
-        while(skipWhitespace() && !isNext("CloseBrace")) {
-            tokens.add(readStatement());
-        }
-        tokens.add(wexpect("CloseBrace"));
-        return new NamedToken("Code", tokens.toArray(new Token[0]));
+        ParserState.pushLocation();
+        TypeTree type = readType();
+        LexerToken name = wexpect("Identifier");
+        return new ParameterTree(type, name);
+    }
+
+    public CodeTree readCode() {
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        skipWhitespace();
+//        if(!isNext("OpenBrace")) {
+//            tokens.add(expect("LineCodeChars"));
+//            tokens.add(readStatement());
+//            return new NamedToken("Code", tokens.toArray(new Token[0]));
+//        }
+//        tokens.add(expect("OpenBrace"));
+//        while(skipWhitespace() && !isNext("CloseBrace")) {
+//            tokens.add(readStatement());
+//        }
+//        tokens.add(wexpect("CloseBrace"));
+//        return new NamedToken("Code", tokens.toArray(new Token[0]));
     }
 
     public NamedToken readBreakStatement() {
@@ -246,10 +250,11 @@ public final class Parser {
     }
 
     public NamedToken readElseStatement() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(wexpect("ElseKeyword"));
-        tokens.add(readCode());
-        return new NamedToken("ElseStatement", tokens.toArray(new Token[0]));
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        tokens.add(wexpect("ElseKeyword"));
+//        tokens.add(readCode());
+//        return new NamedToken("ElseStatement", tokens.toArray(new Token[0]));
     }
 
     public NamedToken readCreateAssignmentStatement(Token type) {
