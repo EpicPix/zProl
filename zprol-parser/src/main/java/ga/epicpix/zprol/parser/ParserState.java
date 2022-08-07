@@ -34,7 +34,7 @@ public class ParserState {
     }
 
     public static int popStartLocation() {
-        return getState().tokens.get(getState().locations.pop()).getStart();
+        return getState().tokens.get(popLocation()).getStart();
     }
 
     public static int getEndLocation() {
@@ -43,6 +43,10 @@ public class ParserState {
 
     public static void pushLocation() {
         getState().locations.push(getState().tokens.currentIndex());
+    }
+
+    public static int popLocation() {
+        return getState().locations.pop();
     }
 
 }

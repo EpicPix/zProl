@@ -41,7 +41,11 @@ public final class Parser {
                         wexpect("Semicolon");
                         declarations.add(new UsingTree(identifier));
                     }
-//                    case "ClassKeyword" -> declarations.add(readClass(next));
+                    case "ClassKeyword" -> {
+                        ParserState.popLocation();
+                        lexerTokens.previous();
+                        declarations.add(readClass());
+                    }
 //                    default -> {
 //                        lexerTokens.previous();
 //                        declarations.add(readFieldOrMethod());
@@ -68,19 +72,17 @@ public final class Parser {
         return new NamespaceIdentifierTree(tokens.toArray(new LexerToken[0]));
     }
 
-    public NamedToken readClass(LexerToken classKeyword) {
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(classKeyword);
-        tokens.add(wexpect("Identifier"));
-        tokens.add(wexpect("OpenBrace"));
-        LexerToken close;
+    public ClassTree readClass() {
         skipWhitespace();
-        while((close = optional("CloseBrace")) == null) {
-            tokens.add(readFieldOrMethod());
-            skipWhitespace();
+        ParserState.pushLocation();
+        expect("ClassKeyword");
+        LexerToken name = wexpect("Identifier");
+        wexpect("OpenBrace");
+        ArrayList<IDeclaration> declarations = new ArrayList<>();
+        while(skipWhitespace() && optional("CloseBrace") == null) {
+            declarations.add(readFieldOrMethod());
         }
-        tokens.add(close);
-        return new NamedToken("Class", tokens.toArray(new Token[0]));
+        return new ClassTree(name, declarations);
     }
 
     public NamedToken readMethod(ArrayList<Token> tokens) {
@@ -100,29 +102,30 @@ public final class Parser {
         return new NamedToken("Field", tokens.toArray(new Token[0]));
     }
 
-    public NamedToken readFieldOrMethod() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        if(skipWhitespace() && optional("ConstKeyword", tokens)) {
-            tokens.add(readType());
-            tokens.add(wexpect("Identifier"));
-            tokens.add(wexpect("AssignOperator"));
-            tokens.add(readExpression());
-            tokens.add(wexpect("Semicolon"));
-            return new NamedToken("Field", tokens.toArray(new Token[0]));
-        }
-        tokens.addAll(readFunctionModifiers());
-        if(tokens.size() != 0) {
-            tokens.add(readType());
-            tokens.add(wexpect("Identifier"));
-            return readMethod(tokens);
-        }
-        tokens.add(readType());
-        tokens.add(wexpect("Identifier"));
-        skipWhitespace();
-        if(isNext("OpenParen")) {
-            return readMethod(tokens);
-        }
-        return readField(tokens);
+    public IDeclaration readFieldOrMethod() {
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        if(skipWhitespace() && optional("ConstKeyword", tokens)) {
+//            tokens.add(readType());
+//            tokens.add(wexpect("Identifier"));
+//            tokens.add(wexpect("AssignOperator"));
+//            tokens.add(readExpression());
+//            tokens.add(wexpect("Semicolon"));
+//            return new NamedToken("Field", tokens.toArray(new Token[0]));
+//        }
+//        tokens.addAll(readFunctionModifiers());
+//        if(tokens.size() != 0) {
+//            tokens.add(readType());
+//            tokens.add(wexpect("Identifier"));
+//            return readMethod(tokens);
+//        }
+//        tokens.add(readType());
+//        tokens.add(wexpect("Identifier"));
+//        skipWhitespace();
+//        if(isNext("OpenParen")) {
+//            return readMethod(tokens);
+//        }
+//        return readField(tokens);
     }
 
     public ArrayList<Token> readFunctionModifiers() {
