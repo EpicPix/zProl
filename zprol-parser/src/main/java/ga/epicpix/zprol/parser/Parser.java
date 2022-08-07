@@ -312,93 +312,106 @@ public final class Parser {
     }
 
     public IExpression readExpression() {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        return new NamedToken("Expression", readInclusiveAndExpression());
+        return readInclusiveAndExpression();
     }
 
-    public Token readInclusiveAndExpression() {
+    public IExpression readInclusiveAndExpression() {
         skipWhitespace();
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(readInclusiveOrExpression());
-        if(skipWhitespace() && optional("AndOperator", tokens)) {
-            tokens.add(readInclusiveAndExpression());
+        ParserState.pushLocation();
+        IExpression expression = readInclusiveOrExpression();
+        LexerToken operator;
+        if(skipWhitespace() && (operator = optional("AndOperator")) != null) {
+            return new OperatorExpressionTree(expression, operator, readInclusiveAndExpression());
+        }else {
+            ParserState.popLocation();
+            return expression;
         }
-        if(tokens.size() == 1) return tokens.get(0);
-        return new NamedToken("InclusiveAndExpression", tokens.toArray(new Token[0]));
     }
 
-    public Token readInclusiveOrExpression() {
+    public IExpression readInclusiveOrExpression() {
         skipWhitespace();
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(readShiftExpression());
-        if(skipWhitespace() && optional("InclusiveOrOperator", tokens)) {
-            tokens.add(readInclusiveOrExpression());
+        ParserState.pushLocation();
+        IExpression expression = readShiftExpression();
+        LexerToken operator;
+        if(skipWhitespace() && (operator = optional("InclusiveOrOperator")) != null) {
+            return new OperatorExpressionTree(expression, operator, readInclusiveOrExpression());
+        }else {
+            ParserState.popLocation();
+            return expression;
         }
-        if(tokens.size() == 1) return tokens.get(0);
-        return new NamedToken("InclusiveOrExpression", tokens.toArray(new Token[0]));
     }
 
-    public Token readShiftExpression() {
+    public IExpression readShiftExpression() {
         skipWhitespace();
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(readEqualsExpression());
-        if(skipWhitespace() && optional(tokens, "ShiftLeftOperator", "ShiftRightOperator")) {
-            tokens.add(readShiftExpression());
+        ParserState.pushLocation();
+        IExpression expression = readEqualsExpression();
+        LexerToken operator;
+        if(skipWhitespace() && (operator = optional("ShiftLeftOperator", "ShiftRightOperator")) != null) {
+            return new OperatorExpressionTree(expression, operator, readShiftExpression());
+        }else {
+            ParserState.popLocation();
+            return expression;
         }
-        if(tokens.size() == 1) return tokens.get(0);
-        return new NamedToken("ShiftExpression", tokens.toArray(new Token[0]));
     }
 
 
-    public Token readEqualsExpression() {
+    public IExpression readEqualsExpression() {
         skipWhitespace();
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(readCompareExpression());
-        if(skipWhitespace() && optional(tokens, "EqualOperator", "NotEqualOperator")) {
-            tokens.add(readEqualsExpression());
+        ParserState.pushLocation();
+        IExpression expression = readCompareExpression();
+        LexerToken operator;
+        if(skipWhitespace() && (operator = optional("EqualOperator", "NotEqualOperator")) != null) {
+            return new OperatorExpressionTree(expression, operator, readEqualsExpression());
+        }else {
+            ParserState.popLocation();
+            return expression;
         }
-        if(tokens.size() == 1) return tokens.get(0);
-        return new NamedToken("EqualsExpression", tokens.toArray(new Token[0]));
     }
 
 
-    public Token readCompareExpression() {
+    public IExpression readCompareExpression() {
         skipWhitespace();
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(readAdditiveExpression());
-        if(skipWhitespace() && optional(tokens, "LessEqualThanOperator", "LessThanOperator", "GreaterEqualThanOperator", "GreaterThanOperator")) {
-            tokens.add(readCompareExpression());
+        ParserState.pushLocation();
+        IExpression expression = readAdditiveExpression();
+        LexerToken operator;
+        if(skipWhitespace() && (operator = optional("LessEqualThanOperator", "LessThanOperator", "GreaterEqualThanOperator", "GreaterThanOperator")) != null) {
+            return new OperatorExpressionTree(expression, operator, readCompareExpression());
+        }else {
+            ParserState.popLocation();
+            return expression;
         }
-        if(tokens.size() == 1) return tokens.get(0);
-        return new NamedToken("CompareExpression", tokens.toArray(new Token[0]));
     }
 
 
-    public Token readAdditiveExpression() {
+    public IExpression readAdditiveExpression() {
         skipWhitespace();
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(readMultiplicativeExpression());
-        if(skipWhitespace() && optional(tokens, "AddOperator", "SubtractOperator")) {
-            tokens.add(readAdditiveExpression());
+        ParserState.pushLocation();
+        IExpression expression = readMultiplicativeExpression();
+        LexerToken operator;
+        if(skipWhitespace() && (operator = optional("AddOperator", "SubtractOperator")) != null) {
+            return new OperatorExpressionTree(expression, operator, readAdditiveExpression());
+        }else {
+            ParserState.popLocation();
+            return expression;
         }
-        if(tokens.size() == 1) return tokens.get(0);
-        return new NamedToken("AdditiveExpression", tokens.toArray(new Token[0]));
     }
 
 
-    public Token readMultiplicativeExpression() {
+    public IExpression readMultiplicativeExpression() {
         skipWhitespace();
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(readPostExpression());
-        if(skipWhitespace() && optional(tokens, "MultiplyOperator", "DivideOperator", "ModuloOperator")) {
-            tokens.add(readMultiplicativeExpression());
+        ParserState.pushLocation();
+        IExpression expression = readPostExpression();
+        LexerToken operator;
+        if(skipWhitespace() && (operator = optional("MultiplyOperator", "DivideOperator", "ModuloOperator")) != null) {
+            return new OperatorExpressionTree(expression, operator, readMultiplicativeExpression());
+        }else {
+            ParserState.popLocation();
+            return expression;
         }
-        if(tokens.size() == 1) return tokens.get(0);
-        return new NamedToken("MultiplicativeExpression", tokens.toArray(new Token[0]));
     }
 
 
-    public Token readPostExpression() {
+    public IExpression readPostExpression() {
         throw new TokenLocatedException("TODO", lexerTokens.current());
 //        ArrayList<Token> tokens = new ArrayList<>();
 //        skipWhitespace();
@@ -536,6 +549,15 @@ public final class Parser {
             return true;
         }
         return false;
+    }
+
+    public LexerToken optional(String... names) {
+        for(String name : names) {
+            var opt = optional(name);
+            if(opt == null) continue;
+            return opt;
+        }
+        return null;
     }
 
     // ---- AST to 'dot' Converter ---
