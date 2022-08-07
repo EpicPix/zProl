@@ -257,15 +257,12 @@ public final class Parser {
         return new ElseStatementTree(code);
     }
 
-    public NamedToken readCreateAssignmentStatement(Token type) {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        tokens.add(type);
-//        tokens.add(wexpect("Identifier"));
-//        tokens.add(wexpect("AssignOperator"));
-//        tokens.add(readExpression());
-//        tokens.add(wexpect("Semicolon"));
-//        return new NamedToken("CreateAssignmentStatement", tokens.toArray(new Token[0]));
+    public CreateAssignmentStatementTree readCreateAssignmentStatement(TypeTree type) {
+        LexerToken name = wexpect("Identifier");
+        wexpect("AssignOperator");
+        IExpression expression = readExpression();
+        wexpect("Semicolon");
+        return new CreateAssignmentStatementTree(type, name, expression);
     }
 
     public IStatement readStatement() {
@@ -281,37 +278,36 @@ public final class Parser {
             return readContinueStatement();
         }else if(isNext("ReturnKeyword")) {
             return readReturnStatement();
+        }else if(isNext("Identifier")) {
+            int start = lexerTokens.currentIndex();
+            TypeTree type = null;
+            try {
+                type = readType();
+            }catch(TokenLocatedException e) {
+                ParserState.popLocation(); // pop readType location
+                lexerTokens.setIndex(start);
+                readAccessor();
+            }
+            skipWhitespace();
+            if(!isNext("Identifier")) {
+                lexerTokens.setIndex(start);
+                AccessorTree accessor = readAccessor();
+                skipWhitespace();
+                if(optional("AssignOperator") != null) {
+                    IExpression expression = readExpression();
+                    wexpect("Semicolon");
+                    return new AssignmentStatementTree(accessor, expression);
+                }else {
+                    wexpect("Semicolon");
+                    return new AccessorStatementTree(accessor);
+                }
+            }else {
+                if(type == null) throw new TokenLocatedException("Expected a type", lexerTokens.get(start));
+                return readCreateAssignmentStatement(type);
+            }
+        }else {
+            return readCreateAssignmentStatement(readType());
         }
-//        else if(isNext("Identifier")) {
-//            ArrayList<Token> statement = new ArrayList<>();
-//            int start = lexerTokens.currentIndex();
-//            try {
-//                statement.add(readType());
-//            }catch(TokenLocatedException e) {
-//                lexerTokens.setIndex(start);
-//                statement.add(readAccessor());
-//            }
-//            skipWhitespace();
-//            if(!isNext("Identifier")) {
-//                lexerTokens.setIndex(start);
-//                statement.clear();
-//                statement.add(readAccessor());
-//                skipWhitespace();
-//                if(optional("AssignOperator", statement)) {
-//                    statement.add(readExpression());
-//                    statement.add(wexpect("Semicolon"));
-//                    return new NamedToken("AssignmentStatement", statement.toArray(new Token[0]));
-//                }else {
-//                    statement.add(wexpect("Semicolon"));
-//                    return new NamedToken("AccessorStatement", statement.toArray(new Token[0]));
-//                }
-//            }else {
-//                return readCreateAssignmentStatement(statement.get(0));
-//            }
-//        }else {
-//            return readCreateAssignmentStatement(readType());
-//        }
-        throw new TokenLocatedException("TODO", lexerTokens.current());
     }
 
     public IExpression readExpression() {
@@ -425,7 +421,7 @@ public final class Parser {
                 type = readType();
                 hardCast = optional("HardCastIndicatorOperator") != null;
                 wexpect("CloseParen");
-            }catch(TokenLocatedException e) {
+            }catch(TokenLocatedException e) { // possibly broke at readType(), might break the stack
                 lexerTokens.setIndex(start);
                 var expr = readExpression();
                 wexpect("CloseParen");
