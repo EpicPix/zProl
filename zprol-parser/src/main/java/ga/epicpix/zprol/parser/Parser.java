@@ -193,41 +193,44 @@ public final class Parser {
         return new CodeTree(statements);
     }
 
-    public NamedToken readBreakStatement() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(wexpect("BreakKeyword"));
-        tokens.add(wexpect("Semicolon"));
-        return new NamedToken("BreakStatement", tokens.toArray(new Token[0]));
+    public BreakStatementTree readBreakStatement() {
+        skipWhitespace();
+        ParserState.pushLocation();
+        expect("BreakKeyword");
+        wexpect("Semicolon");
+        return new BreakStatementTree();
     }
 
-    public NamedToken readContinueStatement() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(wexpect("ContinueKeyword"));
-        tokens.add(wexpect("Semicolon"));
-        return new NamedToken("ContinueStatement", tokens.toArray(new Token[0]));
+    public ContinueStatementTree readContinueStatement() {
+        skipWhitespace();
+        ParserState.pushLocation();
+        expect("ContinueKeyword");
+        wexpect("Semicolon");
+        return new ContinueStatementTree();
     }
 
-    public NamedToken readReturnStatement() {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        tokens.add(wexpect("ReturnKeyword"));
-//        skipWhitespace();
-//        if(!isNext("Semicolon")) {
-//            tokens.add(readExpression());
-//        }
-//        tokens.add(wexpect("Semicolon"));
-//        return new NamedToken("ReturnStatement", tokens.toArray(new Token[0]));
+    public ReturnStatementTree readReturnStatement() {
+        skipWhitespace();
+        ParserState.pushLocation();
+        expect("ReturnKeyword");
+        skipWhitespace();
+        if(optional("Semicolon") != null) {
+            return new ReturnStatementTree(null);
+        }
+        IExpression expression = readExpression();
+        wexpect("Semicolon");
+        return new ReturnStatementTree(expression);
     }
 
-    public NamedToken readWhileStatement() {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        tokens.add(wexpect("WhileKeyword"));
-//        tokens.add(wexpect("OpenParen"));
-//        tokens.add(readExpression());
-//        tokens.add(wexpect("CloseParen"));
-//        tokens.add(readCode());
-//        return new NamedToken("WhileStatement", tokens.toArray(new Token[0]));
+    public WhileStatementTree readWhileStatement() {
+        skipWhitespace();
+        ParserState.pushLocation();
+        wexpect("WhileKeyword");
+        wexpect("OpenParen");
+        IExpression expression = readExpression();
+        wexpect("CloseParen");
+        CodeTree code = readCode();
+        return new WhileStatementTree(expression, code);
     }
 
     public IfStatementTree readIfStatement() {
@@ -270,16 +273,16 @@ public final class Parser {
         ParserState.pushLocation();
         if(isNext("IfKeyword")) {
             return readIfStatement();
-        }else throw new TokenLocatedException("TODO", lexerTokens.current());
-//        if(isNext("WhileKeyword")) {
-//            tokens.add(readWhileStatement());
-//        }else if(isNext("BreakKeyword")) {
-//            tokens.add(readBreakStatement());
-//        }else if(isNext("ContinueKeyword")) {
-//            tokens.add(readContinueStatement());
-//        }else if(isNext("ReturnKeyword")) {
-//            tokens.add(readReturnStatement());
-//        }else if(isNext("Identifier")) {
+        }else if(isNext("WhileKeyword")) {
+            return readWhileStatement();
+        }else if(isNext("BreakKeyword")) {
+            return readBreakStatement();
+        }else if(isNext("ContinueKeyword")) {
+            return readContinueStatement();
+        }else if(isNext("ReturnKeyword")) {
+            return readReturnStatement();
+        }
+//        else if(isNext("Identifier")) {
 //            ArrayList<Token> statement = new ArrayList<>();
 //            int start = lexerTokens.currentIndex();
 //            try {
@@ -297,18 +300,18 @@ public final class Parser {
 //                if(optional("AssignOperator", statement)) {
 //                    statement.add(readExpression());
 //                    statement.add(wexpect("Semicolon"));
-//                    tokens.add(new NamedToken("AssignmentStatement", statement.toArray(new Token[0])));
+//                    return new NamedToken("AssignmentStatement", statement.toArray(new Token[0]));
 //                }else {
 //                    statement.add(wexpect("Semicolon"));
-//                    tokens.add(new NamedToken("AccessorStatement", statement.toArray(new Token[0])));
+//                    return new NamedToken("AccessorStatement", statement.toArray(new Token[0]));
 //                }
 //            }else {
-//                tokens.add(readCreateAssignmentStatement(statement.get(0)));
+//                return readCreateAssignmentStatement(statement.get(0));
 //            }
 //        }else {
-//            tokens.add(readCreateAssignmentStatement(readType()));
+//            return readCreateAssignmentStatement(readType());
 //        }
-//        return new NamedToken("Statement", tokens.toArray(new Token[0]));
+        throw new TokenLocatedException("TODO", lexerTokens.current());
     }
 
     public IExpression readExpression() {
