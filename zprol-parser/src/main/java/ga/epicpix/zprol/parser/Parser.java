@@ -28,7 +28,9 @@ public final class Parser {
         FileTree file;
         try {
             while(skipWhitespace()) {
-                ParserState.pushLocation();
+                if(isNext("NamespaceKeyword") || isNext("UsingKeyword")) {
+                    ParserState.pushLocation();
+                }
                 var next = lexerTokens.next();
                 switch(next.name) {
                     case "NamespaceKeyword" -> {
@@ -42,16 +44,12 @@ public final class Parser {
                         declarations.add(new UsingTree(identifier));
                     }
                     case "ClassKeyword" -> {
-                        ParserState.popLocation();
                         lexerTokens.previous();
                         declarations.add(readClass());
                     }
-//                    default -> {
-//                        lexerTokens.previous();
-//                        declarations.add(readFieldOrMethod());
-//                    }
                     default -> {
-                        throw new TokenLocatedException("TODO", next);
+                        lexerTokens.previous();
+                        declarations.add(readFieldOrMethod());
                     }
                 }
             }
@@ -103,16 +101,16 @@ public final class Parser {
     }
 
     public IDeclaration readFieldOrMethod() {
+        if(skipWhitespace() && optional("ConstKeyword") != null) {
+            TypeTree type = readType();
+            LexerToken name = wexpect("Identifier");
+            wexpect("AssignOperator");
+            IExpression expression = readExpression();
+            wexpect("Semicolon");
+            return new FieldTree(true, type, name, expression);
+        }
         throw new TokenLocatedException("TODO", lexerTokens.current());
 //        ArrayList<Token> tokens = new ArrayList<>();
-//        if(skipWhitespace() && optional("ConstKeyword", tokens)) {
-//            tokens.add(readType());
-//            tokens.add(wexpect("Identifier"));
-//            tokens.add(wexpect("AssignOperator"));
-//            tokens.add(readExpression());
-//            tokens.add(wexpect("Semicolon"));
-//            return new NamedToken("Field", tokens.toArray(new Token[0]));
-//        }
 //        tokens.addAll(readFunctionModifiers());
 //        if(tokens.size() != 0) {
 //            tokens.add(readType());
@@ -142,21 +140,22 @@ public final class Parser {
         return tokens;
     }
 
-    public NamedToken readType() {
-        ArrayList<Token> tokens = new ArrayList<>();
+    public TypeTree readType() {
         skipWhitespace();
-        if(!optional("VoidKeyword", tokens)) {
-            if(!optional("BoolKeyword", tokens)) {
-                tokens.add(expect("Identifier"));
-                while(optional("AccessorOperator", tokens)) {
-                    tokens.add(expect("Identifier"));
-                }
+        ParserState.pushLocation();
+        int arrays = 0;
+        LexerToken token;
+        if((token = optional("VoidKeyword")) != null) {
+            if((token = optional("BoolKeyword")) != null) {
+                token = expect("Identifier");
             }
             while(isNext("OpenBracket")) {
-                tokens.add(new NamedToken("ArrayCharacters", expect("OpenBracket"), expect("CloseBracket")));
+                expect("OpenBracket");
+                expect("CloseBracket");
+                arrays++;
             }
         }
-        return new NamedToken("Type", tokens);
+        return new TypeTree(token, arrays);
     }
 
     public void readParameterList(String endToken, ArrayList<Token> output) {
@@ -174,7 +173,8 @@ public final class Parser {
     }
 
     public NamedToken readParameter() {
-        return new NamedToken("Parameter", readType(), wexpect("Identifier"));
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        return new NamedToken("Parameter", readType(), wexpect("Identifier"));
     }
 
     public NamedToken readCode() {
@@ -208,38 +208,41 @@ public final class Parser {
     }
 
     public NamedToken readReturnStatement() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(wexpect("ReturnKeyword"));
-        skipWhitespace();
-        if(!isNext("Semicolon")) {
-            tokens.add(readExpression());
-        }
-        tokens.add(wexpect("Semicolon"));
-        return new NamedToken("ReturnStatement", tokens.toArray(new Token[0]));
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        tokens.add(wexpect("ReturnKeyword"));
+//        skipWhitespace();
+//        if(!isNext("Semicolon")) {
+//            tokens.add(readExpression());
+//        }
+//        tokens.add(wexpect("Semicolon"));
+//        return new NamedToken("ReturnStatement", tokens.toArray(new Token[0]));
     }
 
     public NamedToken readWhileStatement() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(wexpect("WhileKeyword"));
-        tokens.add(wexpect("OpenParen"));
-        tokens.add(readExpression());
-        tokens.add(wexpect("CloseParen"));
-        tokens.add(readCode());
-        return new NamedToken("WhileStatement", tokens.toArray(new Token[0]));
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        tokens.add(wexpect("WhileKeyword"));
+//        tokens.add(wexpect("OpenParen"));
+//        tokens.add(readExpression());
+//        tokens.add(wexpect("CloseParen"));
+//        tokens.add(readCode());
+//        return new NamedToken("WhileStatement", tokens.toArray(new Token[0]));
     }
 
     public NamedToken readIfStatement() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(wexpect("IfKeyword"));
-        tokens.add(wexpect("OpenParen"));
-        tokens.add(readExpression());
-        tokens.add(wexpect("CloseParen"));
-        tokens.add(readCode());
-        skipWhitespace();
-        if(isNext("ElseKeyword")) {
-            tokens.add(readElseStatement());
-        }
-        return new NamedToken("IfStatement", tokens.toArray(new Token[0]));
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        tokens.add(wexpect("IfKeyword"));
+//        tokens.add(wexpect("OpenParen"));
+//        tokens.add(readExpression());
+//        tokens.add(wexpect("CloseParen"));
+//        tokens.add(readCode());
+//        skipWhitespace();
+//        if(isNext("ElseKeyword")) {
+//            tokens.add(readElseStatement());
+//        }
+//        return new NamedToken("IfStatement", tokens.toArray(new Token[0]));
     }
 
     public NamedToken readElseStatement() {
@@ -250,62 +253,65 @@ public final class Parser {
     }
 
     public NamedToken readCreateAssignmentStatement(Token type) {
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(type);
-        tokens.add(wexpect("Identifier"));
-        tokens.add(wexpect("AssignOperator"));
-        tokens.add(readExpression());
-        tokens.add(wexpect("Semicolon"));
-        return new NamedToken("CreateAssignmentStatement", tokens.toArray(new Token[0]));
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        tokens.add(type);
+//        tokens.add(wexpect("Identifier"));
+//        tokens.add(wexpect("AssignOperator"));
+//        tokens.add(readExpression());
+//        tokens.add(wexpect("Semicolon"));
+//        return new NamedToken("CreateAssignmentStatement", tokens.toArray(new Token[0]));
     }
 
     public NamedToken readStatement() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        skipWhitespace();
-        if(isNext("IfKeyword")) {
-            tokens.add(readIfStatement());
-        }else if(isNext("WhileKeyword")) {
-            tokens.add(readWhileStatement());
-        }else if(isNext("BreakKeyword")) {
-            tokens.add(readBreakStatement());
-        }else if(isNext("ContinueKeyword")) {
-            tokens.add(readContinueStatement());
-        }else if(isNext("ReturnKeyword")) {
-            tokens.add(readReturnStatement());
-        }else if(isNext("Identifier")) {
-            ArrayList<Token> statement = new ArrayList<>();
-            int start = lexerTokens.currentIndex();
-            try {
-                statement.add(readType());
-            }catch(TokenLocatedException e) {
-                lexerTokens.setIndex(start);
-                statement.add(readAccessor());
-            }
-            skipWhitespace();
-            if(!isNext("Identifier")) {
-                lexerTokens.setIndex(start);
-                statement.clear();
-                statement.add(readAccessor());
-                skipWhitespace();
-                if(optional("AssignOperator", statement)) {
-                    statement.add(readExpression());
-                    statement.add(wexpect("Semicolon"));
-                    tokens.add(new NamedToken("AssignmentStatement", statement.toArray(new Token[0])));
-                }else {
-                    statement.add(wexpect("Semicolon"));
-                    tokens.add(new NamedToken("AccessorStatement", statement.toArray(new Token[0])));
-                }
-            }else {
-                tokens.add(readCreateAssignmentStatement(statement.get(0)));
-            }
-        }else {
-            tokens.add(readCreateAssignmentStatement(readType()));
-        }
-        return new NamedToken("Statement", tokens.toArray(new Token[0]));
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        skipWhitespace();
+//        if(isNext("IfKeyword")) {
+//            tokens.add(readIfStatement());
+//        }else if(isNext("WhileKeyword")) {
+//            tokens.add(readWhileStatement());
+//        }else if(isNext("BreakKeyword")) {
+//            tokens.add(readBreakStatement());
+//        }else if(isNext("ContinueKeyword")) {
+//            tokens.add(readContinueStatement());
+//        }else if(isNext("ReturnKeyword")) {
+//            tokens.add(readReturnStatement());
+//        }else if(isNext("Identifier")) {
+//            ArrayList<Token> statement = new ArrayList<>();
+//            int start = lexerTokens.currentIndex();
+//            try {
+//                statement.add(readType());
+//            }catch(TokenLocatedException e) {
+//                lexerTokens.setIndex(start);
+//                statement.add(readAccessor());
+//            }
+//            skipWhitespace();
+//            if(!isNext("Identifier")) {
+//                lexerTokens.setIndex(start);
+//                statement.clear();
+//                statement.add(readAccessor());
+//                skipWhitespace();
+//                if(optional("AssignOperator", statement)) {
+//                    statement.add(readExpression());
+//                    statement.add(wexpect("Semicolon"));
+//                    tokens.add(new NamedToken("AssignmentStatement", statement.toArray(new Token[0])));
+//                }else {
+//                    statement.add(wexpect("Semicolon"));
+//                    tokens.add(new NamedToken("AccessorStatement", statement.toArray(new Token[0])));
+//                }
+//            }else {
+//                tokens.add(readCreateAssignmentStatement(statement.get(0)));
+//            }
+//        }else {
+//            tokens.add(readCreateAssignmentStatement(readType()));
+//        }
+//        return new NamedToken("Statement", tokens.toArray(new Token[0]));
     }
 
-    public Token readExpression() {
-        return new NamedToken("Expression", readInclusiveAndExpression());
+    public IExpression readExpression() {
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        return new NamedToken("Expression", readInclusiveAndExpression());
     }
 
     public Token readInclusiveAndExpression() {
@@ -391,42 +397,44 @@ public final class Parser {
 
 
     public Token readPostExpression() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        skipWhitespace();
-        if(optional("OpenParen", tokens)) {
-            var start = lexerTokens.currentIndex();
-            ArrayList<Token> cast = new ArrayList<>();
-            try {
-                cast.add(readType());
-                optional("HardCastIndicatorOperator", cast);
-                cast.add(wexpect("CloseParen"));
-            }catch(TokenLocatedException e) {
-                lexerTokens.setIndex(start);
-                var expr = readExpression();
-                tokens.add(wexpect("CloseParen"));
-                return expr;
-            }
-            tokens.addAll(cast);
-            return new NamedToken("CastExpression", new NamedToken("CastOperator", tokens.toArray(new Token[0])), readPostExpression());
-        }
-        skipWhitespace();
-        if(isNext("Identifier")) {
-            return readAccessor();
-        }
-        return expect("String", "NullKeyword", "Integer", "TrueKeyword", "FalseKeyword");
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        skipWhitespace();
+//        if(optional("OpenParen", tokens)) {
+//            var start = lexerTokens.currentIndex();
+//            ArrayList<Token> cast = new ArrayList<>();
+//            try {
+//                cast.add(readType());
+//                optional("HardCastIndicatorOperator", cast);
+//                cast.add(wexpect("CloseParen"));
+//            }catch(TokenLocatedException e) {
+//                lexerTokens.setIndex(start);
+//                var expr = readExpression();
+//                tokens.add(wexpect("CloseParen"));
+//                return expr;
+//            }
+//            tokens.addAll(cast);
+//            return new NamedToken("CastExpression", new NamedToken("CastOperator", tokens.toArray(new Token[0])), readPostExpression());
+//        }
+//        skipWhitespace();
+//        if(isNext("Identifier")) {
+//            return readAccessor();
+//        }
+//        return expect("String", "NullKeyword", "Integer", "TrueKeyword", "FalseKeyword");
     }
 
     public NamedToken readAccessor() {
-        ArrayList<Token> tokens = new ArrayList<>();
-        tokens.add(readFunctionInvocationAccessor());
-        while(skipWhitespace() && (isNext("OpenBracket") || isNext("AccessorOperator"))) {
-            if(isNext("OpenBracket")) {
-                tokens.add(new NamedToken("AccessorElement", new NamedToken("ArrayAccessor", expect("OpenBracket"), readExpression(), wexpect("CloseBracket"))));
-            }else {
-                tokens.add(new NamedToken("AccessorElement", expect("AccessorOperator"), readFunctionInvocationAccessor()));
-            }
-        }
-        return new NamedToken("Accessor", tokens.toArray(new Token[0]));
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        tokens.add(readFunctionInvocationAccessor());
+//        while(skipWhitespace() && (isNext("OpenBracket") || isNext("AccessorOperator"))) {
+//            if(isNext("OpenBracket")) {
+//                tokens.add(new NamedToken("AccessorElement", new NamedToken("ArrayAccessor", expect("OpenBracket"), readExpression(), wexpect("CloseBracket"))));
+//            }else {
+//                tokens.add(new NamedToken("AccessorElement", expect("AccessorOperator"), readFunctionInvocationAccessor()));
+//            }
+//        }
+//        return new NamedToken("Accessor", tokens.toArray(new Token[0]));
     }
 
     public Token readFunctionInvocationAccessor() {
@@ -442,17 +450,18 @@ public final class Parser {
     }
 
     public void readArgumentList(String endToken, ArrayList<Token> output) {
-        ArrayList<Token> tokens = new ArrayList<>();
-        skipWhitespace();
-        if(isNext(endToken)) {
-            return;
-        }
-        tokens.add(readExpression());
-        while(skipWhitespace() && !isNext(endToken)) {
-            tokens.add(expect("CommaOperator"));
-            tokens.add(readExpression());
-        }
-        output.add(new NamedToken("ArgumentList", tokens.toArray(new Token[0])));
+        throw new TokenLocatedException("TODO", lexerTokens.current());
+//        ArrayList<Token> tokens = new ArrayList<>();
+//        skipWhitespace();
+//        if(isNext(endToken)) {
+//            return;
+//        }
+//        tokens.add(readExpression());
+//        while(skipWhitespace() && !isNext(endToken)) {
+//            tokens.add(expect("CommaOperator"));
+//            tokens.add(readExpression());
+//        }
+//        output.add(new NamedToken("ArgumentList", tokens.toArray(new Token[0])));
     }
 
     // ---- Helper Methods ----
