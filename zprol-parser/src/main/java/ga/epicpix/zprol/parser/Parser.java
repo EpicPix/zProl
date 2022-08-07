@@ -230,27 +230,28 @@ public final class Parser {
 //        return new NamedToken("WhileStatement", tokens.toArray(new Token[0]));
     }
 
-    public NamedToken readIfStatement() {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        tokens.add(wexpect("IfKeyword"));
-//        tokens.add(wexpect("OpenParen"));
-//        tokens.add(readExpression());
-//        tokens.add(wexpect("CloseParen"));
-//        tokens.add(readCode());
-//        skipWhitespace();
-//        if(isNext("ElseKeyword")) {
-//            tokens.add(readElseStatement());
-//        }
-//        return new NamedToken("IfStatement", tokens.toArray(new Token[0]));
+    public IfStatementTree readIfStatement() {
+        skipWhitespace();
+        ParserState.pushLocation();
+        expect("IfKeyword");
+        wexpect("OpenParen");
+        IExpression expression = readExpression();
+        wexpect("CloseParen");
+        CodeTree code = readCode();
+        skipWhitespace();
+        ElseStatementTree elseStatement = null;
+        if(isNext("ElseKeyword")) {
+            elseStatement = readElseStatement();
+        }
+        return new IfStatementTree(expression, code, elseStatement);
     }
 
-    public NamedToken readElseStatement() {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        tokens.add(wexpect("ElseKeyword"));
-//        tokens.add(readCode());
-//        return new NamedToken("ElseStatement", tokens.toArray(new Token[0]));
+    public ElseStatementTree readElseStatement() {
+        skipWhitespace();
+        ParserState.pushLocation();
+        expect("ElseKeyword");
+        CodeTree code = readCode();
+        return new ElseStatementTree(code);
     }
 
     public NamedToken readCreateAssignmentStatement(Token type) {
@@ -265,12 +266,12 @@ public final class Parser {
     }
 
     public IStatement readStatement() {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        skipWhitespace();
-//        if(isNext("IfKeyword")) {
-//            tokens.add(readIfStatement());
-//        }else if(isNext("WhileKeyword")) {
+        skipWhitespace();
+        ParserState.pushLocation();
+        if(isNext("IfKeyword")) {
+            return readIfStatement();
+        }else throw new TokenLocatedException("TODO", lexerTokens.current());
+//        if(isNext("WhileKeyword")) {
 //            tokens.add(readWhileStatement());
 //        }else if(isNext("BreakKeyword")) {
 //            tokens.add(readBreakStatement());
