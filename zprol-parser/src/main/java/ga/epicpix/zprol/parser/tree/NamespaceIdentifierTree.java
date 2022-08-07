@@ -1,8 +1,8 @@
 package ga.epicpix.zprol.parser.tree;
 
-import java.util.List;
+import ga.epicpix.zprol.parser.tokens.LexerToken;
 
-public record FileTree(int start, int end, NamespaceTree namespace, List<IDeclaration> declarations) implements ITree {
+public record NamespaceIdentifierTree(int start, int end, LexerToken[] locations) implements ITree {
     public int getStartIndex() {
         return start;
     }
