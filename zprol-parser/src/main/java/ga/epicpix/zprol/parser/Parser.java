@@ -22,27 +22,33 @@ public final class Parser {
 
     public ArrayList<Token> parse() {
         var tokens = new ArrayList<Token>();
-        while(skipWhitespace()) {
-            var next = lexerTokens.next();
-            switch(next.name) {
-                case "NamespaceKeyword" -> tokens.add(new NamedToken("Namespace", next, readNamespaceIdentifier(), wexpect("Semicolon")));
-                case "UsingKeyword" -> tokens.add(new NamedToken("Using", next, readNamespaceIdentifier(), wexpect("Semicolon")));
-                case "ClassKeyword" -> tokens.add(readClass(next));
-                default -> {
-                    lexerTokens.previous();
-                    tokens.add(readFieldOrMethod());
+        ParserState.create(lexerTokens);
+        try {
+            while(skipWhitespace()) {
+                var next = lexerTokens.next();
+                switch(next.name) {
+                    case "NamespaceKeyword" -> tokens.add(new NamedToken("Namespace", next, readNamespaceIdentifier(), wexpect("Semicolon")));
+                    case "UsingKeyword" -> tokens.add(new NamedToken("Using", next, readNamespaceIdentifier(), wexpect("Semicolon")));
+                    case "ClassKeyword" -> tokens.add(readClass(next));
+                    default -> {
+                        lexerTokens.previous();
+                        tokens.add(readFieldOrMethod());
+                    }
                 }
             }
+        }finally {
+            ParserState.delete();
         }
         return tokens;
     }
 
     public NamedToken readNamespaceIdentifier() {
         ArrayList<Token> tokens = new ArrayList<>();
+//        ArrayList<LexerToken> tokens = new ArrayList<>();
         tokens.add(wexpect("Identifier"));
         LexerToken seperator;
         while((seperator = optional("AccessorOperator")) != null) {
-            tokens.add(seperator);
+            tokens.add(seperator); // remove this when using ast
             tokens.add(expect("Identifier"));
         }
         return new NamedToken("NamespaceIdentifier", tokens.toArray(new Token[0]));

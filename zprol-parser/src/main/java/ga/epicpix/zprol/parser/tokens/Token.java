@@ -37,6 +37,14 @@ public abstract sealed class Token permits LexerToken, NamedToken {
         return getData();
     }
 
-    public abstract ParserLocation getStartLocation();
-    public abstract ParserLocation getEndLocation();
+    public abstract int getStart();
+    public abstract int getEnd();
+
+    public ParserLocation getStartLocation() {
+        return parser.getLocation(getStart());
+    }
+
+    public ParserLocation getEndLocation() {
+        return parser.getLocation(getEnd());
+    }
 }
