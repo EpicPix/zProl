@@ -2,14 +2,17 @@ package ga.epicpix.zprol.parser;
 
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
-import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tree.*;
 import ga.epicpix.zprol.utils.SeekIterator;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public final class Parser {
 
@@ -572,39 +575,6 @@ public final class Parser {
             return opt;
         }
         return null;
-    }
-
-    // ---- AST to 'dot' Converter ---
-
-    public static String generateParseTree(ArrayList<Token> tokens) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("digraph {\n");
-        AtomicInteger current = new AtomicInteger();
-        int root = current.getAndIncrement();
-        builder.append("  token").append(root).append("[shape=box,color=\"#007FFF\",label=\"<root>\"]\n");
-        for(var t : tokens) {
-            int num = writeTokenParseTree(t, builder, current);
-            builder.append("  token").append(root).append(" -> token").append(num).append("\n");
-        }
-        builder.append("}");
-        return builder.toString();
-    }
-
-    private static int writeTokenParseTree(Token token, StringBuilder builder, AtomicInteger current) {
-        int index = current.getAndIncrement();
-        if (token instanceof NamedToken named) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#FF7F00\",label=\"").append("(").append(named.name).append(")\"]\n");
-            for(var t : named.tokens) {
-                int num = writeTokenParseTree(t, builder, current);
-                builder.append("  token").append(index).append(" -> token").append(num).append("\n");
-            }
-        }else if (token instanceof LexerToken lexer) {
-            builder.append("  token").append(index).append("[shape=box,color=\"#007FFF\",label=\"").append("(").append(lexer.name).append(")\"]\n");
-            int indexI = current.getAndIncrement();
-            builder.append("  token").append(indexI).append("[shape=box,color=\"#00FFFF\",label=\"").append(lexer.data.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\\\\n")).append("\"]\n");
-            builder.append("  token").append(index).append(" -> token").append(indexI).append("\n");
-        }
-        return index;
     }
 
 }
