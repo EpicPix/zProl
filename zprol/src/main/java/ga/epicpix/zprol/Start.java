@@ -176,24 +176,26 @@ public class Start {
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to lex\n", file.substring(file.lastIndexOf('/') + 1), endLex - startLex);
 
                     long startToken = System.currentTimeMillis();
-                    ArrayList<Token> tokens = Parser.parse(new SeekIterator<>(lexedTokens));
+//                    ArrayList<Token> tokens = Parser.parse(new SeekIterator<>(lexedTokens));
+                    Parser.parse(new SeekIterator<>(lexedTokens));
                     long endToken = System.currentTimeMillis();
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to parse\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 
-                    if(Boolean.parseBoolean(System.getProperty("PARSE_TREE"))) {
-                        long startAst = System.currentTimeMillis();
-                        DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".dot"));
-                        out.write(Parser.generateParseTree(tokens).getBytes(StandardCharsets.UTF_8));
-                        out.close();
-                        long endAst = System.currentTimeMillis();
-                        if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to save parser parse tree\n", file.substring(file.lastIndexOf('/') + 1), endAst - startAst);
-                    }
-
-                    long startPreCompile = System.currentTimeMillis();
-                    PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tokens);
-                    long stopPreCompile = System.currentTimeMillis();
-                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
-                    preCompiled.add(data);
+                    // uncomment when done with all ast structures
+//                    if(Boolean.parseBoolean(System.getProperty("PARSE_TREE"))) {
+//                        long startAst = System.currentTimeMillis();
+//                        DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".dot"));
+//                        out.write(Parser.generateParseTree(tokens).getBytes(StandardCharsets.UTF_8));
+//                        out.close();
+//                        long endAst = System.currentTimeMillis();
+//                        if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to save parser parse tree\n", file.substring(file.lastIndexOf('/') + 1), endAst - startAst);
+//                    }
+//
+//                    long startPreCompile = System.currentTimeMillis();
+//                    PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tokens);
+//                    long stopPreCompile = System.currentTimeMillis();
+//                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
+//                    preCompiled.add(data);
                 }catch(ParserException e) {
                     e.printError();
                     System.exit(1);

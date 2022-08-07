@@ -4,6 +4,7 @@ import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.tokens.NamedToken;
 import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.parser.tree.*;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.util.ArrayList;
@@ -16,42 +17,55 @@ public final class Parser {
         this.lexerTokens = lexerTokens;
     }
 
-    public static ArrayList<Token> parse(SeekIterator<LexerToken> lexerTokens) {
+    public static FileTree parse(SeekIterator<LexerToken> lexerTokens) {
         return new Parser(lexerTokens).parse();
     }
 
-    public ArrayList<Token> parse() {
-        var tokens = new ArrayList<Token>();
+    public FileTree parse() {
+        var declarations = new ArrayList<IDeclaration>();
         ParserState.create(lexerTokens);
+        ParserState.pushLocation();
+        FileTree file;
         try {
             while(skipWhitespace()) {
+                ParserState.pushLocation();
                 var next = lexerTokens.next();
                 switch(next.name) {
-                    case "NamespaceKeyword" -> tokens.add(new NamedToken("Namespace", next, readNamespaceIdentifier(), wexpect("Semicolon")));
-                    case "UsingKeyword" -> tokens.add(new NamedToken("Using", next, readNamespaceIdentifier(), wexpect("Semicolon")));
-                    case "ClassKeyword" -> tokens.add(readClass(next));
+                    case "NamespaceKeyword" -> {
+                        var identifier = readNamespaceIdentifier();
+                        wexpect("Semicolon");
+                        declarations.add(new NamespaceTree(identifier));
+                    }
+                    case "UsingKeyword" -> {
+                        var identifier = readNamespaceIdentifier();
+                        wexpect("Semicolon");
+                        declarations.add(new UsingTree(identifier));
+                    }
+//                    case "ClassKeyword" -> declarations.add(readClass(next));
+//                    default -> {
+//                        lexerTokens.previous();
+//                        declarations.add(readFieldOrMethod());
+//                    }
                     default -> {
-                        lexerTokens.previous();
-                        tokens.add(readFieldOrMethod());
+                        throw new TokenLocatedException("TODO", next);
                     }
                 }
             }
         }finally {
+            file = new FileTree(declarations);
             ParserState.delete();
         }
-        return tokens;
+        return file;
     }
 
-    public NamedToken readNamespaceIdentifier() {
-        ArrayList<Token> tokens = new ArrayList<>();
-//        ArrayList<LexerToken> tokens = new ArrayList<>();
+    public NamespaceIdentifierTree readNamespaceIdentifier() {
+        ArrayList<LexerToken> tokens = new ArrayList<>();
+        ParserState.pushLocation();
         tokens.add(wexpect("Identifier"));
-        LexerToken seperator;
-        while((seperator = optional("AccessorOperator")) != null) {
-            tokens.add(seperator); // remove this when using ast
+        while(optional("AccessorOperator") != null) {
             tokens.add(expect("Identifier"));
         }
-        return new NamedToken("NamespaceIdentifier", tokens.toArray(new Token[0]));
+        return new NamespaceIdentifierTree(tokens.toArray(new LexerToken[0]));
     }
 
     public NamedToken readClass(LexerToken classKeyword) {
