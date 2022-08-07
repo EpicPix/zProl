@@ -436,57 +436,62 @@ public final class Parser {
         }
         if(isNext("String")) {
             return new LiteralTree(LiteralType.STRING, expect("String").data);
-        }else if(isNext("NullKeyword")) {
+        }else if(optional("NullKeyword") != null) {
             return new LiteralTree(LiteralType.NULL, null);
         }else if(isNext("Integer")) {
             return new LiteralTree(LiteralType.INTEGER, ParserUtils.getInteger(expect("Integer")));
-        }else if(isNext("TrueKeyword")) {
+        }else if(optional("TrueKeyword") != null) {
             return new LiteralTree(LiteralType.BOOLEAN, true);
-        }else if(isNext("FalseKeyword")) {
+        }else if(optional("FalseKeyword") != null) {
             return new LiteralTree(LiteralType.BOOLEAN, false);
         }
         throw new TokenLocatedException("Expected an expression got " + lexerTokens.current().name, lexerTokens.current());
     }
 
-    public IExpression readAccessor() {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        tokens.add(readFunctionInvocationAccessor());
-//        while(skipWhitespace() && (isNext("OpenBracket") || isNext("AccessorOperator"))) {
-//            if(isNext("OpenBracket")) {
-//                tokens.add(new NamedToken("AccessorElement", new NamedToken("ArrayAccessor", expect("OpenBracket"), readExpression(), wexpect("CloseBracket"))));
-//            }else {
-//                tokens.add(new NamedToken("AccessorElement", expect("AccessorOperator"), readFunctionInvocationAccessor()));
-//            }
-//        }
-//        return new NamedToken("Accessor", tokens.toArray(new Token[0]));
-    }
-
-    public Token readFunctionInvocationAccessor() {
-        var ident = wexpect("Identifier");
-        skipWhitespace();
-        ArrayList<Token> tokens = new ArrayList<>();
-        if(optional("OpenParen", tokens)) {
-            readArgumentList("CloseParen", tokens);
-            tokens.add(wexpect("CloseParen"));
-            return new NamedToken("FunctionInvocationAccessor", ident, new NamedToken("FunctionInvocation", tokens.toArray(new Token[0])));
+    public AccessorTree readAccessor() {
+        ParserState.pushLocation();
+        ArrayList<IAccessorElement> elements = new ArrayList<>();
+        elements.add(readFunctionInvocationAccessor());
+        while(skipWhitespace() && (isNext("OpenBracket") || isNext("AccessorOperator"))) {
+            if(isNext("OpenBracket")) {
+                ParserState.pushLocation();
+                expect("OpenBracket");
+                IExpression expression = readExpression();
+                expect("CloseBracket");
+                elements.add(new ArrayAccessTree(expression));
+            }else {
+                expect("AccessorOperator");
+                elements.add(readFunctionInvocationAccessor());
+            }
         }
-        return ident;
+        return new AccessorTree(elements.toArray(new IAccessorElement[0]));
     }
 
-    public void readArgumentList(String endToken, ArrayList<Token> output) {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        skipWhitespace();
-//        if(isNext(endToken)) {
-//            return;
-//        }
-//        tokens.add(readExpression());
-//        while(skipWhitespace() && !isNext(endToken)) {
-//            tokens.add(expect("CommaOperator"));
-//            tokens.add(readExpression());
-//        }
-//        output.add(new NamedToken("ArgumentList", tokens.toArray(new Token[0])));
+    public IAccessorElement readFunctionInvocationAccessor() {
+        skipWhitespace();
+        ParserState.pushLocation();
+        var ident = expect("Identifier");
+        if(optional("OpenParen") != null) {
+            ArgumentsTree args = readArgumentList("CloseParen");
+            wexpect("CloseParen");
+            return new FunctionCallTree(ident, args);
+        }
+        return new FieldAccessTree(ident);
+    }
+
+    public ArgumentsTree readArgumentList(String endToken) {
+        skipWhitespace();
+        ParserState.pushLocation();
+        if(isNext(endToken)) {
+            return new ArgumentsTree(new IExpression[0]);
+        }
+        ArrayList<IExpression> arguments = new ArrayList<>();
+        arguments.add(readExpression());
+        while(skipWhitespace() && !isNext(endToken)) {
+            expect("CommaOperator");
+            arguments.add(readExpression());
+        }
+        return new ArgumentsTree(arguments.toArray(new IExpression[0]));
     }
 
     // ---- Helper Methods ----
