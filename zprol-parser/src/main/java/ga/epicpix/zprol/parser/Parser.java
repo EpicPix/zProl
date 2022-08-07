@@ -8,6 +8,7 @@ import ga.epicpix.zprol.parser.tree.*;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Parser {
@@ -177,20 +178,19 @@ public final class Parser {
     }
 
     public CodeTree readCode() {
-        throw new TokenLocatedException("TODO", lexerTokens.current());
-//        ArrayList<Token> tokens = new ArrayList<>();
-//        skipWhitespace();
-//        if(!isNext("OpenBrace")) {
-//            tokens.add(expect("LineCodeChars"));
-//            tokens.add(readStatement());
-//            return new NamedToken("Code", tokens.toArray(new Token[0]));
-//        }
-//        tokens.add(expect("OpenBrace"));
-//        while(skipWhitespace() && !isNext("CloseBrace")) {
-//            tokens.add(readStatement());
-//        }
-//        tokens.add(wexpect("CloseBrace"));
-//        return new NamedToken("Code", tokens.toArray(new Token[0]));
+        skipWhitespace();
+        ParserState.pushLocation();
+        if(!isNext("OpenBrace")) {
+            expect("LineCodeChars");
+            IStatement statement = readStatement();
+            return new CodeTree(new ArrayList<>(List.of(statement)));
+        }
+        expect("OpenBrace");
+        ArrayList<IStatement> statements = new ArrayList<>();
+        while(skipWhitespace() && optional("CloseBrace") == null) {
+            statements.add(readStatement());
+        }
+        return new CodeTree(statements);
     }
 
     public NamedToken readBreakStatement() {
@@ -264,7 +264,7 @@ public final class Parser {
 //        return new NamedToken("CreateAssignmentStatement", tokens.toArray(new Token[0]));
     }
 
-    public NamedToken readStatement() {
+    public IStatement readStatement() {
         throw new TokenLocatedException("TODO", lexerTokens.current());
 //        ArrayList<Token> tokens = new ArrayList<>();
 //        skipWhitespace();
