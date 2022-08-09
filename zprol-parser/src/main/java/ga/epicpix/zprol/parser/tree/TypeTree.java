@@ -17,7 +17,7 @@ public record TypeTree(int start, int end, LexerToken type, int arrayAmount) imp
     }
 
     public String toString() {
-        return type.name + "[]".repeat(arrayAmount);
+        return type.data + "[]".repeat(arrayAmount);
     }
 }
 

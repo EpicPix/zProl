@@ -204,7 +204,7 @@ public class Start {
                 pre.addAll(preCompiled);
                 pre.remove(data);
                 long startCompile = System.currentTimeMillis();
-                CompiledData zpil = Compiler.compile(data, pre);
+                CompiledData zpil = Compiler.compile(data, pre, data.parser);
                 long stopCompile = System.currentTimeMillis();
                 if (SHOW_TIMINGS)
                     System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
@@ -253,14 +253,7 @@ public class Start {
                 function.name = func.name();
                 function.returnType = func.signature().returnType().normalName();
                 function.parameters.addAll(params);
-                for(var v : func.modifiers()) {
-                    for(PreFunctionModifiers m : PreFunctionModifiers.MODIFIERS) {
-                        if(m.getCompiledModifier() == v) {
-                            function.modifiers.add(m);
-                            break;
-                        }
-                    }
-                }
+                function.modifiers.addAll(func.modifiers());
                 methods.add(function);
             }
             preCompiledData.get(clazz.namespace()).classes.add(new PreClass(clazz.namespace(), clazz.name(), fields.toArray(new PreField[0]), methods.toArray(new PreFunction[0])));
@@ -278,14 +271,7 @@ public class Start {
             function.name = func.name();
             function.returnType = func.signature().returnType().normalName();
             function.parameters.addAll(params);
-            for(var v : func.modifiers()) {
-                for(PreFunctionModifiers m : PreFunctionModifiers.MODIFIERS) {
-                    if(m.getCompiledModifier() == v) {
-                        function.modifiers.add(m);
-                        break;
-                    }
-                }
-            }
+            function.modifiers.addAll(func.modifiers());
             preCompiledData.get(func.namespace()).functions.add(function);
         }
         for(var fld : gen.fields) {

@@ -76,12 +76,12 @@ public class PreCompiler {
             func.modifiers.add(modifiers);
         }
         func.returnType = function.type().toString();
-        func.name = function.name().data;
+        func.name = function.name().toStringRaw();
         var paramList = function.parameters();
         for (ParameterTree paramTree : paramList.parameters()) {
             PreParameter param = new PreParameter();
             param.type = paramTree.type().toString();
-            param.name = paramTree.name().data;
+            param.name = paramTree.name().toStringRaw();
             func.parameters.add(param);
         }
         if(func.hasCode()) {
