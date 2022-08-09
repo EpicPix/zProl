@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.structures;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 
 public enum FunctionModifiers {
@@ -31,6 +32,19 @@ public enum FunctionModifiers {
             }
         }
         return false;
+    }
+
+    public static FunctionModifiers getModifier(long id) {
+        ArrayList<FunctionModifiers> modifiers = new ArrayList<>();
+        for(var modifier : MODIFIERS) {
+            if((modifier.getBits() & id) == modifier.getBits()) {
+                modifiers.add(modifier);
+            }
+        }
+        if(modifiers.size() != 1) {
+            throw new RuntimeException("Unknown modifier: 0x" + Long.toHexString(id));
+        }
+        return modifiers.get(0);
     }
 
     public static EnumSet<FunctionModifiers> getModifiers(int id) {

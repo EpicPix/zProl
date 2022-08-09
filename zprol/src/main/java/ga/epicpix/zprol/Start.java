@@ -179,12 +179,12 @@ public class Start {
                     FileTree tree = Parser.parse(new SeekIterator<>(lexedTokens));
                     long endToken = System.currentTimeMillis();
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to parse\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
-                    // uncomment when done with all ast structures
-//                    long startPreCompile = System.currentTimeMillis();
-//                    PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tokens);
-//                    long stopPreCompile = System.currentTimeMillis();
-//                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
-//                    preCompiled.add(data);
+
+                    long startPreCompile = System.currentTimeMillis();
+                    PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tree, lexedTokens.get(0) != null ? lexedTokens.get(0).parser : null);
+                    long stopPreCompile = System.currentTimeMillis();
+                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
+                    preCompiled.add(data);
                 }catch(ParserException e) {
                     e.printError();
                     System.exit(1);
