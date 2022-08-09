@@ -1,98 +1,97 @@
 package ga.epicpix.zprol.compiler.precompiled;
 
+import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
-import ga.epicpix.zprol.parser.tokens.NamedToken;
-import ga.epicpix.zprol.parser.tokens.Token;
-import ga.epicpix.zprol.utils.SeekIterator;
+import ga.epicpix.zprol.parser.tree.*;
+import ga.epicpix.zprol.structures.FunctionModifiers;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class PreCompiler {
 
-    public static PreCompiledData preCompile(String sourceFile, ArrayList<Token> pTokens) {
+    public static PreCompiledData preCompile(String sourceFile, FileTree file, DataParser parser) {
         PreCompiledData pre = new PreCompiledData();
+        pre.parser = parser;
         pre.sourceFile = sourceFile;
-
-        SeekIterator<Token> tokens = new SeekIterator<>(pTokens);
-        boolean usedOther = false;
-        while(tokens.hasNext()) {
-            Token token = tokens.next();
-            if(!(token instanceof NamedToken named && named.name.equals("Namespace"))) usedOther = true;
-            if(token instanceof NamedToken named) {
-                if(named.name.equals("Using")) {
-                    pre.using.add(named.getTokenWithName("NamespaceIdentifier").toStringRaw().trim());
-                }else if(named.name.equals("Namespace")) {
-                    if(usedOther) throw new TokenLocatedException("Namespace not defined at the top of the file", named);
-                    if(pre.namespace != null) throw new TokenLocatedException("Defined namespace for a file multiple times", named);
-                    pre.namespace = named.getTokenWithName("NamespaceIdentifier").toStringRaw().trim();
-                }else if(named.name.equals("Function")) {
-                    pre.functions.add(parseFunction(named));
-                }else if(named.name.equals("Field")) {
-                    PreField field = new PreField(named.getTokenWithName("Expression"));
-                    field.type = named.getTokenAsString("Type");
-                    field.name = named.getLexerToken("Identifier").data;
-                    if(named.getLexerToken("ConstKeyword") != null) {
-                        field.modifiers.add(PreFieldModifiers.CONST);
-                    }
-                    pre.fields.add(field);
-                }else if(named.name.equals("Class")) {
-                    PreClass clazz = new PreClass();
-                    clazz.namespace = pre.namespace;
-                    clazz.name = named.getLexerToken("Identifier").data;
-
-                    for(var fieldToken : named.getTokensWithName("Field")) {
-                        PreField field = new PreField(named.getTokenWithName("Expression"));
-                        field.type = fieldToken.getTokenAsString("Type");
-                        field.name = fieldToken.getLexerToken("Identifier").data;
-                        clazz.fields.add(field);
-                    }
-
-                    for(var methodToken : named.getTokensWithName("Function")) {
-                        clazz.methods.add(parseFunction(methodToken));
-                    }
-
-                    pre.classes.add(clazz);
-                } else if(!named.name.equals("Whitespace")) {
-                    throw new TokenLocatedException("Unsupported named token \"" + named.name + "\"", named);
+        List<IDeclaration> declarations = file.declarations();
+        for(int i = 0; i < declarations.size(); i++) {
+            IDeclaration nsSearch = declarations.get(i);
+            if(nsSearch instanceof NamespaceTree) {
+                if(i != 0) {
+                    throw new TokenLocatedException("Namespace not defined at the top of the file", nsSearch, parser);
                 }
+            }
+        }
+
+        for(IDeclaration decl : declarations) {
+            if(decl instanceof UsingTree using) {
+                pre.using.add(using.identifier().toString());
+            }else if(decl instanceof NamespaceTree namespace) {
+                if(pre.namespace != null) throw new TokenLocatedException("Defined namespace for a file multiple times", namespace, parser);
+                pre.namespace = namespace.identifier().toString();
+            }else if(decl instanceof FunctionTree func) {
+                pre.functions.add(parseFunction(func, parser));
+            }else if(decl instanceof FieldTree f) {
+                PreField field = new PreField(f.value());
+                field.type = f.type().toString();
+                field.name = f.name().toStringRaw();
+                if(f.isConst()) {
+                    field.modifiers.add(PreFieldModifiers.CONST);
+                }
+                pre.fields.add(field);
+            }else if(decl instanceof ClassTree clz) {
+                PreClass clazz = new PreClass();
+                clazz.namespace = pre.namespace;
+                clazz.name = clz.name().toStringRaw();
+
+                for(var decl2 : clz.declarations()) {
+                    if(decl2 instanceof FieldTree f) {
+                        PreField field = new PreField(f.value());
+                        field.type = f.type().toString();
+                        field.name = f.name().toStringRaw();
+                        clazz.fields.add(field);
+                    }else if(decl2 instanceof FunctionTree m) {
+                        clazz.methods.add(parseFunction(m, parser));
+                    }else {
+                        throw new TokenLocatedException("Unsupported declaration \"" + decl2.getClass().getSimpleName() + "\"", decl2, parser);
+                    }
+                }
+
+                pre.classes.add(clazz);
             }else {
-                throw new TokenLocatedException("Expected named token, this might be a bug in parsing code", token);
+                throw new TokenLocatedException("Unsupported declaration \"" + decl.getClass().getSimpleName() + "\"", decl, parser);
             }
         }
 
         return pre;
     }
 
-    private static PreFunction parseFunction(NamedToken function) {
+    private static PreFunction parseFunction(FunctionTree function, DataParser parser) {
         var func = new PreFunction();
-        for(Token modifier : function.getTokensWithName("FunctionModifier")) {
-            PreFunctionModifiers modifiers = PreFunctionModifiers.getModifier(modifier.toStringRaw());
+        for(ModifierTree modifier : function.modifiers().modifiers()) {
+            FunctionModifiers modifiers = FunctionModifiers.getModifier(modifier.mod());
             if(func.modifiers.contains(modifiers)) {
-                throw new TokenLocatedException("Duplicate function modifier: '" + modifiers.getName() + "'", modifier);
+                throw new TokenLocatedException("Duplicate function modifier: '" + modifiers.name().toLowerCase() + "'", modifier, parser);
             }
             func.modifiers.add(modifiers);
         }
-        func.returnType = function.getTokenAsString("Type");
-        func.name = function.getLexerToken("Identifier").data;
-        var paramList = function.getTokenWithName("ParameterList");
-        if(paramList != null) {
-            for (NamedToken namedToken : paramList.getTokensWithName("Parameter")) {
-                PreParameter param = new PreParameter();
-                param.type = namedToken.getTokenAsString("Type");
-                param.name = namedToken.getLexerToken("Identifier").data;
-                func.parameters.add(param);
-            }
+        func.returnType = function.type().toString();
+        func.name = function.name().toStringRaw();
+        var paramList = function.parameters();
+        for (ParameterTree paramTree : paramList.parameters()) {
+            PreParameter param = new PreParameter();
+            param.type = paramTree.type().toString();
+            param.name = paramTree.name().toStringRaw();
+            func.parameters.add(param);
         }
         if(func.hasCode()) {
-            if(function.getTokenWithName("Code") == null) {
-                throw new TokenLocatedException("Expected code", function);
+            if(function.code() == null) {
+                throw new TokenLocatedException("Expected code", function, parser);
             }
-            for (var a : function.getTokenWithName("Code").getTokensWithName("Statement"))
-                func.code.addAll(List.of(a.tokens));
+            func.code.addAll(function.code().statements());
         }else {
-            if(function.getTokenWithName("Code") != null) {
-                throw new TokenLocatedException("Expected no code", function);
+            if(function.code() != null) {
+                throw new TokenLocatedException("Expected no code", function, parser);
             }
         }
         return func;

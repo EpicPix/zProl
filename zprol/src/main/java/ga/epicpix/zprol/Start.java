@@ -12,7 +12,7 @@ import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
-import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.parser.tree.FileTree;
 import ga.epicpix.zprol.structures.FunctionModifiers;
 import ga.epicpix.zprol.utils.SeekIterator;
 
@@ -176,21 +176,12 @@ public class Start {
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to lex\n", file.substring(file.lastIndexOf('/') + 1), endLex - startLex);
 
                     long startToken = System.currentTimeMillis();
-                    ArrayList<Token> tokens = Parser.parse(new SeekIterator<>(lexedTokens));
+                    FileTree tree = Parser.parse(new SeekIterator<>(lexedTokens));
                     long endToken = System.currentTimeMillis();
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to parse\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 
-                    if(Boolean.parseBoolean(System.getProperty("PARSE_TREE"))) {
-                        long startAst = System.currentTimeMillis();
-                        DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".dot"));
-                        out.write(Parser.generateParseTree(tokens).getBytes(StandardCharsets.UTF_8));
-                        out.close();
-                        long endAst = System.currentTimeMillis();
-                        if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to save parser parse tree\n", file.substring(file.lastIndexOf('/') + 1), endAst - startAst);
-                    }
-
                     long startPreCompile = System.currentTimeMillis();
-                    PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tokens);
+                    PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tree, lexedTokens.get(0) != null ? lexedTokens.get(0).parser : null);
                     long stopPreCompile = System.currentTimeMillis();
                     if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
                     preCompiled.add(data);
@@ -213,7 +204,7 @@ public class Start {
                 pre.addAll(preCompiled);
                 pre.remove(data);
                 long startCompile = System.currentTimeMillis();
-                CompiledData zpil = Compiler.compile(data, pre);
+                CompiledData zpil = Compiler.compile(data, pre, data.parser);
                 long stopCompile = System.currentTimeMillis();
                 if (SHOW_TIMINGS)
                     System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
@@ -262,14 +253,7 @@ public class Start {
                 function.name = func.name();
                 function.returnType = func.signature().returnType().normalName();
                 function.parameters.addAll(params);
-                for(var v : func.modifiers()) {
-                    for(PreFunctionModifiers m : PreFunctionModifiers.MODIFIERS) {
-                        if(m.getCompiledModifier() == v) {
-                            function.modifiers.add(m);
-                            break;
-                        }
-                    }
-                }
+                function.modifiers.addAll(func.modifiers());
                 methods.add(function);
             }
             preCompiledData.get(clazz.namespace()).classes.add(new PreClass(clazz.namespace(), clazz.name(), fields.toArray(new PreField[0]), methods.toArray(new PreFunction[0])));
@@ -287,14 +271,7 @@ public class Start {
             function.name = func.name();
             function.returnType = func.signature().returnType().normalName();
             function.parameters.addAll(params);
-            for(var v : func.modifiers()) {
-                for(PreFunctionModifiers m : PreFunctionModifiers.MODIFIERS) {
-                    if(m.getCompiledModifier() == v) {
-                        function.modifiers.add(m);
-                        break;
-                    }
-                }
-            }
+            function.modifiers.addAll(func.modifiers());
             preCompiledData.get(func.namespace()).functions.add(function);
         }
         for(var fld : gen.fields) {

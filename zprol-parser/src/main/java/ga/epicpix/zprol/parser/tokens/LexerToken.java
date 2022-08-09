@@ -25,11 +25,11 @@ public final class LexerToken extends Token {
         return data;
     }
 
-    public ParserLocation getStartLocation() {
-        return parser.getLocation(start);
+    public int getStart() {
+        return start;
     }
 
-    public ParserLocation getEndLocation() {
-        return parser.getLocation(end);
+    public int getEnd() {
+        return end;
     }
 }

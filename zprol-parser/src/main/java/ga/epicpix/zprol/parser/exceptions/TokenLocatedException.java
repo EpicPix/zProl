@@ -1,33 +1,46 @@
 package ga.epicpix.zprol.parser.exceptions;
 
+import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.parser.tree.ITree;
 
 public class TokenLocatedException extends RuntimeException {
 
-    private final Token token;
+    private final DataParser parser;
+    private final int start, end;
 
     public TokenLocatedException(String s) {
         super(s);
-        token = null;
+        parser = null;
+        start = -1;
+        end = -1;
     }
 
     public TokenLocatedException(String s, Token token) {
         super(s);
-        this.token = token;
+        parser = token.parser;
+        start = token.getStart();
+        end = token.getEnd();
+    }
+
+    public TokenLocatedException(String s, ITree tree, DataParser parser) {
+        super(s);
+        this.parser = parser;
+        start = tree.getStartIndex();
+        end = tree.getEndIndex();
     }
 
     public void printError() {
-        if(token != null) {
+        if(parser != null) {
             try {
-                var start = token.getStartLocation();
-                var end = token.getEndLocation();
+                var startLoc = parser.getLocation(start);
+                var endLoc = parser.getLocation(end);
+                System.err.println(getMessage() + ", error at " + parser.getFileName() + ":" + (endLoc.line() + 1) + ":" + (startLoc.row() + 1));
 
-                System.err.println(getMessage() + ", error at " + token.parser.getFileName() + ":" + (end.line() + 1) + ":" + (start.row() + 1));
-
-                String l = token.parser.getLines()[end.line()];
+                String l = parser.getLines()[endLoc.line()];
                 System.err.println(l);
 
-                System.err.println(" ".repeat(start.row()) + "^".repeat(end.row() - start.row()));
+                System.err.println(" ".repeat(startLoc.row()) + "^".repeat(endLoc.row() - startLoc.row()));
             } finally {
                 if(Boolean.parseBoolean(System.getProperty("SHOW_STACK_TRACE"))) {
                     System.err.println("DEBUG INFO:");

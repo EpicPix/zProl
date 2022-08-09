@@ -5,7 +5,10 @@ import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.precompiled.PreClass;
 import ga.epicpix.zprol.compiler.precompiled.PreField;
 import ga.epicpix.zprol.data.ConstantValue;
+import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
+import ga.epicpix.zprol.parser.tree.LiteralTree;
+import ga.epicpix.zprol.parser.tree.LiteralType;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.types.*;
 
@@ -20,7 +23,7 @@ import static ga.epicpix.zprol.compiler.CompilerUtils.*;
 
 public class FieldCompiler {
 
-    public static Object compileField(CompiledData data, PreField field, PreClass thisClass) {
+    public static Object compileField(CompiledData data, PreField field, PreClass thisClass, DataParser parser) {
         var type = data.resolveType(field.type);
         if(type instanceof VoidType) {
             throw new TokenLocatedException("Cannot create a field with void type");
@@ -37,30 +40,39 @@ public class FieldCompiler {
         ConstantValue defaultValue = null;
         if(field.isConst()) {
             var value = field.defaultValue;
-            if(value.getTokenWithName("Integer") != null) {
-                if(!(type instanceof PrimitiveType prim)) {
-                    throw new TokenLocatedException("Expected " + type.normalName() + ", got an integer", value);
+            if(value instanceof LiteralTree literal) {
+                if(literal.type() == LiteralType.INTEGER) {
+                    if(!(type instanceof PrimitiveType prim)) {
+                        throw new TokenLocatedException("Expected " + type.normalName() + ", got an integer", value, parser);
+                    }
+                    var n = (BigInteger) literal.value();
+                    if(prim.getSize() == 1) defaultValue = new ConstantValue(n.byteValue());
+                    else if(prim.getSize() == 2) defaultValue = new ConstantValue(n.shortValue());
+                    else if(prim.getSize() == 4) defaultValue = new ConstantValue(n.intValue());
+                    else if(prim.getSize() == 8) defaultValue = new ConstantValue(n.longValue());
+                }else if(literal.type() == LiteralType.BOOLEAN) {
+                    if(!(type instanceof BooleanType)) {
+                        throw new TokenLocatedException("Expected " + type.normalName() + ", got a boolean", value, parser);
+                    }
+                    defaultValue = new ConstantValue(literal.value());
+                }else if(literal.type() == LiteralType.STRING) {
+                    if(!(type instanceof ClassType clzType) || !(Objects.equals(clzType.getNamespace(), "zprol.lang") || clzType.getName().equals("String"))) {
+                        throw new TokenLocatedException("Expected " + type.normalName() + ", got a string", value, parser);
+                    }
+                    defaultValue = new ConstantValue(value);
+                }else if(literal.type() == LiteralType.NULL) {
+                    if(!(type instanceof ClassType || type instanceof ArrayType)) {
+                        throw new TokenLocatedException("Expected a reference type, got " + type.normalName(), value, parser);
+                    }
+                    defaultValue = new ConstantValue(value);
+                }else {
+                    throw new TokenLocatedException("Unhandled case for LiteralType", value, parser);
                 }
-                var n = getInteger(value);
-                if(prim.getSize() == 1) defaultValue = new ConstantValue(n.byteValue());
-                else if(prim.getSize() == 2) defaultValue = new ConstantValue(n.shortValue());
-                else if(prim.getSize() == 4) defaultValue = new ConstantValue(n.intValue());
-                else if(prim.getSize() == 8) defaultValue = new ConstantValue(n.longValue());
-            }else if(value.getTokenWithName("Boolean") != null) {
-                if(!(type instanceof BooleanType)) {
-                    throw new TokenLocatedException("Expected " + type.normalName() + ", got a boolean", value);
-                }
-                defaultValue = new ConstantValue(Boolean.parseBoolean(value.toStringRaw()));
-            }else if(value.getTokenWithName("String") != null) {
-                if(!(type instanceof ClassType clzType) || !(Objects.equals(clzType.getNamespace(), "zprol.lang") || clzType.getName().equals("String"))) {
-                    throw new TokenLocatedException("Expected " + type.normalName() + ", got a string", value);
-                }
-                defaultValue = new ConstantValue(value.toStringRaw());
             }else {
                 var bytecode = createStorage();
                 var got = new ArrayDeque<Type>();
-                generateInstructionsFromExpression(value, null, got, data, new FunctionCodeScope(new LocalScopeManager(), thisClass), bytecode, false);
-                doCast(got.pop(), type, false, bytecode, value);
+                generateInstructionsFromExpression(value, null, got, data, new FunctionCodeScope(new LocalScopeManager(), thisClass), bytecode, false, parser);
+                doCast(got.pop(), type, false, bytecode, value, parser);
                 if(type instanceof PrimitiveType primitive) {
                     bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_field", f));
                 } else if(type instanceof BooleanType) {

@@ -2,29 +2,21 @@ package ga.epicpix.zprol.compiler;
 
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.precompiled.PreClass;
-import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
-import ga.epicpix.zprol.parser.tokens.NamedToken;
-import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.parser.tree.ArgumentsTree;
+import ga.epicpix.zprol.parser.tree.IExpression;
+import ga.epicpix.zprol.parser.tree.ITree;
 
 import java.util.ArrayList;
 
 public class CompilerIdentifierDataFunction extends CompilerIdentifierData {
 
     public final String identifier;
-    public final NamedToken[] arguments;
+    public final IExpression[] arguments;
 
-    public CompilerIdentifierDataFunction(Token location, String identifier, NamedToken functionInvocation) {
+    public CompilerIdentifierDataFunction(ITree location, String identifier, ArgumentsTree args) {
         super(location);
         this.identifier = identifier;
-        arguments = loadArguments(functionInvocation);
-    }
-
-    public static NamedToken[] loadArguments(NamedToken functionInvocation) {
-        if(!functionInvocation.name.equals("FunctionInvocation")) throw new TokenLocatedException("Expected 'FunctionInvocation' got '" + functionInvocation.name + "'", functionInvocation);
-
-        NamedToken argumentList = functionInvocation.getTokenWithName("ArgumentList");
-        if(argumentList == null) return new NamedToken[0];
-        return argumentList.getTokensWithName("Expression").toArray(new NamedToken[0]);
+        arguments = args.arguments();
     }
 
     public String getFunctionName() {

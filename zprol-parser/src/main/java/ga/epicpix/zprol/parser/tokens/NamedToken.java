@@ -81,11 +81,11 @@ public final class NamedToken extends Token {
         return out.toString();
     }
 
-    public ParserLocation getStartLocation() {
-        return tokens[0].getStartLocation();
+    public int getStart() {
+        return tokens[0].getStart();
     }
 
-    public ParserLocation getEndLocation() {
-        return tokens[tokens.length - 1].getEndLocation();
+    public int getEnd() {
+        return tokens[tokens.length - 1].getEnd();
     }
 }

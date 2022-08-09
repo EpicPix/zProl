@@ -3,8 +3,9 @@ package ga.epicpix.zprol.compiler;
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.precompiled.PreClass;
+import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
-import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.parser.tree.ITree;
 import ga.epicpix.zprol.structures.Class;
 import ga.epicpix.zprol.structures.Field;
 import ga.epicpix.zprol.structures.FieldModifiers;
@@ -23,7 +24,7 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
 
     public final String identifier;
 
-    public CompilerIdentifierDataField(Token location, String identifier) {
+    public CompilerIdentifierDataField(ITree location, String identifier) {
         super(location);
         this.identifier = identifier;
     }
@@ -97,14 +98,14 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
         return null;
     }
 
-    public Type storeField(PreClass classContext, LocalScopeManager localsManager, Type type, IBytecodeStorage bytecode, CompiledData data, boolean searchPublic) {
+    public Type storeField(PreClass classContext, LocalScopeManager localsManager, Type type, IBytecodeStorage bytecode, CompiledData data, boolean searchPublic, DataParser parser) {
         String fieldName = getFieldName();
 
         if(searchPublic) {
             var local = localsManager.tryGetLocalVariable(fieldName);
             if (local != null) {
                 var localType = local.type();
-                if(type != null) doCast(localType, type, false, bytecode, location);
+                if(type != null) doCast(localType, type, false, bytecode, location, parser);
                 if (localType instanceof PrimitiveType primitive) {
                     bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_local", local.index()));
                 } else if (localType instanceof BooleanType) {
@@ -123,7 +124,7 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
             for(var field : classContext.fields) {
                 if(field.name.equals(fieldName)) {
                     var fieldType = data.resolveType(field.type);
-                    if(type != null) doCast(fieldType, type, false, bytecode, location);
+                    if(type != null) doCast(fieldType, type, false, bytecode, location, parser);
                     if(searchPublic) {
                         bytecode.pushInstruction(getConstructedInstruction("aload_local", localsManager.getLocalVariable("this").index()));
                     }
@@ -143,7 +144,7 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
                     }
                     var f = new Field(using.namespace, modifiers, field.name, fieldType, null);
                     if(modifiers.contains(FieldModifiers.CONST)) throw new TokenLocatedException("Cannot assign to const value");
-                    if(type != null) doCast(fieldType, type, false, bytecode, location);
+                    if(type != null) doCast(fieldType, type, false, bytecode, location, parser);
                     if(fieldType instanceof PrimitiveType primitive) {
                         bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_field", f));
                     } else if(fieldType instanceof BooleanType) {

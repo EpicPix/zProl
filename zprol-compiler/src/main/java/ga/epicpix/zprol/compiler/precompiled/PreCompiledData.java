@@ -1,9 +1,13 @@
 package ga.epicpix.zprol.compiler.precompiled;
 
+import ga.epicpix.zprol.parser.DataParser;
+import ga.epicpix.zprol.parser.tree.NamespaceIdentifierTree;
+
 import java.util.ArrayList;
 
 public class PreCompiledData {
 
+    public DataParser parser;
     public String sourceFile;
 
     public final ArrayList<String> using = new ArrayList<>();
