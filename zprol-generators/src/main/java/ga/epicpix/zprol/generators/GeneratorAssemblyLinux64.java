@@ -488,7 +488,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }
     }
 
-private static void writeFunction(Function function, boolean methodLike, ConstantPool localConstantPool, InstructionList assembly) {
+    private static void writeFunction(Function function, boolean methodLike, ConstantPool localConstantPool, InstructionList assembly) {
         assembly.add(push("rbp"));
         assembly.add("mov rbp, rsp");
         assembly.add("sub rsp, " + function.code().getLocalsSize());
