@@ -174,26 +174,26 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     private static final String[] SYSCALL_REGISTERS_16 = new String[] {"ax", "di", "sx", "dx", "r10w", "r8w", "r9w"};
 
     static {
-        instructionGenerators.put("vreturn", (i, s, f, lp, instructions) -> (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret()));
+        instructionGenerators.put("vreturn", (i, s, f, lp, instructions) -> instructions.add("mov rsp, rbp", pop("rbp")).add(ret()));
         instructionGenerators.put("breturn", (i, s, f, lp, instructions) -> {
             instructions.add(pop("ax"));
-            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret());
+            instructions.add("mov rsp, rbp", pop("rbp")).add(ret());
         });
         instructionGenerators.put("sreturn", (i, s, f, lp, instructions) -> {
             instructions.add(pop("ax"));
-            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret());
+            instructions.add("mov rsp, rbp", pop("rbp")).add(ret());
         });
         instructionGenerators.put("ireturn", (i, s, f, lp, instructions) -> {
             instructions.add(pop("rax"));
-            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret());
+            instructions.add("mov rsp, rbp", pop("rbp")).add(ret());
         });
         instructionGenerators.put("lreturn", (i, s, f, lp, instructions) -> {
             instructions.add(pop("rax"));
-            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret());
+            instructions.add("mov rsp, rbp", pop("rbp")).add(ret());
         });
         instructionGenerators.put("areturn", (i, s, f, lp, instructions) -> {
             instructions.add(pop("rax"));
-            (f.code().getLocalsSize() != 0 ? instructions.add("mov rsp, rbp", pop("rbp")) : instructions).add(ret());
+            instructions.add("mov rsp, rbp", pop("rbp")).add(ret());
         });
         instructionGenerators.put("bpush", (i, s, f, lp, instructions) -> instructions.add("push word " + i.getData()[0]));
         instructionGenerators.put("spush", (i, s, f, lp, instructions) -> instructions.add("push word " + i.getData()[0]));
@@ -488,12 +488,10 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }
     }
 
-    private static void writeFunction(Function function, boolean methodLike, ConstantPool localConstantPool, InstructionList assembly) {
-        if(function.code().getLocalsSize() != 0) {
-            assembly.add(push("rbp"));
-            assembly.add("mov rbp, rsp");
-            assembly.add("sub rsp, " + function.code().getLocalsSize());
-        }
+private static void writeFunction(Function function, boolean methodLike, ConstantPool localConstantPool, InstructionList assembly) {
+        assembly.add(push("rbp"));
+        assembly.add("mov rbp, rsp");
+        assembly.add("sub rsp, " + function.code().getLocalsSize());
         int localsIndex = 0;
         var parameters = function.signature().parameters();
         int off = methodLike ? 1 : 0;
