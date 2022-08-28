@@ -570,8 +570,8 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     public void generate(DataOutputStream outStream, GeneratedData generated) throws IOException {
         InstructionList assembly = new InstructionList();
 
-        assembly.add("global _entry");
-        assembly.add("_entry:");
+        assembly.add("global _start");
+        assembly.add("_start:");
         for(var function : generated.functions) {
             if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
             if(!function.name().equals(".init")) continue;
