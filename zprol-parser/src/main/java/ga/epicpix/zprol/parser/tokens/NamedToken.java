@@ -1,7 +1,5 @@
 package ga.epicpix.zprol.parser.tokens;
 
-import ga.epicpix.zprol.parser.ParserLocation;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,20 +9,20 @@ public final class NamedToken extends Token {
 
     public final Token[] tokens;
 
-    public NamedToken(String name, Token... tokens) {
-        super(name, tokens[0].parser);
+    public NamedToken(TokenType type, Token... tokens) {
+        super(type, tokens[0].parser);
         this.tokens = tokens;
     }
 
-    public NamedToken(String name, List<Token> tokens) {
-        this(name, tokens.toArray(new Token[0]));
+    public NamedToken(TokenType type, List<Token> tokens) {
+        this(type, tokens.toArray(new Token[0]));
     }
 
-    public ArrayList<NamedToken> getTokensWithName(String name) {
+    public ArrayList<NamedToken> getTokensWithName(TokenType type) {
         ArrayList<NamedToken> t = new ArrayList<>();
         for(Token token : tokens) {
             if(token instanceof NamedToken named) {
-                if(named.name.equals(name)) {
+                if(named.type == type) {
                     t.add(named);
                 }
             }
@@ -32,10 +30,10 @@ public final class NamedToken extends Token {
         return t;
     }
 
-    public NamedToken getTokenWithName(String name) {
+    public NamedToken getTokenWithName(TokenType type) {
         for(Token token : tokens) {
             if(token instanceof NamedToken named) {
-                if(named.name.equals(name)) {
+                if(named.type == type) {
                     return named;
                 }
             }
@@ -43,10 +41,10 @@ public final class NamedToken extends Token {
         return null;
     }
 
-    public LexerToken getLexerToken(String name) {
+    public LexerToken getLexerToken(TokenType type) {
         for(Token token : tokens) {
             if(token instanceof LexerToken lex) {
-                if(lex.name.equals(name)) {
+                if(lex.type == type) {
                     return lex;
                 }
             }
@@ -54,14 +52,14 @@ public final class NamedToken extends Token {
         return null;
     }
 
-    public String getTokenAsString(String name) {
+    public String getTokenAsString(TokenType type) {
         for(Token token : tokens) {
             if(token instanceof NamedToken named) {
-                if(named.name.equals(name)) {
+                if(named.type == type) {
                     return Arrays.stream(named.tokens).map(Token::toStringRaw).collect(Collectors.joining());
                 }
             }else if(token instanceof LexerToken lexer) {
-                if(lexer.name.equals(name)) {
+                if(lexer.type == type) {
                     return lexer.toStringRaw();
                 }
             }
@@ -70,7 +68,7 @@ public final class NamedToken extends Token {
     }
 
     protected String getData() {
-        return name + Arrays.toString(tokens);
+        return type + Arrays.toString(tokens);
     }
 
     public String toStringRaw() {

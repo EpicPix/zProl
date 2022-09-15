@@ -6,10 +6,10 @@ import ga.epicpix.zprol.parser.ParserLocation;
 public abstract sealed class Token permits LexerToken, NamedToken {
 
     public final DataParser parser;
-    public final String name;
+    public final TokenType type;
 
-    public Token(String name, DataParser parser) {
-        this.name = name;
+    public Token(TokenType type, DataParser parser) {
+        this.type = type;
         this.parser = parser;
     }
 

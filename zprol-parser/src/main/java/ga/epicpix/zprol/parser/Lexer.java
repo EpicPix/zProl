@@ -2,8 +2,9 @@ package ga.epicpix.zprol.parser;
 
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
-
 import java.util.ArrayList;
+
+import static ga.epicpix.zprol.parser.tokens.TokenType.*;
 
 public class Lexer {
 
@@ -33,23 +34,23 @@ public class Lexer {
             var end = parser.getIndex();
             var str = parser.data.substring(start, end);
             return switch(str) {
-                case "namespace" -> new LexerToken("NamespaceKeyword", str, start, end, parser);
-                case "using" -> new LexerToken("UsingKeyword", str, start, end, parser);
-                case "class" -> new LexerToken("ClassKeyword", str, start, end, parser);
-                case "return" -> new LexerToken("ReturnKeyword", str, start, end, parser);
-                case "if" -> new LexerToken("IfKeyword", str, start, end, parser);
-                case "else" -> new LexerToken("ElseKeyword", str, start, end, parser);
-                case "while" -> new LexerToken("WhileKeyword", str, start, end, parser);
-                case "break" -> new LexerToken("BreakKeyword", str, start, end, parser);
-                case "continue" -> new LexerToken("ContinueKeyword", str, start, end, parser);
-                case "true" -> new LexerToken("TrueKeyword", str, start, end, parser);
-                case "false" -> new LexerToken("FalseKeyword", str, start, end, parser);
-                case "null" -> new LexerToken("NullKeyword", str, start, end, parser);
-                case "void" -> new LexerToken("VoidKeyword", str, start, end, parser);
-                case "bool" -> new LexerToken("BoolKeyword", str, start, end, parser);
-                case "native" -> new LexerToken("NativeKeyword", str, start, end, parser);
-                case "const" -> new LexerToken("ConstKeyword", str, start, end, parser);
-                default -> new LexerToken("Identifier", str, start, end, parser);
+                case "namespace" -> new LexerToken(NamespaceKeyword, str, start, end, parser);
+                case "using" -> new LexerToken(UsingKeyword, str, start, end, parser);
+                case "class" -> new LexerToken(ClassKeyword, str, start, end, parser);
+                case "return" -> new LexerToken(ReturnKeyword, str, start, end, parser);
+                case "if" -> new LexerToken(IfKeyword, str, start, end, parser);
+                case "else" -> new LexerToken(ElseKeyword, str, start, end, parser);
+                case "while" -> new LexerToken(WhileKeyword, str, start, end, parser);
+                case "break" -> new LexerToken(BreakKeyword, str, start, end, parser);
+                case "continue" -> new LexerToken(ContinueKeyword, str, start, end, parser);
+                case "true" -> new LexerToken(TrueKeyword, str, start, end, parser);
+                case "false" -> new LexerToken(FalseKeyword, str, start, end, parser);
+                case "null" -> new LexerToken(NullKeyword, str, start, end, parser);
+                case "void" -> new LexerToken(VoidKeyword, str, start, end, parser);
+                case "bool" -> new LexerToken(BoolKeyword, str, start, end, parser);
+                case "native" -> new LexerToken(NativeKeyword, str, start, end, parser);
+                case "const" -> new LexerToken(ConstKeyword, str, start, end, parser);
+                default -> new LexerToken(Identifier, str, start, end, parser);
             };
         }else if(first == ' ' || first == '\t' || first == '\n') {
             int value;
@@ -59,7 +60,7 @@ public class Lexer {
                     break;
                 }
             }
-            return new LexerToken("Whitespace", "", start, parser.getIndex(), parser);
+            return new LexerToken(Whitespace, "", start, parser.getIndex(), parser);
         }else if(first >= '0' && first <= '9') {
             int value = parser.nextChar();
             if(value == 'x' || value == 'X') {
@@ -79,7 +80,7 @@ public class Lexer {
                     }
                 }
             }
-            return new LexerToken("Integer", parser.data.substring(start, parser.getIndex()), start, parser.getIndex(), parser);
+            return new LexerToken(Integer, parser.data.substring(start, parser.getIndex()), start, parser.getIndex(), parser);
         }else if(first == '"') {
             int value;
             StringBuilder str = new StringBuilder();
@@ -108,21 +109,21 @@ public class Lexer {
                 }
                 str.appendCodePoint(value);
             }
-            return new LexerToken("String", str.toString(), start, parser.getIndex(), parser);
+            return new LexerToken(String, str.toString(), start, parser.getIndex(), parser);
         }else {
             switch(first) {
-                case ';' -> {return new LexerToken("Semicolon", ";", start, parser.getIndex(), parser);}
-                case '[' -> {return new LexerToken("OpenBracket", "[", start, parser.getIndex(), parser);}
-                case ']' -> {return new LexerToken("CloseBracket", "]", start, parser.getIndex(), parser);}
-                case '{' -> {return new LexerToken("OpenBrace", "{", start, parser.getIndex(), parser);}
-                case '}' -> {return new LexerToken("CloseBrace", "}", start, parser.getIndex(), parser);}
-                case '(' -> {return new LexerToken("OpenParen", "(", start, parser.getIndex(), parser);}
-                case ')' -> {return new LexerToken("CloseParen", ")", start, parser.getIndex(), parser);}
-                case ',' -> {return new LexerToken("CommaOperator", ",", start, parser.getIndex(), parser);}
-                case '.' -> {return new LexerToken("AccessorOperator", ".", start, parser.getIndex(), parser);}
-                case '+' -> {return new LexerToken("AddOperator", "+", start, parser.getIndex(), parser);}
-                case '-' -> {return new LexerToken("SubtractOperator", "-", start, parser.getIndex(), parser);}
-                case '*' -> {return new LexerToken("MultiplyOperator", "*", start, parser.getIndex(), parser);}
+                case ';' -> {return new LexerToken(Semicolon, ";", start, parser.getIndex(), parser);}
+                case '[' -> {return new LexerToken(OpenBracket, "[", start, parser.getIndex(), parser);}
+                case ']' -> {return new LexerToken(CloseBracket, "]", start, parser.getIndex(), parser);}
+                case '{' -> {return new LexerToken(OpenBrace, "{", start, parser.getIndex(), parser);}
+                case '}' -> {return new LexerToken(CloseBrace, "}", start, parser.getIndex(), parser);}
+                case '(' -> {return new LexerToken(OpenParen, "(", start, parser.getIndex(), parser);}
+                case ')' -> {return new LexerToken(CloseParen, ")", start, parser.getIndex(), parser);}
+                case ',' -> {return new LexerToken(CommaOperator, ",", start, parser.getIndex(), parser);}
+                case '.' -> {return new LexerToken(AccessorOperator, ".", start, parser.getIndex(), parser);}
+                case '+' -> {return new LexerToken(AddOperator, "+", start, parser.getIndex(), parser);}
+                case '-' -> {return new LexerToken(SubtractOperator, "-", start, parser.getIndex(), parser);}
+                case '*' -> {return new LexerToken(MultiplyOperator, "*", start, parser.getIndex(), parser);}
                 case '/' -> {
                     int next = parser.nextChar();
                     if(next == '/') {
@@ -133,51 +134,51 @@ public class Lexer {
                                 break;
                             }
                         }
-                        return new LexerToken("Comment", "", start, parser.getIndex(), parser);
+                        return new LexerToken(Comment, "", start, parser.getIndex(), parser);
                     }
                     parser.goBack();
-                    return new LexerToken("DivideOperator", "/", start, parser.getIndex(), parser);
+                    return new LexerToken(DivideOperator, "/", start, parser.getIndex(), parser);
                 }
-                case '%' -> {return new LexerToken("ModuloOperator", "%", start, parser.getIndex(), parser);}
-                case '|' -> {return new LexerToken("InclusiveOrOperator", "|", start, parser.getIndex(), parser);}
-                case '&' -> {return new LexerToken("AndOperator", "&", start, parser.getIndex(), parser);}
+                case '%' -> {return new LexerToken(ModuloOperator, "%", start, parser.getIndex(), parser);}
+                case '|' -> {return new LexerToken(InclusiveOrOperator, "|", start, parser.getIndex(), parser);}
+                case '&' -> {return new LexerToken(AndOperator, "&", start, parser.getIndex(), parser);}
                 case '!' -> {
                     int next = parser.nextChar();
                     if(next == '=') {
-                        return new LexerToken("NotEqualOperator", "!=", start, parser.getIndex(), parser);
+                        return new LexerToken(NotEqualOperator, "!=", start, parser.getIndex(), parser);
                     }
                     parser.goBack();
-                    return new LexerToken("HardCastIndicatorOperator", "!", start, parser.getIndex(), parser);
+                    return new LexerToken(HardCastIndicatorOperator, "!", start, parser.getIndex(), parser);
                 }
                 case '=' -> {
                     int next = parser.nextChar();
                     if(next == '=') {
-                        return new LexerToken("EqualOperator", "==", start, parser.getIndex(), parser);
+                        return new LexerToken(EqualOperator, "==", start, parser.getIndex(), parser);
                     }else if(next == '>') {
-                        return new LexerToken("LineCodeChars", "=>", start, parser.getIndex(), parser);
+                        return new LexerToken(LineCodeChars, "=>", start, parser.getIndex(), parser);
                     }
                     parser.goBack();
-                    return new LexerToken("AssignOperator", "=", start, parser.getIndex(), parser);
+                    return new LexerToken(AssignOperator, "=", start, parser.getIndex(), parser);
                 }
                 case '>' -> {
                     int next = parser.nextChar();
                     if(next == '=') {
-                        return new LexerToken("GreaterEqualThanOperator", ">=", start, parser.getIndex(), parser);
+                        return new LexerToken(GreaterEqualThanOperator, ">=", start, parser.getIndex(), parser);
                     }else if(next == '>') {
-                        return new LexerToken("ShiftRightOperator", ">>", start, parser.getIndex(), parser);
+                        return new LexerToken(ShiftRightOperator, ">>", start, parser.getIndex(), parser);
                     }
                     parser.goBack();
-                    return new LexerToken("GreaterThanOperator", ">", start, parser.getIndex(), parser);
+                    return new LexerToken(GreaterThanOperator, ">", start, parser.getIndex(), parser);
                 }
                 case '<' -> {
                     int next = parser.nextChar();
                     if(next == '=') {
-                        return new LexerToken("LessEqualThanOperator", "<=", start, parser.getIndex(), parser);
+                        return new LexerToken(LessEqualThanOperator, "<=", start, parser.getIndex(), parser);
                     }else if(next == '<') {
-                        return new LexerToken("ShiftLeftOperator", "<<", start, parser.getIndex(), parser);
+                        return new LexerToken(ShiftLeftOperator, "<<", start, parser.getIndex(), parser);
                     }
                     parser.goBack();
-                    return new LexerToken("LessThanOperator", "<", start, parser.getIndex(), parser);
+                    return new LexerToken(LessThanOperator, "<", start, parser.getIndex(), parser);
                 }
             }
         }

@@ -10,8 +10,8 @@ public final class LexerToken extends Token {
 
     public final String data;
 
-    public LexerToken(String name, String data, int start, int end, DataParser parser) {
-        super(name, parser);
+    public LexerToken(TokenType type, String data, int start, int end, DataParser parser) {
+        super(type, parser);
         this.start = start;
         this.end = end;
         this.data = data;
