@@ -7,10 +7,8 @@ public class DataParser {
     private final String[] lines;
     private int index;
 
-    private int lineNumber;
-    private int lineRow;
-
-    private ParserLocation lastLocation = new ParserLocation(0, 0);
+    private int lineNumber, lineRow;
+    private int lastLineNumber, lastLineRow;
 
     public DataParser(String fileName, String... lines) {
         this.fileName = fileName;
@@ -41,29 +39,6 @@ public class DataParser {
         return new ParserLocation(line, index - len - line);
     }
 
-    public static class SavedLocation {
-        private int savedStart;
-        private int savedCurrentLine;
-        private int savedCurrentLineRow;
-        private ParserLocation savedLast;
-    }
-
-    public SavedLocation saveLocation() {
-        SavedLocation savedLocation = new SavedLocation();
-        savedLocation.savedStart = index;
-        savedLocation.savedCurrentLine = lineNumber;
-        savedLocation.savedCurrentLineRow = lineRow;
-        savedLocation.savedLast = lastLocation;
-        return savedLocation;
-    }
-
-    public void loadLocation(SavedLocation savedLocation) {
-        index = savedLocation.savedStart;
-        lineNumber = savedLocation.savedCurrentLine;
-        lineRow = savedLocation.savedCurrentLineRow;
-        lastLocation = savedLocation.savedLast;
-    }
-
     public String[] getLines() {
         return lines;
     }
@@ -73,7 +48,7 @@ public class DataParser {
     }
 
     public ParserLocation getLastLocation() {
-        return lastLocation;
+        return new ParserLocation(lastLineNumber, lastLineRow);
     }
 
     public String getFileName() {
@@ -88,14 +63,20 @@ public class DataParser {
         if(index <= 0) throw new IllegalStateException("Index is 0, cannot go further back");
         index--;
         lineRow--;
-        if(lineRow != -1) return;
+        if(lineRow != -1) {
+            lastLineNumber = lineNumber;
+            lastLineRow = lineRow;
+            return;
+        }
         lineNumber--;
         lineRow = lines[lineNumber].length() - 1;
-        lastLocation = getLocation();
+        lastLineNumber = lineNumber;
+        lastLineRow = lineRow;
     }
 
     public int nextChar() {
-        lastLocation = getLocation();
+        lastLineNumber = lineNumber;
+        lastLineRow = lineRow;
         if(!hasNext()) return -1;
         lineRow++;
         int cp = data.codePointAt(index++);

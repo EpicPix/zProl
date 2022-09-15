@@ -168,7 +168,6 @@ public class Start {
                 var gen = GeneratedData.load(Files.readAllBytes(new File(file).toPath()));
                 loadGenerated(gen, includedCompiled, included);
             }else {
-                String normalName = file.substring(0, file.lastIndexOf('.') == -1 ? file.length() : file.lastIndexOf('.'));
                 try {
                     long startLex = System.currentTimeMillis();
                     ArrayList<LexerToken> lexedTokens = Lexer.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
