@@ -24,56 +24,40 @@ public final class Parser {
 
     public FileTree parse() {
         var declarations = new ArrayList<IDeclaration>();
-        ParserState.create(lexerTokens);
-        ParserState.pushLocation();
-        FileTree file;
-        try {
-            while(skipWhitespace()) {
-                if(isNext(NamespaceKeyword) || isNext(UsingKeyword)) {
-                    ParserState.pushLocation();
+        int _start = curr();
+        while(skipWhitespace()) {
+            int start = curr();
+            switch(lexerTokens.seek().type) {
+                case NamespaceKeyword -> {
+                    lexerTokens.next();
+                    var identifier = readNamespaceIdentifier(start);
+                    wexpect(Semicolon);
+                    declarations.add(new NamespaceTree(start, curr(), identifier));
                 }
-                var next = lexerTokens.next();
-                switch(next.type) {
-                    case NamespaceKeyword -> {
-                        var identifier = readNamespaceIdentifier();
-                        wexpect(Semicolon);
-                        declarations.add(new NamespaceTree(identifier));
-                    }
-                    case UsingKeyword -> {
-                        var identifier = readNamespaceIdentifier();
-                        wexpect(Semicolon);
-                        declarations.add(new UsingTree(identifier));
-                    }
-                    case ClassKeyword -> {
-                        lexerTokens.previous();
-                        declarations.add(readClass());
-                    }
-                    default -> {
-                        lexerTokens.previous();
-                        declarations.add(readFieldOrMethod());
-                    }
+                case UsingKeyword -> {
+                    lexerTokens.next();
+                    var identifier = readNamespaceIdentifier(start);
+                    wexpect(Semicolon);
+                    declarations.add(new UsingTree(start, curr(), identifier));
                 }
+                case ClassKeyword -> declarations.add(readClass(start));
+                default -> declarations.add(readFieldOrMethod());
             }
-        }finally {
-            file = new FileTree(declarations);
-            ParserState.delete();
         }
-        return file;
+        return new FileTree(_start, curr(), declarations);
     }
 
-    public NamespaceIdentifierTree readNamespaceIdentifier() {
+    public NamespaceIdentifierTree readNamespaceIdentifier(int start) {
         ArrayList<LexerToken> tokens = new ArrayList<>();
-        ParserState.pushLocation();
         tokens.add(wexpect(Identifier));
         while(optional(AccessorOperator) != null) {
             tokens.add(expect(Identifier));
         }
-        return new NamespaceIdentifierTree(tokens.toArray(new LexerToken[0]));
+        return new NamespaceIdentifierTree(start, curr(), tokens.toArray(new LexerToken[0]));
     }
 
-    public ClassTree readClass() {
+    public ClassTree readClass(int start) {
         skipWhitespace();
-        ParserState.pushLocation();
         expect(ClassKeyword);
         LexerToken name = wexpect(Identifier);
         wexpect(OpenBrace);
@@ -81,65 +65,65 @@ public final class Parser {
         while(skipWhitespace() && optional(CloseBrace) == null) {
             declarations.add(readFieldOrMethod());
         }
-        return new ClassTree(name, declarations);
+        return new ClassTree(start, curr(), name, declarations);
     }
 
-    public FunctionTree readFunction(ModifiersTree mods, TypeTree type, LexerToken name) {
+    public FunctionTree readFunction(int start, ModifiersTree mods, TypeTree type, LexerToken name) {
         wexpect(OpenParen);
         ParametersTree params = readParameterList(CloseParen);
         wexpect(CloseParen);
         skipWhitespace();
         if(optional(Semicolon) != null) {
-            return new FunctionTree(mods, type, name, params, null);
+            return new FunctionTree(start, curr(), mods, type, name, params, null);
         }
         CodeTree code = readCode();
-        return new FunctionTree(mods, type, name, params, code);
+        return new FunctionTree(start, curr(), mods, type, name, params, code);
     }
 
     public IDeclaration readFieldOrMethod() {
-        ParserState.pushLocation();
+        int start = curr();
         if(skipWhitespace() && optional(ConstKeyword) != null) {
             TypeTree type = readType();
             LexerToken name = wexpect(Identifier);
             wexpect(AssignOperator);
             IExpression expression = readExpression();
             wexpect(Semicolon);
-            return new FieldTree(true, type, name, expression);
+            return new FieldTree(start, curr(), true, type, name, expression);
         }
         ModifiersTree mods = readFunctionModifiers();
         TypeTree type = readType();
         LexerToken name = wexpect(Identifier);
         skipWhitespace();
         if(mods.modifiers().length != 0 || isNext(OpenParen)) {
-            return readFunction(mods, type, name);
+            return readFunction(start, mods, type, name);
         }
         wexpect(Semicolon);
-        return new FieldTree(false, type, name, null);
+        return new FieldTree(start, curr(), false, type, name, null);
     }
 
     public ModifiersTree readFunctionModifiers() {
         ArrayList<ModifierTree> mods = new ArrayList<>();
-        ParserState.pushLocation();
+        int start = curr();
         while(skipWhitespace()) {
             if(isNext(NativeKeyword)) {
-                ParserState.pushLocation();
+                int localStart = curr();
                 expect(NativeKeyword);
-                mods.add(new ModifierTree(ModifierTree.NATIVE));
+                mods.add(new ModifierTree(localStart, curr(), ModifierTree.NATIVE));
                 continue;
             }
             if(!isNext(NativeKeyword)) {
                 break;
             }
         }
-        return new ModifiersTree(mods.toArray(new ModifierTree[0]));
+        return new ModifiersTree(start, curr(), mods.toArray(new ModifierTree[0]));
     }
 
     public TypeTree readType() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         int arrays = 0;
         if(isNext(VoidKeyword)) {
-            return new TypeTree(expect(VoidKeyword), 0);
+            return new TypeTree(start, curr(), expect(VoidKeyword), 0);
         }else {
             LexerToken token;
             if((token = optional(BoolKeyword)) == null) {
@@ -150,15 +134,15 @@ public final class Parser {
                 expect(CloseBracket);
                 arrays++;
             }
-            return new TypeTree(token, arrays);
+            return new TypeTree(start, curr(), token, arrays);
         }
     }
 
     public ParametersTree readParameterList(TokenType endToken) {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         if(isNext(endToken)) {
-            return new ParametersTree(new ParameterTree[0]);
+            return new ParametersTree(start, curr(), new ParameterTree[0]);
         }
         ArrayList<ParameterTree> params = new ArrayList<>();
         params.add(readParameter());
@@ -166,76 +150,76 @@ public final class Parser {
             expect(CommaOperator);
             params.add(readParameter());
         }
-        return new ParametersTree(params.toArray(new ParameterTree[0]));
+        return new ParametersTree(start, curr(), params.toArray(new ParameterTree[0]));
     }
 
     public ParameterTree readParameter() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         TypeTree type = readType();
         LexerToken name = wexpect(Identifier);
-        return new ParameterTree(type, name);
+        return new ParameterTree(start, curr(), type, name);
     }
 
     public CodeTree readCode() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         if(!isNext(OpenBrace)) {
             expect(LineCodeChars);
             IStatement statement = readStatement();
-            return new CodeTree(new ArrayList<>(List.of(statement)));
+            return new CodeTree(start, curr(), new ArrayList<>(List.of(statement)));
         }
         expect(OpenBrace);
         ArrayList<IStatement> statements = new ArrayList<>();
         while(skipWhitespace() && optional(CloseBrace) == null) {
             statements.add(readStatement());
         }
-        return new CodeTree(statements);
+        return new CodeTree(start, curr(), statements);
     }
 
     public BreakStatementTree readBreakStatement() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         expect(BreakKeyword);
         wexpect(Semicolon);
-        return new BreakStatementTree();
+        return new BreakStatementTree(start, curr());
     }
 
     public ContinueStatementTree readContinueStatement() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         expect(ContinueKeyword);
         wexpect(Semicolon);
-        return new ContinueStatementTree();
+        return new ContinueStatementTree(start, curr());
     }
 
     public ReturnStatementTree readReturnStatement() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         expect(ReturnKeyword);
         skipWhitespace();
         if(optional(Semicolon) != null) {
-            return new ReturnStatementTree(null);
+            return new ReturnStatementTree(start, curr(), null);
         }
         IExpression expression = readExpression();
         wexpect(Semicolon);
-        return new ReturnStatementTree(expression);
+        return new ReturnStatementTree(start, curr(), expression);
     }
 
     public WhileStatementTree readWhileStatement() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         wexpect(WhileKeyword);
         wexpect(OpenParen);
         IExpression expression = readExpression();
         wexpect(CloseParen);
         CodeTree code = readCode();
-        return new WhileStatementTree(expression, code);
+        return new WhileStatementTree(start, curr(), expression, code);
     }
 
     public IfStatementTree readIfStatement() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         expect(IfKeyword);
         wexpect(OpenParen);
         IExpression expression = readExpression();
@@ -246,28 +230,28 @@ public final class Parser {
         if(isNext(ElseKeyword)) {
             elseStatement = readElseStatement();
         }
-        return new IfStatementTree(expression, code, elseStatement);
+        return new IfStatementTree(start, curr(), expression, code, elseStatement);
     }
 
     public ElseStatementTree readElseStatement() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         expect(ElseKeyword);
         CodeTree code = readCode();
-        return new ElseStatementTree(code);
+        return new ElseStatementTree(start, curr(), code);
     }
 
-    public CreateAssignmentStatementTree readCreateAssignmentStatement(TypeTree type) {
+    public CreateAssignmentStatementTree readCreateAssignmentStatement(int start, TypeTree type) {
         LexerToken name = wexpect(Identifier);
         wexpect(AssignOperator);
         IExpression expression = readExpression();
         wexpect(Semicolon);
-        return new CreateAssignmentStatementTree(type, name, expression);
+        return new CreateAssignmentStatementTree(start, curr(), type, name, expression);
     }
 
     public IStatement readStatement() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         if(isNext(IfKeyword)) {
             return readIfStatement();
         }else if(isNext(WhileKeyword)) {
@@ -279,12 +263,10 @@ public final class Parser {
         }else if(isNext(ReturnKeyword)) {
             return readReturnStatement();
         }else if(isNext(Identifier)) {
-            int start = lexerTokens.currentIndex();
             TypeTree type = null;
             try {
                 type = readType();
             }catch(TokenLocatedException e) {
-                ParserState.popLocation(); // pop readType location
                 lexerTokens.setIndex(start);
                 readAccessor();
             }
@@ -296,17 +278,17 @@ public final class Parser {
                 if(optional(AssignOperator) != null) {
                     IExpression expression = readExpression();
                     wexpect(Semicolon);
-                    return new AssignmentStatementTree(accessor, expression);
+                    return new AssignmentStatementTree(start, curr(), accessor, expression);
                 }else {
                     wexpect(Semicolon);
-                    return new AccessorStatementTree(accessor);
+                    return new AccessorStatementTree(start, curr(), accessor);
                 }
             }else {
                 if(type == null) throw new TokenLocatedException("Expected a type", lexerTokens.get(start));
-                return readCreateAssignmentStatement(type);
+                return readCreateAssignmentStatement(start, type);
             }
         }else {
-            return readCreateAssignmentStatement(readType());
+            return readCreateAssignmentStatement(start, readType());
         }
     }
 
@@ -316,39 +298,36 @@ public final class Parser {
 
     public IExpression readInclusiveAndExpression() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         IExpression expression = readInclusiveOrExpression();
         LexerToken operator;
         if(skipWhitespace() && (operator = optional(AndOperator)) != null) {
-            return new OperatorExpressionTree(expression, operator, readInclusiveAndExpression());
+            return new OperatorExpressionTree(start, curr(), expression, operator, readInclusiveAndExpression());
         }else {
-            ParserState.popLocation();
             return expression;
         }
     }
 
     public IExpression readInclusiveOrExpression() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         IExpression expression = readShiftExpression();
         LexerToken operator;
         if(skipWhitespace() && (operator = optional(InclusiveOrOperator)) != null) {
-            return new OperatorExpressionTree(expression, operator, readInclusiveOrExpression());
+            return new OperatorExpressionTree(start, curr(), expression, operator, readInclusiveOrExpression());
         }else {
-            ParserState.popLocation();
             return expression;
         }
     }
 
     public IExpression readShiftExpression() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         IExpression expression = readEqualsExpression();
         LexerToken operator;
         if(skipWhitespace() && (operator = optional(ShiftLeftOperator, ShiftRightOperator)) != null) {
-            return new OperatorExpressionTree(expression, operator, readShiftExpression());
+            return new OperatorExpressionTree(start, curr(), expression, operator, readShiftExpression());
         }else {
-            ParserState.popLocation();
             return expression;
         }
     }
@@ -356,13 +335,12 @@ public final class Parser {
 
     public IExpression readEqualsExpression() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         IExpression expression = readCompareExpression();
         LexerToken operator;
         if(skipWhitespace() && (operator = optional(EqualOperator, NotEqualOperator)) != null) {
-            return new OperatorExpressionTree(expression, operator, readEqualsExpression());
+            return new OperatorExpressionTree(start, curr(), expression, operator, readEqualsExpression());
         }else {
-            ParserState.popLocation();
             return expression;
         }
     }
@@ -370,13 +348,12 @@ public final class Parser {
 
     public IExpression readCompareExpression() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         IExpression expression = readAdditiveExpression();
         LexerToken operator;
         if(skipWhitespace() && (operator = optional(LessEqualThanOperator, LessThanOperator, GreaterEqualThanOperator, GreaterThanOperator)) != null) {
-            return new OperatorExpressionTree(expression, operator, readCompareExpression());
+            return new OperatorExpressionTree(start, curr(), expression, operator, readCompareExpression());
         }else {
-            ParserState.popLocation();
             return expression;
         }
     }
@@ -384,13 +361,12 @@ public final class Parser {
 
     public IExpression readAdditiveExpression() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         IExpression expression = readMultiplicativeExpression();
         LexerToken operator;
         if(skipWhitespace() && (operator = optional(AddOperator, SubtractOperator)) != null) {
-            return new OperatorExpressionTree(expression, operator, readAdditiveExpression());
+            return new OperatorExpressionTree(start, curr(), expression, operator, readAdditiveExpression());
         }else {
-            ParserState.popLocation();
             return expression;
         }
     }
@@ -398,13 +374,12 @@ public final class Parser {
 
     public IExpression readMultiplicativeExpression() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         IExpression expression = readPostExpression();
         LexerToken operator;
         if(skipWhitespace() && (operator = optional(MultiplyOperator, DivideOperator, ModuloOperator)) != null) {
-            return new OperatorExpressionTree(expression, operator, readMultiplicativeExpression());
+            return new OperatorExpressionTree(start, curr(), expression, operator, readMultiplicativeExpression());
         }else {
-            ParserState.popLocation();
             return expression;
         }
     }
@@ -412,77 +387,77 @@ public final class Parser {
 
     public IExpression readPostExpression() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         if(optional(OpenParen) != null) {
-            var start = lexerTokens.currentIndex();
+            int _start = curr();
             TypeTree type;
             boolean hardCast;
             try {
                 type = readType();
                 hardCast = optional(HardCastIndicatorOperator) != null;
                 wexpect(CloseParen);
-            }catch(TokenLocatedException e) { // possibly broke at readType(), might break the stack
-                lexerTokens.setIndex(start);
+            }catch(TokenLocatedException e) {
+                lexerTokens.setIndex(_start);
                 var expr = readExpression();
                 wexpect(CloseParen);
                 return expr;
             }
-            return new CastTree(type, hardCast, readPostExpression());
+            return new CastTree(start, curr(), type, hardCast, readPostExpression());
         }
         skipWhitespace();
         if(isNext(Identifier)) {
             return readAccessor();
         }
         if(isNext(String)) {
-            return new LiteralTree(LiteralType.STRING, expect(String).data);
+            return new LiteralTree(start, curr(), LiteralType.STRING, expect(String).data);
         }else if(optional(NullKeyword) != null) {
-            return new LiteralTree(LiteralType.NULL, null);
+            return new LiteralTree(start, curr(), LiteralType.NULL, null);
         }else if(isNext(Integer)) {
-            return new LiteralTree(LiteralType.INTEGER, ParserUtils.getInteger(expect(Integer)));
+            return new LiteralTree(start, curr(), LiteralType.INTEGER, ParserUtils.getInteger(expect(Integer)));
         }else if(optional(TrueKeyword) != null) {
-            return new LiteralTree(LiteralType.BOOLEAN, true);
+            return new LiteralTree(start, curr(), LiteralType.BOOLEAN, true);
         }else if(optional(FalseKeyword) != null) {
-            return new LiteralTree(LiteralType.BOOLEAN, false);
+            return new LiteralTree(start, curr(), LiteralType.BOOLEAN, false);
         }
         throw new TokenLocatedException("Expected an expression got " + lexerTokens.current().type, lexerTokens.current());
     }
 
     public AccessorTree readAccessor() {
-        ParserState.pushLocation();
+        int start = curr();
         ArrayList<IAccessorElement> elements = new ArrayList<>();
         elements.add(readFunctionInvocationAccessor());
         while(skipWhitespace() && (isNext(OpenBracket) || isNext(AccessorOperator))) {
             if(isNext(OpenBracket)) {
-                ParserState.pushLocation();
+                int startLoc = curr();
                 expect(OpenBracket);
                 IExpression expression = readExpression();
                 expect(CloseBracket);
-                elements.add(new ArrayAccessTree(expression));
+                elements.add(new ArrayAccessTree(startLoc, curr(), expression));
             }else {
                 expect(AccessorOperator);
                 elements.add(readFunctionInvocationAccessor());
             }
         }
-        return new AccessorTree(elements.toArray(new IAccessorElement[0]));
+        return new AccessorTree(start, curr(), elements.toArray(new IAccessorElement[0]));
     }
 
     public IAccessorElement readFunctionInvocationAccessor() {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         var ident = expect(Identifier);
         if(optional(OpenParen) != null) {
             ArgumentsTree args = readArgumentList(CloseParen);
             wexpect(CloseParen);
-            return new FunctionCallTree(ident, args);
+            return new FunctionCallTree(start, curr(), ident, args);
         }
-        return new FieldAccessTree(ident);
+        return new FieldAccessTree(start, curr(), ident);
     }
 
     public ArgumentsTree readArgumentList(TokenType endToken) {
         skipWhitespace();
-        ParserState.pushLocation();
+        int start = curr();
         if(isNext(endToken)) {
-            return new ArgumentsTree(new IExpression[0]);
+            return new ArgumentsTree(start, curr(), new IExpression[0]);
         }
         ArrayList<IExpression> arguments = new ArrayList<>();
         arguments.add(readExpression());
@@ -490,10 +465,14 @@ public final class Parser {
             expect(CommaOperator);
             arguments.add(readExpression());
         }
-        return new ArgumentsTree(arguments.toArray(new IExpression[0]));
+        return new ArgumentsTree(start, curr(), arguments.toArray(new IExpression[0]));
     }
 
     // ---- Helper Methods ----
+
+    public int curr() {
+        return lexerTokens.currentIndex();
+    }
 
     public boolean skipWhitespace() {
         while(lexerTokens.hasNext()) {
