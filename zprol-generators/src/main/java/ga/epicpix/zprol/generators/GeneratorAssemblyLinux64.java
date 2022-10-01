@@ -163,6 +163,14 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         return new ReturnInstruction();
     }
 
+    public static void markField(State state, Field field) {
+        if(!ALL_FUNCTIONS) {
+            if(!state.definedFields.contains(getMangledName(field))) {
+                state.nextFields.add(field);
+            }
+        }
+    }
+
     private static final String[] CALL_REGISTERS_64 = new String[] {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
     private static final String[] CALL_REGISTERS_16 = new String[] {"di", "sx", "dx", "cx", "r8w", "r9w"};
     private static final String[] SYSCALL_REGISTERS_64 = new String[] {"rax", "rdi", "rsi", "rdx", "r10", "r8", "r9"};
@@ -208,16 +216,38 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             case "istore_array" -> instructions.add(pop("rcx"), pop("rdx"), pop("rax"), "mov [rdx + rcx * 4], eax");
             case "lstore_array" -> instructions.add(pop("rcx"), pop("rdx"), pop("rax"), "mov [rdx + rcx * 8], rax");
             case "astore_array" -> instructions.add(pop("rcx"), pop("rdx"), pop("rax"), "mov [rdx + rcx * 8], rax");
-            case "bload_field" -> instructions.add("xor cx, cx", "mov cl, [" + getMangledName((Field) i.getData()[0]) + "]", push("cx"));
-            case "sload_field" -> instructions.add("mov cx, [" + getMangledName((Field) i.getData()[0]) + "]", push("cx"));
-            case "iload_field" -> instructions.add("mov ecx, [" + getMangledName((Field) i.getData()[0]) + "]", push("rcx"));
-            case "lload_field" -> instructions.add("mov rcx, [" + getMangledName((Field) i.getData()[0]) + "]", push("rcx"));
-            case "aload_field" -> instructions.add("mov rcx, [" + getMangledName((Field) i.getData()[0]) + "]", push("rcx"));
-            case "bstore_field" -> instructions.add(pop("cx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], cl");
-            case "sstore_field" -> instructions.add(pop("cx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], cx");
-            case "istore_field" -> instructions.add(pop("rcx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], ecx");
-            case "lstore_field" -> instructions.add(pop("rcx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], rcx");
-            case "astore_field" -> instructions.add(pop("rcx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], rcx");
+            case "bload_field" -> {
+                markField(st, (Field) i.getData()[0]);
+                instructions.add("xor cx, cx", "mov cl, [" + getMangledName((Field) i.getData()[0]) + "]", push("cx"));
+            }
+            case "sload_field" -> {
+                markField(st, (Field) i.getData()[0]);
+                instructions.add("mov cx, [" + getMangledName((Field) i.getData()[0]) + "]", push("cx"));
+            }
+            case "iload_field" -> {
+                markField(st, (Field) i.getData()[0]);
+                instructions.add("mov ecx, [" + getMangledName((Field) i.getData()[0]) + "]", push("rcx"));
+            }
+            case "lload_field", "aload_field" -> {
+                markField(st, (Field) i.getData()[0]);
+                instructions.add("mov rcx, [" + getMangledName((Field) i.getData()[0]) + "]", push("rcx"));
+            }
+            case "bstore_field" -> {
+                markField(st, (Field) i.getData()[0]);
+                instructions.add(pop("cx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], cl");
+            }
+            case "sstore_field" -> {
+                markField(st, (Field) i.getData()[0]);
+                instructions.add(pop("cx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], cx");
+            }
+            case "istore_field" -> {
+                markField(st, (Field) i.getData()[0]);
+                instructions.add(pop("rcx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], ecx");
+            }
+            case "lstore_field", "astore_field" -> {
+                markField(st, (Field) i.getData()[0]);
+                instructions.add(pop("rcx"), "mov [" + getMangledName((Field) i.getData()[0]) + "], rcx");
+            }
             case "class_field_load"  -> {
                 var clz = (Class) i.getData()[0];
                 var fieldName = (String) i.getData()[1];
@@ -543,7 +573,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
     private static class State {
         private final ArrayList<String> definedFunctions = new ArrayList<>();
+        private final ArrayList<String> definedFields = new ArrayList<>();
         private final ArrayDeque<Object> nextFunctions = new ArrayDeque<>();
+        private final ArrayDeque<Field> nextFields = new ArrayDeque<>();
     }
 
     public static final boolean ALL_FUNCTIONS = Objects.equals(System.getenv("ALL_FUNCTIONS"), "true");
@@ -564,7 +596,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         assembly.add("syscall");
         ConstantPool localConstantPool = new ConstantPool();
         State state = new State();
+        List<Field> fields;
         if(ALL_FUNCTIONS) {
+            fields = generated.fields;
             for(var function : generated.functions) {
                 if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
 
@@ -600,14 +634,20 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                     writeFunction(state, new Function(m.namespace(), m.modifiers(), m.className() + "." + m.name(), m.signature(), m.code()), true, localConstantPool, assembly);
                 }
             }
+
+            fields = new ArrayList<>();
+            while(!state.nextFields.isEmpty()) {
+                var field = state.nextFields.pop();
+                fields.add(field);
+                if(field.defaultValue() == null) continue;
+                if(field.type() instanceof ClassType clz && clz.normalName().equals("zprol.lang.String")) {
+                    localConstantPool.getOrCreateStringIndex((String) field.defaultValue().value());
+                }
+            }
+
+
         }
 
-        for (var field : generated.fields) {
-            if(field.defaultValue() == null) continue;
-            if(field.type() instanceof ClassType clz && clz.normalName().equals("zprol.lang.String")) {
-                localConstantPool.getOrCreateStringIndex((String) field.defaultValue().value());
-            }
-        }
         int index = 1;
         for(var constantPoolEntry : localConstantPool.entries) {
             if(constantPoolEntry instanceof ConstantPoolEntry.StringEntry str) {
@@ -619,9 +659,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             index++;
         }
 
-        if(generated.fields.size() != 0) {
+        if(fields.size() != 0) {
             boolean shownBSS = false;
-            for (var field : generated.fields) {
+            for (var field : fields) {
                 if(field.defaultValue() != null) continue;
                 int size = 8;
                 if (field.type() instanceof PrimitiveType prim) {
@@ -635,7 +675,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }
 
             boolean shownROData = false;
-            for (var field : generated.fields) {
+            for (var field : fields) {
                 if(field.defaultValue() == null) continue;
                 if(!shownROData) {
                     assembly.add("section .rodata");
