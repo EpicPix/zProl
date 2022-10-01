@@ -581,7 +581,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     }
 
     public static final boolean ALL_FUNCTIONS = Objects.equals(System.getenv("ALL_FUNCTIONS"), "true");
-    public static final boolean NO_OPT = Objects.equals(System.getenv("NO_OPT"), "false");
+    public static final boolean NO_OPT = Objects.equals(System.getenv("NO_OPT"), "true");
 
     public void generate(DataOutputStream outStream, GeneratedData generated) throws IOException {
         InstructionList assembly = new InstructionList();
