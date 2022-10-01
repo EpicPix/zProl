@@ -584,6 +584,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         InstructionList assembly = new InstructionList();
 
         assembly.add("global _start");
+        assembly.add("section .text");
         assembly.add("_start:");
         for(var function : generated.functions) {
             if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
