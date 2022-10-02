@@ -62,4 +62,4 @@ jobs:
           method: 'POST'
           timeout: 15000
           customHeaders: '{"Content-Type": "application/json"}'
-          data: ${{ format('{{"secret":"{0}","commit":"{1}"}}', secrets.API_SECRET, github.GITHUB_SHA) }}
+          data: ${{ format('{{"secret":"{0}","commit":"{1}"}}', secrets.API_SECRET, env.GITHUB_SHA) }}
