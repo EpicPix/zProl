@@ -26,6 +26,7 @@ import static ga.epicpix.zprol.Loader.*;
 public class Start {
 
     public static final boolean SHOW_TIMINGS = !Boolean.parseBoolean(System.getProperty("HIDE_TIMINGS"));
+    public static final String VERSION = "1.1.1";
 
     public static void main(String[] args) throws UnknownTypeException, IOException {
         registerTypes();
@@ -35,6 +36,10 @@ public class Start {
         ArrayList<String> arguments = new ArrayList<>();
         for(String arg : args) {
             if(arg.equals("-test")) p = true;
+            else if(arg.equals("-v") || arg.equals("--version")) {
+                System.out.println("zProl Version: " + VERSION);
+                return;
+            }
             else arguments.add(arg);
         }
         args = arguments.toArray(new String[0]);
