@@ -59,12 +59,12 @@ public class FieldCompiler {
                     if(!(type instanceof ClassType clzType) || !(Objects.equals(clzType.getNamespace(), "zprol.lang") || clzType.getName().equals("String"))) {
                         throw new TokenLocatedException("Expected " + type.normalName() + ", got a string", value, parser);
                     }
-                    defaultValue = new ConstantValue(value);
+                    defaultValue = new ConstantValue(literal.value());
                 }else if(literal.type() == LiteralType.NULL) {
                     if(!(type instanceof ClassType || type instanceof ArrayType)) {
                         throw new TokenLocatedException("Expected a reference type, got " + type.normalName(), value, parser);
                     }
-                    defaultValue = new ConstantValue(value);
+                    defaultValue = new ConstantValue(null);
                 }else {
                     throw new TokenLocatedException("Unhandled case for LiteralType", value, parser);
                 }
