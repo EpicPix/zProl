@@ -97,8 +97,16 @@ public class Lexer {
                         str.append("\\");
                     }else if(check == 'n') {
                         str.append("\n");
+                    }else if(check == 'r') {
+                        str.append("\r");
+                    }else if(check == 'f') {
+                        str.append("\f");
+                    }else if(check == '\'') {
+                        str.append("'");
                     }else if(check == 't') {
                         str.append("\t");
+                    }else if(check == 'b') {
+                        str.append("\b");
                     }else if(check == '0') {
                         str.append("\0");
                     }else if(check == '"') {
