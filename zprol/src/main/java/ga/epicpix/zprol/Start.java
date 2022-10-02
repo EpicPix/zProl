@@ -17,43 +17,23 @@ import ga.epicpix.zprol.structures.FunctionModifiers;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
-import static ga.epicpix.zprol.Loader.*;
+import static ga.epicpix.zprol.Loader.registerTypes;
+import static ga.epicpix.zprol.generators.Generator.initGenerators;
 
 public class Start {
 
-    public static final boolean SHOW_TIMINGS = !Boolean.parseBoolean(System.getProperty("HIDE_TIMINGS"));
+    public static final boolean HIDE_TIMINGS = Boolean.parseBoolean(System.getProperty("HIDE_TIMINGS"));
     public static final String VERSION = "1.1.1";
 
-    public static void main(String[] args) throws UnknownTypeException, IOException {
+    static {
         registerTypes();
-        Generator.initGenerators();
-
-        boolean p = false;
-        ArrayList<String> arguments = new ArrayList<>();
-        for(String arg : args) {
-            if(arg.equals("-test")) p = true;
-            else if(arg.equals("-v") || arg.equals("--version")) {
-                System.out.println("zProl Version: " + VERSION);
-                return;
-            }
-            else arguments.add(arg);
-        }
-        args = arguments.toArray(new String[0]);
-        if(p) {
-            Scanner sc = new Scanner(System.in);
-            while(!sc.nextLine().equals("break")) {
-                preMain(args);
-            }
-        }else {
-            preMain(args);
-        }
+        initGenerators();
     }
 
-    public static void preMain(String[] args) throws IOException, UnknownTypeException {
+    public static void main(String[] args) throws UnknownTypeException, IOException {
         ArrayList<Generator> generators = new ArrayList<>();
         boolean ignoreCompileStdWarning = false;
         boolean unloadStd = false;
@@ -65,7 +45,10 @@ public class Start {
         while(argsIterator.hasNext()) {
             String s = argsIterator.next();
             if(s.startsWith("-")) {
-                if(s.startsWith("-g")) {
+                if(s.equals("-v") || s.equals("--version")) {
+                    System.out.println("zProl Version: " + VERSION);
+                    return;
+                }else if(s.startsWith("-g")) {
                     String gen = s.substring(2);
                     boolean found = false;
                     for(Generator generator : Generator.GENERATORS) {
@@ -119,7 +102,7 @@ public class Start {
                 throw new IllegalArgumentException("Files to compile not specified");
             }
 
-            String output = Objects.requireNonNullElse(outputFile, "output.out");
+            String output = outputFile != null ? outputFile : "output.out";
 
             compileFiles(files, output, ignoreCompileStdWarning, unloadStd);
 
@@ -131,7 +114,7 @@ public class Start {
                 gen.generate(out, generated);
                 out.close();
                 long stopGenerator = System.currentTimeMillis();
-                if(SHOW_TIMINGS) System.out.printf("Took %d ms to generate %s code\n", stopGenerator - startGenerator, gen.getGeneratorName());
+                if(!HIDE_TIMINGS) System.out.printf("Took %d ms to generate %s code\n", stopGenerator - startGenerator, gen.getGeneratorName());
             }
         }
 
@@ -143,7 +126,19 @@ public class Start {
             return;
         }
 
-        throw new NotImplementedException("When help menu?");
+        System.out.println("zProl Help Menu");
+        System.out.println("-g<gen>                          Use a generator for converting zpil bytecode to other formats");
+        System.out.println("-o <file>                        File where the generated zpil should be put");
+        System.out.println("-p [file]                        Shows compiled zpil code, optional file if the output file is provided");
+        System.out.println("-v                               Shows version of the currently running zProl version");
+        System.out.println("--ignore-std-not-found-warning   Will not show a warning message when the std was not found (used for compiling the std itself)");
+        System.out.println("--unload-std                     Will not load the std while compiling (will use other libraries though)");
+        System.out.println("--version                        Shows version of the currently running zProl version");
+        System.out.println();
+        System.out.println("Available generators:");
+        for(var gen : Generator.GENERATORS) {
+            System.out.println(" - " + gen.getGeneratorName() + " (*" + gen.getFileExtension() + "): -g" + gen.getGeneratorCommandLine());
+        }
     }
 
     public static void compileFiles(ArrayList<String> files, String output, boolean ignoreStdWarning, boolean unloadStd) throws IOException, UnknownTypeException {
@@ -177,17 +172,17 @@ public class Start {
                     long startLex = System.currentTimeMillis();
                     ArrayList<LexerToken> lexedTokens = Lexer.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
                     long endLex = System.currentTimeMillis();
-                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to lex\n", file.substring(file.lastIndexOf('/') + 1), endLex - startLex);
+                    if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d ms to lex\n", file.substring(file.lastIndexOf('/') + 1), endLex - startLex);
 
                     long startToken = System.currentTimeMillis();
                     FileTree tree = Parser.parse(new SeekIterator<>(lexedTokens));
                     long endToken = System.currentTimeMillis();
-                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to parse\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
+                    if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d ms to parse\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
 
                     long startPreCompile = System.currentTimeMillis();
                     PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tree, lexedTokens.get(0) != null ? lexedTokens.get(0).parser : null);
                     long stopPreCompile = System.currentTimeMillis();
-                    if(SHOW_TIMINGS) System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
+                    if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
                     preCompiled.add(data);
                 }catch(ParserException e) {
                     e.printError();
@@ -210,7 +205,7 @@ public class Start {
                 long startCompile = System.currentTimeMillis();
                 CompiledData zpil = Compiler.compile(data, pre, data.parser);
                 long stopCompile = System.currentTimeMillis();
-                if (SHOW_TIMINGS)
+                if (!HIDE_TIMINGS)
                     System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
                 compiled.add(zpil);
             }
@@ -225,7 +220,7 @@ public class Start {
         for(CompiledData d : compiled) d.includeToGenerated(linked);
         for(CompiledData d : includedCompiled) d.includeToGenerated(linked);
         long stopLink = System.currentTimeMillis();
-        if(SHOW_TIMINGS) System.out.printf("Took %d ms to link everything\n", stopLink - startLink);
+        if(!HIDE_TIMINGS) System.out.printf("Took %d ms to link everything\n", stopLink - startLink);
 
         String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
         {
