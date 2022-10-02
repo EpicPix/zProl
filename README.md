@@ -6,6 +6,16 @@ For actual usage check the [wiki](https://github.com/EpicPix/zProl/wiki).
 
 Ideas/Proposals for this language create at https://zprol.epicpix.ga/
 
+## HTTP Api
+
+You can run zProl online using an api which is on https://zprol.epicpix.ga/api/v1/run
+
+You have to use the `POST` method with the `Content-Type` set to `application/json`.
+
+There must be either `code` or `code_url` defined in the json, there is an optional `debug` value when set to `true` it disables optimizations.
+
+The program result will be in `run` and in `commit` there will be the currently running commit.
+
 ## Maven Repository
 
 To use parts of this project like `zprol-parser` you can use my repository
