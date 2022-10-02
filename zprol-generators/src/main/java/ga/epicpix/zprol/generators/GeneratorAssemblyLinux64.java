@@ -165,8 +165,10 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
     public static void markField(State state, Field field) {
         if(!ALL_FUNCTIONS) {
-            if(!state.definedFields.contains(getMangledName(field))) {
+            String n = getMangledName(field);
+            if(!state.definedFields.contains(n)) {
                 state.nextFields.add(field);
+                state.definedFields.add(n);
             }
         }
     }
@@ -475,6 +477,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             if(!ALL_FUNCTIONS) {
                 if(!state.definedFunctions.contains(mangledName)) {
                     state.nextFunctions.add(f);
+                    state.definedFunctions.add(mangledName);
                 }
             }
             instructions.add(call(getMangledName(f), f));
@@ -626,13 +629,11 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 var current = state.nextFunctions.pop();
                 if(current instanceof Function f) {
                     if(FunctionModifiers.isEmptyCode(f.modifiers())) continue;
-                    state.definedFunctions.add(getMangledName(f));
 
                     assembly.add(new FunctionStartInstruction(f));
                     writeFunction(state, f, false, localConstantPool, assembly);
                 }else if(current instanceof Method m) {
                     if (FunctionModifiers.isEmptyCode(m.modifiers())) continue;
-                    state.definedFunctions.add(getMangledName(m));
 
                     assembly.add(getMangledName(m) + ":");
                     writeFunction(state, new Function(m.namespace(), m.modifiers(), m.className() + "." + m.name(), m.signature(), m.code()), true, localConstantPool, assembly);
