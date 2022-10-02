@@ -53,3 +53,12 @@ jobs:
           title: "Development Build"
           files: |
             *.jar
+
+      - name: Notify API
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: 'https://zprol.epicpix.ga/api/v1/get_commit'
+          method: 'POST'
+          timeout: 15000
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: ${{ format('{{"secret":"{0}","commit":"{1}"}}', secrets.API_SECRET, github.GITHUB_SHA) }}
