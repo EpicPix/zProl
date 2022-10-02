@@ -653,16 +653,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
         }
 
-        int index = 1;
-        for(var constantPoolEntry : localConstantPool.entries) {
-            if(constantPoolEntry instanceof ConstantPoolEntry.StringEntry str) {
-                assembly.add("_string" + index + ".chars" + ": db " + Arrays.stream(str.getString().chars().toArray()).mapToObj(x -> "0x" + Integer.toHexString(x)).collect(Collectors.joining(", ")));
-                assembly.add("_string" + index + ":");
-                assembly.add("dq " + str.getString().length());
-                assembly.add("dq _string" + index + ".chars");
-            }
-            index++;
-        }
+        boolean shownReadonlyData = false;
 
         if(fields.size() != 0) {
             boolean shownBSS = false;
@@ -678,13 +669,29 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 }
                 assembly.add(getMangledName(field) + ": resb " + size);
             }
+        }
 
-            boolean shownROData = false;
+        int index = 1;
+        for(var constantPoolEntry : localConstantPool.entries) {
+            if(constantPoolEntry instanceof ConstantPoolEntry.StringEntry str) {
+                if(!shownReadonlyData) {
+                    assembly.add("section .rodata");
+                    shownReadonlyData = true;
+                }
+                assembly.add("_string" + index + ".chars" + ": db " + Arrays.stream(str.getString().chars().toArray()).mapToObj(x -> "0x" + Integer.toHexString(x)).collect(Collectors.joining(", ")));
+                assembly.add("_string" + index + ":");
+                assembly.add("dq " + str.getString().length());
+                assembly.add("dq _string" + index + ".chars");
+            }
+            index++;
+        }
+
+        if(fields.size() != 0) {
             for (var field : fields) {
                 if(field.defaultValue() == null) continue;
-                if(!shownROData) {
+                if(!shownReadonlyData) {
                     assembly.add("section .rodata");
-                    shownROData = true;
+                    shownReadonlyData = true;
                 }
                 if (field.type() instanceof PrimitiveType prim) {
                     int size = prim.size;
