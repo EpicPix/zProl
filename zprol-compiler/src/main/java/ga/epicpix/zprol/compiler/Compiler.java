@@ -236,7 +236,7 @@ public class Compiler {
                 }
             } else if(prob instanceof BooleanType) {
                 bytecode.pushInstruction(getConstructedSizeInstruction(8, "pop"));
-            } else {
+            } else if(!(prob instanceof VoidType)) {
                 bytecode.pushInstruction(getConstructedInstruction("apop"));
             }
         }
