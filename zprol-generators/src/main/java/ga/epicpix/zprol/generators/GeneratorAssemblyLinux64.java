@@ -687,7 +687,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                     shownReadonlyData = true;
                 }
                 assembly.add("_string" + index + ".chars" + ": db " + Arrays.stream(str.getString().chars().toArray()).mapToObj(x -> "0x" + Integer.toHexString(x)).collect(Collectors.joining(", ")));
-                assembly.add("_string" + index + ": dq " + str.getString().length() + " string" + index + ".chars");
+                assembly.add("_string" + index + ": dq " + str.getString().length() + ", string" + index + ".chars");
             }
             index++;
         }
