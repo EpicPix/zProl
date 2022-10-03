@@ -655,6 +655,10 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
         boolean shownReadonlyData = false;
 
+        if(NO_OPT) {
+            assembly.add("; Non-Constant Fields");
+        }
+
         if(fields.size() != 0) {
             boolean shownBSS = false;
             for (var field : fields) {
@@ -671,6 +675,10 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }
         }
 
+        if(NO_OPT) {
+            assembly.add("; Strings");
+        }
+
         int index = 1;
         for(var constantPoolEntry : localConstantPool.entries) {
             if(constantPoolEntry instanceof ConstantPoolEntry.StringEntry str) {
@@ -679,11 +687,13 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                     shownReadonlyData = true;
                 }
                 assembly.add("_string" + index + ".chars" + ": db " + Arrays.stream(str.getString().chars().toArray()).mapToObj(x -> "0x" + Integer.toHexString(x)).collect(Collectors.joining(", ")));
-                assembly.add("_string" + index + ":");
-                assembly.add("dq " + str.getString().length());
-                assembly.add("dq _string" + index + ".chars");
+                assembly.add("_string" + index + ": dq " + str.getString().length() + " string" + index + ".chars");
             }
             index++;
+        }
+
+        if(NO_OPT) {
+            assembly.add("; Constant Fields");
         }
 
         if(fields.size() != 0) {
@@ -787,7 +797,11 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }
 
 
-        outStream.writeBytes(assembly.instructions.stream().map(Instruction::data).collect(Collectors.joining("\n")));
+        StringJoiner joiner = new StringJoiner("\n");
+        for(Instruction i : assembly.instructions) {
+            joiner.add(i.data());
+        }
+        outStream.writeBytes(joiner.toString());
     }
 
     public static String getMangledName(Function func) {
