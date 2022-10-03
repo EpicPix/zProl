@@ -5,7 +5,6 @@ import ga.epicpix.zprol.compiler.Compiler;
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.*;
-import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.parser.Lexer;
 import ga.epicpix.zprol.parser.Parser;
@@ -13,7 +12,6 @@ import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tree.FileTree;
-import ga.epicpix.zprol.structures.FunctionModifiers;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.io.*;
@@ -119,7 +117,7 @@ public class Start {
         }
 
         if(printFile != null) {
-            printZpil(GeneratedData.load(Files.readAllBytes(new File(printFile).toPath())));
+            GeneratedData.load(Files.readAllBytes(new File(printFile).toPath())).printZpil();
         }
 
         if(outputFile != null || printFile != null) {
@@ -295,80 +293,6 @@ public class Start {
         for(var e : preCompiledData.entrySet()) {
             e.getValue().namespace = e.getKey();
             included.add(e.getValue());
-        }
-    }
-
-    public static void printZpil(GeneratedData data) {
-        System.out.println("Functions:");
-        for(var func : data.functions) {
-            System.out.println("  Function");
-            System.out.println("    Namespace: \"" + (func.namespace() != null ? func.namespace() : "") + "\"");
-            System.out.println("    Name: \"" + func.name() + "\"");
-            System.out.println("    Signature: \"" + func.signature() + "\"");
-            System.out.println("    Modifiers (" + func.modifiers().size() + "):");
-            for(var modifier : func.modifiers()) {
-                System.out.println("      " + modifier);
-            }
-            if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
-                System.out.println("    Code");
-                System.out.println("      Locals Size: " + func.code().getLocalsSize());
-                System.out.println("      Instructions");
-                for(var instruction : func.code().getInstructions()) {
-                    System.out.println("        " + instruction);
-                }
-            }
-        }
-
-        System.out.println("Fields:");
-        for(var fld : data.fields) {
-            System.out.println("  Field");
-            System.out.println("    Namespace: \"" + (fld.namespace() != null ? fld.namespace() : "") + "\"");
-            System.out.println("    Name: \"" + fld.name() + "\"");
-            System.out.println("    Type: \"" + fld.type().getDescriptor() + "\"");
-            if(fld.defaultValue() != null) {
-                if(fld.defaultValue().value() != null) {
-                    System.out.println("    Constant Value: " + fld.defaultValue().value().getClass().getSimpleName() + " " + fld.defaultValue().value());
-                }else {
-                    System.out.println("    Constant Value: null");
-                }
-            }
-            System.out.println("    Modifiers (" + fld.modifiers().size() + "):");
-            for(var modifier : fld.modifiers()) {
-                System.out.println("      " + modifier);
-            }
-        }
-
-        System.out.println("Classes:");
-        for(var clz : data.classes) {
-            System.out.println("  Class");
-            System.out.println("    Namespace: \"" + (clz.namespace() != null ? clz.namespace() : "") + "\"");
-            System.out.println("    Name: \"" + clz.name() + "\"");
-            System.out.println("    Fields:");
-            for(var fld : clz.fields()) {
-                System.out.println("      Field");
-                System.out.println("        Name: \"" + fld.name() + "\"");
-                System.out.println("        Type: \"" + fld.type().getDescriptor() + "\"");
-            }
-            System.out.println("    Methods:");
-            for(var func : clz.methods()) {
-                System.out.println("      Method");
-                System.out.println("        Namespace: \"" + (func.namespace() != null ? func.namespace() : "") + "\"");
-                System.out.println("        Class: \"" + func.className() + "\"");
-                System.out.println("        Name: \"" + func.name() + "\"");
-                System.out.println("        Signature: \"" + func.signature() + "\"");
-                System.out.println("        Modifiers (" + func.modifiers().size() + "):");
-                for(var modifier : func.modifiers()) {
-                    System.out.println("          " + modifier);
-                }
-                if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
-                    System.out.println("        Code");
-                    System.out.println("          Locals Size: " + func.code().getLocalsSize());
-                    System.out.println("          Instructions");
-                    for(var instruction : func.code().getInstructions()) {
-                        System.out.println("            " + instruction);
-                    }
-                }
-            }
         }
     }
 
