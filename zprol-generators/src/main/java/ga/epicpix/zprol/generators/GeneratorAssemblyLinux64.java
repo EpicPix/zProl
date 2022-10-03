@@ -199,12 +199,12 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             case "push_true" -> instructions.add(push(1));
             case "bload_local" -> instructions.add("xor cx, cx", "mov cl, [rbp-" + i.getData()[0] + "]", push("cx"));
             case "sload_local" -> instructions.add("push word [rbp-" + i.getData()[0] + "]");
-            case "iload_local" -> instructions.add("xor rcx, rcx", "mov ecx, [rbp-" + i.getData()[0] + "]", push("rcx"));
+            case "iload_local" -> instructions.add("mov ecx, [rbp-" + i.getData()[0] + "]", push("rcx"));
             case "lload_local" -> instructions.add("push qword [rbp-" + i.getData()[0] + "]");
             case "aload_local" -> instructions.add("push qword [rbp-" + i.getData()[0] + "]");
             case "bstore_local" -> instructions.add(pop("cx"), "mov [rbp-" + i.getData()[0] + "], cl");
             case "sstore_local" -> instructions.add("pop word [rbp-" + i.getData()[0] + "]");
-            case "istore_local" -> instructions.add(pop("rcx"), "mov qword [rbp-" + i.getData()[0] + "], ecx");
+            case "istore_local" -> instructions.add(pop("rcx"), "mov dword [rbp-" + i.getData()[0] + "], ecx");
             case "lstore_local" -> instructions.add("pop qword [rbp-" + i.getData()[0] + "]");
             case "astore_local" -> instructions.add("pop qword [rbp-" + i.getData()[0] + "]");
             case "push_string" -> instructions.add("push _string" + lp.getOrCreateStringIndex((String) i.getData()[0]));
