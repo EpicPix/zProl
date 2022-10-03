@@ -6,6 +6,8 @@ For actual usage check the [wiki](https://github.com/EpicPix/zProl/wiki).
 
 Ideas/Proposals for this language create at https://zprol.epicpix.ga/
 
+You can also run zProl online on https://zprol.epicpix.ga/runner
+
 ## HTTP Api
 
 You can run zProl online using an api which is on https://zprol.epicpix.ga/api/v1/run
