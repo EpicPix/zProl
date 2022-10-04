@@ -1,0 +1,55 @@
+namespace zprol.lang.io;
+
+using zprol.lang;
+using zprol.lang.linux.amd64;
+using zprol.lang.memory;
+
+const int O_RDONLY = 0;
+const int O_WRONLY = 1;
+const int O_RDWR = 2;
+
+// make sure that the file location has a null terminator
+int file_open(String file_location, int flags, int mode) {
+    return syscall(SYSCALL_OPEN, (long!) file_location.bytes, flags, mode);
+}
+
+long file_length(int fd) {
+    file_stat data = (file_stat!) mmap_alloc(4096);
+    // add checks if the fstat succeded
+    syscall(SYSCALL_FSTAT, fd, (long!) data);
+    long length = data.st_size;
+    munmap((long!) data, 4096);
+    return length;
+}
+
+byte[] file_map(int fd) {
+    return mmap(0, file_length(fd), PROT_READ, MAP_PRIVATE, fd, 0);
+}
+
+int file_read(int fd, byte[] buf, int length) {
+    return syscall(SYSCALL_READ, fd, (long!) buf, length);
+}
+
+int file_close(int fd) {
+    return syscall(SYSCALL_CLOSE, fd);
+}
+
+class file_stat {
+    ulong st_dev;
+    ulong st_ino;
+    ulong st_nlink;
+    uint st_mode;
+    uint st_uid;
+    uint st_gid;
+    int pad;
+    ulong st_rdev;
+    long st_size;
+    ulong st_blksize;
+    ulong st_blocks;
+    ulong st_atime;
+    ulong st_atime_nsec;
+    ulong st_mtime;
+    ulong st_mtime_nsec;
+    ulong st_ctime;
+    ulong st_ctime_nsec;
+}

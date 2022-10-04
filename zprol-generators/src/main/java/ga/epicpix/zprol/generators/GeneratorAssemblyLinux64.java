@@ -174,6 +174,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     }
 
     private static final String[] CALL_REGISTERS_64 = new String[] {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+    private static final String[] CALL_REGISTERS_32 = new String[] {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
     private static final String[] CALL_REGISTERS_16 = new String[] {"di", "sx", "dx", "cx", "r8w", "r9w"};
     private static final String[] SYSCALL_REGISTERS_64 = new String[] {"rax", "rdi", "rsi", "rdx", "r10", "r8", "r9"};
     private static final String[] SYSCALL_REGISTERS_16 = new String[] {"ax", "di", "sx", "dx", "r10w", "r8w", "r9w"};
@@ -520,7 +521,10 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                     if (primitive.getSize() == 1 || primitive.getSize() == 2) {
                         localsIndex += 2;
                         assembly.add("mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_16[i]);
-                    } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
+                    } else if (primitive.getSize() == 4) {
+                        localsIndex += 4;
+                        assembly.add("mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_32[i]);
+                    } else if (primitive.getSize() == 8) {
                         localsIndex += 8;
                         assembly.add("mov [rbp-" + localsIndex + "], " + CALL_REGISTERS_64[i]);
                     } else {
