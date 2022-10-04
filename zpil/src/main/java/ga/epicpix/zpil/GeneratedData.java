@@ -42,7 +42,7 @@ public class GeneratedData {
                 var instructions = func.code().getInstructions();
                 out.writeInt(instructions.size());
                 for (var instruction : instructions) {
-                    out.write(Bytecode.write(instruction, data));
+                    Bytecode.write(instruction, data, out);
                 }
             }
         }
@@ -67,7 +67,7 @@ public class GeneratedData {
                     var instructions = func.code().getInstructions();
                     out.writeInt(instructions.size());
                     for (var instruction : instructions) {
-                        out.write(Bytecode.write(instruction, data));
+                        Bytecode.write(instruction, data, out);
                     }
                 }
             }

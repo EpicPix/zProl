@@ -156,9 +156,7 @@ public final class Bytecode implements IBytecode {
         return new BytecodeData();
     }
 
-    public static byte[] write(IBytecodeInstruction instr, GeneratedData data) throws IOException {
-        var bytes = new ByteArrayOutputStream();
-        var out = new DataOutputStream(bytes);
+    public static void write(IBytecodeInstruction instr, GeneratedData data, DataOutputStream out) throws IOException {
         out.writeByte(instr.getId());
         var values = Bytecode.BYTECODE.getInstructionValueTypesRequirements(instr.getId());
         var args = instr.getData();
@@ -232,7 +230,6 @@ public final class Bytecode implements IBytecode {
                 default -> throw new IllegalStateException("Invalid size of bytecode type: " + type.getSize());
             }
         }
-        return bytes.toByteArray();
     }
 
     public static IBytecodeInstruction read(DataInput input) throws IOException {
