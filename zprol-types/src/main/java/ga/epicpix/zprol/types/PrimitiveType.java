@@ -1,5 +1,7 @@
 package ga.epicpix.zprol.types;
 
+import java.util.Objects;
+
 public class PrimitiveType extends Type {
 
     public final int size;
@@ -38,4 +40,14 @@ public class PrimitiveType extends Type {
         return size;
     }
 
+    public boolean equals(Object o) {
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
+        PrimitiveType that = (PrimitiveType) o;
+        return size == that.size && unsigned == that.unsigned && Objects.equals(descriptor, that.descriptor) && Objects.equals(name, that.name);
+    }
+
+    public int hashCode() {
+        return Objects.hash(size, unsigned, descriptor, name);
+    }
 }

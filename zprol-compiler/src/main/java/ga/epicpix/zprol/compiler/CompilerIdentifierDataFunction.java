@@ -31,7 +31,7 @@ public class CompilerIdentifierDataFunction extends CompilerIdentifierData {
             for (var method : classContext.methods){
                 if (method.name.equals(funcName)) {
                     if (method.parameters.size() == arguments.length) {
-                        possibilities.add(new LookupFunction(true, method));
+                        possibilities.add(new LookupFunction(true, method, classContext.namespace));
                     }
                 }
             }
@@ -41,7 +41,7 @@ public class CompilerIdentifierDataFunction extends CompilerIdentifierData {
                 for (var func : using.functions) {
                     if (func.name.equals(funcName)) {
                         if (func.parameters.size() == arguments.length) {
-                            possibilities.add(new LookupFunction(false, func));
+                            possibilities.add(new LookupFunction(false, func, using.namespace));
                         }
                     }
                 }

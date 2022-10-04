@@ -4,6 +4,8 @@ import ga.epicpix.zprol.types.Type;
 import ga.epicpix.zprol.types.Types;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
 
 public record FunctionSignature(Type returnType, Type... parameters) {
 
@@ -52,4 +54,16 @@ public record FunctionSignature(Type returnType, Type... parameters) {
         return new FunctionSignature(returnType, params.toArray(new Type[0]));
     }
 
+    public boolean equals(Object o) {
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
+        FunctionSignature that = (FunctionSignature) o;
+        return returnType.equals(that.returnType) && Arrays.equals(parameters, that.parameters);
+    }
+
+    public int hashCode() {
+        int result = Objects.hash(returnType);
+        result = 31 * result + Arrays.hashCode(parameters);
+        return result;
+    }
 }

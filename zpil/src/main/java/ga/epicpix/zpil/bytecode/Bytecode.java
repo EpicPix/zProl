@@ -4,12 +4,12 @@ import ga.epicpix.zpil.GeneratedData;
 import ga.epicpix.zpil.exceptions.RedefinedInstructionException;
 import ga.epicpix.zpil.exceptions.UnknownInstructionException;
 import ga.epicpix.zpil.pool.ConstantPool;
-import ga.epicpix.zpil.pool.ConstantPoolEntry;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public final class Bytecode implements IBytecode {
 
@@ -156,7 +156,7 @@ public final class Bytecode implements IBytecode {
         return new BytecodeData();
     }
 
-    public static byte[] write(IBytecodeInstruction instr, ConstantPool pool) throws IOException {
+    public static byte[] write(IBytecodeInstruction instr, GeneratedData data) throws IOException {
         var bytes = new ByteArrayOutputStream();
         var out = new DataOutputStream(bytes);
         out.writeByte(instr.getId());
@@ -166,22 +166,64 @@ public final class Bytecode implements IBytecode {
             var type = values[i];
             var val = args[i];
             if(type == BytecodeValueType.STRING) {
-                if(val instanceof String v) val = pool.getStringIndex(v);
+                if(val instanceof String v) val = data.constantPool.getStringIndex(v);
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }else if(type == BytecodeValueType.FUNCTION) {
-                if(val instanceof Function v) val = pool.getFunctionIndex(v);
+                if(val instanceof Function v) {
+                    var functions = data.functions;
+                    for(int j = 0; j < functions.size(); j++) {
+                        var f = functions.get(j);
+                        if(!Objects.equals(f.namespace(), v.namespace())) continue;
+                        if(!f.name().equals(v.name())) continue;
+                        if(!f.signature().equals(v.signature())) continue;
+                        val = j;
+                        break;
+                    }
+                }
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }else if(type == BytecodeValueType.CLASS) {
-                if(val instanceof Class v) val = pool.getClassIndex(v);
+                if(val instanceof Class v) {
+                    var classes = data.classes;
+                    for(int j = 0; j < classes.size(); j++) {
+                        var f = classes.get(j);
+                        if(!Objects.equals(f.namespace(), v.namespace())) continue;
+                        if(!f.name().equals(v.name())) continue;
+                        val = j;
+                        break;
+                    }
+                }
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }else if(type == BytecodeValueType.FIELD) {
-                if(val instanceof Field v) val = pool.getFieldIndex(v);
+                if(val instanceof Field v) {
+                    var fields = data.fields;
+                    for(int j = 0; j < fields.size(); j++) {
+                        var f = fields.get(j);
+                        if(!Objects.equals(f.namespace(), v.namespace())) continue;
+                        if(!f.name().equals(v.name())) continue;
+                        if(!f.type().equals(v.type())) continue;
+                        val = j;
+                        break;
+                    }
+                }
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }else if(type == BytecodeValueType.METHOD) {
-                if(val instanceof Method m) val = pool.getMethodIndex(m);
-                else throw new IllegalArgumentException(val.toString().getClass().getName());
+                if(val instanceof Method v) {
+                    var classes = data.classes;
+                    out: for(int j = 0; j < classes.size(); j++) {
+                        var f = classes.get(j);
+                        if(!Objects.equals(f.namespace(), v.namespace())) continue;
+                        for(int k = 0; k<f.methods().length; k++) {
+                            var m = f.methods()[k];
+                            if(!m.name().equals(v.name())) continue;
+                            if(!m.signature().equals(v.signature())) continue;
+                            val = ((long) k << 32) | j;
+                            break out;
+                        }
+                    }
+                }
+                else throw new IllegalArgumentException(val.getClass().getName());
             }
-            if(!(val instanceof Number num)) throw new IllegalArgumentException(val.toString().getClass().getName());
+            if(!(val instanceof Number num)) throw new IllegalArgumentException(val.getClass().getName());
             switch (type.getSize()) {
                 case 1 -> out.writeByte(num.byteValue());
                 case 2 -> out.writeShort(num.shortValue());
@@ -208,7 +250,8 @@ public final class Bytecode implements IBytecode {
                 default -> throw new IllegalStateException("Invalid size of bytecode type: " + type.getSize());
             };
             switch(type) {
-                case STRING, FUNCTION, CLASS, FIELD, METHOD -> args[i] = ((Number) args[i]).intValue();
+                case STRING, FUNCTION, CLASS, FIELD -> args[i] = ((Number) args[i]).intValue();
+                case METHOD -> args[i] = ((Number) args[i]).longValue();
             }
         }
         return instructionGenerator.createInstruction(args);
@@ -219,35 +262,19 @@ public final class Bytecode implements IBytecode {
         for(int i = 0; i<values.length; i++) {
             if(values[i] == BytecodeValueType.STRING) {
                 int index = ((Number) instr.getData()[i]).intValue();
-                instr.getData()[i] = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(index - 1)).getString();
+                instr.getData()[i] = data.constantPool.getString(index);
             }else if(values[i] == BytecodeValueType.FUNCTION) {
                 int index = ((Number) instr.getData()[i]).intValue();
-                var entry = (ConstantPoolEntry.FunctionEntry) data.constantPool.entries.get(index - 1);
-                var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
-                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
-                var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
-                instr.getData()[i] = data.getFunction(namespace, name, signature);
+                instr.getData()[i] = data.functions.get(index);
             }else if(values[i] == BytecodeValueType.CLASS) {
                 int index = ((Number) instr.getData()[i]).intValue();
-                var entry = (ConstantPoolEntry.ClassEntry) data.constantPool.entries.get(index - 1);
-                var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
-                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
-                instr.getData()[i] = data.getClass(namespace, name);
+                instr.getData()[i] = data.classes.get(index);
             }else if(values[i] == BytecodeValueType.FIELD) {
                 int index = ((Number) instr.getData()[i]).intValue();
-                var entry = (ConstantPoolEntry.FieldEntry) data.constantPool.entries.get(index - 1);
-                var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
-                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
-                var type = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getType() - 1)).getString();
-                instr.getData()[i] = data.getField(namespace, name, type);
+                instr.getData()[i] = data.fields.get(index);
             }else if(values[i] == BytecodeValueType.METHOD) {
-                int index = ((Number) instr.getData()[i]).intValue();
-                var entry = (ConstantPoolEntry.MethodEntry) data.constantPool.entries.get(index - 1);
-                var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
-                var className = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getClassName() - 1)).getString();
-                var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
-                var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
-                instr.getData()[i] = data.getMethod(namespace, className, name, signature);
+                long index = ((Number) instr.getData()[i]).longValue();
+                instr.getData()[i] = data.classes.get((int) (index)).methods()[(int) (index >> 32)];
             }
         }
     }
@@ -259,13 +286,35 @@ public final class Bytecode implements IBytecode {
             var val = instr.getData()[i];
             if(type == BytecodeValueType.STRING) {
                 if(val instanceof String v) pool.getOrCreateStringIndex(v);
-                else throw new IllegalArgumentException(val.toString().getClass().getName());
+                else throw new IllegalArgumentException(val.getClass().getName());
             }else if(type == BytecodeValueType.FUNCTION) {
-                if(val instanceof Function v) pool.getOrCreateFunctionIndex(v);
-                else throw new IllegalArgumentException(val.toString().getClass().getName());
+                if(val instanceof Function v) {
+                    pool.getOrCreateStringIndex(v.namespace());
+                    pool.getOrCreateStringIndex(v.name());
+                    pool.getOrCreateStringIndex(v.signature().toString());
+                }
+                else throw new IllegalArgumentException(val.getClass().getName());
             }else if(type == BytecodeValueType.CLASS) {
-                if(val instanceof Class v) pool.getOrCreateClassIndex(v);
-                else throw new IllegalArgumentException(val.toString().getClass().getName());
+                if(val instanceof Class v) {
+                    pool.getOrCreateStringIndex(v.namespace());
+                    pool.getOrCreateStringIndex(v.name());
+                }
+                else throw new IllegalArgumentException(val.getClass().getName());
+            }else if(type == BytecodeValueType.METHOD) {
+                if(val instanceof Method v) {
+                    pool.getOrCreateStringIndex(v.namespace());
+                    pool.getOrCreateStringIndex(v.name());
+                    pool.getOrCreateStringIndex(v.className());
+                    pool.getOrCreateStringIndex(v.signature().toString());
+                }
+                else throw new IllegalArgumentException(val.getClass().getName());
+            }else if(type == BytecodeValueType.FIELD) {
+                if(val instanceof Field v) {
+                    pool.getOrCreateStringIndex(v.namespace());
+                    pool.getOrCreateStringIndex(v.name());
+                    pool.getOrCreateStringIndex(v.type().toString());
+                }
+                else throw new IllegalArgumentException(val.getClass().getName());
             }
         }
     }

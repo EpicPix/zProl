@@ -51,7 +51,7 @@ public class CompiledData {
                 }
             }
             data.functions.add(f);
-            data.constantPool.getOrCreateFunctionIndex(f);
+            data.constantPool.prepareConstantPool(f);
             if(!FunctionModifiers.isEmptyCode(f.modifiers())) {
                 for (var instruction : f.code().getInstructions()) {
                     Bytecode.prepareConstantPool(instruction, data.constantPool);
@@ -68,7 +68,7 @@ public class CompiledData {
 
             }
             data.fields.add(f);
-            data.constantPool.getOrCreateFieldIndex(f);
+            data.constantPool.prepareConstantPool(f);
             if(f.defaultValue() != null) {
                 new ConstantValueAttribute(f.defaultValue().value()).prepareConstantPool(data.constantPool);
             }
@@ -82,13 +82,13 @@ public class CompiledData {
                 throw new RedefinedClassException((clz.namespace() != null ? clz.namespace() + "." : "") + clz.name());
             }
             data.classes.add(clz);
-            data.constantPool.getOrCreateClassIndex(clz);
+            data.constantPool.prepareConstantPool(clz);
             for(var field : clz.fields()) {
                 data.constantPool.getOrCreateStringIndex(field.name());
                 data.constantPool.getOrCreateStringIndex(field.type().getDescriptor());
             }
             for(var m : clz.methods()) {
-                data.constantPool.getOrCreateMethodIndex(m);
+                data.constantPool.prepareConstantPool(m);
                 if(!FunctionModifiers.isEmptyCode(m.modifiers())) {
                     for (var instruction : m.code().getInstructions()) {
                         Bytecode.prepareConstantPool(instruction, data.constantPool);

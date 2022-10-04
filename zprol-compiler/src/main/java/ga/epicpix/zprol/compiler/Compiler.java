@@ -565,7 +565,7 @@ public class Compiler {
         if(lfunc.isClassMethod()) {
             bytecode.pushInstruction(getConstructedInstruction("invoke_class", new Method(classContext.namespace, fMods, classContext.name, func.getFunctionName(), signature, null)));
         }else {
-            bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(data.namespace, fMods, func.getFunctionName(), signature, null)));
+            bytecode.pushInstruction(getConstructedInstruction("invoke", new Function(lfunc.namespace(), fMods, func.getFunctionName(), signature, null)));
         }
 
         if(discardValue && returnType instanceof PrimitiveType primitive) {

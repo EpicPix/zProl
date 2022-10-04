@@ -34,40 +34,6 @@ public class GeneratedData {
         throw new FunctionNotDefinedException((namespace != null ? namespace + "." : "") + name + " - " + signature);
     }
 
-    public Method getMethod(String namespace, String className, String name, String signature) {
-        Class clazz = getClass(namespace, className);
-        for(Method method : clazz.methods()) {
-            if(!method.name().equals(name)) continue;
-
-            if(method.signature().toString().equals(signature)) {
-                return method;
-            }
-        }
-        throw new FunctionNotDefinedException((namespace != null ? namespace + "." : "") + className + "." + name + " - " + signature);
-    }
-
-    public Object getField(String namespace, String name, String type) {
-        for(Field fld : fields) {
-            if(Objects.equals(fld.namespace(), name)) continue;
-            if(!fld.name().equals(name)) continue;
-
-            if(type.equals(fld.type().getDescriptor())) {
-                return fld;
-            }
-        }
-        throw new IllegalArgumentException("Field not found " + (namespace != null ? namespace + "." : "") + name + " - " + type);
-    }
-
-    public Class getClass(String namespace, String name) {
-        for(Class clz : classes) {
-            if(clz.namespace() != null && namespace != null && !clz.namespace().equals(namespace)) continue;
-            if(!clz.name().equals(name)) continue;
-
-            return clz;
-        }
-        throw new FunctionNotDefinedException((namespace != null ? namespace + "." : "") + name);
-    }
-
     public static byte[] save(GeneratedData data) throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(bytes);
@@ -78,21 +44,25 @@ public class GeneratedData {
 
         out.writeInt(data.functions.size());
         for(Function func : data.functions) {
-            out.writeInt(data.constantPool.getFunctionIndex(func));
+            out.writeInt(data.constantPool.getStringIndex(func.namespace()));
+            out.writeInt(data.constantPool.getStringIndex(func.name()));
+            out.writeInt(data.constantPool.getStringIndex(func.signature().toString()));
+            out.writeInt(FunctionModifiers.toBits(func.modifiers()));
             var hasCode = !FunctionModifiers.isEmptyCode(func.modifiers());
             if(hasCode) {
                 out.writeInt(func.code().getLocalsSize());
                 var instructions = func.code().getInstructions();
                 out.writeInt(instructions.size());
                 for (var instruction : instructions) {
-                    out.write(Bytecode.write(instruction, data.constantPool));
+                    out.write(Bytecode.write(instruction, data));
                 }
             }
         }
 
         out.writeInt(data.classes.size());
         for(var clz : data.classes) {
-            out.writeInt(data.constantPool.getClassIndex(clz));
+            out.writeInt(data.constantPool.getStringIndex(clz.namespace()));
+            out.writeInt(data.constantPool.getStringIndex(clz.name()));
             out.writeInt(clz.fields().length);
             for(var field : clz.fields()) {
                 out.writeInt(data.constantPool.getStringIndex(field.name()));
@@ -100,14 +70,16 @@ public class GeneratedData {
             }
             out.writeInt(clz.methods().length);
             for(var func : clz.methods()) {
-                out.writeInt(data.constantPool.getMethodIndex(func));
+                out.writeInt(data.constantPool.getStringIndex(func.name()));
+                out.writeInt(data.constantPool.getStringIndex(func.signature().toString()));
+                out.writeInt(FunctionModifiers.toBits(func.modifiers()));
                 var hasCode = !FunctionModifiers.isEmptyCode(func.modifiers());
                 if(hasCode) {
                     out.writeInt(func.code().getLocalsSize());
                     var instructions = func.code().getInstructions();
                     out.writeInt(instructions.size());
                     for (var instruction : instructions) {
-                        out.write(Bytecode.write(instruction, data.constantPool));
+                        out.write(Bytecode.write(instruction, data));
                     }
                 }
             }
@@ -115,7 +87,10 @@ public class GeneratedData {
 
         out.writeInt(data.fields.size());
         for(Field field : data.fields) {
-            out.writeInt(data.constantPool.getFieldIndex(field));
+            out.writeInt(data.constantPool.getStringIndex(field.namespace()));
+            out.writeInt(data.constantPool.getStringIndex(field.name()));
+            out.writeInt(data.constantPool.getStringIndex(field.type().getDescriptor()));
+            out.writeInt(FieldModifiers.toBits(field.modifiers()));
 
             int attributeCount = 0;
             if(field.defaultValue() != null) attributeCount++;
@@ -143,11 +118,10 @@ public class GeneratedData {
 
         int functionLength = in.readInt();
         for(int i = 0; i<functionLength; i++) {
-            var entry = (ConstantPoolEntry.FunctionEntry) data.constantPool.entries.get(in.readInt() - 1);
-            var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
-            var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
-            var signature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getSignature() - 1)).getString();
-            var modifiers = FunctionModifiers.getModifiers(entry.getModifiers());
+            var namespace = data.constantPool.getStringNullable(in.readInt());
+            var name = data.constantPool.getString(in.readInt());
+            var signature = data.constantPool.getString(in.readInt());
+            var modifiers = FunctionModifiers.getModifiers(in.readInt());
             var hasCode = !FunctionModifiers.isEmptyCode(modifiers);
             Function function = new Function(namespace, modifiers, name, FunctionSignature.fromDescriptor(signature), hasCode ? Bytecode.BYTECODE.createStorage() : null);
             if(hasCode) {
@@ -162,26 +136,22 @@ public class GeneratedData {
 
         int classLength = in.readInt();
         for(int i = 0; i<classLength; i++) {
-            var entry = (ConstantPoolEntry.ClassEntry) data.constantPool.entries.get(in.readInt() - 1);
-            var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
-            var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
+            var namespace = data.constantPool.getStringNullable(in.readInt());
+            var name = data.constantPool.getString(in.readInt());
             var fields = new ClassField[in.readInt()];
             for(int fieldIndex = 0; fieldIndex<fields.length; fieldIndex++) {
-                var fieldName = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(in.readInt() - 1)).getString();
-                var fieldTypeDescriptor = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(in.readInt() - 1)).getString();
+                var fieldName = data.constantPool.getString(in.readInt());
+                var fieldTypeDescriptor = data.constantPool.getString(in.readInt());
                 var fieldType = Types.getTypeFromDescriptor(fieldTypeDescriptor);
                 fields[fieldIndex] = new ClassField(fieldName, fieldType);
             }
             var methods = new Method[in.readInt()];
             for(int methodIndex = 0; methodIndex<methods.length; methodIndex++) {
-                var mentry = (ConstantPoolEntry.MethodEntry) data.constantPool.entries.get(in.readInt() - 1);
-                var mnamespace = mentry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(mentry.getNamespace() - 1)).getString() : null;
-                var mclassName = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(mentry.getClassName() - 1)).getString();
-                var mname = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(mentry.getName() - 1)).getString();
-                var msignature = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(mentry.getSignature() - 1)).getString();
-                var mmodifiers = FunctionModifiers.getModifiers(mentry.getModifiers());
+                var mname = data.constantPool.getStringNullable(in.readInt());
+                var msignature = data.constantPool.getString(in.readInt());
+                var mmodifiers = FunctionModifiers.getModifiers(in.readInt());
                 var mhasCode = !FunctionModifiers.isEmptyCode(mmodifiers);
-                Method method = new Method(mnamespace, mmodifiers, mclassName, mname, FunctionSignature.fromDescriptor(msignature), mhasCode ? Bytecode.BYTECODE.createStorage() : null);
+                Method method = new Method(namespace, mmodifiers, name, mname, FunctionSignature.fromDescriptor(msignature), mhasCode ? Bytecode.BYTECODE.createStorage() : null);
                 if(mhasCode) {
                     method.code().setLocalsSize(in.readInt());
                     int instructionsLength = in.readInt();
@@ -196,11 +166,10 @@ public class GeneratedData {
 
         int fieldLength = in.readInt();
         for(int i = 0; i<fieldLength; i++) {
-            var entry = (ConstantPoolEntry.FieldEntry) data.constantPool.entries.get(in.readInt() - 1);
-            var namespace = entry.getNamespace() != 0 ? ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getNamespace() - 1)).getString() : null;
-            var name = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getName() - 1)).getString();
-            var type = ((ConstantPoolEntry.StringEntry) data.constantPool.entries.get(entry.getType() - 1)).getString();
-            var modifiers = FieldModifiers.getModifiers(entry.getModifiers());
+            var namespace = data.constantPool.getStringNullable(in.readInt());
+            var name =  data.constantPool.getString(in.readInt());
+            var type = data.constantPool.getString(in.readInt());
+            var modifiers = FieldModifiers.getModifiers(in.readInt());
 
             int attrCount = in.readInt();
             ConstantValue constantValue = null;
