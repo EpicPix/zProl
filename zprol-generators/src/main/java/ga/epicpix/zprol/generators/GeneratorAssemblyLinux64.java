@@ -485,12 +485,11 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
         var ret = f.signature().returnType();
         if(ret instanceof PrimitiveType primitive) {
-            if (primitive.getSize() == 0) {
-            } else if (primitive.getSize() == 1 || primitive.getSize() == 2) {
+            if (primitive.getSize() == 1 || primitive.getSize() == 2) {
                 instructions.add(push("ax"));
             } else if (primitive.getSize() == 4 || primitive.getSize() == 8) {
                 instructions.add(push("rax"));
-            } else {
+            } else if(primitive.getSize() != 0) {
                 throw new NotImplementedException("Not implemented size " + primitive.getSize());
             }
         }else if(ret instanceof ClassType) {
@@ -592,17 +591,30 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         assembly.add("global _start");
         assembly.add("section .text");
         assembly.add("_start:");
+        State state = new State();
         for(var function : generated.functions) {
             if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
             if(!function.name().equals(".init")) continue;
             assembly.add("call " + getMangledName(function));
+            state.nextFunctions.add(function);
         }
-        assembly.add("call " + getMangledName(null, "main", new FunctionSignature(Types.getTypeFromDescriptor("V"))));
+        var mainSig = new FunctionSignature(Types.getTypeFromDescriptor("V"));
+        Function mainFunction = null;
+        for(var func : generated.functions) {
+            if(!func.name().equals("main")) continue;
+            if(!func.signature().equals(mainSig)) continue;
+            mainFunction = func;
+            break;
+        }
+        if(mainFunction == null) {
+            System.out.println("Main function not found! Only initialization functions will be run.");
+        }else {
+            assembly.add("call " + getMangledName(mainFunction));
+        }
         assembly.add("mov rax, 60");
         assembly.add("mov rdi, 0");
         assembly.add("syscall");
         ConstantPool localConstantPool = new ConstantPool();
-        State state = new State();
         List<Field> fields;
         if(ALL_FUNCTIONS) {
             fields = generated.fields;
@@ -621,10 +633,10 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 }
             }
         }else {
-            Function mainFunction = generated.getFunction(null, "main", new FunctionSignature(Types.getTypeFromDescriptor("V")).toString());
-
-            assembly.add(new FunctionStartInstruction(mainFunction));
-            writeFunction(state, mainFunction, false, localConstantPool, assembly);
+            if(mainFunction != null) {
+                assembly.add(new FunctionStartInstruction(mainFunction));
+                writeFunction(state, mainFunction, false, localConstantPool, assembly);
+            }
             while(!state.nextFunctions.isEmpty()) {
                 var current = state.nextFunctions.pop();
                 if(current instanceof Function f) {

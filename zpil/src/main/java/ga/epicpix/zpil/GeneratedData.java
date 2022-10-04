@@ -22,18 +22,6 @@ public class GeneratedData {
     public final ArrayList<Class> classes = new ArrayList<>();
     public final ConstantPool constantPool = new ConstantPool();
 
-    public Function getFunction(String namespace, String name, String signature) {
-        for(Function func : functions) {
-            if(Objects.equals(func.namespace(), name)) continue;
-            if(!func.name().equals(name)) continue;
-
-            if(func.signature().toString().equals(signature)) {
-                return func;
-            }
-        }
-        throw new FunctionNotDefinedException((namespace != null ? namespace + "." : "") + name + " - " + signature);
-    }
-
     public static byte[] save(GeneratedData data) throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(bytes);
