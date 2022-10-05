@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public final class GeneratorAssemblyLinux64 extends Generator {
 
     public String getGeneratorCommandLine() {
-        return "asmlinux64";
+        return "asm-x86_64-linux";
     }
 
     public String getGeneratorName() {

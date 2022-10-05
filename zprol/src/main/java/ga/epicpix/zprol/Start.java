@@ -40,54 +40,65 @@ public class Start {
 
         ArrayList<String> files = new ArrayList<>();
         Iterator<String> argsIterator = Arrays.asList(args).iterator();
+        label:
         while(argsIterator.hasNext()) {
             String s = argsIterator.next();
             if(s.startsWith("-")) {
-                if(s.equals("-v") || s.equals("--version")) {
-                    System.out.println("zProl Version: " + VERSION);
-                    return;
-                }else if(s.startsWith("-g")) {
-                    String gen = s.substring(2);
-                    boolean found = false;
-                    for(Generator generator : Generator.GENERATORS) {
-                        if(gen.equals(generator.getGeneratorCommandLine())) {
-                            generators.add(generator);
-                            found = true;
-                            break;
+                switch(s) {
+                    case "-v", "--version" -> {
+                        System.out.println("zProl Version: " + VERSION);
+                        return;
+                    }
+                    case "-g" -> {
+                        if(!argsIterator.hasNext()) {
+                            throw new IllegalArgumentException("Expected generator after '-g'");
                         }
+                        String gen = argsIterator.next();
+                        boolean found = false;
+                        for(Generator generator : Generator.GENERATORS) {
+                            if(gen.equals(generator.getGeneratorCommandLine())) {
+                                generators.add(generator);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(!found) {
+                            throw new IllegalArgumentException("Unable to find generator: " + gen);
+                        }
+                        continue;
                     }
-                    if(!found) {
-                        throw new IllegalArgumentException("Unable to find generator: " + gen);
-                    }
-                    continue;
-                } else if(s.equals("-o")) {
-                    if(outputFile != null) {
-                        throw new IllegalArgumentException("Tried to declare output file multiple times");
-                    }
-                    if(!argsIterator.hasNext()) {
-                        throw new IllegalArgumentException("Missing output filename after -o");
-                    }
-                    outputFile = argsIterator.next();
-                    continue;
-                } else if(s.equals("--ignore-std-not-found-warning")) {
-                    ignoreCompileStdWarning = true;
-                    continue;
-                } else if(s.equals("--unload-std")) {
-                    unloadStd = true;
-                    continue;
-                } else if(s.equals("-p")) {
-                    if(printFile != null) {
-                        throw new IllegalArgumentException("Tried to declare input file multiple times");
-                    }
-                    if(!argsIterator.hasNext()) {
+                    case "-o" -> {
                         if(outputFile != null) {
-                            printFile = outputFile;
-                            break;
+                            throw new IllegalArgumentException("Tried to declare output file multiple times");
                         }
-                        throw new IllegalArgumentException("Missing input filename after -p");
+                        if(!argsIterator.hasNext()) {
+                            throw new IllegalArgumentException("Missing output filename after -o");
+                        }
+                        outputFile = argsIterator.next();
+                        continue;
                     }
-                    printFile = argsIterator.next();
-                    continue;
+                    case "--ignore-std-not-found-warning" -> {
+                        ignoreCompileStdWarning = true;
+                        continue;
+                    }
+                    case "--unload-std" -> {
+                        unloadStd = true;
+                        continue;
+                    }
+                    case "-p" -> {
+                        if(printFile != null) {
+                            throw new IllegalArgumentException("Tried to declare input file multiple times");
+                        }
+                        if(!argsIterator.hasNext()) {
+                            if(outputFile != null) {
+                                printFile = outputFile;
+                                break label;
+                            }
+                            throw new IllegalArgumentException("Missing input filename after -p");
+                        }
+                        printFile = argsIterator.next();
+                        continue;
+                    }
                 }
                 System.err.println("Unknown setting: " + s);
                 System.exit(1);
@@ -125,7 +136,7 @@ public class Start {
         }
 
         System.out.println("zProl Help Menu");
-        System.out.println("-g<gen>                          Use a generator for converting zpil bytecode to other formats");
+        System.out.println("-g <gen>                         Use a generator for converting zpil bytecode to other formats");
         System.out.println("-o <file>                        File where the generated zpil should be put");
         System.out.println("-p [file]                        Shows compiled zpil code, optional file if the output file is provided");
         System.out.println("-v                               Shows version of the currently running zProl version");
@@ -135,7 +146,7 @@ public class Start {
         System.out.println();
         System.out.println("Available generators:");
         for(var gen : Generator.GENERATORS) {
-            System.out.println(" - " + gen.getGeneratorName() + " (*" + gen.getFileExtension() + "): -g" + gen.getGeneratorCommandLine());
+            System.out.println(" - " + gen.getGeneratorName() + " (*" + gen.getFileExtension() + "): -g " + gen.getGeneratorCommandLine());
         }
     }
 
