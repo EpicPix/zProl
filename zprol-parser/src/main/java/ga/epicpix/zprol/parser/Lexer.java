@@ -93,27 +93,20 @@ public class Lexer {
                 }
                 if(value == '\\') {
                     int check = parser.nextChar();
-                    if(check == '\\') {
-                        str.append("\\");
-                    }else if(check == 'n') {
-                        str.append("\n");
-                    }else if(check == 'r') {
-                        str.append("\r");
-                    }else if(check == 'f') {
-                        str.append("\f");
-                    }else if(check == '\'') {
-                        str.append("'");
-                    }else if(check == 't') {
-                        str.append("\t");
-                    }else if(check == 'b') {
-                        str.append("\b");
-                    }else if(check == '0') {
-                        str.append("\0");
-                    }else if(check == '"') {
-                        str.append("\"");
-                    }else {
-                        parser.goBack();
-                        throw new ParserException("Unexpected escape sequence", parser);
+                    switch(check) {
+                        case '\\' -> str.append("\\");
+                        case 'n' -> str.append("\n");
+                        case 'r' -> str.append("\r");
+                        case 'f' -> str.append("\f");
+                        case '\'' -> str.append("'");
+                        case 't' -> str.append("\t");
+                        case 'b' -> str.append("\b");
+                        case '0' -> str.append("\0");
+                        case '"' -> str.append("\"");
+                        default -> {
+                            parser.goBack();
+                            throw new ParserException("Unexpected escape sequence", parser);
+                        }
                     }
                     continue;
                 }
