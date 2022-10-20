@@ -4,44 +4,44 @@ Z Programming Language
 
 For actual usage check the [wiki](https://github.com/EpicPix/zProl/wiki).
 
-Ideas/Proposals for this language create at https://zprol.epicpix.ga/
-
-You can also run zProl online on https://zprol.epicpix.ga/runner
-
-## HTTP Api
-
-You can run zProl online using an api which is on https://zprol.epicpix.ga/api/v1/run
-
-You have to use the `POST` method with the `Content-Type` set to `application/json`.
-
-There must be either `code` or `code_url` defined in the json, there is an optional `debug` value when set to `true` it disables optimizations.
-
-The program result will be in `run` and in `commit` there will be the currently running commit.
-
-## Maven Repository
-
-To use parts of this project like `zprol-parser` you can use my repository
-
-```xml
-<repositories>
-    <repository>
-        <id>epicpix</id>
-        <name>EpicPix</name>
-        <url>https://maven.epicpix.ga/releases/</url>
-    </repository>
-</repositories>
-```
-
-and then to use `zprol-parser` you can do
-
-```xml
-<dependencies>
-    <dependency>
-        <groupId>ga.epicpix</groupId>
-        <artifactId>zprol-parser</artifactId>
-        <version>1.0.4</version>
-    </dependency>
-</dependencies>
-```
-
-To check all other available modules you can check my [maven repository](https://maven.epicpix.ga/)
+[//]: # (Ideas/Proposals for this language create at https://zprol.epicpix.ga/)
+[//]: # ()
+[//]: # (You can also run zProl online on https://zprol.epicpix.ga/runner)
+[//]: # ()
+[//]: # (## HTTP Api)
+[//]: # ()
+[//]: # (You can run zProl online using an api which is on https://zprol.epicpix.ga/api/v1/run)
+[//]: # ()
+[//]: # (You have to use the `POST` method with the `Content-Type` set to `application/json`.)
+[//]: # ()
+[//]: # (There must be either `code` or `code_url` defined in the json, there is an optional `debug` value when set to `true` it disables optimizations.)
+[//]: # ()
+[//]: # (The program result will be in `run` and in `commit` there will be the currently running commit.)
+[//]: # ()
+[//]: # (## Maven Repository)
+[//]: # ()
+[//]: # (To use parts of this project like `zprol-parser` you can use my repository)
+[//]: # ()
+[//]: # (```xml)
+[//]: # (<repositories>)
+[//]: # (    <repository>)
+[//]: # (        <id>epicpix</id>)
+[//]: # (        <name>EpicPix</name>)
+[//]: # (        <url>https://maven.epicpix.ga/releases/</url>)
+[//]: # (    </repository>)
+[//]: # (</repositories>)
+[//]: # (```)
+[//]: # ()
+[//]: # (and then to use `zprol-parser` you can do)
+[//]: # ()
+[//]: # (```xml)
+[//]: # (<dependencies>)
+[//]: # (    <dependency>)
+[//]: # (        <groupId>ga.epicpix</groupId>)
+[//]: # (        <artifactId>zprol-parser</artifactId>)
+[//]: # (        <version>1.0.4</version>)
+[//]: # (    </dependency>)
+[//]: # (</dependencies>)
+[//]: # (```)
+[//]: # ()
+[//]: # (To check all other available modules you can check my [maven repository]&#40;https://maven.epicpix.ga/&#41;)
