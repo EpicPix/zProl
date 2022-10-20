@@ -3,18 +3,18 @@ package ga.epicpix.zprol.interpreter;
 import java.util.ArrayList;
 import java.util.List;
 
-class LocalStorage {
+public class LocalStorage {
 
     private final List<LocalValue> values = new ArrayList<>();
 
     public void set(Object value, int loc, int size) {
         for(int i = 0; i<values.size(); i++) {
             var v = values.get(i);
-            if((v.index() < loc && loc <= v.index() + v.size()) || (v.index() < loc + size && loc + size <= v.index() + v.size())) {
+            if(v.index() >= loc && v.index() < loc + size) {
                 values.remove(i--);
             }
         }
-        values.add(new LocalValue(value, loc, size));
+        values.add(new LocalValue(value, size, loc));
     }
 
     public LocalValue get(int loc, int size) {
@@ -28,6 +28,10 @@ class LocalStorage {
             }
         }
         throw new IllegalStateException("Undefined local data at " + loc);
+    }
+
+    public Object getLongValue(int loc) {
+        return get(loc, 8).value();
     }
 
 }
