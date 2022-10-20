@@ -17,6 +17,7 @@
         <module>zprol-parser</module>
         <module>zprol-types</module>
         <module>zprol-utils</module>
+        <module>zprol-interpreter</module>
     </modules>
 
     <distributionManagement>

@@ -6,12 +6,15 @@ import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.generators.Generator;
+import ga.epicpix.zprol.interpreter.Interpreter;
 import ga.epicpix.zprol.parser.Lexer;
 import ga.epicpix.zprol.parser.Parser;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tree.FileTree;
+import ga.epicpix.zprol.structures.FunctionSignature;
+import ga.epicpix.zprol.types.Types;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.io.*;
@@ -35,6 +38,7 @@ public class Start {
         ArrayList<Generator> generators = new ArrayList<>();
         boolean ignoreCompileStdWarning = false;
         boolean unloadStd = false;
+        String interpretFile = null;
         String outputFile = null;
         String printFile = null;
 
@@ -85,6 +89,16 @@ public class Start {
                         unloadStd = true;
                         continue;
                     }
+                    case "-i" -> {
+                        if(interpretFile != null) {
+                            throw new IllegalArgumentException("Tried to declare interpreter file multiple times");
+                        }
+                        if(!argsIterator.hasNext()) {
+                            throw new IllegalArgumentException("Missing filename after -i");
+                        }
+                        interpretFile = argsIterator.next();
+                        continue;
+                    }
                     case "-p" -> {
                         if(printFile != null) {
                             throw new IllegalArgumentException("Tried to declare input file multiple times");
@@ -131,11 +145,24 @@ public class Start {
             GeneratedData.load(Files.readAllBytes(new File(printFile).toPath())).printZpil();
         }
 
-        if(outputFile != null || printFile != null) {
+        if(interpretFile != null) {
+            var file = GeneratedData.load(Files.readAllBytes(new File(interpretFile).toPath()));
+            var function = file.getFunction(new FunctionSignature(Types.getTypeFromDescriptor("V")), "main");
+            if(function == null) {
+                System.err.println("Function 'void main()' not found!");
+                System.exit(1);
+                return;
+            }
+            Interpreter.runInterpreter(file, function);
+        }
+
+        //noinspection ConstantConditions
+        if(outputFile != null || printFile != null || interpretFile != null) {
             return;
         }
 
         System.out.println("zProl Help Menu");
+        System.out.println("-i <zpil>                        Run the zProl interpreter, first function that has the signature of 'void main()', will be used");
         System.out.println("-g <gen>                         Use a generator for converting zpil bytecode to other formats");
         System.out.println("-o <file>                        File where the generated zpil should be put");
         System.out.println("-p [file]                        Shows compiled zpil code, optional file if the output file is provided");

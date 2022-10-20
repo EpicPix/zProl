@@ -3,7 +3,6 @@ package ga.epicpix.zpil;
 import ga.epicpix.zpil.attr.Attribute;
 import ga.epicpix.zpil.attr.ConstantValueAttribute;
 import ga.epicpix.zpil.bytecode.Bytecode;
-import ga.epicpix.zpil.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zpil.pool.ConstantPool;
 import ga.epicpix.zpil.pool.ConstantPoolEntry;
 import ga.epicpix.zprol.data.ConstantValue;
@@ -13,7 +12,6 @@ import ga.epicpix.zprol.types.Types;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class GeneratedData {
 
@@ -191,6 +189,14 @@ public class GeneratedData {
         return data;
     }
 
+    public Function getFunction(FunctionSignature sig, String name) {
+        for(var func : functions) {
+            if(!func.signature().equals(sig)) continue;
+            if(!func.name().equals(name)) continue;
+            return func;
+        }
+        return null;
+    }
 
     public void printZpil() {
         System.out.println("Functions:");
