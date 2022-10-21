@@ -22,7 +22,7 @@ public class DefaultNativeImpl extends NativeImpl {
                     System.err.write((byte[]) arg1, 0, Math.toIntExact((Long) arg2));
                     return Math.toIntExact((Long) arg2);
                 }else {
-                    throw new RuntimeException("Unknown file descriptor, only STDOUT (0) and STDERR (1) is supported");
+                    throw new RuntimeException("Unknown file descriptor, only STDOUT (0) and STDERR (1) are supported");
                 }
             }else {
                 throw new RuntimeException("Expected syscall arg0 to be a number");

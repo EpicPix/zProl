@@ -67,9 +67,12 @@ public class Interpreter {
                 state.stack.push(returnValue, func.signature().returnType() instanceof PrimitiveType prim ? prim.size : 8);
             }
         }else {
+            int x = state.currentInstruction;
             boolean returned = false;
-            for(var instr : func.code().getInstructions()) {
-                runInstruction(file, state, instr, locals);
+            state.currentInstruction = 0;
+            var instructions = func.code().getInstructions();
+            while(state.currentInstruction < instructions.size()) {
+                runInstruction(file, state, instructions.get(state.currentInstruction++), locals);
                 if(state.hasReturned) {
                     returned = true;
                     state.popFunction();
@@ -78,11 +81,13 @@ public class Interpreter {
                         state.returnValue = null;
                     }
                     state.hasReturned = false;
+                    break;
                 }
             }
             if(!returned) {
                 throw new IllegalStateException("Function has not returned!");
             }
+            state.currentInstruction = x;
         }
     }
 

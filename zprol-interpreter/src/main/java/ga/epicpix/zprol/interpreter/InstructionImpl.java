@@ -8,8 +8,6 @@ import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
 import ga.epicpix.zprol.types.PrimitiveType;
 
-import java.util.Objects;
-
 class InstructionImpl {
 
     static void runInstruction(GeneratedData file, VMState state, IBytecodeInstruction instruction, LocalStorage locals) {
@@ -20,6 +18,24 @@ class InstructionImpl {
             case "icastl" -> state.stack.push((long) (Integer) state.stack.pop(4).value(), 8);
             case "ipush" -> state.stack.push((Integer) instruction.getData()[0], 4);
             case "lpush" -> state.stack.push((Long) instruction.getData()[0], 8);
+            case "ladd" -> state.stack.push((Long) state.stack.pop(8).value() + (Long) state.stack.pop(8).value(), 8);
+            case "land" -> state.stack.push((Long) state.stack.pop(8).value() & (Long) state.stack.pop(8).value(), 8);
+            case "lor" -> state.stack.push((Long) state.stack.pop(8).value() | (Long) state.stack.pop(8).value(), 8);
+            case "lleu" -> {
+                var a = (Long) state.stack.pop(8).value();
+                var b = (Long) state.stack.pop(8).value();
+                state.stack.push(Long.compareUnsigned(a, b) <= 0 ? 1L : 0L, 8);
+            }
+            case "lgeu" -> {
+                var a = (Long) state.stack.pop(8).value();
+                var b = (Long) state.stack.pop(8).value();
+                state.stack.push(Long.compareUnsigned(a, b) >= 0 ? 1L : 0L, 8);
+            }
+            case "neqjmp" -> {
+                if((Long) state.stack.pop(8).value() == 0) {
+                    state.currentInstruction += (Short) instruction.getData()[0] - 1;
+                }
+            }
             case "lpop" -> state.stack.pop(8);
             case "lload_field" -> state.stack.push(state.getFieldValue((Field) instruction.getData()[0]), 8);
             case "lload_local", "aload_local" -> state.stack.push(locals.get((Short) instruction.getData()[0], 8).value(), 8);
