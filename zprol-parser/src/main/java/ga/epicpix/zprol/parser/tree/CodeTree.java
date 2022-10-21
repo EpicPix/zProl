@@ -2,7 +2,17 @@ package ga.epicpix.zprol.parser.tree;
 
 import java.util.List;
 
-public record CodeTree(int start, int end, List<IStatement> statements) implements ITree {
+public final class CodeTree implements ITree {
+    private final int start;
+    private final int end;
+    public final List<IStatement> statements;
+
+    public CodeTree(int start, int end, List<IStatement> statements) {
+        this.start = start;
+        this.end = end;
+        this.statements = statements;
+    }
+
     public int getStartIndex() {
         return start;
     }
@@ -10,4 +20,5 @@ public record CodeTree(int start, int end, List<IStatement> statements) implemen
     public int getEndIndex() {
         return end;
     }
+
 }

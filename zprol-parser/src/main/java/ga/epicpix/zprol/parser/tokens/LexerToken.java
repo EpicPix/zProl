@@ -1,7 +1,6 @@
 package ga.epicpix.zprol.parser.tokens;
 
 import ga.epicpix.zprol.parser.DataParser;
-import ga.epicpix.zprol.parser.ParserLocation;
 
 public final class LexerToken extends Token {
 

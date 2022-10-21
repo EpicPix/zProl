@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.interpreter;
 
 import ga.epicpix.zpil.GeneratedData;
+import ga.epicpix.zprol.structures.Function;
 
 import java.util.Objects;
 
@@ -8,7 +9,8 @@ public class DefaultNativeImpl extends NativeImpl {
 
     private long runSyscall(VMState state, Object num, Object arg0, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5) {
         if(num == Long.valueOf(1) /* SYS_WRITE */) {
-            if(arg0 instanceof Long alg0) {
+            if(arg0 instanceof Long) {
+                Long alg0 = (Long) arg0;
                 if(!(arg1 instanceof byte[])) {
                     throw new RuntimeException("Expected syscall arg1 to be a byte array of characters");
                 }
@@ -28,14 +30,16 @@ public class DefaultNativeImpl extends NativeImpl {
                 throw new RuntimeException("Expected syscall arg0 to be a number");
             }
         }else if(num == Long.valueOf(9) /* SYS_MMAP */) {
-            if(state.memory instanceof DefaultMemoryImpl dmi) {
+            if(state.memory instanceof DefaultMemoryImpl) {
                 // TODO finish mmap properly
+                DefaultMemoryImpl dmi = (DefaultMemoryImpl) state.memory;
                 return dmi.registerMemory((Long) arg0, (Long) arg1);
             }else {
                 throw new RuntimeException("Cannot use the mmap syscall with a non-default memory implementation");
             }
         }else if(num == Long.valueOf(11) /* SYS_MUNMAP */) {
-            if(state.memory instanceof DefaultMemoryImpl dmi) {
+            if(state.memory instanceof DefaultMemoryImpl) {
+                DefaultMemoryImpl dmi = (DefaultMemoryImpl) state.memory;
                 return dmi.unregisterMemory((Long) arg0) ? 0L : -1L;
             }else {
                 throw new RuntimeException("Cannot use the munmap syscall with a non-default memory implementation");
@@ -45,19 +49,27 @@ public class DefaultNativeImpl extends NativeImpl {
     }
 
     public Object runNativeFunction(GeneratedData file, VMState state, LocalStorage locals) {
-        var current = state.currentFunction();
+        Function current = state.currentFunction();
         if(Objects.equals(current.namespace, "zprol.lang.linux.amd64")) {
             if(current.name.equals("syscall")) {
-                return switch(current.signature.toString()) {
-                    case "uL(L)" -> runSyscall(state, locals.getLongValue(8), 0, 0, 0, 0, 0, 0);
-                    case "uL(LL)" -> runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), 0, 0, 0, 0, 0);
-                    case "uL(LLL)" -> runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), 0, 0, 0, 0);
-                    case "uL(LLLL)" -> runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), locals.getLongValue(32), 0, 0, 0);
-                    case "uL(LLLLL)" -> runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), locals.getLongValue(32), locals.getLongValue(40), 0, 0);
-                    case "uL(LLLLLL)" -> runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), locals.getLongValue(32), locals.getLongValue(40), locals.getLongValue(48), 0);
-                    case "uL(LLLLLLL)" -> runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), locals.getLongValue(32), locals.getLongValue(40), locals.getLongValue(48), locals.getLongValue(56));
-                    default -> throw new RuntimeException("Unknown native method: " + current);
-                };
+                switch(current.signature.toString()) {
+                    case "uL(L)":
+                        return runSyscall(state, locals.getLongValue(8), 0, 0, 0, 0, 0, 0);
+                    case "uL(LL)":
+                        return runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), 0, 0, 0, 0, 0);
+                    case "uL(LLL)":
+                        return runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), 0, 0, 0, 0);
+                    case "uL(LLLL)":
+                        return runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), locals.getLongValue(32), 0, 0, 0);
+                    case "uL(LLLLL)":
+                        return runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), locals.getLongValue(32), locals.getLongValue(40), 0, 0);
+                    case "uL(LLLLLL)":
+                        return runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), locals.getLongValue(32), locals.getLongValue(40), locals.getLongValue(48), 0);
+                    case "uL(LLLLLLL)":
+                        return runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), locals.getLongValue(32), locals.getLongValue(40), locals.getLongValue(48), locals.getLongValue(56));
+                    default:
+                        throw new RuntimeException("Unknown native method: " + current);
+                }
             }else {
                 throw new RuntimeException("Unknown native method: " + current);
             }

@@ -22,8 +22,8 @@ public class DataParser {
 
     public ParserLocation getLocation(int index) {
         if(index < 0 || index > data.length()) throw new IllegalArgumentException("Index out of range");
-        var line = 0;
-        var len = 0;
+        int line = 0;
+        int len = 0;
         while(len <= index) {
             if(line == lines.length) {
                 line = lines.length - 1;

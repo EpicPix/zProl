@@ -1,6 +1,7 @@
 package ga.epicpix.zprol.parser.exceptions;
 
 import ga.epicpix.zprol.parser.DataParser;
+import ga.epicpix.zprol.parser.ParserLocation;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tree.ITree;
 
@@ -33,14 +34,17 @@ public class TokenLocatedException extends RuntimeException {
     public void printError() {
         if(parser != null) {
             try {
-                var startLoc = parser.getLocation(start);
-                var endLoc = parser.getLocation(end);
-                System.err.println(getMessage() + ", error at " + parser.getFileName() + ":" + (endLoc.line() + 1) + ":" + (startLoc.row() + 1));
+                ParserLocation startLoc = parser.getLocation(start);
+                ParserLocation endLoc = parser.getLocation(end);
+                System.err.println(getMessage() + ", error at " + parser.getFileName() + ":" + (endLoc.line + 1) + ":" + (startLoc.row + 1));
 
-                String l = parser.getLines()[endLoc.line()];
+                String l = parser.getLines()[endLoc.line];
                 System.err.println(l);
 
-                System.err.println(" ".repeat(startLoc.row()) + "^".repeat(endLoc.row() - startLoc.row()));
+                StringBuilder b = new StringBuilder();
+                for(int i = 0; i<startLoc.row; i++) b.append(" ");
+                for(int i = 0; i<endLoc.row - startLoc.row; i++) b.append("^");
+                System.err.println(b);
             } finally {
                 if(Boolean.parseBoolean(System.getProperty("SHOW_STACK_TRACE"))) {
                     System.err.println("DEBUG INFO:");

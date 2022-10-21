@@ -21,8 +21,8 @@ public class ParserException extends RuntimeException {
     }
 
     public void printError() {
-        int line = location.line();
-        int row = location.row();
+        int line = location.line;
+        int row = location.row;
 
         String msg = getMessage();
         if(msg.contains("\n")) {
@@ -32,7 +32,10 @@ public class ParserException extends RuntimeException {
             System.err.println(getMessage() + ", error at " + parser.getFileName() + ":" + (line + 1) + ":" + (row + 1));
         }
         System.err.println(parser.getLines()[line]);
-        System.err.println(" ".repeat(Math.max(0, row)) + "^");
+        StringBuilder b = new StringBuilder();
+        int c = Math.max(0, row);
+        for(int i = 0; i<c; i++) b.append(" ");
+        System.err.println(b + "^");
         if(Boolean.parseBoolean(System.getProperty("SHOW_STACK_TRACE"))) {
             System.err.println("DEBUG INFO:");
             StackTraceElement[] trace = getStackTrace();

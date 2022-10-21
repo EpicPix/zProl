@@ -31,7 +31,7 @@ public enum PreFieldModifiers {
     }
 
     public static PreFieldModifiers getModifier(String name) {
-        for(var modifier : MODIFIERS) {
+        for(PreFieldModifiers modifier : MODIFIERS) {
             if(modifier.getName().equals(name)) {
                 return modifier;
             }

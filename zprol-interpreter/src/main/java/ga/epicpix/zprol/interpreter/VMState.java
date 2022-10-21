@@ -6,6 +6,7 @@ import ga.epicpix.zprol.structures.Method;
 import ga.epicpix.zprol.types.PrimitiveType;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class VMState {
 
@@ -21,11 +22,11 @@ public class VMState {
     }
 
     public Function currentFunction() {
-        var s = stack.valueStack();
+        LinkedList<DataValue> s = stack.valueStack();
         for(int i = s.size() - 1; i >= 0; i--) {
-            var v = s.get(i).value();
-            if(v instanceof Function f) {
-                return f;
+            Object v = s.get(i).value;
+            if(v instanceof Function) {
+                return (Function) v;
             }else if(v instanceof Method) {
                 throw new IllegalStateException("Found a method instead of a function");
             }
@@ -34,11 +35,11 @@ public class VMState {
     }
 
     public Method currentMethod() {
-        var s = stack.valueStack();
+        LinkedList<DataValue> s = stack.valueStack();
         for(int i = s.size() - 1; i >= 0; i--) {
-            var v = s.get(i).value();
-            if(v instanceof Method f) {
-                return f;
+            Object v = s.get(i).value;
+            if(v instanceof Method) {
+                return (Method) v;
             }else if(v instanceof Function) {
                 throw new IllegalStateException("Found a function instead of a method");
             }
@@ -55,21 +56,21 @@ public class VMState {
     }
 
     public void popFunction() {
-        var v = stack.pop(8);
-        if(!(v.value() instanceof Function)) {
-            throw new IllegalStateException("Could not pop function, popped " + v.value());
+        DataValue v = stack.pop(8);
+        if(!(v.value instanceof Function)) {
+            throw new IllegalStateException("Could not pop function, popped " + v.value);
         }
     }
 
     public void popMethod() {
-        var v = stack.pop(8);
-        if(!(v.value() instanceof Method)) {
-            throw new IllegalStateException("Could not pop method, popped " + v.value());
+        DataValue v = stack.pop(8);
+        if(!(v.value instanceof Method)) {
+            throw new IllegalStateException("Could not pop method, popped " + v.value);
         }
     }
 
     public FieldStorage getField(Field field) {
-        for(var f : fields) {
+        for(FieldStorage f : fields) {
             if(f.field == field) {
                 return f;
             }
@@ -78,9 +79,10 @@ public class VMState {
     }
 
     public Object getFieldValue(Field f) {
-        var field = getField(f);
+        FieldStorage field = getField(f);
         if(!field.defined) {
-            if(f.type instanceof PrimitiveType t) {
+            if(f.type instanceof PrimitiveType) {
+                PrimitiveType t = (PrimitiveType) f.type;
                 if(t.size == 1) return (byte) 0;
                 else if(t.size == 2) return (short) 0;
                 else if(t.size == 4) return (int) 0;

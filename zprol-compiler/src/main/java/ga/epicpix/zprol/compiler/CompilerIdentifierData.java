@@ -14,15 +14,18 @@ public class CompilerIdentifierData {
     }
 
     public static CompilerIdentifierData[] accessorToData(AccessorTree accessor) {
-        var tokens = accessor.accessorElements();
-        var list = new ArrayList<CompilerIdentifierData>();
-        for(var element : tokens) {
-            if(element instanceof FieldAccessTree fa) {
-                list.add(new CompilerIdentifierDataField(fa, fa.name().toStringRaw()));
-            }else if(element instanceof FunctionCallTree fc) {
-                list.add(new CompilerIdentifierDataFunction(fc, fc.name().toStringRaw(), fc.arguments()));
-            }else if(element instanceof ArrayAccessTree aa) {
-                list.add(new CompilerIdentifierDataArray(aa, aa.index()));
+        IAccessorElement[] tokens = accessor.accessorElements;
+        ArrayList<CompilerIdentifierData> list = new ArrayList<CompilerIdentifierData>();
+        for(IAccessorElement element : tokens) {
+            if(element instanceof FieldAccessTree) {
+                FieldAccessTree fa = (FieldAccessTree) element;
+                list.add(new CompilerIdentifierDataField(fa, fa.name.toStringRaw()));
+            }else if(element instanceof FunctionCallTree) {
+                FunctionCallTree fc = (FunctionCallTree) element;
+                list.add(new CompilerIdentifierDataFunction(fc, fc.name.toStringRaw(), fc.arguments));
+            }else if(element instanceof ArrayAccessTree) {
+                ArrayAccessTree aa = (ArrayAccessTree) element;
+                list.add(new CompilerIdentifierDataArray(aa, aa.index));
             }else {
                 throw new TokenLocatedException("Cannot handle accessor element: " + element);
             }

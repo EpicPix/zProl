@@ -5,6 +5,7 @@ import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.interpreter.LocalStorage;
 import ga.epicpix.zprol.interpreter.VMState;
 import ga.epicpix.zprol.structures.Class;
+import ga.epicpix.zprol.structures.ClassField;
 import ga.epicpix.zprol.types.PrimitiveType;
 
 import java.util.HashMap;
@@ -16,8 +17,9 @@ public class DefaultClassImpl extends ClassImpl {
 
     public DefaultClassImpl(Class clz) {
         clazz = clz;
-        for(var v : clz.fields) {
-            if(v.type instanceof PrimitiveType p) {
+        for(ClassField v : clz.fields) {
+            if(v.type instanceof PrimitiveType) {
+                PrimitiveType p = (PrimitiveType) v.type;
                 if(p.size == 1) fields.put(v.name, (byte) 0);
                 else if(p.size == 2) fields.put(v.name, (short) 0);
                 else if(p.size == 4) fields.put(v.name, (int) 0);

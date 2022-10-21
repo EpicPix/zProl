@@ -9,8 +9,8 @@ public class LocalStorage {
 
     public void set(Object value, int loc, int size) {
         for(int i = 0; i<values.size(); i++) {
-            var v = values.get(i);
-            if(v.index() >= loc && v.index() < loc + size) {
+            LocalValue v = values.get(i);
+            if(v.index >= loc && v.index < loc + size) {
                 values.remove(i--);
             }
         }
@@ -21,9 +21,9 @@ public class LocalStorage {
         if(size < 0) throw new IllegalArgumentException("Cannot get negative bytes");
         if(size > 8) throw new IllegalArgumentException("Cannot get more than 8 bytes");
         for(LocalValue v : values) {
-            if(v.index() == loc) {
-                if(v.size() != size)
-                    throw new IllegalStateException("Expected " + size + " bytes, but got " + v.size() + " bytes");
+            if(v.index == loc) {
+                if(v.size != size)
+                    throw new IllegalStateException("Expected " + size + " bytes, but got " + v.size + " bytes");
                 return v;
             }
         }
@@ -31,7 +31,7 @@ public class LocalStorage {
     }
 
     public Object getLongValue(int loc) {
-        return get(loc, 8).value();
+        return get(loc, 8).value;
     }
 
 }

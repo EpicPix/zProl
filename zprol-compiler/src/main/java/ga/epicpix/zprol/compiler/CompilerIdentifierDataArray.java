@@ -24,14 +24,14 @@ public class CompilerIdentifierDataArray extends CompilerIdentifierData {
     }
 
     public Type loadArray(ArrayType arrayType, CompiledData data, FunctionCodeScope scope, IBytecodeStorage bytecode, DataParser parser) {
-        var types = new ArrayDeque<Type>();
+        ArrayDeque<Type> types = new ArrayDeque<Type>();
         generateInstructionsFromExpression(expression, null, types, data, scope, bytecode, false, parser);
-        var expressionType = types.pop();
+        Type expressionType = types.pop();
         if(!(expressionType instanceof PrimitiveType)) {
             throw new TokenLocatedException("Expected a primitive number", location, parser);
         }
-        var arrayData = arrayType.type;
-        if(arrayData instanceof PrimitiveType primitive) bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "load_array"));
+        Type arrayData = arrayType.type;
+        if(arrayData instanceof PrimitiveType) bytecode.pushInstruction(getConstructedSizeInstruction(((PrimitiveType) arrayData).getSize(), "load_array"));
         else if(arrayData instanceof BooleanType) bytecode.pushInstruction(getConstructedSizeInstruction(8, "load_array"));
         else if(arrayData instanceof ArrayType) bytecode.pushInstruction(getConstructedInstruction("aload_array"));
         else if(arrayData instanceof ClassType) bytecode.pushInstruction(getConstructedInstruction("aload_array"));
@@ -40,14 +40,14 @@ public class CompilerIdentifierDataArray extends CompilerIdentifierData {
     }
 
     public Type storeArray(ArrayType arrayType, CompiledData data, FunctionCodeScope scope, IBytecodeStorage bytecode, DataParser parser) {
-        var types = new ArrayDeque<Type>();
+        ArrayDeque<Type> types = new ArrayDeque<Type>();
         generateInstructionsFromExpression(expression, null, types, data, scope, bytecode, false, parser);
-        var expressionType = types.pop();
+        Type expressionType = types.pop();
         if(!(expressionType instanceof PrimitiveType)) {
             throw new TokenLocatedException("Expected a primitive number", location, parser);
         }
-        var arrayData = arrayType.type;
-        if(arrayData instanceof PrimitiveType primitive) bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "store_array"));
+        Type arrayData = arrayType.type;
+        if(arrayData instanceof PrimitiveType) bytecode.pushInstruction(getConstructedSizeInstruction(((PrimitiveType) arrayData).getSize(), "store_array"));
         else if(arrayData instanceof BooleanType) bytecode.pushInstruction(getConstructedSizeInstruction(8, "store_array"));
         else if(arrayData instanceof ArrayType) bytecode.pushInstruction(getConstructedInstruction("astore_array"));
         else if(arrayData instanceof ClassType) bytecode.pushInstruction(getConstructedInstruction("astore_array"));

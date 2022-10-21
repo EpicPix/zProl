@@ -3,7 +3,7 @@ package ga.epicpix.zprol.parser.tokens;
 import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.ParserLocation;
 
-public abstract sealed class Token permits LexerToken, NamedToken {
+public abstract class Token {
 
     public final DataParser parser;
     public final TokenType type;
@@ -11,10 +11,6 @@ public abstract sealed class Token permits LexerToken, NamedToken {
     public Token(TokenType type, DataParser parser) {
         this.type = type;
         this.parser = parser;
-    }
-
-    public NamedToken asNamedToken() {
-        return (NamedToken) this;
     }
 
     public LexerToken asLexerToken() {
@@ -40,11 +36,4 @@ public abstract sealed class Token permits LexerToken, NamedToken {
     public abstract int getStart();
     public abstract int getEnd();
 
-    public ParserLocation getStartLocation() {
-        return parser.getLocation(getStart());
-    }
-
-    public ParserLocation getEndLocation() {
-        return parser.getLocation(getEnd());
-    }
 }

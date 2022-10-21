@@ -7,7 +7,7 @@ import ga.epicpix.zprol.parser.tree.*;
 import ga.epicpix.zprol.utils.SeekIterator;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 import static ga.epicpix.zprol.parser.tokens.TokenType.*;
 
@@ -23,25 +23,31 @@ public final class Parser {
     }
 
     public FileTree parse() {
-        var declarations = new ArrayList<IDeclaration>();
+        ArrayList<IDeclaration> declarations = new ArrayList<IDeclaration>();
         int _start = curr();
         while(skipWhitespace()) {
             int start = curr();
             switch(lexerTokens.seek().type) {
-                case NamespaceKeyword -> {
+                case NamespaceKeyword: {
                     lexerTokens.next();
-                    var identifier = readNamespaceIdentifier(start);
+                    NamespaceIdentifierTree identifier = readNamespaceIdentifier(start);
                     wexpect(Semicolon);
                     declarations.add(new NamespaceTree(start, curr(), identifier));
+                    break;
                 }
-                case UsingKeyword -> {
+                case UsingKeyword: {
                     lexerTokens.next();
-                    var identifier = readNamespaceIdentifier(start);
+                    NamespaceIdentifierTree identifier = readNamespaceIdentifier(start);
                     wexpect(Semicolon);
                     declarations.add(new UsingTree(start, curr(), identifier));
+                    break;
                 }
-                case ClassKeyword -> declarations.add(readClass(start));
-                default -> declarations.add(readFieldOrMethod());
+                case ClassKeyword:
+                    declarations.add(readClass(start));
+                    break;
+                default:
+                    declarations.add(readFieldOrMethod());
+                    break;
             }
         }
         return new FileTree(_start, curr(), declarations);
@@ -94,7 +100,7 @@ public final class Parser {
         TypeTree type = readType();
         LexerToken name = wexpect(Identifier);
         skipWhitespace();
-        if(mods.modifiers().length != 0 || isNext(OpenParen)) {
+        if(mods.modifiers.length != 0 || isNext(OpenParen)) {
             return readFunction(start, mods, type, name);
         }
         wexpect(Semicolon);
@@ -167,7 +173,7 @@ public final class Parser {
         if(!isNext(OpenBrace)) {
             expect(LineCodeChars);
             IStatement statement = readStatement();
-            return new CodeTree(start, curr(), new ArrayList<>(List.of(statement)));
+            return new CodeTree(start, curr(), new ArrayList<>(Collections.singleton(statement)));
         }
         expect(OpenBrace);
         ArrayList<IStatement> statements = new ArrayList<>();
@@ -398,7 +404,7 @@ public final class Parser {
                 wexpect(CloseParen);
             }catch(TokenLocatedException e) {
                 lexerTokens.setIndex(_start);
-                var expr = readExpression();
+                IExpression expr = readExpression();
                 wexpect(CloseParen);
                 return expr;
             }
@@ -444,7 +450,7 @@ public final class Parser {
     public IAccessorElement readFunctionInvocationAccessor() {
         skipWhitespace();
         int start = curr();
-        var ident = expect(Identifier);
+        LexerToken ident = expect(Identifier);
         if(optional(OpenParen) != null) {
             ArgumentsTree args = readArgumentList(CloseParen);
             wexpect(CloseParen);
@@ -489,7 +495,7 @@ public final class Parser {
         if(!lexerTokens.hasNext()) {
             throw new TokenLocatedException("Expected '" + type.name() + "' got end of file", lexerTokens.current());
         }
-        var next = lexerTokens.next();
+        LexerToken next = lexerTokens.next();
         if(next.type == type) {
             return next;
         }
@@ -520,7 +526,7 @@ public final class Parser {
 
     public LexerToken optional(TokenType... types) {
         for(TokenType type : types) {
-            var opt = optional(type);
+            LexerToken opt = optional(type);
             if(opt == null) continue;
             return opt;
         }

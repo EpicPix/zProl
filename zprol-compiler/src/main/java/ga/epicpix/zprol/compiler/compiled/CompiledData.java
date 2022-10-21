@@ -5,6 +5,7 @@ import ga.epicpix.zpil.attr.ConstantValueAttribute;
 import ga.epicpix.zpil.bytecode.Bytecode;
 import ga.epicpix.zprol.compiler.exceptions.RedefinedFieldException;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
+import ga.epicpix.zprol.compiler.precompiled.PreClass;
 import ga.epicpix.zprol.compiler.precompiled.PreCompiledData;
 import ga.epicpix.zprol.compiler.exceptions.RedefinedClassException;
 import ga.epicpix.zprol.compiler.exceptions.RedefinedFunctionException;
@@ -40,8 +41,8 @@ public class CompiledData {
     public final ArrayList<Class> classes = new ArrayList<>();
 
     public void includeToGenerated(GeneratedData data) {
-        for(var f : functions) {
-            for(var validate : data.functions) {
+        for(Function f : functions) {
+            for(Function validate : data.functions) {
                 if(!Objects.equals(validate.namespace, f.namespace)) continue;
                 if(!validate.name.equals(f.name)) continue;
 
@@ -52,14 +53,14 @@ public class CompiledData {
             data.functions.add(f);
             data.constantPool.prepareConstantPool(f);
             if(!FunctionModifiers.isEmptyCode(f.modifiers)) {
-                for (var instruction : f.code.getInstructions()) {
+                for (IBytecodeInstruction instruction : f.code.getInstructions()) {
                     Bytecode.prepareConstantPool(instruction, data.constantPool);
                 }
             }
         }
 
-        for(var f : fields) {
-            for(var validate : data.fields) {
+        for(Field f : fields) {
+            for(Field validate : data.fields) {
                 if(!Objects.equals(validate.namespace, f.namespace)) continue;
                 if(!validate.name.equals(f.name)) continue;
 
@@ -73,8 +74,8 @@ public class CompiledData {
             }
         }
 
-        for(var clz : classes) {
-            for(var validate : data.classes) {
+        for(Class clz : classes) {
+            for(Class validate : data.classes) {
                 if(!Objects.equals(validate.namespace, clz.namespace)) continue;
                 if(!validate.name.equals(clz.name)) continue;
 
@@ -82,14 +83,14 @@ public class CompiledData {
             }
             data.classes.add(clz);
             data.constantPool.prepareConstantPool(clz);
-            for(var field : clz.fields) {
+            for(ClassField field : clz.fields) {
                 data.constantPool.getOrCreateStringIndex(field.name);
                 data.constantPool.getOrCreateStringIndex(field.type.getDescriptor());
             }
-            for(var m : clz.methods) {
+            for(Method m : clz.methods) {
                 data.constantPool.prepareConstantPool(m);
                 if(!FunctionModifiers.isEmptyCode(m.modifiers)) {
-                    for (var instruction : m.code.getInstructions()) {
+                    for (IBytecodeInstruction instruction : m.code.getInstructions()) {
                         Bytecode.prepareConstantPool(instruction, data.constantPool);
                     }
                 }
@@ -115,7 +116,7 @@ public class CompiledData {
             type = type.substring(0, type.length() - 2);
             arrAmount++;
         }
-        var t = Types.getType(type);
+        Type t = Types.getType(type);
         if(t != null) {
             for(int i = 0; i<arrAmount; i++) {
                 t = new ArrayType(t);
@@ -124,11 +125,11 @@ public class CompiledData {
         }
         String namespace = type.lastIndexOf('.') != -1 ? type.substring(0, type.lastIndexOf('.')) : null;
         String name = type.lastIndexOf('.') != -1 ? type.substring(type.lastIndexOf('.') + 1) : type;
-        for(var data : using) {
+        for(PreCompiledData data : using) {
             if(namespace != null) {
                 if(!Objects.equals(namespace, data.namespace)) continue;
             }
-            for(var clz : data.classes) {
+            for(PreClass clz : data.classes) {
                 if(clz.name.equals(name)) {
                     t = new ClassType(data.namespace, clz.name);
                     for(int i = 0; i<arrAmount; i++) {

@@ -1,3 +1,11 @@
 package ga.epicpix.zprol.parser;
 
-public record ParserLocation(int line, int row) {}
+public final class ParserLocation {
+    public final int line;
+    public final int row;
+
+    public ParserLocation(int line, int row) {
+        this.line = line;
+        this.row = row;
+    }
+}

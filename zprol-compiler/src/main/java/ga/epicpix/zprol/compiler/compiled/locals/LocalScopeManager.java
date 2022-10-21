@@ -34,8 +34,4 @@ public class LocalScopeManager {
         currentScope = currentScope.parent;
     }
 
-    public LocalScope getCurrentScope() {
-        return currentScope;
-    }
-
 }

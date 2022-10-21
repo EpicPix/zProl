@@ -13,7 +13,7 @@ public class PreCompiler {
         PreCompiledData pre = new PreCompiledData();
         pre.parser = parser;
         pre.sourceFile = sourceFile;
-        List<IDeclaration> declarations = file.declarations();
+        List<IDeclaration> declarations = file.declarations;
         for(int i = 0; i < declarations.size(); i++) {
             IDeclaration nsSearch = declarations.get(i);
             if(nsSearch instanceof NamespaceTree) {
@@ -24,34 +24,40 @@ public class PreCompiler {
         }
 
         for(IDeclaration decl : declarations) {
-            if(decl instanceof UsingTree using) {
-                pre.using.add(using.identifier().toString());
-            }else if(decl instanceof NamespaceTree namespace) {
+            if(decl instanceof UsingTree) {
+                UsingTree using = (UsingTree) decl;
+                pre.using.add(using.identifier.toString());
+            }else if(decl instanceof NamespaceTree) {
+                NamespaceTree namespace = (NamespaceTree) decl;
                 if(pre.namespace != null) throw new TokenLocatedException("Defined namespace for a file multiple times", namespace, parser);
-                pre.namespace = namespace.identifier().toString();
-            }else if(decl instanceof FunctionTree func) {
+                pre.namespace = namespace.identifier.toString();
+            }else if(decl instanceof FunctionTree) {
+                FunctionTree func = (FunctionTree) decl;
                 pre.functions.add(parseFunction(func, parser));
-            }else if(decl instanceof FieldTree f) {
-                PreField field = new PreField(f.value());
-                field.type = f.type().toString();
-                field.name = f.name().toStringRaw();
-                if(f.isConst()) {
+            }else if(decl instanceof FieldTree) {
+                FieldTree f = (FieldTree) decl;
+                PreField field = new PreField(f.value);
+                field.type = f.type.toString();
+                field.name = f.name.toStringRaw();
+                if(f.isConst) {
                     field.modifiers.add(PreFieldModifiers.CONST);
                 }
                 pre.fields.add(field);
-            }else if(decl instanceof ClassTree clz) {
+            }else if(decl instanceof ClassTree) {
+                ClassTree clz = (ClassTree) decl;
                 PreClass clazz = new PreClass();
                 clazz.namespace = pre.namespace;
-                clazz.name = clz.name().toStringRaw();
+                clazz.name = clz.name.toStringRaw();
 
-                for(var decl2 : clz.declarations()) {
-                    if(decl2 instanceof FieldTree f) {
-                        PreField field = new PreField(f.value());
-                        field.type = f.type().toString();
-                        field.name = f.name().toStringRaw();
+                for(IDeclaration decl2 : clz.declarations) {
+                    if(decl2 instanceof FieldTree) {
+                        FieldTree f = (FieldTree) decl2;
+                        PreField field = new PreField(f.value);
+                        field.type = f.type.toString();
+                        field.name = f.name.toStringRaw();
                         clazz.fields.add(field);
-                    }else if(decl2 instanceof FunctionTree m) {
-                        clazz.methods.add(parseFunction(m, parser));
+                    }else if(decl2 instanceof FunctionTree) {
+                        clazz.methods.add(parseFunction((FunctionTree) decl2, parser));
                     }else {
                         throw new TokenLocatedException("Unsupported declaration \"" + decl2.getClass().getSimpleName() + "\"", decl2, parser);
                     }
@@ -67,30 +73,30 @@ public class PreCompiler {
     }
 
     private static PreFunction parseFunction(FunctionTree function, DataParser parser) {
-        var func = new PreFunction();
-        for(ModifierTree modifier : function.modifiers().modifiers()) {
-            FunctionModifiers modifiers = FunctionModifiers.getModifier(modifier.mod());
+        PreFunction func = new PreFunction();
+        for(ModifierTree modifier : function.modifiers.modifiers) {
+            FunctionModifiers modifiers = FunctionModifiers.getModifier(modifier.mod);
             if(func.modifiers.contains(modifiers)) {
                 throw new TokenLocatedException("Duplicate function modifier: '" + modifiers.name().toLowerCase() + "'", modifier, parser);
             }
             func.modifiers.add(modifiers);
         }
-        func.returnType = function.type().toString();
-        func.name = function.name().toStringRaw();
-        var paramList = function.parameters();
-        for (ParameterTree paramTree : paramList.parameters()) {
+        func.returnType = function.type.toString();
+        func.name = function.name.toStringRaw();
+        ParametersTree paramList = function.parameters;
+        for (ParameterTree paramTree : paramList.parameters) {
             PreParameter param = new PreParameter();
-            param.type = paramTree.type().toString();
-            param.name = paramTree.name().toStringRaw();
+            param.type = paramTree.type.toString();
+            param.name = paramTree.name.toStringRaw();
             func.parameters.add(param);
         }
         if(func.hasCode()) {
-            if(function.code() == null) {
+            if(function.code == null) {
                 throw new TokenLocatedException("Expected code", function, parser);
             }
-            func.code.addAll(function.code().statements());
+            func.code.addAll(function.code.statements);
         }else {
-            if(function.code() != null) {
+            if(function.code != null) {
                 throw new TokenLocatedException("Expected no code", function, parser);
             }
         }

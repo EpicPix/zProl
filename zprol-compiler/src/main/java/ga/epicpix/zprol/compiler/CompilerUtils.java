@@ -1,37 +1,26 @@
 package ga.epicpix.zprol.compiler;
 
 import ga.epicpix.zpil.bytecode.Bytecode;
-import ga.epicpix.zpil.bytecode.IBytecodeInstructionGenerator;
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.precompiled.PreClass;
-import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
-import ga.epicpix.zprol.parser.tokens.Token;
+import ga.epicpix.zprol.compiler.precompiled.PreCompiledData;
 import ga.epicpix.zprol.structures.IBytecodeInstruction;
 import ga.epicpix.zprol.structures.IBytecodeStorage;
 import ga.epicpix.zprol.types.ClassType;
 
-import java.math.BigInteger;
 import java.util.Objects;
 
 public class CompilerUtils {
 
     public static PreClass classTypeToPreClass(ClassType type, CompiledData data) {
-        for(var use : data.getUsing()) {
-            for(var clz : use.classes) {
+        for(PreCompiledData use : data.getUsing()) {
+            for(PreClass clz : use.classes) {
                 if(!Objects.equals(clz.namespace, type.getNamespace())) continue;
                 if(!clz.name.equals(type.getName())) continue;
                 return clz;
             }
         }
         return null;
-    }
-
-    public static BigInteger getInteger(Token token) {
-        String raw = token.toStringRaw();
-        if(raw.startsWith("0x")) {
-            return new BigInteger(token.toStringRaw().substring(2), 16);
-        }
-        return new BigInteger(token.toStringRaw(), 10);
     }
 
     public static String getInstructionPrefix(int size) {

@@ -29,8 +29,8 @@ public class LocalScope {
         if(findLocalVariable(name) != null) {
             throw new VariableAlreadyDefinedException(name);
         }
-        if(type instanceof PrimitiveType primitive) {
-            index += primitive.getSize();
+        if(type instanceof PrimitiveType) {
+            index += ((PrimitiveType) type).getSize();
         }else {
             index += 8;
         }
@@ -41,7 +41,7 @@ public class LocalScope {
 
     public LocalVariable getLocalVariable(String name) {
         for(LocalVariable lVar : localVariables) {
-            if(lVar.name().equals(name)) {
+            if(lVar.name.equals(name)) {
                 return lVar;
             }
         }
@@ -51,7 +51,7 @@ public class LocalScope {
 
     public LocalVariable tryGetLocalVariable(String name) {
         for(LocalVariable lVar : localVariables) {
-            if(lVar.name().equals(name)) {
+            if(lVar.name.equals(name)) {
                 return lVar;
             }
         }
@@ -61,7 +61,7 @@ public class LocalScope {
 
     public LocalVariable findLocalVariable(String name) {
         for(LocalVariable lVar : localVariables) {
-            if(lVar.name().equals(name)) {
+            if(lVar.name.equals(name)) {
                 return lVar;
             }
         }

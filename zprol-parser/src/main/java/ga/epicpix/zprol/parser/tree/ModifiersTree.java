@@ -1,10 +1,20 @@
 package ga.epicpix.zprol.parser.tree;
 
-public record ModifiersTree(int start, int end, ModifierTree[] modifiers) implements ITree {
+public final class ModifiersTree implements ITree {
+    private final int start;
+    private final int end;
+    public final ModifierTree[] modifiers;
+
+    public ModifiersTree(int start, int end, ModifierTree[] modifiers) {
+        this.start = start;
+        this.end = end;
+        this.modifiers = modifiers;
+    }
+
     public long mods() {
         long m = 0;
         for(ModifierTree mod : modifiers) {
-            m |= mod.mod();
+            m |= mod.mod;
         }
         return m;
     }
