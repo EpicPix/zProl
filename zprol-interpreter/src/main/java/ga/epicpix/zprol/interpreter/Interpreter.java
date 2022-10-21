@@ -1,15 +1,11 @@
 package ga.epicpix.zprol.interpreter;
 
 import ga.epicpix.zpil.GeneratedData;
-import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.structures.Function;
 import ga.epicpix.zprol.structures.FunctionModifiers;
 import ga.epicpix.zprol.structures.FunctionSignature;
 import ga.epicpix.zprol.types.PrimitiveType;
-import ga.epicpix.zprol.types.Type;
 import ga.epicpix.zprol.types.Types;
-
-import java.util.Arrays;
 
 import static ga.epicpix.zprol.interpreter.InstructionImpl.runInstruction;
 
