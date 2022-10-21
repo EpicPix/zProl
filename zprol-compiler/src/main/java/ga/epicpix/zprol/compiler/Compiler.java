@@ -366,13 +366,13 @@ public class Compiler {
                     for(var instr : arg2bytecode.getInstructions()) {
                         bytecode.pushInstruction(instr);
                     }
-                    bytecode.pushInstruction(getConstructedInstruction("beq"));
+                    bytecode.pushInstruction(getConstructedInstruction("leq"));
                     return new BooleanType();
                 }else if(operatorName.equals("!=")) {
                     for(var instr : arg2bytecode.getInstructions()) {
                         bytecode.pushInstruction(instr);
                     }
-                    bytecode.pushInstruction(getConstructedInstruction("bneq"));
+                    bytecode.pushInstruction(getConstructedInstruction("lneq"));
                     return new BooleanType();
                 }
             }
