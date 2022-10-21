@@ -20,6 +20,7 @@ class InstructionImpl {
             case "invoke" -> Interpreter.runFunction(file, state, (Function) instruction.getData()[0]);
             case "invoke_class" -> Interpreter.runMethod(file, state, (Method) instruction.getData()[0]);
             case "icastl" -> state.stack.push((long) (Integer) state.stack.pop(4).value(), 8);
+            case "bcasti" -> state.stack.push((int) (Byte) state.stack.pop(1).value(), 4);
             case "bpush" -> state.stack.push((Byte) instruction.getData()[0], 1);
             case "ipush" -> state.stack.push((Integer) instruction.getData()[0], 4);
             case "lpush" -> state.stack.push((Long) instruction.getData()[0], 8);
@@ -28,7 +29,15 @@ class InstructionImpl {
             case "iadd" -> state.stack.push((Integer) state.stack.pop(4).value() + (Integer) state.stack.pop(4).value(), 4);
             case "ladd" -> state.stack.push((Long) state.stack.pop(8).value() + (Long) state.stack.pop(8).value(), 8);
             case "lmul", "lmulu" -> state.stack.push((Long) state.stack.pop(8).value() * (Long) state.stack.pop(8).value(), 8);
+            case "band" -> state.stack.push((byte) ((Byte) state.stack.pop(1).value() & (Byte) state.stack.pop(1).value()), 1);
+            case "iand" -> state.stack.push((Integer) state.stack.pop(4).value() & (Integer) state.stack.pop(4).value(), 4);
             case "land" -> state.stack.push((Long) state.stack.pop(8).value() & (Long) state.stack.pop(8).value(), 8);
+            case "lsub" -> {
+                var b = (Long) state.stack.pop(8).value();
+                var a = (Long) state.stack.pop(8).value();
+                state.stack.push(a - b, 8);
+            }
+            case "bor" -> state.stack.push((byte) ((Byte) state.stack.pop(1).value() | (Byte) state.stack.pop(1).value()), 1);
             case "lor" -> state.stack.push((Long) state.stack.pop(8).value() | (Long) state.stack.pop(8).value(), 8);
             case "lleu" -> {
                 var b = (Long) state.stack.pop(8).value();
@@ -55,11 +64,22 @@ class InstructionImpl {
                 var a = state.stack.pop(8).value();
                 state.stack.push(Objects.equals(a, b) ? 1L : 0L, 8);
             }
+            case "ineq" -> {
+                var b = state.stack.pop(4).value();
+                var a = state.stack.pop(4).value();
+                state.stack.push(!Objects.equals(a, b) ? 1L : 0L, 8);
+            }
+            case "aneq", "lneq" -> {
+                var b = state.stack.pop(8).value();
+                var a = state.stack.pop(8).value();
+                state.stack.push(!Objects.equals(a, b) ? 1L : 0L, 8);
+            }
             case "neqjmp" -> {
                 if((Long) state.stack.pop(8).value() == 0) {
                     state.currentInstruction += (Short) instruction.getData()[0] - 1;
                 }
             }
+            case "jmp" -> state.currentInstruction += (Short) instruction.getData()[0] - 1;
             case "apop", "lpop" -> state.stack.pop(8);
             case "aload_field", "lload_field" -> state.stack.push(state.getFieldValue((Field) instruction.getData()[0]), 8);
             case "astore_field" -> {
