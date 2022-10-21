@@ -27,12 +27,21 @@ public class Interpreter {
             state.fields.add(v);
         }
         var sig = new FunctionSignature(Types.getTypeFromDescriptor("V"));
-        for(var f : file.functions) {
-            if(f.name().equals(".init") && f.signature().equals(sig)) {
-                runFunction(file, state, f);
+        try {
+            for(var f : file.functions) {
+                if(f.name().equals(".init") && f.signature().equals(sig)) {
+                    runFunction(file, state, f);
+                }
             }
+            runFunction(file, state, function);
+        }catch(RuntimeException e) {
+            StringBuilder s = new StringBuilder("An exception occurred while interpreting code\nStack Dump:");
+            for(var t : state.stack.valueStack()) {
+                s.append("\n").append("[").append(t.size()).append("b] ").append(t.value());
+            }
+            s.append("\n").append("Native Implementation: ").append(state.natives == null ? "<None>" : state.natives.getClass().getName());
+            throw new RuntimeException(s.toString(), e);
         }
-        runFunction(file, state, function);
     }
 
     static void runFunction(GeneratedData file, VMState state, Function function) {
@@ -49,6 +58,9 @@ public class Interpreter {
         state.pushFunction(function);
         var func = state.currentFunction();
         if(func.modifiers().contains(FunctionModifiers.NATIVE)) {
+            if(state.natives == null) {
+                throw new IllegalStateException("Cannot call native functions, missing a native implementation");
+            }
             Object returnValue = state.natives.runNative(file, state, locals);
             state.popFunction();
             if(func.signature().returnType() != Types.getTypeFromDescriptor("V")) {
