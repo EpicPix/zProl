@@ -31,28 +31,28 @@ class InstructionImpl {
             case "land" -> state.stack.push((Long) state.stack.pop(8).value() & (Long) state.stack.pop(8).value(), 8);
             case "lor" -> state.stack.push((Long) state.stack.pop(8).value() | (Long) state.stack.pop(8).value(), 8);
             case "lleu" -> {
-                var a = (Long) state.stack.pop(8).value();
                 var b = (Long) state.stack.pop(8).value();
+                var a = (Long) state.stack.pop(8).value();
                 state.stack.push(Long.compareUnsigned(a, b) <= 0 ? 1L : 0L, 8);
             }
             case "lltu" -> {
-                var a = (Long) state.stack.pop(8).value();
                 var b = (Long) state.stack.pop(8).value();
+                var a = (Long) state.stack.pop(8).value();
                 state.stack.push(Long.compareUnsigned(a, b) < 0 ? 1L : 0L, 8);
             }
             case "lgeu" -> {
-                var a = (Long) state.stack.pop(8).value();
                 var b = (Long) state.stack.pop(8).value();
+                var a = (Long) state.stack.pop(8).value();
                 state.stack.push(Long.compareUnsigned(a, b) >= 0 ? 1L : 0L, 8);
             }
             case "lgtu" -> {
-                var a = (Long) state.stack.pop(8).value();
                 var b = (Long) state.stack.pop(8).value();
+                var a = (Long) state.stack.pop(8).value();
                 state.stack.push(Long.compareUnsigned(a, b) > 0 ? 1L : 0L, 8);
             }
             case "aeq" -> {
-                var a = state.stack.pop(8).value();
                 var b = state.stack.pop(8).value();
+                var a = state.stack.pop(8).value();
                 state.stack.push(Objects.equals(a, b) ? 1L : 0L, 8);
             }
             case "neqjmp" -> {
