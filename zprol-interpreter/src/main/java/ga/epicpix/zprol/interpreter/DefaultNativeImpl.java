@@ -44,7 +44,7 @@ public class DefaultNativeImpl extends NativeImpl {
         throw new RuntimeException("Cannot handle syscall: " + num + " / " + arg0 + " / " + arg1 + " / " + arg2 + " / " + arg3 + " / " + arg4 + " / " + arg5);
     }
 
-    public Object runNative(GeneratedData file, VMState state, LocalStorage locals) {
+    public Object runNativeFunction(GeneratedData file, VMState state, LocalStorage locals) {
         var current = state.currentFunction();
         if(Objects.equals(current.namespace(), "zprol.lang.linux.amd64")) {
             if(current.name().equals("syscall")) {

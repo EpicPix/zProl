@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class DefaultMemoryImpl extends MemoryImpl {
 
-    private final ArrayList<MemoryData> maps = new ArrayList<>();
+    final ArrayList<MemoryData> maps = new ArrayList<>();
 
     public byte get(long addr) {
         for(var v : maps) {
@@ -12,7 +12,7 @@ public class DefaultMemoryImpl extends MemoryImpl {
                 return v.data()[Math.toIntExact(addr - v.start())];
             }
         }
-        throw new RuntimeException("Unregistered memory at address " + addr);
+        throw new RuntimeException("Unregistered memory at address 0x" + Long.toHexString(addr));
     }
 
     public void set(long addr, byte val) {
@@ -22,7 +22,7 @@ public class DefaultMemoryImpl extends MemoryImpl {
                 return;
             }
         }
-        throw new RuntimeException("Unregistered memory at address " + addr);
+        throw new RuntimeException("Unregistered memory at address 0x" + Long.toHexString(addr));
     }
 
     public long registerMemory(long addr, long length) {

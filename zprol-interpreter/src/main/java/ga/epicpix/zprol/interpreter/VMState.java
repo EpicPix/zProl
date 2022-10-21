@@ -2,6 +2,7 @@ package ga.epicpix.zprol.interpreter;
 
 import ga.epicpix.zprol.structures.Field;
 import ga.epicpix.zprol.structures.Function;
+import ga.epicpix.zprol.structures.Method;
 import ga.epicpix.zprol.types.PrimitiveType;
 
 import java.util.ArrayList;
@@ -22,21 +23,48 @@ public class VMState {
     public Function currentFunction() {
         var s = stack.valueStack();
         for(int i = s.size() - 1; i >= 0; i--) {
-            if(s.get(i).value() instanceof Function f) {
+            var v = s.get(i).value();
+            if(v instanceof Function f) {
                 return f;
+            }else if(v instanceof Method) {
+                throw new IllegalStateException("Found a method instead of a function");
             }
         }
         throw new IllegalStateException("Current function not found");
+    }
+
+    public Method currentMethod() {
+        var s = stack.valueStack();
+        for(int i = s.size() - 1; i >= 0; i--) {
+            var v = s.get(i).value();
+            if(v instanceof Method f) {
+                return f;
+            }else if(v instanceof Function) {
+                throw new IllegalStateException("Found a function instead of a method");
+            }
+        }
+        throw new IllegalStateException("Current method not found");
     }
 
     public void pushFunction(Function function) {
         stack.push(function, 8);
     }
 
+    public void pushMethod(Method method) {
+        stack.push(method, 8);
+    }
+
     public void popFunction() {
         var v = stack.pop(8);
         if(!(v.value() instanceof Function)) {
             throw new IllegalStateException("Could not pop function, popped " + v.value());
+        }
+    }
+
+    public void popMethod() {
+        var v = stack.pop(8);
+        if(!(v.value() instanceof Method)) {
+            throw new IllegalStateException("Could not pop method, popped " + v.value());
         }
     }
 
