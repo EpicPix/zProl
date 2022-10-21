@@ -2,6 +2,7 @@ package ga.epicpix.zprol.interpreter;
 
 import ga.epicpix.zprol.structures.Field;
 import ga.epicpix.zprol.structures.Function;
+import ga.epicpix.zprol.types.PrimitiveType;
 
 import java.util.ArrayList;
 
@@ -51,7 +52,14 @@ public class VMState {
     public Object getFieldValue(Field f) {
         var field = getField(f);
         if(!field.defined) {
-            throw new IllegalStateException("Field content not defined!");
+            if(f.type() instanceof PrimitiveType t) {
+                if(t.size == 1) return (byte) 0;
+                else if(t.size == 2) return (short) 0;
+                else if(t.size == 4) return (int) 0;
+                else if(t.size == 8) return (long) 0;
+            }else {
+                return (long) 0;
+            }
         }
         return field.value;
     }

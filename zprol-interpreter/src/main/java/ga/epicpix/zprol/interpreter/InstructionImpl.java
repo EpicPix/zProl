@@ -20,6 +20,8 @@ class InstructionImpl {
             case "bpush" -> state.stack.push((Byte) instruction.getData()[0], 1);
             case "ipush" -> state.stack.push((Integer) instruction.getData()[0], 4);
             case "lpush" -> state.stack.push((Long) instruction.getData()[0], 8);
+            case "null", "false" -> state.stack.push(0L, 8);
+            case "true" -> state.stack.push(1L, 8);
             case "ladd" -> state.stack.push((Long) state.stack.pop(8).value() + (Long) state.stack.pop(8).value(), 8);
             case "land" -> state.stack.push((Long) state.stack.pop(8).value() & (Long) state.stack.pop(8).value(), 8);
             case "lor" -> state.stack.push((Long) state.stack.pop(8).value() | (Long) state.stack.pop(8).value(), 8);
@@ -39,7 +41,7 @@ class InstructionImpl {
                 }
             }
             case "apop", "lpop" -> state.stack.pop(8);
-            case "lload_field" -> state.stack.push(state.getFieldValue((Field) instruction.getData()[0]), 8);
+            case "aload_field", "lload_field" -> state.stack.push(state.getFieldValue((Field) instruction.getData()[0]), 8);
             case "lload_local", "aload_local" -> state.stack.push(locals.get((Short) instruction.getData()[0], 8).value(), 8);
             case "astore_local", "lstore_local" -> locals.set(state.stack.pop(8).value(), (Short) instruction.getData()[0], 8);
             case "class_field_load" -> {
