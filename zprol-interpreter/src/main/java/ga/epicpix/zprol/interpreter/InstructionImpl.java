@@ -13,6 +13,7 @@ class InstructionImpl {
     static void runInstruction(GeneratedData file, VMState state, IBytecodeInstruction instruction, LocalStorage locals) {
         switch(instruction.getName()) {
             case "vreturn" -> state.returnFunction(null, 0);
+            case "areturn", "lreturn" -> state.returnFunction(state.stack.pop(8).value(), 8);
             case "push_string" -> state.stack.push(new StringImpl((String) instruction.getData()[0]), 8);
             case "invoke" -> Interpreter.runFunction(file, state, (Function) instruction.getData()[0]);
             case "icastl" -> state.stack.push((long) (Integer) state.stack.pop(4).value(), 8);
@@ -36,7 +37,7 @@ class InstructionImpl {
                     state.currentInstruction += (Short) instruction.getData()[0] - 1;
                 }
             }
-            case "lpop" -> state.stack.pop(8);
+            case "apop", "lpop" -> state.stack.pop(8);
             case "lload_field" -> state.stack.push(state.getFieldValue((Field) instruction.getData()[0]), 8);
             case "lload_local", "aload_local" -> state.stack.push(locals.get((Short) instruction.getData()[0], 8).value(), 8);
             case "astore_local", "lstore_local" -> locals.set(state.stack.pop(8).value(), (Short) instruction.getData()[0], 8);

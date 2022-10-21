@@ -10,10 +10,12 @@ public class VMState {
     public final DataStack stack = new DataStack();
     public final ArrayList<FieldStorage> fields = new ArrayList<>();
     public final NativeImpl natives;
+    public final MemoryImpl memory;
     public int currentInstruction;
 
-    VMState(NativeImpl natives) {
+    VMState(NativeImpl natives, MemoryImpl memory) {
         this.natives = natives;
+        this.memory = memory;
     }
 
     public Function currentFunction() {

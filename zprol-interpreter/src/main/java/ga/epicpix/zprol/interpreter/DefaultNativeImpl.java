@@ -27,6 +27,19 @@ public class DefaultNativeImpl extends NativeImpl {
             }else {
                 throw new RuntimeException("Expected syscall arg0 to be a number");
             }
+        }else if(num == Long.valueOf(9) /* SYS_MMAP */) {
+            if(state.memory instanceof DefaultMemoryImpl dmi) {
+                // TODO finish mmap properly
+                return dmi.registerMemory((Long) arg0, (Long) arg1);
+            }else {
+                throw new RuntimeException("Cannot use the mmap syscall with a non-default memory implementation");
+            }
+        }else if(num == Long.valueOf(11) /* SYS_MUNMAP */) {
+            if(state.memory instanceof DefaultMemoryImpl dmi) {
+                return dmi.unregisterMemory((Long) arg0) ? 0L : -1L;
+            }else {
+                throw new RuntimeException("Cannot use the munmap syscall with a non-default memory implementation");
+            }
         }
         throw new RuntimeException("Cannot handle syscall: " + num + " / " + arg0 + " / " + arg1 + " / " + arg2 + " / " + arg3 + " / " + arg4 + " / " + arg5);
     }

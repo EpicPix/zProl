@@ -11,12 +11,13 @@ import static ga.epicpix.zprol.interpreter.InstructionImpl.runInstruction;
 
 public class Interpreter {
 
-    public static void runInterpreter(GeneratedData file, Function function) {
-        runInterpreter(file, function, new DefaultNativeImpl());
+    public static VMState runInterpreter(GeneratedData file, Function function) {
+        return runInterpreter(file, function, new DefaultNativeImpl(), new DefaultMemoryImpl());
     }
 
-    public static void runInterpreter(GeneratedData file, Function function, NativeImpl natives) {
-        VMState state = new VMState(natives);
+    public static VMState runInterpreter(GeneratedData file, Function function, NativeImpl natives, MemoryImpl memory) {
+        if(memory == null) throw new NullPointerException("The memory implementation cannot be null!");
+        VMState state = new VMState(natives, memory);
         for(var f : file.fields) {
             var v = new FieldStorage();
             v.field = f;
@@ -33,25 +34,29 @@ public class Interpreter {
                     runFunction(file, state, f);
                 }
             }
-            runFunction(file, state, function);
+            if(function != null) {
+                runFunction(file, state, function);
+            }
+            return state;
         }catch(RuntimeException e) {
             StringBuilder s = new StringBuilder("An exception occurred while interpreting code\nStack Dump:");
             for(var t : state.stack.valueStack()) {
                 s.append("\n").append("[").append(t.size()).append("b] ").append(t.value());
             }
             s.append("\n").append("Native Implementation: ").append(state.natives == null ? "<None>" : state.natives.getClass().getName());
+            s.append("\n").append("Memory Implementation: ").append(state.memory.getClass().getName());
             throw new RuntimeException(s.toString(), e);
         }
     }
 
-    static void runFunction(GeneratedData file, VMState state, Function function) {
+    public static void runFunction(GeneratedData file, VMState state, Function function) {
         LocalStorage locals = new LocalStorage();
         var params = function.signature().parameters();
         int loc = 0;
         for(var param : params) loc += param instanceof PrimitiveType prim ? prim.size : 8;
 
-        for(int i = 0; i<params.length; i++) {
-            int size = params[i] instanceof PrimitiveType prim ? prim.size : 8;
+        for(var param : params) {
+            int size = param instanceof PrimitiveType prim ? prim.size : 8;
             locals.set(state.stack.pop(size).value(), loc, size);
             loc -= size;
         }
