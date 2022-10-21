@@ -7,7 +7,8 @@ public class DefaultMemoryImpl extends MemoryImpl {
     final ArrayList<MemoryData> maps = new ArrayList<>();
 
     public byte get(long addr) {
-        for(var v : maps) {
+        for(int i = 0, mapsSize = maps.size(); i < mapsSize; i++) {
+            MemoryData v = maps.get(i);
             if(addr >= v.start() && addr < v.start() + v.length()) {
                 return v.data()[Math.toIntExact(addr - v.start())];
             }
@@ -16,7 +17,8 @@ public class DefaultMemoryImpl extends MemoryImpl {
     }
 
     public void set(long addr, byte val) {
-        for(var v : maps) {
+        for(int i = 0, mapsSize = maps.size(); i < mapsSize; i++) {
+            MemoryData v = maps.get(i);
             if(addr >= v.start() && addr < v.start() + v.length()) {
                 v.data()[Math.toIntExact(addr - v.start())] = val;
                 return;

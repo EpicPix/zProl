@@ -59,6 +59,11 @@ class InstructionImpl {
                 var a = (Long) state.stack.pop(8).value();
                 state.stack.push(Long.compareUnsigned(a, b) > 0 ? 1L : 0L, 8);
             }
+            case "ieq" -> {
+                var b = state.stack.pop(4).value();
+                var a = state.stack.pop(4).value();
+                state.stack.push(Objects.equals(a, b) ? 1L : 0L, 8);
+            }
             case "aeq", "leq" -> {
                 var b = state.stack.pop(8).value();
                 var a = state.stack.pop(8).value();
