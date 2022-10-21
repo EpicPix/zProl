@@ -50,7 +50,7 @@ class InstructionImpl {
                 var a = (Long) state.stack.pop(8).value();
                 state.stack.push(Long.compareUnsigned(a, b) > 0 ? 1L : 0L, 8);
             }
-            case "aeq" -> {
+            case "aeq", "leq" -> {
                 var b = state.stack.pop(8).value();
                 var a = state.stack.pop(8).value();
                 state.stack.push(Objects.equals(a, b) ? 1L : 0L, 8);
@@ -72,6 +72,32 @@ class InstructionImpl {
             }
             case "lload_local", "aload_local" -> state.stack.push(locals.get((Short) instruction.getData()[0], 8).value(), 8);
             case "astore_local", "lstore_local" -> locals.set(state.stack.pop(8).value(), (Short) instruction.getData()[0], 8);
+            case "lstore_array" -> {
+                var index = state.stack.pop(8).value();
+                var pointer = state.stack.pop(8).value();
+                var value = state.stack.pop(8).value();
+                if(!(pointer instanceof Long lp)) {
+                    throw new RuntimeException("The array must be a pointer");
+                }
+                if(!(index instanceof Long idx)) {
+                    throw new RuntimeException("The index must be a long");
+                }
+                if(!(value instanceof Long val)) {
+                    throw new NotImplementedException("Cannot store objects in arrays yet");
+                }
+                state.memory.setLong(lp + idx * 8, val);
+            }
+            case "lload_array" -> {
+                var index = state.stack.pop(8).value();
+                var pointer = state.stack.pop(8).value();
+                if(!(pointer instanceof Long lp)) {
+                    throw new RuntimeException("The array must be a pointer");
+                }
+                if(!(index instanceof Long idx)) {
+                    throw new RuntimeException("The index must be a long");
+                }
+                state.stack.push(state.memory.getLong(lp + idx * 8), 8);
+            }
             case "class_field_load" -> {
                 var val = state.stack.pop(8).value();
                 var clz = (Class) instruction.getData()[0];
