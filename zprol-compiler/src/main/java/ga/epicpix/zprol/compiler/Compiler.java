@@ -29,11 +29,11 @@ public class Compiler {
             localsManager.defineLocalVariable("this", new ClassType(data.namespace, clazz.name));
         }
         for(int i = 0; i<names.length; i++) {
-            localsManager.defineLocalVariable(names[i], sig.parameters()[i]);
+            localsManager.defineLocalVariable(names[i], sig.parameters[i]);
         }
         boolean hasReturned = parseFunctionCode(data, tokens, sig, storage, new FunctionCodeScope(localsManager, clazz), parser);
         if(!hasReturned) {
-            if(!(sig.returnType() instanceof VoidType)) {
+            if(!(sig.returnType instanceof VoidType)) {
                 throw new TokenLocatedException("Missing return statement in " + sig);
             }
             storage.pushInstruction(getConstructedSizeInstruction(0, "return"));
@@ -49,23 +49,23 @@ public class Compiler {
         while(tokens.hasNext()) {
             token = tokens.next();
             if(token instanceof ReturnStatementTree retStatement) {
-                if(!(sig.returnType() instanceof VoidType)) {
+                if(!(sig.returnType instanceof VoidType)) {
                     if(retStatement.expression() == null) {
                         throw new TokenLocatedException("Function is not void, expected a return value", token, parser);
                     }
                     var types = new ArrayDeque<Type>();
-                    generateInstructionsFromExpression(retStatement.expression(), sig.returnType(), types, data, scope, bytecode, false, parser);
+                    generateInstructionsFromExpression(retStatement.expression(), sig.returnType, types, data, scope, bytecode, false, parser);
                 }
-                if(sig.returnType() instanceof VoidType) {
+                if(sig.returnType instanceof VoidType) {
                     if(retStatement.expression() != null) {
                         throw new TokenLocatedException("Function is void, expected no value", token, parser);
                     }
                 }
-                if(sig.returnType() instanceof PrimitiveType primitive) {
+                if(sig.returnType instanceof PrimitiveType primitive) {
                     bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "return"));
-                }else if(sig.returnType() instanceof BooleanType) {
+                }else if(sig.returnType instanceof BooleanType) {
                     bytecode.pushInstruction(getConstructedSizeInstruction(8, "return"));
-                }else if(!(sig.returnType() instanceof VoidType)) {
+                }else if(!(sig.returnType instanceof VoidType)) {
                     bytecode.pushInstruction(getConstructedInstruction("areturn"));
                 }
                 hasReturned = true;
@@ -557,7 +557,7 @@ public class Compiler {
 
         for(int i = 0; i<func.arguments.length; i++) {
             generateInstructionsFromExpression(func.arguments[i], parameters[i], types, data, scope, bytecode, parser);
-            doCast(types.pop(), signature.parameters()[i], false, bytecode, func.arguments[i], parser);
+            doCast(types.pop(), signature.parameters[i], false, bytecode, func.arguments[i], parser);
         }
 
         EnumSet<FunctionModifiers> fMods = EnumSet.noneOf(FunctionModifiers.class);

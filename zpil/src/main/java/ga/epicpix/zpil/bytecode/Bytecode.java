@@ -171,9 +171,9 @@ public final class Bytecode implements IBytecode {
                     var functions = data.functions;
                     for(int j = 0; j < functions.size(); j++) {
                         var f = functions.get(j);
-                        if(!Objects.equals(f.namespace(), v.namespace())) continue;
-                        if(!f.name().equals(v.name())) continue;
-                        if(!f.signature().equals(v.signature())) continue;
+                        if(!Objects.equals(f.namespace, v.namespace)) continue;
+                        if(!f.name.equals(v.name)) continue;
+                        if(!f.signature.equals(v.signature)) continue;
                         val = j;
                         break;
                     }
@@ -184,8 +184,8 @@ public final class Bytecode implements IBytecode {
                     var classes = data.classes;
                     for(int j = 0; j < classes.size(); j++) {
                         var f = classes.get(j);
-                        if(!Objects.equals(f.namespace(), v.namespace())) continue;
-                        if(!f.name().equals(v.name())) continue;
+                        if(!Objects.equals(f.namespace, v.namespace)) continue;
+                        if(!f.name.equals(v.name)) continue;
                         val = j;
                         break;
                     }
@@ -196,9 +196,9 @@ public final class Bytecode implements IBytecode {
                     var fields = data.fields;
                     for(int j = 0; j < fields.size(); j++) {
                         var f = fields.get(j);
-                        if(!Objects.equals(f.namespace(), v.namespace())) continue;
-                        if(!f.name().equals(v.name())) continue;
-                        if(!f.type().equals(v.type())) continue;
+                        if(!Objects.equals(f.namespace, v.namespace)) continue;
+                        if(!f.name.equals(v.name)) continue;
+                        if(!f.type.equals(v.type)) continue;
                         val = j;
                         break;
                     }
@@ -209,11 +209,11 @@ public final class Bytecode implements IBytecode {
                     var classes = data.classes;
                     out: for(int j = 0; j < classes.size(); j++) {
                         var f = classes.get(j);
-                        if(!Objects.equals(f.namespace(), v.namespace())) continue;
-                        for(int k = 0; k<f.methods().length; k++) {
-                            var m = f.methods()[k];
-                            if(!m.name().equals(v.name())) continue;
-                            if(!m.signature().equals(v.signature())) continue;
+                        if(!Objects.equals(f.namespace, v.namespace)) continue;
+                        for(int k = 0; k<f.methods.length; k++) {
+                            var m = f.methods[k];
+                            if(!m.name.equals(v.name)) continue;
+                            if(!m.signature.equals(v.signature)) continue;
                             val = ((long) k << 32) | j;
                             break out;
                         }
@@ -271,7 +271,7 @@ public final class Bytecode implements IBytecode {
                 instr.getData()[i] = data.fields.get(index);
             }else if(values[i] == BytecodeValueType.METHOD) {
                 long index = ((Number) instr.getData()[i]).longValue();
-                instr.getData()[i] = data.classes.get((int) (index)).methods()[(int) (index >> 32)];
+                instr.getData()[i] = data.classes.get((int) (index)).methods[(int) (index >> 32)];
             }
         }
     }
@@ -286,30 +286,30 @@ public final class Bytecode implements IBytecode {
                 else throw new IllegalArgumentException(val.getClass().getName());
             }else if(type == BytecodeValueType.FUNCTION) {
                 if(val instanceof Function v) {
-                    pool.getOrCreateStringIndex(v.namespace());
-                    pool.getOrCreateStringIndex(v.name());
-                    pool.getOrCreateStringIndex(v.signature().toString());
+                    pool.getOrCreateStringIndex(v.namespace);
+                    pool.getOrCreateStringIndex(v.name);
+                    pool.getOrCreateStringIndex(v.signature.toString());
                 }
                 else throw new IllegalArgumentException(val.getClass().getName());
             }else if(type == BytecodeValueType.CLASS) {
                 if(val instanceof Class v) {
-                    pool.getOrCreateStringIndex(v.namespace());
-                    pool.getOrCreateStringIndex(v.name());
+                    pool.getOrCreateStringIndex(v.namespace);
+                    pool.getOrCreateStringIndex(v.name);
                 }
                 else throw new IllegalArgumentException(val.getClass().getName());
             }else if(type == BytecodeValueType.METHOD) {
                 if(val instanceof Method v) {
-                    pool.getOrCreateStringIndex(v.namespace());
-                    pool.getOrCreateStringIndex(v.name());
-                    pool.getOrCreateStringIndex(v.className());
-                    pool.getOrCreateStringIndex(v.signature().toString());
+                    pool.getOrCreateStringIndex(v.namespace);
+                    pool.getOrCreateStringIndex(v.name);
+                    pool.getOrCreateStringIndex(v.className);
+                    pool.getOrCreateStringIndex(v.signature.toString());
                 }
                 else throw new IllegalArgumentException(val.getClass().getName());
             }else if(type == BytecodeValueType.FIELD) {
                 if(val instanceof Field v) {
-                    pool.getOrCreateStringIndex(v.namespace());
-                    pool.getOrCreateStringIndex(v.name());
-                    pool.getOrCreateStringIndex(v.type().toString());
+                    pool.getOrCreateStringIndex(v.namespace);
+                    pool.getOrCreateStringIndex(v.name);
+                    pool.getOrCreateStringIndex(v.type.toString());
                 }
                 else throw new IllegalArgumentException(val.getClass().getName());
             }

@@ -80,7 +80,7 @@ public class VMState {
     public Object getFieldValue(Field f) {
         var field = getField(f);
         if(!field.defined) {
-            if(f.type() instanceof PrimitiveType t) {
+            if(f.type instanceof PrimitiveType t) {
                 if(t.size == 1) return (byte) 0;
                 else if(t.size == 2) return (short) 0;
                 else if(t.size == 4) return (int) 0;

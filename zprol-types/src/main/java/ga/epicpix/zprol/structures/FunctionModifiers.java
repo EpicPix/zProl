@@ -36,7 +36,7 @@ public enum FunctionModifiers {
 
     public static FunctionModifiers getModifier(long id) {
         ArrayList<FunctionModifiers> modifiers = new ArrayList<>();
-        for(var modifier : MODIFIERS) {
+        for(FunctionModifiers modifier : MODIFIERS) {
             if((modifier.getBits() & id) == modifier.getBits()) {
                 modifiers.add(modifier);
             }
@@ -49,7 +49,7 @@ public enum FunctionModifiers {
 
     public static EnumSet<FunctionModifiers> getModifiers(int id) {
         EnumSet<FunctionModifiers> modifiers = EnumSet.noneOf(FunctionModifiers.class);
-        for(var modifier : MODIFIERS) {
+        for(FunctionModifiers modifier : MODIFIERS) {
             if((modifier.getBits() & id) == modifier.getBits()) {
                 modifiers.add(modifier);
             }
@@ -59,7 +59,7 @@ public enum FunctionModifiers {
 
     public static int toBits(EnumSet<FunctionModifiers> modifiers) {
         int i = 0;
-        for(var modifier : modifiers) {
+        for(FunctionModifiers modifier : modifiers) {
             i |= modifier.bits;
         }
         return i;

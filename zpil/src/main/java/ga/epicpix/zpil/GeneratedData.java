@@ -30,14 +30,14 @@ public class GeneratedData {
 
         out.writeInt(data.functions.size());
         for(Function func : data.functions) {
-            out.writeInt(data.constantPool.getStringIndex(func.namespace()));
-            out.writeInt(data.constantPool.getStringIndex(func.name()));
-            out.writeInt(data.constantPool.getStringIndex(func.signature().toString()));
-            out.writeInt(FunctionModifiers.toBits(func.modifiers()));
-            var hasCode = !FunctionModifiers.isEmptyCode(func.modifiers());
+            out.writeInt(data.constantPool.getStringIndex(func.namespace));
+            out.writeInt(data.constantPool.getStringIndex(func.name));
+            out.writeInt(data.constantPool.getStringIndex(func.signature.toString()));
+            out.writeInt(FunctionModifiers.toBits(func.modifiers));
+            var hasCode = !FunctionModifiers.isEmptyCode(func.modifiers);
             if(hasCode) {
-                out.writeInt(func.code().getLocalsSize());
-                var instructions = func.code().getInstructions();
+                out.writeInt(func.code.getLocalsSize());
+                var instructions = func.code.getInstructions();
                 out.writeInt(instructions.size());
                 for (var instruction : instructions) {
                     Bytecode.write(instruction, data, out);
@@ -47,22 +47,22 @@ public class GeneratedData {
 
         out.writeInt(data.classes.size());
         for(var clz : data.classes) {
-            out.writeInt(data.constantPool.getStringIndex(clz.namespace()));
-            out.writeInt(data.constantPool.getStringIndex(clz.name()));
-            out.writeInt(clz.fields().length);
-            for(var field : clz.fields()) {
-                out.writeInt(data.constantPool.getStringIndex(field.name()));
-                out.writeInt(data.constantPool.getStringIndex(field.type().getDescriptor()));
+            out.writeInt(data.constantPool.getStringIndex(clz.namespace));
+            out.writeInt(data.constantPool.getStringIndex(clz.name));
+            out.writeInt(clz.fields.length);
+            for(var field : clz.fields) {
+                out.writeInt(data.constantPool.getStringIndex(field.name));
+                out.writeInt(data.constantPool.getStringIndex(field.type.getDescriptor()));
             }
-            out.writeInt(clz.methods().length);
-            for(var func : clz.methods()) {
-                out.writeInt(data.constantPool.getStringIndex(func.name()));
-                out.writeInt(data.constantPool.getStringIndex(func.signature().toString()));
-                out.writeInt(FunctionModifiers.toBits(func.modifiers()));
-                var hasCode = !FunctionModifiers.isEmptyCode(func.modifiers());
+            out.writeInt(clz.methods.length);
+            for(var func : clz.methods) {
+                out.writeInt(data.constantPool.getStringIndex(func.name));
+                out.writeInt(data.constantPool.getStringIndex(func.signature.toString()));
+                out.writeInt(FunctionModifiers.toBits(func.modifiers));
+                var hasCode = !FunctionModifiers.isEmptyCode(func.modifiers);
                 if(hasCode) {
-                    out.writeInt(func.code().getLocalsSize());
-                    var instructions = func.code().getInstructions();
+                    out.writeInt(func.code.getLocalsSize());
+                    var instructions = func.code.getInstructions();
                     out.writeInt(instructions.size());
                     for (var instruction : instructions) {
                         Bytecode.write(instruction, data, out);
@@ -73,17 +73,17 @@ public class GeneratedData {
 
         out.writeInt(data.fields.size());
         for(Field field : data.fields) {
-            out.writeInt(data.constantPool.getStringIndex(field.namespace()));
-            out.writeInt(data.constantPool.getStringIndex(field.name()));
-            out.writeInt(data.constantPool.getStringIndex(field.type().getDescriptor()));
-            out.writeInt(FieldModifiers.toBits(field.modifiers()));
+            out.writeInt(data.constantPool.getStringIndex(field.namespace));
+            out.writeInt(data.constantPool.getStringIndex(field.name));
+            out.writeInt(data.constantPool.getStringIndex(field.type.getDescriptor()));
+            out.writeInt(FieldModifiers.toBits(field.modifiers));
 
             int attributeCount = 0;
-            if(field.defaultValue() != null) attributeCount++;
+            if(field.defaultValue != null) attributeCount++;
             out.writeInt(attributeCount);
 
-            if(field.defaultValue() != null) {
-                out.write(new ConstantValueAttribute(field.defaultValue().value()).write(data.constantPool));
+            if(field.defaultValue != null) {
+                out.write(new ConstantValueAttribute(field.defaultValue.value).write(data.constantPool));
             }
         }
 
@@ -111,10 +111,10 @@ public class GeneratedData {
             var hasCode = !FunctionModifiers.isEmptyCode(modifiers);
             Function function = new Function(namespace, modifiers, name, FunctionSignature.fromDescriptor(signature), hasCode ? Bytecode.BYTECODE.createStorage() : null);
             if(hasCode) {
-                function.code().setLocalsSize(in.readInt());
+                function.code.setLocalsSize(in.readInt());
                 int instructionsLength = in.readInt();
                 for (int j = 0; j < instructionsLength; j++) {
-                    function.code().pushInstruction(Bytecode.read(in));
+                    function.code.pushInstruction(Bytecode.read(in));
                 }
             }
             data.functions.add(function);
@@ -139,10 +139,10 @@ public class GeneratedData {
                 var mhasCode = !FunctionModifiers.isEmptyCode(mmodifiers);
                 Method method = new Method(namespace, mmodifiers, name, mname, FunctionSignature.fromDescriptor(msignature), mhasCode ? Bytecode.BYTECODE.createStorage() : null);
                 if(mhasCode) {
-                    method.code().setLocalsSize(in.readInt());
+                    method.code.setLocalsSize(in.readInt());
                     int instructionsLength = in.readInt();
                     for (int j = 0; j < instructionsLength; j++) {
-                        method.code().pushInstruction(Bytecode.read(in));
+                        method.code.pushInstruction(Bytecode.read(in));
                     }
                 }
                 methods[methodIndex] = method;
@@ -170,16 +170,16 @@ public class GeneratedData {
         }
 
         for(var func : data.functions) {
-            if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
-                for (var instr : func.code().getInstructions()) {
+            if(!FunctionModifiers.isEmptyCode(func.modifiers)) {
+                for (var instr : func.code.getInstructions()) {
                     Bytecode.postRead(instr, data);
                 }
             }
         }
         for(var clz : data.classes) {
-            for (var mth : clz.methods()) {
-                if (!FunctionModifiers.isEmptyCode(mth.modifiers())) {
-                    for (var instr : mth.code().getInstructions()) {
+            for (var mth : clz.methods) {
+                if (!FunctionModifiers.isEmptyCode(mth.modifiers)) {
+                    for (var instr : mth.code.getInstructions()) {
                         Bytecode.postRead(instr, data);
                     }
                 }
@@ -191,8 +191,8 @@ public class GeneratedData {
 
     public Function getFunction(FunctionSignature sig, String name) {
         for(var func : functions) {
-            if(!func.signature().equals(sig)) continue;
-            if(!func.name().equals(name)) continue;
+            if(!func.signature.equals(sig)) continue;
+            if(!func.name.equals(name)) continue;
             return func;
         }
         return null;
@@ -202,18 +202,18 @@ public class GeneratedData {
         System.out.println("Functions:");
         for(var func : functions) {
             System.out.println("  Function");
-            System.out.println("    Namespace: \"" + (func.namespace() != null ? func.namespace() : "") + "\"");
-            System.out.println("    Name: \"" + func.name() + "\"");
-            System.out.println("    Signature: \"" + func.signature() + "\"");
-            System.out.println("    Modifiers (" + func.modifiers().size() + "):");
-            for(var modifier : func.modifiers()) {
+            System.out.println("    Namespace: \"" + (func.namespace != null ? func.namespace : "") + "\"");
+            System.out.println("    Name: \"" + func.name + "\"");
+            System.out.println("    Signature: \"" + func.signature + "\"");
+            System.out.println("    Modifiers (" + func.modifiers.size() + "):");
+            for(var modifier : func.modifiers) {
                 System.out.println("      " + modifier);
             }
-            if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
+            if(!FunctionModifiers.isEmptyCode(func.modifiers)) {
                 System.out.println("    Code");
-                System.out.println("      Locals Size: " + func.code().getLocalsSize());
+                System.out.println("      Locals Size: " + func.code.getLocalsSize());
                 System.out.println("      Instructions");
-                for(var instruction : func.code().getInstructions()) {
+                for(var instruction : func.code.getInstructions()) {
                     System.out.println("        " + instruction);
                 }
             }
@@ -222,18 +222,18 @@ public class GeneratedData {
         System.out.println("Fields:");
         for(var fld : fields) {
             System.out.println("  Field");
-            System.out.println("    Namespace: \"" + (fld.namespace() != null ? fld.namespace() : "") + "\"");
-            System.out.println("    Name: \"" + fld.name() + "\"");
-            System.out.println("    Type: \"" + fld.type().getDescriptor() + "\"");
-            if(fld.defaultValue() != null) {
-                if(fld.defaultValue().value() != null) {
-                    System.out.println("    Constant Value: " + fld.defaultValue().value().getClass().getSimpleName() + " " + fld.defaultValue().value());
+            System.out.println("    Namespace: \"" + (fld.namespace != null ? fld.namespace : "") + "\"");
+            System.out.println("    Name: \"" + fld.name + "\"");
+            System.out.println("    Type: \"" + fld.type.getDescriptor() + "\"");
+            if(fld.defaultValue != null) {
+                if(fld.defaultValue.value != null) {
+                    System.out.println("    Constant Value: " + fld.defaultValue.value.getClass().getSimpleName() + " " + fld.defaultValue.value);
                 }else {
                     System.out.println("    Constant Value: null");
                 }
             }
-            System.out.println("    Modifiers (" + fld.modifiers().size() + "):");
-            for(var modifier : fld.modifiers()) {
+            System.out.println("    Modifiers (" + fld.modifiers.size() + "):");
+            for(var modifier : fld.modifiers) {
                 System.out.println("      " + modifier);
             }
         }
@@ -241,30 +241,30 @@ public class GeneratedData {
         System.out.println("Classes:");
         for(var clz : classes) {
             System.out.println("  Class");
-            System.out.println("    Namespace: \"" + (clz.namespace() != null ? clz.namespace() : "") + "\"");
-            System.out.println("    Name: \"" + clz.name() + "\"");
+            System.out.println("    Namespace: \"" + (clz.namespace != null ? clz.namespace : "") + "\"");
+            System.out.println("    Name: \"" + clz.name + "\"");
             System.out.println("    Fields:");
-            for(var fld : clz.fields()) {
+            for(var fld : clz.fields) {
                 System.out.println("      Field");
-                System.out.println("        Name: \"" + fld.name() + "\"");
-                System.out.println("        Type: \"" + fld.type().getDescriptor() + "\"");
+                System.out.println("        Name: \"" + fld.name + "\"");
+                System.out.println("        Type: \"" + fld.type.getDescriptor() + "\"");
             }
             System.out.println("    Methods:");
-            for(var func : clz.methods()) {
+            for(var func : clz.methods) {
                 System.out.println("      Method");
-                System.out.println("        Namespace: \"" + (func.namespace() != null ? func.namespace() : "") + "\"");
-                System.out.println("        Class: \"" + func.className() + "\"");
-                System.out.println("        Name: \"" + func.name() + "\"");
-                System.out.println("        Signature: \"" + func.signature() + "\"");
-                System.out.println("        Modifiers (" + func.modifiers().size() + "):");
-                for(var modifier : func.modifiers()) {
+                System.out.println("        Namespace: \"" + (func.namespace != null ? func.namespace : "") + "\"");
+                System.out.println("        Class: \"" + func.className + "\"");
+                System.out.println("        Name: \"" + func.name + "\"");
+                System.out.println("        Signature: \"" + func.signature + "\"");
+                System.out.println("        Modifiers (" + func.modifiers.size() + "):");
+                for(var modifier : func.modifiers) {
                     System.out.println("          " + modifier);
                 }
-                if(!FunctionModifiers.isEmptyCode(func.modifiers())) {
+                if(!FunctionModifiers.isEmptyCode(func.modifiers)) {
                     System.out.println("        Code");
-                    System.out.println("          Locals Size: " + func.code().getLocalsSize());
+                    System.out.println("          Locals Size: " + func.code.getLocalsSize());
                     System.out.println("          Instructions");
-                    for(var instruction : func.code().getInstructions()) {
+                    for(var instruction : func.code.getInstructions()) {
                         System.out.println("            " + instruction);
                     }
                 }

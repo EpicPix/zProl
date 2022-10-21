@@ -16,14 +16,14 @@ public class DefaultClassImpl extends ClassImpl {
 
     public DefaultClassImpl(Class clz) {
         clazz = clz;
-        for(var v : clz.fields()) {
-            if(v.type() instanceof PrimitiveType p) {
-                if(p.size == 1) fields.put(v.name(), (byte) 0);
-                else if(p.size == 2) fields.put(v.name(), (short) 0);
-                else if(p.size == 4) fields.put(v.name(), (int) 0);
-                else if(p.size == 8) fields.put(v.name(), (long) 0);
+        for(var v : clz.fields) {
+            if(v.type instanceof PrimitiveType p) {
+                if(p.size == 1) fields.put(v.name, (byte) 0);
+                else if(p.size == 2) fields.put(v.name, (short) 0);
+                else if(p.size == 4) fields.put(v.name, (int) 0);
+                else if(p.size == 8) fields.put(v.name, (long) 0);
             }else {
-                fields.put(v.name(), null);
+                fields.put(v.name, null);
             }
         }
     }

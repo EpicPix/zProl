@@ -256,27 +256,27 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 var fieldName = (String) i.getData()[1];
                 ClassField field = null;
                 int offset = 0;
-                for(var e : clz.fields()) {
-                    if(e.name().equals(fieldName)) {
+                for(var e : clz.fields) {
+                    if(e.name.equals(fieldName)) {
                         field = e;
                         break;
                     }
-                    if(e.type() instanceof PrimitiveType t) offset += t.getSize();
-                    else if(e.type() instanceof BooleanType) offset += 8;
-                    else if(e.type() instanceof ArrayType) offset += 8;
-                    else if(e.type() instanceof ClassType) offset += 8;
-                    else throw new IllegalStateException("Cannot get size of type '" + e.type().getName() + "'");
+                    if(e.type instanceof PrimitiveType t) offset += t.getSize();
+                    else if(e.type instanceof BooleanType) offset += 8;
+                    else if(e.type instanceof ArrayType) offset += 8;
+                    else if(e.type instanceof ClassType) offset += 8;
+                    else throw new IllegalStateException("Cannot get size of type '" + e.type.getName() + "'");
                 }
                 if(field == null) {
-                    throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name() + "'");
+                    throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace != null ? clz.namespace + "." : "") + clz.name + "'");
                 }
 
                 int size;
-                if(field.type() instanceof ClassType) size = 8;
-                else if(field.type() instanceof BooleanType) size = 8;
-                else if(field.type() instanceof ArrayType) size = 8;
-                else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
-                else throw new IllegalStateException("Cannot get size of type '" + field.type().getName() + "'");
+                if(field.type instanceof ClassType) size = 8;
+                else if(field.type instanceof BooleanType) size = 8;
+                else if(field.type instanceof ArrayType) size = 8;
+                else if(field.type instanceof PrimitiveType primitive) size = primitive.getSize();
+                else throw new IllegalStateException("Cannot get size of type '" + field.type.getName() + "'");
 
                 instructions.add(pop("rcx"));
                 if(size == 1) {
@@ -297,27 +297,27 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 var fieldName = (String) i.getData()[1];
                 ClassField field = null;
                 int offset = 0;
-                for(var e : clz.fields()) {
-                    if(e.name().equals(fieldName)) {
+                for(var e : clz.fields) {
+                    if(e.name.equals(fieldName)) {
                         field = e;
                         break;
                     }
-                    if(e.type() instanceof PrimitiveType t) offset += t.getSize();
-                    else if(e.type() instanceof BooleanType) offset += 8;
-                    else if(e.type() instanceof ArrayType) offset += 8;
-                    else if(e.type() instanceof ClassType) offset += 8;
-                    else throw new IllegalStateException("Cannot get size of type '" + e.type().getName() + "'");
+                    if(e.type instanceof PrimitiveType t) offset += t.getSize();
+                    else if(e.type instanceof BooleanType) offset += 8;
+                    else if(e.type instanceof ArrayType) offset += 8;
+                    else if(e.type instanceof ClassType) offset += 8;
+                    else throw new IllegalStateException("Cannot get size of type '" + e.type.getName() + "'");
                 }
                 if(field == null) {
-                    throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace() != null ? clz.namespace() + "." : "") + clz.name() + "'");
+                    throw new IllegalStateException("Field '" + fieldName + "' not found in class '" + (clz.namespace != null ? clz.namespace + "." : "") + clz.name + "'");
                 }
 
                 int size;
-                if(field.type() instanceof ClassType) size = 8;
-                else if(field.type() instanceof BooleanType) size = 8;
-                else if(field.type() instanceof ArrayType) size = 8;
-                else if(field.type() instanceof PrimitiveType primitive) size = primitive.getSize();
-                else throw new IllegalStateException("Cannot get size of type '" + field.type().getName() + "'");
+                if(field.type instanceof ClassType) size = 8;
+                else if(field.type instanceof BooleanType) size = 8;
+                else if(field.type instanceof ArrayType) size = 8;
+                else if(field.type instanceof PrimitiveType primitive) size = primitive.getSize();
+                else throw new IllegalStateException("Cannot get size of type '" + field.type.getName() + "'");
 
                 instructions.add(pop("rcx"));
                 if(size == 1) {
@@ -418,7 +418,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             case "invoke" -> invokeFunction(st, (Function) i.getData()[0], false, instructions);
             case "invoke_class" -> {
                 var method = (Method) i.getData()[0];
-                invokeFunction(st, new Function(method.namespace(), method.modifiers(), method.className() + "." + method.name(), method.signature(), method.code()), true, instructions);
+                invokeFunction(st, new Function(method.namespace, method.modifiers, method.className + "." + method.name, method.signature, method.code), true, instructions);
             }
             default -> throw new UnknownInstructionException("Unable to generate instructions for the " + i.getName() + " instruction");
         };
@@ -426,19 +426,19 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
     private static void invokeFunction(State state, Function f, boolean methodLike, InstructionList instructions) {
         boolean isSyscall = false;
-        if(FunctionModifiers.isEmptyCode(f.modifiers())) {
+        if(FunctionModifiers.isEmptyCode(f.modifiers)) {
             boolean isFound = false;
-            if(Objects.equals(f.namespace(), "zprol.lang.io.direct")) {
-                if(f.name().equals("inb") && f.signature().toString().equals("uB(uS)")) instructions.add("pop dx").add("in al, dx").add("push ax");
-                else if(f.name().equals("ins") && f.signature().toString().equals("uS(uS)")) instructions.add("pop dx").add("in ax, dx").add("push ax");
-                else if(f.name().equals("inw") && f.signature().toString().equals("uI(uS)")) instructions.add("pop dx").add("in eax, dx").add("push rax");
-                else if(f.name().equals("outb") && f.signature().toString().equals("V(uSuB)")) instructions.add("pop ax").add("pop dx").add("out dx, al");
-                else if(f.name().equals("outs") && f.signature().toString().equals("V(uSuS)")) instructions.add("pop ax").add("pop dx").add("out dx, ax");
-                else if(f.name().equals("outw") && f.signature().toString().equals("V(uSuI)")) instructions.add("pop rax").add("pop dx").add("out dx, eax");
+            if(Objects.equals(f.namespace, "zprol.lang.io.direct")) {
+                if(f.name.equals("inb") && f.signature.toString().equals("uB(uS)")) instructions.add("pop dx").add("in al, dx").add("push ax");
+                else if(f.name.equals("ins") && f.signature.toString().equals("uS(uS)")) instructions.add("pop dx").add("in ax, dx").add("push ax");
+                else if(f.name.equals("inw") && f.signature.toString().equals("uI(uS)")) instructions.add("pop dx").add("in eax, dx").add("push rax");
+                else if(f.name.equals("outb") && f.signature.toString().equals("V(uSuB)")) instructions.add("pop ax").add("pop dx").add("out dx, al");
+                else if(f.name.equals("outs") && f.signature.toString().equals("V(uSuS)")) instructions.add("pop ax").add("pop dx").add("out dx, ax");
+                else if(f.name.equals("outw") && f.signature.toString().equals("V(uSuI)")) instructions.add("pop rax").add("pop dx").add("out dx, eax");
                 else isFound = true;
             }
-            if(Objects.equals(f.namespace(), "zprol.lang.linux.amd64")) {
-                if(f.name().equals("syscall")) {
+            if(Objects.equals(f.namespace, "zprol.lang.linux.amd64")) {
+                if(f.name.equals("syscall")) {
                     isSyscall = true;
                     isFound = true;
                 }
@@ -446,7 +446,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             if(!isFound) return;
         }
 
-        var params = f.signature().parameters();
+        var params = f.signature.parameters;
         int off = methodLike ? 1 : 0;
         for(int x = params.length - 1 + off; x>=0; x--) {
             if(x == params.length && methodLike) {
@@ -467,11 +467,11 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             }
         }
 
-        if (FunctionModifiers.isEmptyCode(f.modifiers())) {
+        if (FunctionModifiers.isEmptyCode(f.modifiers)) {
             if (isSyscall) {
                 instructions.add("syscall");
             } else {
-                throw new FunctionNotDefinedException("Unknown native function " + f.name());
+                throw new FunctionNotDefinedException("Unknown native function " + f.name);
             }
         } else {
             var mangledName = getMangledName(f);
@@ -484,7 +484,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             instructions.add(call(getMangledName(f), f));
         }
 
-        var ret = f.signature().returnType();
+        var ret = f.signature.returnType;
         if(ret instanceof PrimitiveType primitive) {
             if (primitive.getSize() == 1 || primitive.getSize() == 2) {
                 instructions.add(push("ax"));
@@ -507,9 +507,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     private static void writeFunction(State state, Function function, boolean methodLike, ConstantPool localConstantPool, InstructionList assembly) {
         assembly.add(push("rbp"));
         assembly.add("mov rbp, rsp");
-        assembly.add("sub rsp, " + function.code().getLocalsSize());
+        assembly.add("sub rsp, " + function.code.getLocalsSize());
         int localsIndex = 0;
-        var parameters = function.signature().parameters();
+        var parameters = function.signature.parameters;
         int off = methodLike ? 1 : 0;
         for (int i = 0; i < parameters.length + off; i++) {
             if(methodLike && i == 0) {
@@ -538,13 +538,13 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }
         var labelList = new ArrayList<Integer>();
         int c = 0;
-        for(var instr : function.code().getInstructions()) {
+        for(var instr : function.code.getInstructions()) {
             if(instr.getName().equals("jmp") || instr.getName().equals("eqjmp") || instr.getName().equals("neqjmp")) {
                 labelList.add(c + ((Number) instr.getData()[0]).shortValue());
             }
             c++;
         }
-        SeekIterator<IBytecodeInstruction> instructions = new SeekIterator<>(function.code().getInstructions());
+        SeekIterator<IBytecodeInstruction> instructions = new SeekIterator<>(function.code.getInstructions());
         while(instructions.hasNext()) {
             if(labelList.contains(instructions.currentIndex())) {
                 assembly.add(new Instruction(getMangledName(function) + "." + instructions.currentIndex() + ":"));
@@ -597,16 +597,16 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         assembly.add("_start:");
         State state = new State();
         for(var function : generated.functions) {
-            if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
-            if(!function.name().equals(".init")) continue;
+            if(FunctionModifiers.isEmptyCode(function.modifiers)) continue;
+            if(!function.name.equals(".init")) continue;
             assembly.add("call " + getMangledName(function));
             state.nextFunctions.add(function);
         }
         var mainSig = new FunctionSignature(Types.getTypeFromDescriptor("V"));
         Function mainFunction = null;
         for(var func : generated.functions) {
-            if(!func.name().equals("main")) continue;
-            if(!func.signature().equals(mainSig)) continue;
+            if(!func.name.equals("main")) continue;
+            if(!func.signature.equals(mainSig)) continue;
             mainFunction = func;
             break;
         }
@@ -623,17 +623,17 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         if(ALL_FUNCTIONS) {
             fields = generated.fields;
             for(var function : generated.functions) {
-                if(FunctionModifiers.isEmptyCode(function.modifiers())) continue;
+                if(FunctionModifiers.isEmptyCode(function.modifiers)) continue;
 
                 assembly.add(new FunctionStartInstruction(function));
                 writeFunction(state, function, false, localConstantPool, assembly);
             }
             for(var clazz : generated.classes) {
-                for (var method : clazz.methods()) {
-                    if (FunctionModifiers.isEmptyCode(method.modifiers())) continue;
+                for (var method : clazz.methods) {
+                    if (FunctionModifiers.isEmptyCode(method.modifiers)) continue;
 
                     assembly.add(getMangledName(method) + ":");
-                    writeFunction(state, new Function(method.namespace(), method.modifiers(), method.className() + "." + method.name(), method.signature(), method.code()), true, localConstantPool, assembly);
+                    writeFunction(state, new Function(method.namespace, method.modifiers, method.className + "." + method.name, method.signature, method.code), true, localConstantPool, assembly);
                 }
             }
         }else {
@@ -644,15 +644,15 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             while(!state.nextFunctions.isEmpty()) {
                 var current = state.nextFunctions.pop();
                 if(current instanceof Function f) {
-                    if(FunctionModifiers.isEmptyCode(f.modifiers())) continue;
+                    if(FunctionModifiers.isEmptyCode(f.modifiers)) continue;
 
                     assembly.add(new FunctionStartInstruction(f));
                     writeFunction(state, f, false, localConstantPool, assembly);
                 }else if(current instanceof Method m) {
-                    if (FunctionModifiers.isEmptyCode(m.modifiers())) continue;
+                    if (FunctionModifiers.isEmptyCode(m.modifiers)) continue;
 
                     assembly.add(getMangledName(m) + ":");
-                    writeFunction(state, new Function(m.namespace(), m.modifiers(), m.className() + "." + m.name(), m.signature(), m.code()), true, localConstantPool, assembly);
+                    writeFunction(state, new Function(m.namespace, m.modifiers, m.className + "." + m.name, m.signature, m.code), true, localConstantPool, assembly);
                 }
             }
 
@@ -660,9 +660,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             while(!state.nextFields.isEmpty()) {
                 var field = state.nextFields.pop();
                 fields.add(field);
-                if(field.defaultValue() == null) continue;
-                if(field.type() instanceof ClassType clz && clz.normalName().equals("zprol.lang.String")) {
-                    localConstantPool.getOrCreateStringIndex((String) field.defaultValue().value());
+                if(field.defaultValue == null) continue;
+                if(field.type instanceof ClassType clz && clz.normalName().equals("zprol.lang.String")) {
+                    localConstantPool.getOrCreateStringIndex((String) field.defaultValue.value);
                 }
             }
 
@@ -678,9 +678,9 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         if(fields.size() != 0) {
             boolean shownBSS = false;
             for (var field : fields) {
-                if(field.defaultValue() != null) continue;
+                if(field.defaultValue != null) continue;
                 int size = 8;
-                if (field.type() instanceof PrimitiveType prim) {
+                if (field.type instanceof PrimitiveType prim) {
                     size = prim.size;
                 }
                 if(!shownBSS) {
@@ -714,23 +714,23 @@ public final class GeneratorAssemblyLinux64 extends Generator {
 
         if(fields.size() != 0) {
             for (var field : fields) {
-                if(field.defaultValue() == null) continue;
+                if(field.defaultValue == null) continue;
                 if(!shownReadonlyData) {
                     assembly.add("section .rodata");
                     shownReadonlyData = true;
                 }
-                if (field.type() instanceof PrimitiveType prim) {
+                if (field.type instanceof PrimitiveType prim) {
                     int size = prim.size;
                     switch(size) {
-                        case 1 -> assembly.add(getMangledName(field) + ": db " + field.defaultValue().value());
-                        case 2 -> assembly.add(getMangledName(field) + ": dw " + field.defaultValue().value());
-                        case 4 -> assembly.add(getMangledName(field) + ": dd " + field.defaultValue().value());
-                        case 8 -> assembly.add(getMangledName(field) + ": dq " + field.defaultValue().value());
+                        case 1 -> assembly.add(getMangledName(field) + ": db " + field.defaultValue.value);
+                        case 2 -> assembly.add(getMangledName(field) + ": dw " + field.defaultValue.value);
+                        case 4 -> assembly.add(getMangledName(field) + ": dd " + field.defaultValue.value);
+                        case 8 -> assembly.add(getMangledName(field) + ": dq " + field.defaultValue.value);
                     }
-                }else if(field.type() instanceof NullType) {
+                }else if(field.type instanceof NullType) {
                     assembly.add(getMangledName(field) + ": dq 0");
-                }else if(field.type() instanceof ClassType clz && clz.normalName().equals("zprol.lang.String")) {
-                    var s = (String) field.defaultValue().value();
+                }else if(field.type instanceof ClassType clz && clz.normalName().equals("zprol.lang.String")) {
+                    var s = (String) field.defaultValue.value;
                     index = 1;
                     for(var constantPoolEntry : localConstantPool.entries) {
                         if(constantPoolEntry instanceof ConstantPoolEntry.StringEntry str) {
@@ -742,7 +742,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                         index++;
                     }
                 }else {
-                    throw new IllegalStateException("Unexpected type: " + field.type());
+                    throw new IllegalStateException("Unexpected type: " + field.type);
                 }
             }
         }
@@ -752,7 +752,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             HashMap<Function, ValueReturnInstruction> valueReturnFunctions = new HashMap<>();
             for(int i = 0; i < assembly.instructions.size(); i++) {
                 if(assembly.instructions.get(i) instanceof FunctionStartInstruction func) {
-                    if(func.function.signature().parameters().length == 0 && func.function.signature().returnType() instanceof PrimitiveType prim && prim.getSize() == 8) {
+                    if(func.function.signature.parameters.length == 0 && func.function.signature.returnType instanceof PrimitiveType prim && prim.getSize() == 8) {
                         if(assembly.instructions.get(i + 1) instanceof PushNumberInstruction push) {
                             if(assembly.instructions.get(i + 2) instanceof PopInstruction pop) {
                                 if(pop.register.equals("rax")) {
@@ -821,15 +821,15 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     }
 
     public static String getMangledName(Function func) {
-        return getMangledName(func.namespace(), func.name(), func.signature());
+        return getMangledName(func.namespace, func.name, func.signature);
     }
 
     public static String getMangledName(Method func) {
-        return getMangledName(func.namespace(), func.className(), func.name(), func.signature());
+        return getMangledName(func.namespace, func.className, func.name, func.signature);
     }
 
     public static String getMangledName(Field field) {
-        return getMangledName(field.namespace(), field.name(), field.type());
+        return getMangledName(field.namespace, field.name, field.type);
     }
 
     public static String getMangledName(String namespace, String name, FunctionSignature signature) {

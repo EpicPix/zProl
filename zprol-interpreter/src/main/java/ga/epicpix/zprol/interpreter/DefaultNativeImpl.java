@@ -46,9 +46,9 @@ public class DefaultNativeImpl extends NativeImpl {
 
     public Object runNativeFunction(GeneratedData file, VMState state, LocalStorage locals) {
         var current = state.currentFunction();
-        if(Objects.equals(current.namespace(), "zprol.lang.linux.amd64")) {
-            if(current.name().equals("syscall")) {
-                return switch(current.signature().toString()) {
+        if(Objects.equals(current.namespace, "zprol.lang.linux.amd64")) {
+            if(current.name.equals("syscall")) {
+                return switch(current.signature.toString()) {
                     case "uL(L)" -> runSyscall(state, locals.getLongValue(8), 0, 0, 0, 0, 0, 0);
                     case "uL(LL)" -> runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), 0, 0, 0, 0, 0);
                     case "uL(LLL)" -> runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), 0, 0, 0, 0);

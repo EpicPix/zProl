@@ -45,7 +45,7 @@ public class Types {
         if(descriptor.equals("b")) {
             return putInArrayType(new BooleanType(), arrTimes);
         }
-        for(var type : TYPES.values()) {
+        for(Type type : TYPES.values()) {
             if(type.getDescriptor().equals(descriptor)) {
                 return putInArrayType(type, arrTimes);
             }

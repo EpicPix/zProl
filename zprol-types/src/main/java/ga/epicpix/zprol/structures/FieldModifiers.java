@@ -35,7 +35,7 @@ public enum FieldModifiers {
 
     public static EnumSet<FieldModifiers> getModifiers(int id) {
         EnumSet<FieldModifiers> modifiers = EnumSet.noneOf(FieldModifiers.class);
-        for(var modifier : MODIFIERS) {
+        for(FieldModifiers modifier : MODIFIERS) {
             if((modifier.getBits() & id) == modifier.getBits()) {
                 modifiers.add(modifier);
             }
@@ -45,7 +45,7 @@ public enum FieldModifiers {
 
     public static int toBits(EnumSet<FieldModifiers> modifiers) {
         int i = 0;
-        for(var modifier : modifiers) {
+        for(FieldModifiers modifier : modifiers) {
             i |= modifier.bits;
         }
         return i;

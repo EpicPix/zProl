@@ -89,7 +89,7 @@ class InstructionImpl {
             case "aload_field", "lload_field" -> state.stack.push(state.getFieldValue((Field) instruction.getData()[0]), 8);
             case "astore_field" -> {
                 var f = state.getField((Field) instruction.getData()[0]);
-                if(f.field.modifiers().contains(FieldModifiers.CONST) && f.defined) {
+                if(f.field.modifiers.contains(FieldModifiers.CONST) && f.defined) {
                     throw new RuntimeException("Cannot redefine a constant field");
                 }
                 f.value = state.stack.pop(8).value();
@@ -129,30 +129,30 @@ class InstructionImpl {
                 var fname = (String) instruction.getData()[1];
                 if(val instanceof ClassImpl ci) {
                     ClassField fi = null;
-                    for(var c : clz.fields()) {
-                        if(c.name().equals(fname)) {
+                    for(var c : clz.fields) {
+                        if(c.name.equals(fname)) {
                             fi = c;
                             break;
                         }
                     }
                     if(fi == null) {
-                        throw new RuntimeException("Unknown field '" + fname + "' in " + clz.namespace() + "." + clz.name());
+                        throw new RuntimeException("Unknown field '" + fname + "' in " + clz.namespace + "." + clz.name);
                     }
                     var value = ci.getFieldValue(file, state, fname);
                     if(value instanceof Byte) {
-                        if(!(fi.type() instanceof PrimitiveType t && t.size == 1)) {
+                        if(!(fi.type instanceof PrimitiveType t && t.size == 1)) {
                             throw new IllegalArgumentException("Field type and return value don't match");
                         }
                         state.stack.push(value, 1);
                     }
                     else if(value instanceof Short) {
-                        if(!(fi.type() instanceof PrimitiveType t && t.size == 2)) {
+                        if(!(fi.type instanceof PrimitiveType t && t.size == 2)) {
                             throw new IllegalArgumentException("Field type and return value don't match");
                         }
                         state.stack.push(value, 2);
                     }
                     else if(value instanceof Integer) {
-                        if(!(fi.type() instanceof PrimitiveType t && t.size == 4)) {
+                        if(!(fi.type instanceof PrimitiveType t && t.size == 4)) {
                             throw new IllegalArgumentException("Field type and return value don't match");
                         }
                         state.stack.push(value, 4);
@@ -161,16 +161,16 @@ class InstructionImpl {
                 }else if(val instanceof Long l) {
                     int byteIndex = 0;
                     ClassField cf = null;
-                    for(var c : clz.fields()) {
-                        if(c.name().equals(fname)) {
+                    for(var c : clz.fields) {
+                        if(c.name.equals(fname)) {
                             cf = c;
                             break;
                         }
-                        byteIndex += c.type() instanceof PrimitiveType p ? p.size : 8;
+                        byteIndex += c.type instanceof PrimitiveType p ? p.size : 8;
                     }
-                    if(cf == null) throw new RuntimeException("Unknown field '" + fname + "' in " + clz.namespace() + "." + clz.name());
+                    if(cf == null) throw new RuntimeException("Unknown field '" + fname + "' in " + clz.namespace + "." + clz.name);
 
-                    if(cf.type() instanceof PrimitiveType p) {
+                    if(cf.type instanceof PrimitiveType p) {
                         if(p.size == 1) state.stack.push(state.memory.get(l + byteIndex), 1);
                         else if(p.size == 2) state.stack.push(state.memory.getShort(l + byteIndex), 2);
                         else if(p.size == 4) state.stack.push(state.memory.getInt(l + byteIndex), 4);
@@ -188,17 +188,17 @@ class InstructionImpl {
                 var fname = (String) instruction.getData()[1];
                 int byteIndex = 0;
                 ClassField cf = null;
-                for(var c : clz.fields()) {
-                    if(c.name().equals(fname)) {
+                for(var c : clz.fields) {
+                    if(c.name.equals(fname)) {
                         cf = c;
                         break;
                     }
-                    byteIndex += c.type() instanceof PrimitiveType p ? p.size : 8;
+                    byteIndex += c.type instanceof PrimitiveType p ? p.size : 8;
                 }
-                if(cf == null) throw new RuntimeException("Unknown field '" + fname + "' in " + clz.namespace() + "." + clz.name());
-                Object data = state.stack.pop(cf.type() instanceof PrimitiveType pt ? pt.size : 8).value();
+                if(cf == null) throw new RuntimeException("Unknown field '" + fname + "' in " + clz.namespace + "." + clz.name);
+                Object data = state.stack.pop(cf.type instanceof PrimitiveType pt ? pt.size : 8).value();
                 if(loc instanceof Long l) {
-                    if(cf.type() instanceof PrimitiveType p) {
+                    if(cf.type instanceof PrimitiveType p) {
                         if(p.size == 1) state.memory.set(l + byteIndex, (Byte) data);
                         else if(p.size == 2) state.memory.setShort(l + byteIndex, (Short) data);
                         else if(p.size == 4) state.memory.setInt(l + byteIndex, (Integer) data);
@@ -206,7 +206,7 @@ class InstructionImpl {
                     }else if(data instanceof Long) {
                         state.memory.setLong(l + byteIndex, (Long) data);
                     }else {
-                        throw new NotImplementedException("Cannot store objects in classes yet: " + loc + " / " + cf.type());
+                        throw new NotImplementedException("Cannot store objects in classes yet: " + loc + " / " + cf.type);
                     }
                 }else if(loc instanceof ClassImpl ci) {
                     ci.setFieldValue(file, state, fname, data);

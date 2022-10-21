@@ -3,7 +3,6 @@ package ga.epicpix.zprol.compiler.compiled;
 import ga.epicpix.zpil.GeneratedData;
 import ga.epicpix.zpil.attr.ConstantValueAttribute;
 import ga.epicpix.zpil.bytecode.Bytecode;
-import ga.epicpix.zpil.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zprol.compiler.exceptions.RedefinedFieldException;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.PreCompiledData;
@@ -43,17 +42,17 @@ public class CompiledData {
     public void includeToGenerated(GeneratedData data) {
         for(var f : functions) {
             for(var validate : data.functions) {
-                if(!Objects.equals(validate.namespace(), f.namespace())) continue;
-                if(!validate.name().equals(f.name())) continue;
+                if(!Objects.equals(validate.namespace, f.namespace)) continue;
+                if(!validate.name.equals(f.name)) continue;
 
-                if(validate.signature().validateFunctionSignature(f.signature())) {
-                    throw new RedefinedFunctionException((f.namespace() != null ? f.namespace() + "." : "") + f.name() + " - " + f.signature());
+                if(validate.signature.validateFunctionSignature(f.signature)) {
+                    throw new RedefinedFunctionException((f.namespace != null ? f.namespace + "." : "") + f.name + " - " + f.signature);
                 }
             }
             data.functions.add(f);
             data.constantPool.prepareConstantPool(f);
-            if(!FunctionModifiers.isEmptyCode(f.modifiers())) {
-                for (var instruction : f.code().getInstructions()) {
+            if(!FunctionModifiers.isEmptyCode(f.modifiers)) {
+                for (var instruction : f.code.getInstructions()) {
                     Bytecode.prepareConstantPool(instruction, data.constantPool);
                 }
             }
@@ -61,36 +60,36 @@ public class CompiledData {
 
         for(var f : fields) {
             for(var validate : data.fields) {
-                if(!Objects.equals(validate.namespace(), f.namespace())) continue;
-                if(!validate.name().equals(f.name())) continue;
+                if(!Objects.equals(validate.namespace, f.namespace)) continue;
+                if(!validate.name.equals(f.name)) continue;
 
-                throw new RedefinedFieldException((f.namespace() != null ? f.namespace() + "." : "") + f.name() + " - " + f.type().normalName());
+                throw new RedefinedFieldException((f.namespace != null ? f.namespace + "." : "") + f.name + " - " + f.type.normalName());
 
             }
             data.fields.add(f);
             data.constantPool.prepareConstantPool(f);
-            if(f.defaultValue() != null) {
-                new ConstantValueAttribute(f.defaultValue().value()).prepareConstantPool(data.constantPool);
+            if(f.defaultValue != null) {
+                new ConstantValueAttribute(f.defaultValue.value).prepareConstantPool(data.constantPool);
             }
         }
 
         for(var clz : classes) {
             for(var validate : data.classes) {
-                if(!Objects.equals(validate.namespace(), clz.namespace())) continue;
-                if(!validate.name().equals(clz.name())) continue;
+                if(!Objects.equals(validate.namespace, clz.namespace)) continue;
+                if(!validate.name.equals(clz.name)) continue;
 
-                throw new RedefinedClassException((clz.namespace() != null ? clz.namespace() + "." : "") + clz.name());
+                throw new RedefinedClassException((clz.namespace != null ? clz.namespace + "." : "") + clz.name);
             }
             data.classes.add(clz);
             data.constantPool.prepareConstantPool(clz);
-            for(var field : clz.fields()) {
-                data.constantPool.getOrCreateStringIndex(field.name());
-                data.constantPool.getOrCreateStringIndex(field.type().getDescriptor());
+            for(var field : clz.fields) {
+                data.constantPool.getOrCreateStringIndex(field.name);
+                data.constantPool.getOrCreateStringIndex(field.type.getDescriptor());
             }
-            for(var m : clz.methods()) {
+            for(var m : clz.methods) {
                 data.constantPool.prepareConstantPool(m);
-                if(!FunctionModifiers.isEmptyCode(m.modifiers())) {
-                    for (var instruction : m.code().getInstructions()) {
+                if(!FunctionModifiers.isEmptyCode(m.modifiers)) {
+                    for (var instruction : m.code.getInstructions()) {
                         Bytecode.prepareConstantPool(instruction, data.constantPool);
                     }
                 }

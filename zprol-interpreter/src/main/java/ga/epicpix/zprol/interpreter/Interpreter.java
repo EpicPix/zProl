@@ -22,8 +22,8 @@ public class Interpreter {
         for(var f : file.fields) {
             var v = new FieldStorage();
             v.field = f;
-            if(f.defaultValue() != null) {
-                v.value = f.defaultValue().value();
+            if(f.defaultValue != null) {
+                v.value = f.defaultValue.value;
                 v.defined = true;
             }
             state.fields.add(v);
@@ -31,7 +31,7 @@ public class Interpreter {
         var sig = new FunctionSignature(Types.getTypeFromDescriptor("V"));
         try {
             for(var f : file.functions) {
-                if(f.name().equals(".init") && f.signature().equals(sig)) {
+                if(f.name.equals(".init") && f.signature.equals(sig)) {
                     runFunction(file, state, f);
                 }
             }
@@ -59,7 +59,7 @@ public class Interpreter {
 
     public static void runFunction(GeneratedData file, VMState state, Function function) {
         LocalStorage locals = new LocalStorage();
-        var params = function.signature().parameters();
+        var params = function.signature.parameters;
         int loc = 0;
         for(var param : params) loc += param instanceof PrimitiveType prim ? prim.size : 8;
 
@@ -70,20 +70,20 @@ public class Interpreter {
         }
         state.pushFunction(function);
         var func = state.currentFunction();
-        if(func.modifiers().contains(FunctionModifiers.NATIVE)) {
+        if(func.modifiers.contains(FunctionModifiers.NATIVE)) {
             if(state.natives == null) {
                 throw new IllegalStateException("Cannot call native functions, missing a native implementation");
             }
             Object returnValue = state.natives.runNativeFunction(file, state, locals);
             state.popFunction();
-            if(func.signature().returnType() != Types.getTypeFromDescriptor("V")) {
-                state.stack.push(returnValue, func.signature().returnType() instanceof PrimitiveType prim ? prim.size : 8);
+            if(func.signature.returnType != Types.getTypeFromDescriptor("V")) {
+                state.stack.push(returnValue, func.signature.returnType instanceof PrimitiveType prim ? prim.size : 8);
             }
         }else {
             int x = state.currentInstruction;
             boolean returned = false;
             state.currentInstruction = 0;
-            var instructions = func.code().getInstructions();
+            var instructions = func.code.getInstructions();
             while(state.currentInstruction < instructions.size()) {
                 runInstruction(file, state, instructions.get(state.currentInstruction++), locals);
                 if(state.hasReturned) {
@@ -106,7 +106,7 @@ public class Interpreter {
 
     public static void runMethod(GeneratedData file, VMState state, Method method) {
         LocalStorage locals = new LocalStorage();
-        var params = method.signature().parameters();
+        var params = method.signature.parameters;
         int loc = 8;
         for(var param : params) loc += param instanceof PrimitiveType prim ? prim.size : 8;
 
@@ -119,20 +119,20 @@ public class Interpreter {
         }
         state.pushMethod(method);
         var m = state.currentMethod();
-        if(m.modifiers().contains(FunctionModifiers.NATIVE)) {
+        if(m.modifiers.contains(FunctionModifiers.NATIVE)) {
             if(state.natives == null) {
                 throw new IllegalStateException("Cannot call native methods, missing a native implementation");
             }
             Object returnValue = state.natives.runNativeMethod(file, state, locals);
             state.popMethod();
-            if(m.signature().returnType() != Types.getTypeFromDescriptor("V")) {
-                state.stack.push(returnValue, m.signature().returnType() instanceof PrimitiveType prim ? prim.size : 8);
+            if(m.signature.returnType != Types.getTypeFromDescriptor("V")) {
+                state.stack.push(returnValue, m.signature.returnType instanceof PrimitiveType prim ? prim.size : 8);
             }
         }else {
             int x = state.currentInstruction;
             boolean returned = false;
             state.currentInstruction = 0;
-            var instructions = m.code().getInstructions();
+            var instructions = m.code.getInstructions();
             while(state.currentInstruction < instructions.size()) {
                 runInstruction(file, state, instructions.get(state.currentInstruction++), locals);
                 if(state.hasReturned) {

@@ -51,21 +51,21 @@ public class ConstantPool {
     public void prepareConstantPool(Object val) {
         if(val instanceof String v) getOrCreateStringIndex(v);
         else if(val instanceof Function v) {
-            getOrCreateStringIndex(v.namespace());
-            getOrCreateStringIndex(v.name());
-            getOrCreateStringIndex(v.signature().toString());
+            getOrCreateStringIndex(v.namespace);
+            getOrCreateStringIndex(v.name);
+            getOrCreateStringIndex(v.signature.toString());
         } else if(val instanceof Class v) {
-            getOrCreateStringIndex(v.namespace());
-            getOrCreateStringIndex(v.name());
+            getOrCreateStringIndex(v.namespace);
+            getOrCreateStringIndex(v.name);
         } else if(val instanceof Method v) {
-            getOrCreateStringIndex(v.namespace());
-            getOrCreateStringIndex(v.name());
-            getOrCreateStringIndex(v.className());
-            getOrCreateStringIndex(v.signature().toString());
+            getOrCreateStringIndex(v.namespace);
+            getOrCreateStringIndex(v.name);
+            getOrCreateStringIndex(v.className);
+            getOrCreateStringIndex(v.signature.toString());
         } else if(val instanceof Field v) {
-            getOrCreateStringIndex(v.namespace());
-            getOrCreateStringIndex(v.name());
-            getOrCreateStringIndex(v.type().getDescriptor());
+            getOrCreateStringIndex(v.namespace);
+            getOrCreateStringIndex(v.name);
+            getOrCreateStringIndex(v.type.getDescriptor());
         } else throw new IllegalArgumentException(val.getClass().getName());
     }
 

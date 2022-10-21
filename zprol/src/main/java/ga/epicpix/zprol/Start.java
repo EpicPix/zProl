@@ -270,54 +270,54 @@ public class Start {
         HashMap<String, CompiledData> compiledData = new HashMap<>();
         HashMap<String, PreCompiledData> preCompiledData = new HashMap<>();
         for(var clazz : gen.classes) {
-            compiledData.putIfAbsent(clazz.namespace(), new CompiledData(clazz.namespace()));
-            preCompiledData.putIfAbsent(clazz.namespace(), new PreCompiledData());
+            compiledData.putIfAbsent(clazz.namespace, new CompiledData(clazz.namespace));
+            preCompiledData.putIfAbsent(clazz.namespace, new PreCompiledData());
 
-            compiledData.get(clazz.namespace()).addClass(clazz);
+            compiledData.get(clazz.namespace).addClass(clazz);
             var fields = new ArrayList<PreField>();
             var methods = new ArrayList<PreFunction>();
-            for(var f : clazz.fields()) {
-                fields.add(new PreField(f.name(), f.type().normalName(), null));
+            for(var f : clazz.fields) {
+                fields.add(new PreField(f.name, f.type.normalName(), null));
             }
-            for(var func : clazz.methods()) {
+            for(var func : clazz.methods) {
                 var params = new ArrayList<PreParameter>();
-                for(var f : func.signature().parameters()) {
+                for(var f : func.signature.parameters) {
                     params.add(new PreParameter(null, f.normalName()));
                 }
                 var function = new PreFunction();
-                function.name = func.name();
-                function.returnType = func.signature().returnType().normalName();
+                function.name = func.name;
+                function.returnType = func.signature.returnType.normalName();
                 function.parameters.addAll(params);
-                function.modifiers.addAll(func.modifiers());
+                function.modifiers.addAll(func.modifiers);
                 methods.add(function);
             }
-            preCompiledData.get(clazz.namespace()).classes.add(new PreClass(clazz.namespace(), clazz.name(), fields.toArray(new PreField[0]), methods.toArray(new PreFunction[0])));
+            preCompiledData.get(clazz.namespace).classes.add(new PreClass(clazz.namespace, clazz.name, fields.toArray(new PreField[0]), methods.toArray(new PreFunction[0])));
         }
         for(var func : gen.functions) {
-            compiledData.putIfAbsent(func.namespace(), new CompiledData(func.namespace()));
-            preCompiledData.putIfAbsent(func.namespace(), new PreCompiledData());
+            compiledData.putIfAbsent(func.namespace, new CompiledData(func.namespace));
+            preCompiledData.putIfAbsent(func.namespace, new PreCompiledData());
 
-            compiledData.get(func.namespace()).addFunction(func);
+            compiledData.get(func.namespace).addFunction(func);
             var params = new ArrayList<PreParameter>();
-            for(var f : func.signature().parameters()) {
+            for(var f : func.signature.parameters) {
                 params.add(new PreParameter(null, f.normalName()));
             }
             var function = new PreFunction();
-            function.name = func.name();
-            function.returnType = func.signature().returnType().normalName();
+            function.name = func.name;
+            function.returnType = func.signature.returnType.normalName();
             function.parameters.addAll(params);
-            function.modifiers.addAll(func.modifiers());
-            preCompiledData.get(func.namespace()).functions.add(function);
+            function.modifiers.addAll(func.modifiers);
+            preCompiledData.get(func.namespace).functions.add(function);
         }
         for(var fld : gen.fields) {
-            compiledData.putIfAbsent(fld.namespace(), new CompiledData(fld.namespace()));
-            preCompiledData.putIfAbsent(fld.namespace(), new PreCompiledData());
+            compiledData.putIfAbsent(fld.namespace, new CompiledData(fld.namespace));
+            preCompiledData.putIfAbsent(fld.namespace, new PreCompiledData());
 
-            compiledData.get(fld.namespace()).addField(fld);
+            compiledData.get(fld.namespace).addField(fld);
             var field = new PreField(null);
-            field.name = fld.name();
-            field.type = fld.type().getName();
-            for(var v : fld.modifiers()) {
+            field.name = fld.name;
+            field.type = fld.type.getName();
+            for(var v : fld.modifiers) {
                 for(var m : PreFieldModifiers.MODIFIERS) {
                     if(m.getCompiledModifier() == v) {
                         field.modifiers.add(m);
@@ -325,7 +325,7 @@ public class Start {
                     }
                 }
             }
-            preCompiledData.get(fld.namespace()).fields.add(field);
+            preCompiledData.get(fld.namespace).fields.add(field);
         }
         for(var e : compiledData.entrySet()) includedCompiled.add(e.getValue());
         for(var e : preCompiledData.entrySet()) {

@@ -82,9 +82,9 @@ public class FieldCompiler {
                 }
                 Function initFunction = null;
                 for(var func : data.functions) {
-                    if(!Objects.equals(func.namespace(), data.namespace)) continue;
-                    if(!func.name().equals(".init")) continue;
-                    if(!func.signature().validateFunctionSignature(new FunctionSignature(data.resolveType("void")))) continue;
+                    if(!Objects.equals(func.namespace, data.namespace)) continue;
+                    if(!func.name.equals(".init")) continue;
+                    if(!func.signature.validateFunctionSignature(new FunctionSignature(data.resolveType("void")))) continue;
                     initFunction = func;
                     break;
                 }
@@ -93,7 +93,7 @@ public class FieldCompiler {
                     bytecode.pushInstruction(getConstructedInstruction("vreturn"));
                     data.functions.add(initFunction);
                 }else {
-                    var code = initFunction.code();
+                    var code = initFunction.code;
                     for(var i : bytecode.getInstructions()) code.pushInstruction(code.getInstructionsLength() - 1, i);
                 }
             }

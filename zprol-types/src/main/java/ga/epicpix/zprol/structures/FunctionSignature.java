@@ -7,14 +7,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
-public record FunctionSignature(Type returnType, Type... parameters) {
+public final class FunctionSignature {
+    public final Type returnType;
+    public final Type[] parameters;
+
+    public FunctionSignature(Type returnType, Type... parameters) {
+        this.returnType = returnType;
+        this.parameters = parameters;
+    }
 
     public boolean validateFunctionSignature(FunctionSignature cmp) {
-        if (cmp.returnType == null || returnType == cmp.returnType) {
-            if (cmp.parameters.length == parameters.length) {
+        if(cmp.returnType == null || returnType == cmp.returnType) {
+            if(cmp.parameters.length == parameters.length) {
                 boolean success = true;
-                for (int i = 0; i < cmp.parameters.length; i++) {
-                    if (cmp.parameters[i] != parameters[i]) {
+                for(int i = 0; i < cmp.parameters.length; i++) {
+                    if(cmp.parameters[i] != parameters[i]) {
                         success = false;
                         break;
                     }
@@ -29,7 +36,7 @@ public record FunctionSignature(Type returnType, Type... parameters) {
         StringBuilder output = new StringBuilder();
         output.append(returnType.getDescriptor());
         output.append("(");
-        for(var parameter : parameters) {
+        for(Type parameter : parameters) {
             output.append(parameter.getDescriptor());
         }
         output.append(")");
@@ -39,12 +46,12 @@ public record FunctionSignature(Type returnType, Type... parameters) {
     public static FunctionSignature fromDescriptor(String descriptor) {
         String returnTypeDescriptor = descriptor.substring(0, descriptor.indexOf("("));
         String paramsDescriptor = descriptor.substring(descriptor.indexOf("(") + 1, descriptor.lastIndexOf(")"));
-        var returnType = Types.getTypeFromDescriptor(returnTypeDescriptor);
+        Type returnType = Types.getTypeFromDescriptor(returnTypeDescriptor);
         ArrayList<Type> params = new ArrayList<>();
         StringBuilder current = new StringBuilder();
         while(!paramsDescriptor.isEmpty()) {
             current.append(paramsDescriptor.charAt(0));
-            var type = Types.getTypeFromDescriptor(current.toString());
+            Type type = Types.getTypeFromDescriptor(current.toString());
             if(type != null) {
                 params.add(type);
                 current = new StringBuilder();
