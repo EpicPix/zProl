@@ -17,6 +17,7 @@ class InstructionImpl {
             case "push_string" -> state.stack.push(new StringImpl((String) instruction.getData()[0]), 8);
             case "invoke" -> Interpreter.runFunction(file, state, (Function) instruction.getData()[0]);
             case "icastl" -> state.stack.push((long) (Integer) state.stack.pop(4).value(), 8);
+            case "bpush" -> state.stack.push((Byte) instruction.getData()[0], 1);
             case "ipush" -> state.stack.push((Integer) instruction.getData()[0], 4);
             case "lpush" -> state.stack.push((Long) instruction.getData()[0], 8);
             case "ladd" -> state.stack.push((Long) state.stack.pop(8).value() + (Long) state.stack.pop(8).value(), 8);
@@ -78,6 +79,36 @@ class InstructionImpl {
                     else state.stack.push(value, 8);
                 }else {
                     throw new IllegalStateException("Expected a class type, got " + val.getClass().getSimpleName() + " (" + val + ")");
+                }
+            }
+            case "class_field_store" -> {
+                var loc = state.stack.pop(8).value();
+                var clz = (Class) instruction.getData()[0];
+                var fname = (String) instruction.getData()[1];
+                int byteIndex = 0;
+                ClassField cf = null;
+                for(var c : clz.fields()) {
+                    if(c.name().equals(fname)) {
+                        cf = c;
+                        break;
+                    }
+                    byteIndex += c.type() instanceof PrimitiveType p ? p.size : 8;
+                }
+                if(cf == null) throw new RuntimeException("Unknown field '" + fname + "' in " + clz.namespace() + "." + clz.name());
+                Object data = state.stack.pop(cf.type() instanceof PrimitiveType pt ? pt.size : 8).value();
+                if(loc instanceof Long l) {
+                    if(cf.type() instanceof PrimitiveType p) {
+                        if(p.size == 1) state.memory.set(l + byteIndex, (Byte) data);
+                        else if(p.size == 2) state.memory.setShort(l + byteIndex, (Short) data);
+                        else if(p.size == 4) state.memory.setInt(l + byteIndex, (Integer) data);
+                        else if(p.size == 8) state.memory.setLong(l + byteIndex, (Long) data);
+                    }else {
+                        throw new NotImplementedException("Cannot store objects in classes yet");
+                    }
+                }else if(loc instanceof ClassImpl ci) {
+                    ci.setFieldValue(file, state, fname, data);
+                }else {
+                    throw new IllegalArgumentException("Expected a pointer or ClassImpl");
                 }
             }
             default -> throw new NotImplementedException("Cannot handle instruction {" + instruction + "}");
