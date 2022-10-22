@@ -130,12 +130,12 @@ public class Start {
             String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
             var generated = GeneratedData.load(Files.readAllBytes(new File(normalName + ".zpil").toPath()));
             for(Generator gen : generators) {
-                long startGenerator = System.currentTimeMillis();
+                long startGenerator = System.nanoTime();
                 DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(normalName + gen.getFileExtension())));
                 gen.generate(out, generated);
                 out.close();
-                long stopGenerator = System.currentTimeMillis();
-                if(!HIDE_TIMINGS) System.out.printf("Took %d ms to generate %s code\n", stopGenerator - startGenerator, gen.getGeneratorName());
+                long stopGenerator = System.nanoTime();
+                if(!HIDE_TIMINGS) System.out.printf("Took %d μs to generate %s code\n", (stopGenerator - startGenerator)/1000, gen.getGeneratorName());
             }
         }
 
@@ -202,20 +202,20 @@ public class Start {
                 loadGenerated(gen, includedCompiled, included);
             }else {
                 try {
-                    long startLex = System.currentTimeMillis();
+                    long startLex = System.nanoTime();
                     ArrayList<LexerToken> lexedTokens = Lexer.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
-                    long endLex = System.currentTimeMillis();
-                    if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d ms to lex\n", file.substring(file.lastIndexOf('/') + 1), endLex - startLex);
+                    long endLex = System.nanoTime();
+                    if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d μs to lex\n", file.substring(file.lastIndexOf('/') + 1), (endLex - startLex)/1000);
 
-                    long startToken = System.currentTimeMillis();
+                    long startToken = System.nanoTime();
                     FileTree tree = Parser.parse(new SeekIterator<>(lexedTokens));
-                    long endToken = System.currentTimeMillis();
-                    if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d ms to parse\n", file.substring(file.lastIndexOf('/') + 1), endToken - startToken);
+                    long endToken = System.nanoTime();
+                    if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d μs to parse\n", file.substring(file.lastIndexOf('/') + 1), (endToken - startToken)/1000);
 
-                    long startPreCompile = System.currentTimeMillis();
+                    long startPreCompile = System.nanoTime();
                     PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tree, lexedTokens.get(0) != null ? lexedTokens.get(0).parser : null);
-                    long stopPreCompile = System.currentTimeMillis();
-                    if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d ms to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, stopPreCompile - startPreCompile);
+                    long stopPreCompile = System.nanoTime();
+                    if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d μs to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, (stopPreCompile - startPreCompile)/1000);
                     preCompiled.add(data);
                 }catch(ParserException e) {
                     e.printError();
@@ -235,11 +235,11 @@ public class Start {
                 ArrayList<PreCompiledData> pre = new ArrayList<>(included);
                 pre.addAll(preCompiled);
                 pre.remove(data);
-                long startCompile = System.currentTimeMillis();
+                long startCompile = System.nanoTime();
                 CompiledData zpil = Compiler.compile(data, pre, data.parser);
-                long stopCompile = System.currentTimeMillis();
+                long stopCompile = System.nanoTime();
                 if (!HIDE_TIMINGS)
-                    System.out.printf("[%s] Took %d ms to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, stopCompile - startCompile);
+                    System.out.printf("[%s] Took %d μs to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, (stopCompile - startCompile)/1000);
                 compiled.add(zpil);
             }
         }catch(TokenLocatedException e) {
@@ -249,11 +249,11 @@ public class Start {
         }
 
         GeneratedData linked = new GeneratedData();
-        long startLink = System.currentTimeMillis();
+        long startLink = System.nanoTime();
         for(CompiledData d : compiled) d.includeToGenerated(linked);
         for(CompiledData d : includedCompiled) d.includeToGenerated(linked);
-        long stopLink = System.currentTimeMillis();
-        if(!HIDE_TIMINGS) System.out.printf("Took %d ms to link everything\n", stopLink - startLink);
+        long stopLink = System.nanoTime();
+        if(!HIDE_TIMINGS) System.out.printf("Took %d μs to link everything\n", (stopLink - startLink)/1000);
 
         String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
         {
