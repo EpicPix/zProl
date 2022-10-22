@@ -179,7 +179,11 @@ class InstructionImpl {
                 }
                 Long idx = (Long) index;
                 if(!(value instanceof Long)) {
-                    throw new NotImplementedException("Cannot store objects in arrays yet");
+                    if(value instanceof ILocatable) {
+                        value = state.memory.objectToPointer((ILocatable) value);
+                    }else {
+                        throw new NotImplementedException("Cannot store objects in arrays yet");
+                    }
                 }
                 Long val = (Long) value;
                 state.memory.setLong(lp + idx * 8, val);
@@ -203,6 +207,12 @@ class InstructionImpl {
                 Object val = state.stack.pop(8).value;
                 Class clz = (Class) instruction.getData()[0];
                 String fname = (String) instruction.getData()[1];
+                if(val instanceof Long) {
+                    long l = (Long) val;
+                    if((l & 0x8000000000000000L) != 0) {
+                        val = state.memory.pointerToObject(l);
+                    }
+                }
                 if(val instanceof ClassImpl) {
                     ClassImpl ci = (ClassImpl) val;
                     ClassField fi = null;
@@ -309,10 +319,15 @@ class InstructionImpl {
                         else if(p.size == 2) state.memory.setShort(l + byteIndex, (Short) data);
                         else if(p.size == 4) state.memory.setInt(l + byteIndex, (Integer) data);
                         else if(p.size == 8) state.memory.setLong(l + byteIndex, (Long) data);
-                    } else if(data instanceof Long) {
-                        state.memory.setLong(l + byteIndex, (Long) data);
                     } else {
-                        throw new NotImplementedException("Cannot store objects in classes yet: " + loc + " / " + cf.type);
+                        if(data instanceof ILocatable) {
+                            data = state.memory.objectToPointer((ILocatable) data);
+                        }
+                        if(data instanceof Long) {
+                            state.memory.setLong(l + byteIndex, (Long) data);
+                        } else {
+                            throw new NotImplementedException("This value cannot be stored: 0x" + Long.toHexString(l) + " / " + cf.type + " / " + data);
+                        }
                     }
                 } else if(loc instanceof ClassImpl) {
                     ClassImpl ci = (ClassImpl) loc;

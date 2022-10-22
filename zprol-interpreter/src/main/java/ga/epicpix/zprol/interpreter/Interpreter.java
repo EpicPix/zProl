@@ -46,11 +46,15 @@ public class Interpreter {
             }
             s.append("\nNative Implementation: ").append(state.natives == null ? "<None>" : state.natives.getClass().getName());
             s.append("\nMemory Implementation: ").append(state.memory.getClass().getName());
-            s.append("\nMemory Maps:");
             if(state.memory instanceof DefaultMemoryImpl) {
                 DefaultMemoryImpl dmi = (DefaultMemoryImpl) state.memory;
+                s.append("\nMemory Maps:");
                 for(MemoryData map : dmi.maps) {
                     s.append("\n\t0x").append(Long.toHexString(map.start)).append(" - 0x").append(Long.toHexString(map.start + map.length)).append(" (").append(map.length).append(" bytes)");
+                }
+                s.append("\nPointer Memory Maps:");
+                for(ObjectMemoryData map : dmi.pointerMaps) {
+                    s.append("\n\t0x").append(Long.toHexString(map.start)).append(" - 0x").append(Long.toHexString(map.start + (map.count << 3))).append(" (").append(map.count).append(" elements)");
                 }
             }
             s.append("\n-----------------");

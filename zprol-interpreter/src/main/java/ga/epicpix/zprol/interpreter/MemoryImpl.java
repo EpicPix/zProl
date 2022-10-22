@@ -41,4 +41,6 @@ public abstract class MemoryImpl {
         set(addr + 7, (byte) ((val >>> 56) & 0xff));
     }
 
+    public abstract Long objectToPointer(ILocatable data);
+    public abstract ILocatable pointerToObject(long addr);
 }
