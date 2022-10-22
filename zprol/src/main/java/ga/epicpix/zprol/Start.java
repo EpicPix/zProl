@@ -21,7 +21,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 
-import static ga.epicpix.zprol.Loader.registerTypes;
 import static ga.epicpix.zprol.generators.Generator.initGenerators;
 
 public class Start {
@@ -30,7 +29,6 @@ public class Start {
     public static final String VERSION = "1.1.1";
 
     static {
-        registerTypes();
         initGenerators();
     }
 
@@ -156,7 +154,6 @@ public class Start {
             Interpreter.runInterpreter(file, function);
         }
 
-        //noinspection ConstantConditions
         if(outputFile != null || printFile != null || interpretFile != null) {
             return;
         }

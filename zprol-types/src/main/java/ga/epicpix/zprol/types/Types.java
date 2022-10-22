@@ -6,6 +6,19 @@ public class Types {
 
     private static final HashMap<String, Type> TYPES = new HashMap<>();
 
+    static {
+        Types.registerType(new VoidType(), "void");
+        Types.registerPrimitiveType(1, false, "B", "int8", "byte");
+        Types.registerPrimitiveType(2, false, "S", "int16", "short");
+        Types.registerPrimitiveType(4, false, "I", "int32", "int");
+        Types.registerPrimitiveType(8, false, "L", "int64", "long");
+        Types.registerPrimitiveType(1, true, "uB", "uint8", "ubyte");
+        Types.registerPrimitiveType(2, true, "uS", "uint16", "ushort");
+        Types.registerPrimitiveType(4, true, "uI", "uint32", "uint");
+        Types.registerPrimitiveType(8, true, "uL", "uint64", "ulong");
+        Types.registerType(new BooleanType(), "bool");
+    }
+
     public static void registerPrimitiveType(int size, boolean unsigned, String descriptor, String... names) {
         for(String name : names) {
             TYPES.put(name, new PrimitiveType(size, unsigned, descriptor, name));
