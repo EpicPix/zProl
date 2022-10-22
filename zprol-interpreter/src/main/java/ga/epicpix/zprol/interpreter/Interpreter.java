@@ -39,7 +39,7 @@ public class Interpreter {
                 runFunction(file, state, function);
             }
             return state;
-        }catch(RuntimeException e) {
+        }catch(RuntimeException | StackOverflowError e) {
             StringBuilder s = new StringBuilder("An exception occurred while interpreting code\n-----------------\nStack Dump:");
             for(DataValue t : state.stack.valueStack()) {
                 s.append("\n").append("[").append(t.size).append("b] ").append(t.value);
@@ -48,10 +48,14 @@ public class Interpreter {
             s.append("\nMemory Implementation: ").append(state.memory.getClass().getName());
             if(state.memory instanceof DefaultMemoryImpl) {
                 DefaultMemoryImpl dmi = (DefaultMemoryImpl) state.memory;
-                s.append("\nMemory Maps:");
+                long totalNormalBytes = 0;
+                StringBuilder o = new StringBuilder();
                 for(MemoryData map : dmi.maps) {
-                    s.append("\n\t0x").append(Long.toHexString(map.start)).append(" - 0x").append(Long.toHexString(map.start + map.length)).append(" (").append(map.length).append(" bytes)");
+                    totalNormalBytes += map.length;
+                    o.append("\n\t0x").append(Long.toHexString(map.start)).append(" - 0x").append(Long.toHexString(map.start + map.length)).append(" (").append(map.length).append(" bytes)");
                 }
+                s.append("\nMemory Maps (total ").append(totalNormalBytes).append(" bytes):");
+                s.append(o);
                 s.append("\nPointer Memory Maps:");
                 for(ObjectMemoryData map : dmi.pointerMaps) {
                     s.append("\n\t0x").append(Long.toHexString(map.start)).append(" - 0x").append(Long.toHexString(map.start + (map.count << 3))).append(" (").append(map.count).append(" elements)");
