@@ -18,10 +18,10 @@ public class ConstantPoolEntry {
 
     public static ConstantPoolEntry read(DataInputStream in) throws IOException {
         byte t = in.readByte();
-        return switch(t) {
-            case 1 -> StringEntry.read(in);
-            default -> throw new RuntimeException("Unknown tag: " + t);
-        };
+        if(t == 1) {
+            return StringEntry.read(in);
+        }
+        throw new RuntimeException("Unknown tag: " + t);
     }
 
     public static class StringEntry extends ConstantPoolEntry {

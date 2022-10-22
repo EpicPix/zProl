@@ -16,8 +16,9 @@ public class ConstantPool {
         if(str == null) return 0;
 
         for(int i = 0; i < entries.size(); i++) {
-            if(entries.get(i) instanceof ConstantPoolEntry.StringEntry e) {
-                if(e.getString().equals(str)) {
+            ConstantPoolEntry m = entries.get(i);
+            if(m instanceof ConstantPoolEntry.StringEntry) {
+                if(((ConstantPoolEntry.StringEntry) m).getString().equals(str)) {
                     return i + 1;
                 }
             }
@@ -30,8 +31,9 @@ public class ConstantPool {
         if(str == null) return 0;
 
         for(int i = 0; i < entries.size(); i++) {
-            if(entries.get(i) instanceof ConstantPoolEntry.StringEntry e) {
-                if(e.getString().equals(str)) {
+            ConstantPoolEntry m = entries.get(i);
+            if(m instanceof ConstantPoolEntry.StringEntry) {
+                if(((ConstantPoolEntry.StringEntry) m).getString().equals(str)) {
                     return i + 1;
                 }
             }
@@ -49,20 +51,24 @@ public class ConstantPool {
     }
 
     public void prepareConstantPool(Object val) {
-        if(val instanceof String v) getOrCreateStringIndex(v);
-        else if(val instanceof Function v) {
+        if(val instanceof String) getOrCreateStringIndex((String) val);
+        else if(val instanceof Function) {
+            Function v = (Function) val;
             getOrCreateStringIndex(v.namespace);
             getOrCreateStringIndex(v.name);
             getOrCreateStringIndex(v.signature.toString());
-        } else if(val instanceof Class v) {
+        } else if(val instanceof Class) {
+            Class v = (Class) val;
             getOrCreateStringIndex(v.namespace);
             getOrCreateStringIndex(v.name);
-        } else if(val instanceof Method v) {
+        } else if(val instanceof Method) {
+            Method v = (Method) val;
             getOrCreateStringIndex(v.namespace);
             getOrCreateStringIndex(v.name);
             getOrCreateStringIndex(v.className);
             getOrCreateStringIndex(v.signature.toString());
-        } else if(val instanceof Field v) {
+        } else if(val instanceof Field) {
+            Field v = (Field) val;
             getOrCreateStringIndex(v.namespace);
             getOrCreateStringIndex(v.name);
             getOrCreateStringIndex(v.type.getDescriptor());

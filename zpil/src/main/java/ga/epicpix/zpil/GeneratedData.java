@@ -12,6 +12,8 @@ import ga.epicpix.zprol.types.Types;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
 public class GeneratedData {
 
@@ -34,37 +36,37 @@ public class GeneratedData {
             out.writeInt(data.constantPool.getStringIndex(func.name));
             out.writeInt(data.constantPool.getStringIndex(func.signature.toString()));
             out.writeInt(FunctionModifiers.toBits(func.modifiers));
-            var hasCode = !FunctionModifiers.isEmptyCode(func.modifiers);
+            boolean hasCode = !FunctionModifiers.isEmptyCode(func.modifiers);
             if(hasCode) {
                 out.writeInt(func.code.getLocalsSize());
-                var instructions = func.code.getInstructions();
+                List<IBytecodeInstruction> instructions = func.code.getInstructions();
                 out.writeInt(instructions.size());
-                for (var instruction : instructions) {
+                for (IBytecodeInstruction instruction : instructions) {
                     Bytecode.write(instruction, data, out);
                 }
             }
         }
 
         out.writeInt(data.classes.size());
-        for(var clz : data.classes) {
+        for(Class clz : data.classes) {
             out.writeInt(data.constantPool.getStringIndex(clz.namespace));
             out.writeInt(data.constantPool.getStringIndex(clz.name));
             out.writeInt(clz.fields.length);
-            for(var field : clz.fields) {
+            for(ClassField field : clz.fields) {
                 out.writeInt(data.constantPool.getStringIndex(field.name));
                 out.writeInt(data.constantPool.getStringIndex(field.type.getDescriptor()));
             }
             out.writeInt(clz.methods.length);
-            for(var func : clz.methods) {
+            for(Method func : clz.methods) {
                 out.writeInt(data.constantPool.getStringIndex(func.name));
                 out.writeInt(data.constantPool.getStringIndex(func.signature.toString()));
                 out.writeInt(FunctionModifiers.toBits(func.modifiers));
-                var hasCode = !FunctionModifiers.isEmptyCode(func.modifiers);
+                boolean hasCode = !FunctionModifiers.isEmptyCode(func.modifiers);
                 if(hasCode) {
                     out.writeInt(func.code.getLocalsSize());
-                    var instructions = func.code.getInstructions();
+                    List<IBytecodeInstruction> instructions = func.code.getInstructions();
                     out.writeInt(instructions.size());
-                    for (var instruction : instructions) {
+                    for (IBytecodeInstruction instruction : instructions) {
                         Bytecode.write(instruction, data, out);
                     }
                 }
@@ -95,7 +97,7 @@ public class GeneratedData {
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(b));
         GeneratedData data = new GeneratedData();
 
-        if(!new String(in.readNBytes(4)).equals("zPrl")) {
+        if(in.readInt() != 0x7a50726c) {
             throw new IllegalStateException("invalid magic");
         }
 
@@ -104,11 +106,11 @@ public class GeneratedData {
 
         int functionLength = in.readInt();
         for(int i = 0; i<functionLength; i++) {
-            var namespace = data.constantPool.getStringNullable(in.readInt());
-            var name = data.constantPool.getString(in.readInt());
-            var signature = data.constantPool.getString(in.readInt());
-            var modifiers = FunctionModifiers.getModifiers(in.readInt());
-            var hasCode = !FunctionModifiers.isEmptyCode(modifiers);
+            String namespace = data.constantPool.getStringNullable(in.readInt());
+            String name = data.constantPool.getString(in.readInt());
+            String signature = data.constantPool.getString(in.readInt());
+            EnumSet<FunctionModifiers> modifiers = FunctionModifiers.getModifiers(in.readInt());
+            boolean hasCode = !FunctionModifiers.isEmptyCode(modifiers);
             Function function = new Function(namespace, modifiers, name, FunctionSignature.fromDescriptor(signature), hasCode ? Bytecode.BYTECODE.createStorage() : null);
             if(hasCode) {
                 function.code.setLocalsSize(in.readInt());
@@ -122,21 +124,21 @@ public class GeneratedData {
 
         int classLength = in.readInt();
         for(int i = 0; i<classLength; i++) {
-            var namespace = data.constantPool.getStringNullable(in.readInt());
-            var name = data.constantPool.getString(in.readInt());
-            var fields = new ClassField[in.readInt()];
+            String namespace = data.constantPool.getStringNullable(in.readInt());
+            String name = data.constantPool.getString(in.readInt());
+            ClassField[] fields = new ClassField[in.readInt()];
             for(int fieldIndex = 0; fieldIndex<fields.length; fieldIndex++) {
-                var fieldName = data.constantPool.getString(in.readInt());
-                var fieldTypeDescriptor = data.constantPool.getString(in.readInt());
-                var fieldType = Types.getTypeFromDescriptor(fieldTypeDescriptor);
+                String fieldName = data.constantPool.getString(in.readInt());
+                String fieldTypeDescriptor = data.constantPool.getString(in.readInt());
+                ga.epicpix.zprol.types.Type fieldType = Types.getTypeFromDescriptor(fieldTypeDescriptor);
                 fields[fieldIndex] = new ClassField(fieldName, fieldType);
             }
-            var methods = new Method[in.readInt()];
+            Method[] methods = new Method[in.readInt()];
             for(int methodIndex = 0; methodIndex<methods.length; methodIndex++) {
-                var mname = data.constantPool.getStringNullable(in.readInt());
-                var msignature = data.constantPool.getString(in.readInt());
-                var mmodifiers = FunctionModifiers.getModifiers(in.readInt());
-                var mhasCode = !FunctionModifiers.isEmptyCode(mmodifiers);
+                String mname = data.constantPool.getStringNullable(in.readInt());
+                String msignature = data.constantPool.getString(in.readInt());
+                EnumSet<FunctionModifiers> mmodifiers = FunctionModifiers.getModifiers(in.readInt());
+                boolean mhasCode = !FunctionModifiers.isEmptyCode(mmodifiers);
                 Method method = new Method(namespace, mmodifiers, name, mname, FunctionSignature.fromDescriptor(msignature), mhasCode ? Bytecode.BYTECODE.createStorage() : null);
                 if(mhasCode) {
                     method.code.setLocalsSize(in.readInt());
@@ -152,34 +154,34 @@ public class GeneratedData {
 
         int fieldLength = in.readInt();
         for(int i = 0; i<fieldLength; i++) {
-            var namespace = data.constantPool.getStringNullable(in.readInt());
-            var name =  data.constantPool.getString(in.readInt());
-            var type = data.constantPool.getString(in.readInt());
-            var modifiers = FieldModifiers.getModifiers(in.readInt());
+            String namespace = data.constantPool.getStringNullable(in.readInt());
+            String name =  data.constantPool.getString(in.readInt());
+            String type = data.constantPool.getString(in.readInt());
+            EnumSet<FieldModifiers> modifiers = FieldModifiers.getModifiers(in.readInt());
 
             int attrCount = in.readInt();
             ConstantValue constantValue = null;
             for(int j = 0; j<attrCount; j++) {
-                var attr = Attribute.read(in, data.constantPool);
-                if(attr instanceof ConstantValueAttribute cvalue) {
-                    constantValue = new ConstantValue(cvalue.getValue());
+                Attribute attr = Attribute.read(in, data.constantPool);
+                if(attr instanceof ConstantValueAttribute) {
+                    constantValue = new ConstantValue(((ConstantValueAttribute) attr).getValue());
                 }
             }
 
             data.fields.add(new Field(namespace, modifiers, name, Types.getTypeFromDescriptor(type), constantValue));
         }
 
-        for(var func : data.functions) {
+        for(Function func : data.functions) {
             if(!FunctionModifiers.isEmptyCode(func.modifiers)) {
-                for (var instr : func.code.getInstructions()) {
+                for (IBytecodeInstruction instr : func.code.getInstructions()) {
                     Bytecode.postRead(instr, data);
                 }
             }
         }
-        for(var clz : data.classes) {
-            for (var mth : clz.methods) {
+        for(Class clz : data.classes) {
+            for (Method mth : clz.methods) {
                 if (!FunctionModifiers.isEmptyCode(mth.modifiers)) {
-                    for (var instr : mth.code.getInstructions()) {
+                    for (IBytecodeInstruction instr : mth.code.getInstructions()) {
                         Bytecode.postRead(instr, data);
                     }
                 }
@@ -190,7 +192,7 @@ public class GeneratedData {
     }
 
     public Function getFunction(FunctionSignature sig, String name) {
-        for(var func : functions) {
+        for(Function func : functions) {
             if(!func.signature.equals(sig)) continue;
             if(!func.name.equals(name)) continue;
             return func;
@@ -200,27 +202,27 @@ public class GeneratedData {
 
     public void printZpil() {
         System.out.println("Functions:");
-        for(var func : functions) {
+        for(Function func : functions) {
             System.out.println("  Function");
             System.out.println("    Namespace: \"" + (func.namespace != null ? func.namespace : "") + "\"");
             System.out.println("    Name: \"" + func.name + "\"");
             System.out.println("    Signature: \"" + func.signature + "\"");
             System.out.println("    Modifiers (" + func.modifiers.size() + "):");
-            for(var modifier : func.modifiers) {
+            for(FunctionModifiers modifier : func.modifiers) {
                 System.out.println("      " + modifier);
             }
             if(!FunctionModifiers.isEmptyCode(func.modifiers)) {
                 System.out.println("    Code");
                 System.out.println("      Locals Size: " + func.code.getLocalsSize());
                 System.out.println("      Instructions");
-                for(var instruction : func.code.getInstructions()) {
+                for(IBytecodeInstruction instruction : func.code.getInstructions()) {
                     System.out.println("        " + instruction);
                 }
             }
         }
 
         System.out.println("Fields:");
-        for(var fld : fields) {
+        for(Field fld : fields) {
             System.out.println("  Field");
             System.out.println("    Namespace: \"" + (fld.namespace != null ? fld.namespace : "") + "\"");
             System.out.println("    Name: \"" + fld.name + "\"");
@@ -233,38 +235,38 @@ public class GeneratedData {
                 }
             }
             System.out.println("    Modifiers (" + fld.modifiers.size() + "):");
-            for(var modifier : fld.modifiers) {
+            for(FieldModifiers modifier : fld.modifiers) {
                 System.out.println("      " + modifier);
             }
         }
 
         System.out.println("Classes:");
-        for(var clz : classes) {
+        for(Class clz : classes) {
             System.out.println("  Class");
             System.out.println("    Namespace: \"" + (clz.namespace != null ? clz.namespace : "") + "\"");
             System.out.println("    Name: \"" + clz.name + "\"");
             System.out.println("    Fields:");
-            for(var fld : clz.fields) {
+            for(ClassField fld : clz.fields) {
                 System.out.println("      Field");
                 System.out.println("        Name: \"" + fld.name + "\"");
                 System.out.println("        Type: \"" + fld.type.getDescriptor() + "\"");
             }
             System.out.println("    Methods:");
-            for(var func : clz.methods) {
+            for(Method func : clz.methods) {
                 System.out.println("      Method");
                 System.out.println("        Namespace: \"" + (func.namespace != null ? func.namespace : "") + "\"");
                 System.out.println("        Class: \"" + func.className + "\"");
                 System.out.println("        Name: \"" + func.name + "\"");
                 System.out.println("        Signature: \"" + func.signature + "\"");
                 System.out.println("        Modifiers (" + func.modifiers.size() + "):");
-                for(var modifier : func.modifiers) {
+                for(FunctionModifiers modifier : func.modifiers) {
                     System.out.println("          " + modifier);
                 }
                 if(!FunctionModifiers.isEmptyCode(func.modifiers)) {
                     System.out.println("        Code");
                     System.out.println("          Locals Size: " + func.code.getLocalsSize());
                     System.out.println("          Instructions");
-                    for(var instruction : func.code.getInstructions()) {
+                    for(IBytecodeInstruction instruction : func.code.getInstructions()) {
                         System.out.println("            " + instruction);
                     }
                 }

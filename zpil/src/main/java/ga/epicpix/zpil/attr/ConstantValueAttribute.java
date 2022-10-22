@@ -23,45 +23,60 @@ public class ConstantValueAttribute extends Attribute {
     protected void readData(DataInput input, ConstantPool pool) throws IOException {
         int type = input.readUnsignedByte();
         switch(type) {
-            case 'n' -> value = null;
-            case 's' -> value = ((ConstantPoolEntry.StringEntry) pool.entries.get(input.readInt() - 1)).getString();
-            case 'b' -> value = input.readBoolean();
-            case 'B' -> value = input.readByte();
-            case 'S' -> value = input.readShort();
-            case 'I' -> value = input.readInt();
-            case 'L' -> value = input.readLong();
-            default -> throw new IllegalStateException("Unknown type of constant value '" + type + "'");
+            case 'n':
+                value = null;
+                break;
+            case 's':
+                value = ((ConstantPoolEntry.StringEntry) pool.entries.get(input.readInt() - 1)).getString();
+                break;
+            case 'b':
+                value = input.readBoolean();
+                break;
+            case 'B':
+                value = input.readByte();
+                break;
+            case 'S':
+                value = input.readShort();
+                break;
+            case 'I':
+                value = input.readInt();
+                break;
+            case 'L':
+                value = input.readLong();
+                break;
+            default:
+                throw new IllegalStateException("Unknown type of constant value '" + type + "'");
         }
     }
 
     public void prepareConstantPool(ConstantPool pool) {
         super.prepareConstantPool(pool);
-        if(value instanceof String str) {
-            pool.getOrCreateStringIndex(str);
+        if(value instanceof String) {
+            pool.getOrCreateStringIndex((String) value);
         }
     }
 
     protected void writeData(DataOutputStream out, ConstantPool pool) throws IOException {
         if(value == null) {
             out.writeByte('n');
-        }else if(value instanceof String str) {
+        }else if(value instanceof String) {
             out.writeByte('s');
-            out.writeInt(pool.getStringIndex(str));
-        }else if(value instanceof Boolean v) {
+            out.writeInt(pool.getStringIndex((String) value));
+        }else if(value instanceof Boolean) {
             out.writeByte('b');
-            out.writeBoolean(v);
-        }else if(value instanceof Byte v) {
+            out.writeBoolean((Boolean) value);
+        }else if(value instanceof Byte) {
             out.writeByte('B');
-            out.writeByte(v);
-        }else if(value instanceof Short v) {
+            out.writeByte((Byte) value);
+        }else if(value instanceof Short) {
             out.writeByte('S');
-            out.writeShort(v);
-        }else if(value instanceof Integer v) {
+            out.writeShort((Short) value);
+        }else if(value instanceof Integer) {
             out.writeByte('I');
-            out.writeInt(v);
-        }else if(value instanceof Long v) {
+            out.writeInt((Integer) value);
+        }else if(value instanceof Long) {
             out.writeByte('L');
-            out.writeLong(v);
+            out.writeLong((Long) value);
         }else {
             throw new IllegalStateException("Unknown type of constant value '" + value.getClass().getSimpleName() + "'");
         }

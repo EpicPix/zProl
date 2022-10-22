@@ -15,7 +15,19 @@ public final class Bytecode implements IBytecode {
 
     public static final IBytecode BYTECODE = new Bytecode();
 
-    /* package-private */ record BytecodeInstructionData(int id, String name, BytecodeValueType[] values, IBytecodeInstructionGenerator generator) {}
+    /* package-private */ static class BytecodeInstructionData {
+        public final int id;
+        public final String name;
+        public final BytecodeValueType[] values;
+        public final IBytecodeInstructionGenerator generator;
+
+        public BytecodeInstructionData(int id, String name, BytecodeValueType[] values, IBytecodeInstructionGenerator generator) {
+            this.id = id;
+            this.name = name;
+            this.values = values;
+            this.generator = generator;
+        }
+    }
 
     private final ArrayList<BytecodeInstructionData> data = new ArrayList<>();
 
@@ -112,15 +124,15 @@ public final class Bytecode implements IBytecode {
     }
 
     public String getInstructionPrefix(int size) {
-        return switch(size) {
-            case 0 -> "v";
-            case 1 -> "b";
-            case 2 -> "s";
-            case 4 -> "i";
-            case 8 -> "l";
-            case 16 -> "h";
-            default -> throw new IllegalArgumentException("Instruction prefix with size " + size + " does not exist");
-        };
+        switch(size) {
+            case 0: return "v";
+            case 1: return "b";
+            case 2: return "s";
+            case 4: return "i";
+            case 8: return "l";
+            case 16: return "h";
+            default: throw new IllegalArgumentException("Instruction prefix with size " + size + " does not exist");
+        }
     }
 
     public IBytecodeInstructionGenerator getInstruction(int id) {
@@ -135,7 +147,7 @@ public final class Bytecode implements IBytecode {
     public BytecodeValueType[] getInstructionValueTypesRequirements(int id) {
         for(BytecodeInstructionData d : data) {
             if(d.id == id) {
-                var clone = new BytecodeValueType[d.values.length];
+                BytecodeValueType[] clone = new BytecodeValueType[d.values.length];
                 System.arraycopy(d.values, 0, clone, 0, d.values.length);
                 return clone;
             }
@@ -158,19 +170,20 @@ public final class Bytecode implements IBytecode {
 
     public static void write(IBytecodeInstruction instr, GeneratedData data, DataOutputStream out) throws IOException {
         out.writeByte(instr.getId());
-        var values = Bytecode.BYTECODE.getInstructionValueTypesRequirements(instr.getId());
-        var args = instr.getData();
+        BytecodeValueType[] values = Bytecode.BYTECODE.getInstructionValueTypesRequirements(instr.getId());
+        Object[] args = instr.getData();
         for(int i = 0; i<values.length; i++) {
-            var type = values[i];
-            var val = args[i];
+            BytecodeValueType type = values[i];
+            Object val = args[i];
             if(type == BytecodeValueType.STRING) {
-                if(val instanceof String v) val = data.constantPool.getStringIndex(v);
+                if(val instanceof String) val = data.constantPool.getStringIndex((String) val);
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }else if(type == BytecodeValueType.FUNCTION) {
-                if(val instanceof Function v) {
-                    var functions = data.functions;
+                if(val instanceof Function) {
+                    Function v = (Function) val;
+                    ArrayList<Function> functions = data.functions;
                     for(int j = 0; j < functions.size(); j++) {
-                        var f = functions.get(j);
+                        Function f = functions.get(j);
                         if(!Objects.equals(f.namespace, v.namespace)) continue;
                         if(!f.name.equals(v.name)) continue;
                         if(!f.signature.equals(v.signature)) continue;
@@ -180,10 +193,11 @@ public final class Bytecode implements IBytecode {
                 }
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }else if(type == BytecodeValueType.CLASS) {
-                if(val instanceof Class v) {
-                    var classes = data.classes;
+                if(val instanceof Class) {
+                    Class v = (Class) val;
+                    ArrayList<Class> classes = data.classes;
                     for(int j = 0; j < classes.size(); j++) {
-                        var f = classes.get(j);
+                        Class f = classes.get(j);
                         if(!Objects.equals(f.namespace, v.namespace)) continue;
                         if(!f.name.equals(v.name)) continue;
                         val = j;
@@ -192,10 +206,11 @@ public final class Bytecode implements IBytecode {
                 }
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }else if(type == BytecodeValueType.FIELD) {
-                if(val instanceof Field v) {
-                    var fields = data.fields;
+                if(val instanceof Field) {
+                    Field v = (Field) val;
+                    ArrayList<Field> fields = data.fields;
                     for(int j = 0; j < fields.size(); j++) {
-                        var f = fields.get(j);
+                        Field f = fields.get(j);
                         if(!Objects.equals(f.namespace, v.namespace)) continue;
                         if(!f.name.equals(v.name)) continue;
                         if(!f.type.equals(v.type)) continue;
@@ -205,13 +220,14 @@ public final class Bytecode implements IBytecode {
                 }
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }else if(type == BytecodeValueType.METHOD) {
-                if(val instanceof Method v) {
-                    var classes = data.classes;
+                if(val instanceof Method) {
+                    Method v = (Method) val;
+                    ArrayList<Class> classes = data.classes;
                     out: for(int j = 0; j < classes.size(); j++) {
-                        var f = classes.get(j);
+                        Class f = classes.get(j);
                         if(!Objects.equals(f.namespace, v.namespace)) continue;
                         for(int k = 0; k<f.methods.length; k++) {
-                            var m = f.methods[k];
+                            Method m = f.methods[k];
                             if(!m.name.equals(v.name)) continue;
                             if(!m.signature.equals(v.signature)) continue;
                             val = ((long) k << 32) | j;
@@ -221,34 +237,47 @@ public final class Bytecode implements IBytecode {
                 }
                 else throw new IllegalArgumentException(val.getClass().getName());
             }
-            if(!(val instanceof Number num)) throw new IllegalArgumentException(val.getClass().getName());
-            switch (type.getSize()) {
-                case 1 -> out.writeByte(num.byteValue());
-                case 2 -> out.writeShort(num.shortValue());
-                case 4 -> out.writeInt(num.intValue());
-                case 8 -> out.writeLong(num.longValue());
-                default -> throw new IllegalStateException("Invalid size of bytecode type: " + type.getSize());
+            if(!(val instanceof Number)) {
+                throw new IllegalArgumentException(val.getClass().getName());
+            }
+            Number num = (Number) val;
+            if(type.getSize() == 1) {
+                out.writeByte(num.byteValue());
+            } else if(type.getSize() == 2) {
+                out.writeShort(num.shortValue());
+            } else if(type.getSize() == 4) {
+                out.writeInt(num.intValue());
+            } else if(type.getSize() == 8) {
+                out.writeLong(num.longValue());
+            } else {
+                throw new IllegalStateException("Invalid size of bytecode type: " + type.getSize());
             }
         }
     }
 
     public static IBytecodeInstruction read(DataInput input) throws IOException {
         int id = input.readUnsignedByte();
-        var instructionGenerator = Bytecode.BYTECODE.getInstruction(id);
+        IBytecodeInstructionGenerator instructionGenerator = Bytecode.BYTECODE.getInstruction(id);
         BytecodeValueType[] values = Bytecode.BYTECODE.getInstructionValueTypesRequirements(id);
         Object[] args = new Object[values.length];
         for(int i = 0; i<values.length; i++) {
             BytecodeValueType type = values[i];
-            args[i] = switch (type.getSize()) {
-                case 1 -> input.readByte();
-                case 2 -> input.readShort();
-                case 4 -> input.readInt();
-                case 8 -> input.readLong();
-                default -> throw new IllegalStateException("Invalid size of bytecode type: " + type.getSize());
-            };
-            switch(type) {
-                case STRING, FUNCTION, CLASS, FIELD -> args[i] = ((Number) args[i]).intValue();
-                case METHOD -> args[i] = ((Number) args[i]).longValue();
+            if(type.getSize() == 1) {
+                args[i] = input.readByte();
+            } else if(type.getSize() == 2) {
+                args[i] = input.readShort();
+            } else if(type.getSize() == 4) {
+                args[i] = input.readInt();
+            } else if(type.getSize() == 8) {
+                args[i] = input.readLong();
+            } else {
+                throw new IllegalStateException("Invalid size of bytecode type: " + type.getSize());
+            }
+            ;
+            if(type == BytecodeValueType.STRING || type == BytecodeValueType.FUNCTION || type == BytecodeValueType.CLASS || type == BytecodeValueType.FIELD) {
+                args[i] = ((Number) args[i]).intValue();
+            } else if(type == BytecodeValueType.METHOD) {
+                args[i] = ((Number) args[i]).longValue();
             }
         }
         return instructionGenerator.createInstruction(args);
@@ -277,28 +306,31 @@ public final class Bytecode implements IBytecode {
     }
 
     public static void prepareConstantPool(IBytecodeInstruction instr, ConstantPool pool) {
-        var values = Bytecode.BYTECODE.getInstructionValueTypesRequirements(instr.getId());
+        BytecodeValueType[] values = Bytecode.BYTECODE.getInstructionValueTypesRequirements(instr.getId());
         for(int i = 0; i<values.length; i++) {
-            var type = values[i];
-            var val = instr.getData()[i];
+            BytecodeValueType type = values[i];
+            Object val = instr.getData()[i];
             if(type == BytecodeValueType.STRING) {
-                if(val instanceof String v) pool.getOrCreateStringIndex(v);
+                if(val instanceof String) pool.getOrCreateStringIndex((String) val);
                 else throw new IllegalArgumentException(val.getClass().getName());
             }else if(type == BytecodeValueType.FUNCTION) {
-                if(val instanceof Function v) {
+                if(val instanceof Function) {
+                    Function v = (Function) val;
                     pool.getOrCreateStringIndex(v.namespace);
                     pool.getOrCreateStringIndex(v.name);
                     pool.getOrCreateStringIndex(v.signature.toString());
                 }
                 else throw new IllegalArgumentException(val.getClass().getName());
             }else if(type == BytecodeValueType.CLASS) {
-                if(val instanceof Class v) {
+                if(val instanceof Class) {
+                    Class v = (Class) val;
                     pool.getOrCreateStringIndex(v.namespace);
                     pool.getOrCreateStringIndex(v.name);
                 }
                 else throw new IllegalArgumentException(val.getClass().getName());
             }else if(type == BytecodeValueType.METHOD) {
-                if(val instanceof Method v) {
+                if(val instanceof Method) {
+                    Method v = (Method) val;
                     pool.getOrCreateStringIndex(v.namespace);
                     pool.getOrCreateStringIndex(v.name);
                     pool.getOrCreateStringIndex(v.className);
@@ -306,7 +338,8 @@ public final class Bytecode implements IBytecode {
                 }
                 else throw new IllegalArgumentException(val.getClass().getName());
             }else if(type == BytecodeValueType.FIELD) {
-                if(val instanceof Field v) {
+                if(val instanceof Field) {
+                    Field v = (Field) val;
                     pool.getOrCreateStringIndex(v.namespace);
                     pool.getOrCreateStringIndex(v.name);
                     pool.getOrCreateStringIndex(v.type.toString());

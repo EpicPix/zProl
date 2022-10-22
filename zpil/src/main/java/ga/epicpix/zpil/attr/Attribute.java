@@ -22,10 +22,12 @@ public abstract class Attribute {
         int length = input.readInt();
         byte[] data = new byte[length];
         for(int i = 0; i<length; i++) data[i] = input.readByte();
-        Attribute inst = switch(name) {
-            case "ConstantValue" -> new ConstantValueAttribute(null);
-            default -> null;
-        };
+        Attribute inst;
+        if("ConstantValue".equals(name)) {
+            inst = new ConstantValueAttribute(null);
+        } else {
+            inst = null;
+        }
         if(inst == null) return null;
         inst.readData(new DataInputStream(new ByteArrayInputStream(data)), pool);
         return inst;
@@ -36,10 +38,10 @@ public abstract class Attribute {
     }
 
     public final byte[] write(ConstantPool pool) throws IOException {
-        var arr = new ByteArrayOutputStream();
-        var out = new DataOutputStream(arr);
+        ByteArrayOutputStream arr = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(arr);
         out.writeInt(pool.getStringIndex(name));
-        var data = new ByteArrayOutputStream();
+        ByteArrayOutputStream data = new ByteArrayOutputStream();
         writeData(new DataOutputStream(data), pool);
         out.writeInt(data.size());
         out.write(data.toByteArray());
