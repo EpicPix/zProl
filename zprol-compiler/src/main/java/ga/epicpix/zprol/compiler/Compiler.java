@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiler;
 
+import ga.epicpix.zpil.GeneratedData;
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.compiled.locals.LocalVariable;
@@ -523,17 +524,33 @@ public class Compiler {
                 boolean matches = true;
                 boolean nPrimMatches = true;
                 int score = 0;
-                for(int i = 0; i<a.func.parameters.size(); i++) {
-                    Type t = data.resolveType(a.func.parameters.get(i).type);
-                    if(!t.equals(argTypes.get(i))) {
-                        if(argTypes.get(i) instanceof PrimitiveType && t instanceof PrimitiveType) {
+                if(a.func != null) {
+                    for(int i = 0; i < a.func.parameters.size(); i++) {
+                        Type t = data.resolveType(a.func.parameters.get(i).type);
+                        if(!t.equals(argTypes.get(i))) {
+                            if(argTypes.get(i) instanceof PrimitiveType && t instanceof PrimitiveType) {
+                                score++;
+                            } else if(!(argTypes.get(i) instanceof PrimitiveType) || !(t instanceof PrimitiveType)) {
+                                nPrimMatches = false;
+                            }
+                            matches = false;
+                        } else {
                             score++;
-                        }else if(!(argTypes.get(i) instanceof PrimitiveType) || !(t instanceof PrimitiveType)) {
-                            nPrimMatches = false;
                         }
-                        matches = false;
-                    }else {
-                        score++;
+                    }
+                }else {
+                    for(int i = 0; i < a.genFunc.signature.parameters.length; i++) {
+                        Type t = a.genFunc.signature.parameters[i];
+                        if(!t.equals(argTypes.get(i))) {
+                            if(argTypes.get(i) instanceof PrimitiveType && t instanceof PrimitiveType) {
+                                score++;
+                            } else if(!(argTypes.get(i) instanceof PrimitiveType) || !(t instanceof PrimitiveType)) {
+                                nPrimMatches = false;
+                            }
+                            matches = false;
+                        } else {
+                            score++;
+                        }
                     }
                 }
 
@@ -548,7 +565,11 @@ public class Compiler {
                     closest.add(a);
                     break;
                 }
-                candidates.add("(" + a.func.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")");
+                if(a.func != null) {
+                    candidates.add("(" + a.func.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")");
+                }else {
+                    candidates.add("(" + Arrays.stream(a.genFunc.signature.parameters).map(Type::getName).collect(Collectors.joining(", ")) + ")");
+                }
             }
 
             if(closest.size() == 1) {
@@ -563,7 +584,13 @@ public class Compiler {
                                 .collect(Collectors.joining(", "))
                             + ")\nCandidates are:\n" +
                             closest.stream()
-                                .map(a -> "(" + a.func.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")")
+                                .map(a -> {
+                                    if(a.func != null) {
+                                        return "(" + a.func.parameters.stream().map(b -> data.resolveType(b.type).getName()).collect(Collectors.joining(", ")) + ")";
+                                    }else {
+                                        return "(" + Arrays.stream(a.genFunc.signature.parameters).map(Type::getName).collect(Collectors.joining(", ")) + ")";
+                                    }
+                                })
                                 .collect(Collectors.joining("\n")
                                 ), func.location, parser);
                 }
@@ -572,13 +599,26 @@ public class Compiler {
         }
 
         LookupFunction lfunc = possibleFunctions.get(0);
-        PreFunction f = lfunc.func;
-        Type returnType = data.resolveType(f.returnType);
-        Type[] parameters = new Type[f.parameters.size()];
-        for(int i = 0; i<f.parameters.size(); i++) {
-            parameters[i] = data.resolveType(f.parameters.get(i).type);
+        Type returnType;
+        Type[] parameters;
+        FunctionSignature signature;
+        EnumSet<FunctionModifiers> fMods = EnumSet.noneOf(FunctionModifiers.class);
+        if(lfunc.func != null) {
+            PreFunction f = lfunc.func;
+            fMods.addAll(f.modifiers);
+            returnType = data.resolveType(f.returnType);
+            parameters = new Type[f.parameters.size()];
+            for(int i = 0; i < f.parameters.size(); i++) {
+                parameters[i] = data.resolveType(f.parameters.get(i).type);
+            }
+            signature = new FunctionSignature(returnType, parameters);
+        }else {
+            Function f = lfunc.genFunc;
+            fMods.addAll(f.modifiers);
+            returnType = f.signature.returnType;
+            parameters = f.signature.parameters;
+            signature = f.signature;
         }
-        FunctionSignature signature = new FunctionSignature(returnType, parameters);
 
         if(lfunc.isClassMethod && searchPublic) {
             bytecode.pushInstruction(getConstructedInstruction("aload_local", scope.localsManager.getLocalVariable("this").index));
@@ -589,8 +629,6 @@ public class Compiler {
             doCast(types.pop(), signature.parameters[i], false, bytecode, func.arguments[i], parser);
         }
 
-        EnumSet<FunctionModifiers> fMods = EnumSet.noneOf(FunctionModifiers.class);
-        fMods.addAll(f.modifiers);
         if(lfunc.isClassMethod) {
             bytecode.pushInstruction(getConstructedInstruction("invoke_class", new Method(classContext.namespace, fMods, classContext.name, func.getFunctionName(), signature, null)));
         }else {
@@ -671,11 +709,12 @@ public class Compiler {
         data.addClass(new Class(data.namespace, clazz.name, fields, methods));
     }
 
-    public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other, DataParser parser) throws UnknownTypeException {
-        CompiledData data = new CompiledData(preCompiled.namespace);
+    public static CompiledData compile(PreCompiledData preCompiled, ArrayList<PreCompiledData> other, ArrayList<GeneratedData> generated, DataParser parser) throws UnknownTypeException {
+        CompiledData data = new CompiledData(preCompiled.namespace, preCompiled.using.toArray(new String[0]));
 
         data.using(preCompiled);
         for(PreCompiledData o : other) if(preCompiled.using.contains(o.namespace)) data.using(o);
+        for(GeneratedData o : generated) data.using(o);
 
         for(PreClass clazz : preCompiled.classes) compileClass(data, clazz, parser);
         for(PreFunction function : preCompiled.functions) compileFunction(data, function, parser);

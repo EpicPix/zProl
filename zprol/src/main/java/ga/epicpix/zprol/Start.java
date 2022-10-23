@@ -177,12 +177,12 @@ public class Start {
     public static void compileFiles(ArrayList<String> files, String output, boolean ignoreStdWarning, boolean unloadStd) throws IOException, UnknownTypeException {
         ArrayList<PreCompiledData> preCompiled = new ArrayList<>();
         ArrayList<CompiledData> compiled = new ArrayList<>();
-        ArrayList<PreCompiledData> included = new ArrayList<>();
-        ArrayList<CompiledData> includedCompiled = new ArrayList<>();
+        ArrayList<GeneratedData> includedCompiled = new ArrayList<>();
         if(!unloadStd) {
             var stdReader = Start.class.getClassLoader().getResourceAsStream("std.zpil");
             if (stdReader != null) {
-                loadGenerated(GeneratedData.load(stdReader.readAllBytes()), includedCompiled, included);
+                var gen = GeneratedData.load(stdReader.readAllBytes());
+                includedCompiled.add(gen);
             } else {
                 if (!ignoreStdWarning) System.err.println("Warning! Standard library not found");
             }
@@ -199,7 +199,7 @@ public class Start {
 
             if(load) {
                 var gen = GeneratedData.load(Files.readAllBytes(new File(file).toPath()));
-                loadGenerated(gen, includedCompiled, included);
+                includedCompiled.add(gen);
             }else {
                 try {
                     long startLex = System.nanoTime();
@@ -232,11 +232,10 @@ public class Start {
 
         try {
             for (PreCompiledData data : preCompiled) {
-                ArrayList<PreCompiledData> pre = new ArrayList<>(included);
-                pre.addAll(preCompiled);
+                ArrayList<PreCompiledData> pre = new ArrayList<>(preCompiled);
                 pre.remove(data);
                 long startCompile = System.nanoTime();
-                CompiledData zpil = Compiler.compile(data, pre, data.parser);
+                CompiledData zpil = Compiler.compile(data, pre, includedCompiled, data.parser);
                 long stopCompile = System.nanoTime();
                 if (!HIDE_TIMINGS)
                     System.out.printf("[%s] Took %d μs to compile\n", zpil.namespace != null ? zpil.namespace : data.sourceFile, (stopCompile - startCompile)/1000);
@@ -251,7 +250,7 @@ public class Start {
         GeneratedData linked = new GeneratedData();
         long startLink = System.nanoTime();
         for(CompiledData d : compiled) d.includeToGenerated(linked);
-        for(CompiledData d : includedCompiled) d.includeToGenerated(linked);
+        for(GeneratedData d : includedCompiled) d.includeToGenerated(linked);
         long stopLink = System.nanoTime();
         if(!HIDE_TIMINGS) System.out.printf("Took %d μs to link everything\n", (stopLink - startLink)/1000);
 
@@ -260,74 +259,6 @@ public class Start {
             DataOutputStream out = new DataOutputStream(new FileOutputStream(normalName + ".zpil"));
             out.write(GeneratedData.save(linked));
             out.close();
-        }
-    }
-
-    public static void loadGenerated(GeneratedData gen, ArrayList<CompiledData> includedCompiled, ArrayList<PreCompiledData> included) {
-        HashMap<String, CompiledData> compiledData = new HashMap<>();
-        HashMap<String, PreCompiledData> preCompiledData = new HashMap<>();
-        for(var clazz : gen.classes) {
-            compiledData.putIfAbsent(clazz.namespace, new CompiledData(clazz.namespace));
-            preCompiledData.putIfAbsent(clazz.namespace, new PreCompiledData());
-
-            compiledData.get(clazz.namespace).addClass(clazz);
-            var fields = new ArrayList<PreField>();
-            var methods = new ArrayList<PreFunction>();
-            for(var f : clazz.fields) {
-                fields.add(new PreField(f.name, f.type.normalName(), null));
-            }
-            for(var func : clazz.methods) {
-                var params = new ArrayList<PreParameter>();
-                for(var f : func.signature.parameters) {
-                    params.add(new PreParameter(null, f.normalName()));
-                }
-                var function = new PreFunction();
-                function.name = func.name;
-                function.returnType = func.signature.returnType.normalName();
-                function.parameters.addAll(params);
-                function.modifiers.addAll(func.modifiers);
-                methods.add(function);
-            }
-            preCompiledData.get(clazz.namespace).classes.add(new PreClass(clazz.namespace, clazz.name, fields.toArray(new PreField[0]), methods.toArray(new PreFunction[0])));
-        }
-        for(var func : gen.functions) {
-            compiledData.putIfAbsent(func.namespace, new CompiledData(func.namespace));
-            preCompiledData.putIfAbsent(func.namespace, new PreCompiledData());
-
-            compiledData.get(func.namespace).addFunction(func);
-            var params = new ArrayList<PreParameter>();
-            for(var f : func.signature.parameters) {
-                params.add(new PreParameter(null, f.normalName()));
-            }
-            var function = new PreFunction();
-            function.name = func.name;
-            function.returnType = func.signature.returnType.normalName();
-            function.parameters.addAll(params);
-            function.modifiers.addAll(func.modifiers);
-            preCompiledData.get(func.namespace).functions.add(function);
-        }
-        for(var fld : gen.fields) {
-            compiledData.putIfAbsent(fld.namespace, new CompiledData(fld.namespace));
-            preCompiledData.putIfAbsent(fld.namespace, new PreCompiledData());
-
-            compiledData.get(fld.namespace).addField(fld);
-            var field = new PreField(null);
-            field.name = fld.name;
-            field.type = fld.type.getName();
-            for(var v : fld.modifiers) {
-                for(var m : PreFieldModifiers.MODIFIERS) {
-                    if(m.getCompiledModifier() == v) {
-                        field.modifiers.add(m);
-                        break;
-                    }
-                }
-            }
-            preCompiledData.get(fld.namespace).fields.add(field);
-        }
-        for(var e : compiledData.entrySet()) includedCompiled.add(e.getValue());
-        for(var e : preCompiledData.entrySet()) {
-            e.getValue().namespace = e.getKey();
-            included.add(e.getValue());
         }
     }
 

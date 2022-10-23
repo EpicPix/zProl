@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiler;
 
+import ga.epicpix.zpil.GeneratedData;
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.compiled.locals.LocalScopeManager;
 import ga.epicpix.zprol.compiler.compiled.locals.LocalVariable;
@@ -20,6 +21,7 @@ import ga.epicpix.zprol.types.Type;
 import ga.epicpix.zprol.types.VoidType;
 
 import java.util.EnumSet;
+import java.util.Objects;
 
 import static ga.epicpix.zprol.compiler.Compiler.doCast;
 import static ga.epicpix.zprol.compiler.CompilerUtils.*;
@@ -97,6 +99,25 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
 
                 }
             }
+            for(GeneratedData gen : data.getAllGenerated()) {
+                for(Field field : gen.fields) {
+                    if(Objects.equals(field.namespace, data.namespace) || data.getUsingNamespaces().contains(field.namespace)) {
+                        if(!field.name.equals(fieldName)) continue;
+                        Type fieldType = field.type;
+                        if(fieldType instanceof PrimitiveType) {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(((PrimitiveType) fieldType).getSize(), "load_field", field));
+                        } else if(fieldType instanceof BooleanType) {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(8, "load_field", field));
+                        } else if(fieldType instanceof VoidType) {
+                            throw new TokenLocatedException("Cannot load void type");
+                        } else {
+                            bytecode.pushInstruction(getConstructedInstruction("aload_field", field));
+                        }
+
+                        return fieldType;
+                    }
+                }
+            }
         }
 
         return null;
@@ -161,6 +182,26 @@ public class CompilerIdentifierDataField extends CompilerIdentifierData {
 
                     return fieldType;
 
+                }
+            }
+            for(GeneratedData gen : data.getAllGenerated()) {
+                for(Field field : gen.fields) {
+                    if(Objects.equals(field.namespace, data.namespace) || data.getUsingNamespaces().contains(field.namespace)) {
+                        if(field.modifiers.contains(FieldModifiers.CONST)) throw new TokenLocatedException("Cannot assign to const value");
+                        Type fieldType = field.type;
+                        if(type != null) doCast(fieldType, type, false, bytecode, location, parser);
+                        if(fieldType instanceof PrimitiveType) {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(((PrimitiveType) fieldType).getSize(), "store_field", field));
+                        } else if(fieldType instanceof BooleanType) {
+                            bytecode.pushInstruction(getConstructedSizeInstruction(8, "store_field", field));
+                        } else if(fieldType instanceof VoidType) {
+                            throw new TokenLocatedException("Cannot store void type");
+                        } else {
+                            bytecode.pushInstruction(getConstructedInstruction("astore_field", field));
+                        }
+
+                        return fieldType;
+                    }
                 }
             }
         }

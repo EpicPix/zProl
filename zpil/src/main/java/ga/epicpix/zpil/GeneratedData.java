@@ -14,6 +14,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 
 public class GeneratedData {
 
@@ -198,6 +199,64 @@ public class GeneratedData {
             return func;
         }
         return null;
+    }
+
+    public void includeToGenerated(GeneratedData data) {
+        for(Function f : functions) {
+            for(Function validate : data.functions) {
+                if(!Objects.equals(validate.namespace, f.namespace)) continue;
+                if(!validate.name.equals(f.name)) continue;
+
+                if(validate.signature.validateFunctionSignature(f.signature)) {
+                    throw new RuntimeException((f.namespace != null ? f.namespace + "." : "") + f.name + " - " + f.signature);
+                }
+            }
+            data.functions.add(f);
+            data.constantPool.prepareConstantPool(f);
+            if(!FunctionModifiers.isEmptyCode(f.modifiers)) {
+                for (IBytecodeInstruction instruction : f.code.getInstructions()) {
+                    Bytecode.prepareConstantPool(instruction, data.constantPool);
+                }
+            }
+        }
+
+        for(Field f : fields) {
+            for(Field validate : data.fields) {
+                if(!Objects.equals(validate.namespace, f.namespace)) continue;
+                if(!validate.name.equals(f.name)) continue;
+
+                throw new RuntimeException((f.namespace != null ? f.namespace + "." : "") + f.name + " - " + f.type.normalName());
+
+            }
+            data.fields.add(f);
+            data.constantPool.prepareConstantPool(f);
+            if(f.defaultValue != null) {
+                new ConstantValueAttribute(f.defaultValue.value).prepareConstantPool(data.constantPool);
+            }
+        }
+
+        for(Class clz : classes) {
+            for(Class validate : data.classes) {
+                if(!Objects.equals(validate.namespace, clz.namespace)) continue;
+                if(!validate.name.equals(clz.name)) continue;
+
+                throw new RuntimeException((clz.namespace != null ? clz.namespace + "." : "") + clz.name);
+            }
+            data.classes.add(clz);
+            data.constantPool.prepareConstantPool(clz);
+            for(ClassField field : clz.fields) {
+                data.constantPool.getOrCreateStringIndex(field.name);
+                data.constantPool.getOrCreateStringIndex(field.type.getDescriptor());
+            }
+            for(Method m : clz.methods) {
+                data.constantPool.prepareConstantPool(m);
+                if(!FunctionModifiers.isEmptyCode(m.modifiers)) {
+                    for (IBytecodeInstruction instruction : m.code.getInstructions()) {
+                        Bytecode.prepareConstantPool(instruction, data.constantPool);
+                    }
+                }
+            }
+        }
     }
 
     public void printZpil() {

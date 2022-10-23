@@ -23,10 +23,15 @@ public class PreCompiler {
             }
         }
 
+        pre.using.add("zprol.lang");
+
         for(IDeclaration decl : declarations) {
             if(decl instanceof UsingTree) {
                 UsingTree using = (UsingTree) decl;
-                pre.using.add(using.identifier.toString());
+                String n = using.identifier.toString();
+                if(!pre.using.contains(n)) {
+                    pre.using.add(n);
+                }
             }else if(decl instanceof NamespaceTree) {
                 NamespaceTree namespace = (NamespaceTree) decl;
                 if(pre.namespace != null) throw new TokenLocatedException("Defined namespace for a file multiple times", namespace, parser);

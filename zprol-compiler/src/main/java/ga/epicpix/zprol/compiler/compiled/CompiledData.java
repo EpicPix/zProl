@@ -16,24 +16,34 @@ import ga.epicpix.zprol.types.ClassType;
 import ga.epicpix.zprol.types.Type;
 import ga.epicpix.zprol.types.Types;
 
-import java.util.ArrayList;
-import java.util.Objects;
+import java.util.*;
 
 public class CompiledData {
 
     public final String namespace;
     private final ArrayList<PreCompiledData> using = new ArrayList<>();
+    private final ArrayList<GeneratedData> allGenerated = new ArrayList<>();
+    private final String[] namespaces;
 
-    public CompiledData(String namespace) {
+    public CompiledData(String namespace, String... namespaces) {
         this.namespace = namespace;
+        this.namespaces = namespaces;
     }
 
     public void using(PreCompiledData using) {
         this.using.add(using);
     }
 
+    public void using(GeneratedData using) {
+        this.allGenerated.add(using);
+    }
+
     public ArrayList<PreCompiledData> getUsing() {
         return using;
+    }
+
+    public ArrayList<GeneratedData> getAllGenerated() {
+        return allGenerated;
     }
 
     public final ArrayList<Function> functions = new ArrayList<>();
@@ -139,7 +149,24 @@ public class CompiledData {
                 }
             }
         }
+        for(GeneratedData data : allGenerated) {
+            for(Class c : data.classes) {
+                if(namespace != null) {
+                    if(!Objects.equals(namespace, c.namespace)) continue;
+                    if(c.name.equals(name)) {
+                        t = new ClassType(c.namespace, c.name);
+                        for(int i = 0; i<arrAmount; i++) {
+                            t = new ArrayType(t);
+                        }
+                        return t;
+                    }
+                }
+            }
+        }
         throw new UnknownTypeException(type);
     }
 
+    public List<String> getUsingNamespaces() {
+        return Arrays.asList(namespaces);
+    }
 }

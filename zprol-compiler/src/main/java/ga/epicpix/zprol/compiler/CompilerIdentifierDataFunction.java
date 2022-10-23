@@ -1,5 +1,6 @@
 package ga.epicpix.zprol.compiler;
 
+import ga.epicpix.zpil.GeneratedData;
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.precompiled.PreClass;
 import ga.epicpix.zprol.compiler.precompiled.PreCompiledData;
@@ -7,8 +8,10 @@ import ga.epicpix.zprol.compiler.precompiled.PreFunction;
 import ga.epicpix.zprol.parser.tree.ArgumentsTree;
 import ga.epicpix.zprol.parser.tree.IExpression;
 import ga.epicpix.zprol.parser.tree.ITree;
+import ga.epicpix.zprol.structures.Function;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class CompilerIdentifierDataFunction extends CompilerIdentifierData {
 
@@ -44,6 +47,17 @@ public class CompilerIdentifierDataFunction extends CompilerIdentifierData {
                     if (func.name.equals(funcName)) {
                         if (func.parameters.size() == arguments.length) {
                             possibilities.add(new LookupFunction(false, func, using.namespace));
+                        }
+                    }
+                }
+            }
+            for (GeneratedData using : data.getAllGenerated()) {
+                for (Function func : using.functions) {
+                    if(Objects.equals(func.namespace, data.namespace) || data.getUsingNamespaces().contains(func.namespace)) {
+                        if(func.name.equals(funcName)) {
+                            if(func.signature.parameters.length == arguments.length) {
+                                possibilities.add(new LookupFunction(false, func, func.namespace));
+                            }
                         }
                     }
                 }
