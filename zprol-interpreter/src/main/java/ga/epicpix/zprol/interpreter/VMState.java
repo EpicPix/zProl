@@ -7,6 +7,7 @@ import ga.epicpix.zprol.types.PrimitiveType;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Objects;
 
 public class VMState {
 
@@ -71,11 +72,11 @@ public class VMState {
 
     public FieldStorage getField(Field field) {
         for(FieldStorage f : fields) {
-            if(f.field == field) {
+            if(Objects.equals(f.field.namespace, field.namespace) && f.field.name.equals(field.name) && f.field.type.equals(field.type)) {
                 return f;
             }
         }
-        throw new IllegalStateException("Field not defined");
+        throw new IllegalStateException("Field not defined:" + field.namespace + "." + field.name);
     }
 
     public Object getFieldValue(Field f) {
