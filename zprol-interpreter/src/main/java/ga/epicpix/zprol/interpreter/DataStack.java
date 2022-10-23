@@ -2,7 +2,7 @@ package ga.epicpix.zprol.interpreter;
 
 import java.util.LinkedList;
 
-class DataStack {
+public class DataStack {
 
     private final LinkedList<DataValue> valueStack = new LinkedList<>();
 
