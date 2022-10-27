@@ -93,6 +93,7 @@ public final class Bytecode implements IBytecode {
         registerInstruction(160, "push_false");
         registerInstruction(161, "push_true");
         registerInstruction(162, "null");
+        registerSizedInstruction(163, "neg", new int[] {1, 2, 4, 8});
 
         registerInstruction(-1, "int"); // internal usage, should not be in zpil files
     }

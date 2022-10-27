@@ -35,7 +35,7 @@ class List {
             }
             index = index + 1;
         }
-        return 0 -1;
+        return -1;
     }
 
     void resize(uint64 length) {

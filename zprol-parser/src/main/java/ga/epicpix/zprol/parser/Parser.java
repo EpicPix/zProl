@@ -426,6 +426,9 @@ public final class Parser {
             return new LiteralTree(locS(start), locE(curr()), LiteralType.BOOLEAN, true);
         }else if(optional(FalseKeyword) != null) {
             return new LiteralTree(locS(start), locE(curr()), LiteralType.BOOLEAN, false);
+        }else if(optional(SubtractOperator) != null) {
+            IExpression expr = readPostExpression();
+            return new NegateTree(locS(start), locE(curr()), expr);
         }
         throw new TokenLocatedException("Expected an expression got " + lexerTokens.current().type, lexerTokens.current());
     }

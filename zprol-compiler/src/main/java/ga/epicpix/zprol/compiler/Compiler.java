@@ -290,6 +290,16 @@ public class Compiler {
             }else {
                 throw new TokenLocatedException("Unknown literal", literal, parser);
             }
+        }else if(token instanceof NegateTree) {
+            NegateTree neg = (NegateTree) token;
+            generateInstructionsFromExpression(neg.expression, expectedType, types, data, scope, bytecode, parser);
+            Type type = types.peek();
+            if(!(type instanceof PrimitiveType)) {
+                throw new TokenLocatedException("Expected a primitive type, got " + type.normalName(), neg, parser);
+            }else if(((PrimitiveType) type).unsigned) {
+                throw new TokenLocatedException("Expected a signed primitive type, got " + type.normalName(), neg, parser);
+            }
+            bytecode.pushInstruction(getConstructedSizeInstruction(((PrimitiveType) type).getSize(), "neg"));
         }else if(token instanceof CastTree) {
             CastTree cast = (CastTree) token;
             TypeTree op = cast.type;
