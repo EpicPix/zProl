@@ -4,6 +4,7 @@ import ga.epicpix.zprol.parser.DataParser;
 import ga.epicpix.zprol.parser.ParserLocation;
 import ga.epicpix.zprol.parser.tokens.Token;
 import ga.epicpix.zprol.parser.tree.ITree;
+import ga.epicpix.zprol.utils.SeekIterator;
 
 public class TokenLocatedException extends RuntimeException {
 
