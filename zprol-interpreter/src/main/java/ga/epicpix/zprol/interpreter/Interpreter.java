@@ -70,23 +70,25 @@ public class Interpreter {
         LocalStorage locals = new LocalStorage();
         Type[] params = function.signature.parameters;
         int loc = 0;
-        for(Type param : params) {
-            if(param instanceof PrimitiveType) {
-                PrimitiveType prim = (PrimitiveType) param;
-                loc += prim.size;
-            }
-            else loc += 8;
-        }
-
-        for(Type param : params) {
+        Object[] data = new Object[params.length];
+        for(int i = params.length - 1; i >= 0; i--) {
+            Type param = params[i];
             int size;
             if(param instanceof PrimitiveType) {
                 PrimitiveType prim = (PrimitiveType) param;
                 size = prim.size;
-            }
-            else size = 8;
-            locals.set(state.stack.pop(size).value, loc, size);
-            loc -= size;
+            } else size = 8;
+            data[i] = state.stack.pop(size).value;
+        }
+        for(int i = 0; i < params.length; i++) {
+            Type param = params[i];
+            int size;
+            if(param instanceof PrimitiveType) {
+                PrimitiveType prim = (PrimitiveType) param;
+                size = prim.size;
+            } else size = 8;
+            loc += size;
+            locals.set(data[i], loc, size);
         }
         state.pushFunction(function);
         Function func = state.currentFunction();
