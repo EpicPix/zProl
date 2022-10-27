@@ -14,11 +14,11 @@ int file_open(String file_location, int flags, int mode) {
 }
 
 long file_length(int fd) {
-    file_stat data = (file_stat!) mmap_alloc(4096);
+    file_stat data = (file_stat!) malloc(116);
     // add checks if the fstat succeded
-    syscall(SYSCALL_FSTAT, fd, (long!) data);
+    fstat(fd, data);
     long length = data.st_size;
-    munmap((long!) data, 4096);
+    free((byte[]!) data);
     return length;
 }
 
@@ -32,6 +32,10 @@ int file_read(int fd, byte[] buf, int length) {
 
 int file_close(int fd) {
     return syscall(SYSCALL_CLOSE, fd);
+}
+
+int fstat(int fd, file_stat data) {
+    return syscall(SYSCALL_FSTAT, fd, (long!) data);
 }
 
 class file_stat {

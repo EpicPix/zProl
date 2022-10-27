@@ -13,9 +13,9 @@ public class DataStack {
     public DataValue pop(int size) {
         if(size < 0) throw new IllegalArgumentException("Cannot pop negative bytes");
         if(size > 8) throw new IllegalArgumentException("Cannot pop more than 8 bytes");
-        DataValue data = valueStack.removeLast();
-        if(data.size == size) return data;
-        throw new IllegalStateException("Popped " + data.size + " but requested " + size);
+        DataValue data = valueStack.getLast();
+        if(data.size == size) return valueStack.removeLast();
+        throw new IllegalStateException("Tried to pop " + data.size + " bytes but requested " + size);
     }
 
     public LinkedList<DataValue> valueStack() {

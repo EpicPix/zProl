@@ -161,6 +161,9 @@ class InstructionImpl {
             case "lpop":
                 state.stack.pop(8);
                 break;
+            case "iload_field":
+                state.stack.push(state.getFieldValue((Field) instruction.getData()[0]), 4);
+                break;
             case "aload_field":
             case "lload_field":
                 state.stack.push(state.getFieldValue((Field) instruction.getData()[0]), 8);
