@@ -8,8 +8,8 @@ import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.interpreter.Interpreter;
 import ga.epicpix.zprol.parser.Lexer;
+import ga.epicpix.zprol.parser.LexerResults;
 import ga.epicpix.zprol.parser.Parser;
-import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tree.FileTree;
@@ -203,17 +203,17 @@ public class Start {
             }else {
                 try {
                     long startLex = System.nanoTime();
-                    ArrayList<LexerToken> lexedTokens = Lexer.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
+                    LexerResults lexedTokens = Lexer.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
                     long endLex = System.nanoTime();
                     if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d μs to lex\n", file.substring(file.lastIndexOf('/') + 1), (endLex - startLex)/1000);
 
                     long startToken = System.nanoTime();
-                    FileTree tree = Parser.parse(new SeekIterator<>(lexedTokens));
+                    FileTree tree = Parser.parse(new SeekIterator<>(lexedTokens.tokens));
                     long endToken = System.nanoTime();
                     if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d μs to parse\n", file.substring(file.lastIndexOf('/') + 1), (endToken - startToken)/1000);
 
                     long startPreCompile = System.nanoTime();
-                    PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tree, lexedTokens.get(0) != null ? lexedTokens.get(0).parser : null);
+                    PreCompiledData data = PreCompiler.preCompile(file.substring(file.lastIndexOf('/') + 1), tree, lexedTokens.parser);
                     long stopPreCompile = System.nanoTime();
                     if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d μs to precompile\n", data.namespace != null ? data.namespace : data.sourceFile, (stopPreCompile - startPreCompile)/1000);
                     preCompiled.add(data);

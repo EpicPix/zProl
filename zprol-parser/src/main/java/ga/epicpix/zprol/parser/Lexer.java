@@ -8,13 +8,13 @@ import static ga.epicpix.zprol.parser.tokens.TokenType.*;
 
 public class Lexer {
 
-    public static ArrayList<LexerToken> lex(String filename, String[] lines) {
+    public static LexerResults lex(String filename, String[] lines) {
         DataParser parser = new DataParser(filename, lines);
         ArrayList<LexerToken> tokens = new ArrayList<>();
         while(parser.hasNext()) {
             tokens.add(lexNext(parser));
         }
-        return tokens;
+        return new LexerResults(tokens, parser);
     }
 
     public static LexerToken lexNext(DataParser parser) {
