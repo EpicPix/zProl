@@ -14,6 +14,22 @@ class InstructionImpl {
 
     static void runInstruction(GeneratedData file, VMState state, IBytecodeInstruction instruction, LocalStorage locals) {
         switch(instruction.getName()) {
+            case "bneg": {
+                state.stack.push(-((Byte) state.stack.pop(1).value), 1);
+                break;
+            }
+            case "sneg": {
+                state.stack.push(-((Short) state.stack.pop(2).value), 2);
+                break;
+            }
+            case "ineg": {
+                state.stack.push(-((Integer) state.stack.pop(4).value), 4);
+                break;
+            }
+            case "lneg": {
+                state.stack.push(-((Long) state.stack.pop(8).value), 8);
+                break;
+            }
             case "vreturn":
                 state.returnFunction(null, 0);
                 break;
@@ -158,9 +174,27 @@ class InstructionImpl {
                 f.defined = true;
                 break;
             }
+            case "bload_local":
+                state.stack.push(locals.get((Short) instruction.getData()[0], 1).value, 1);
+                break;
+            case "sload_local":
+                state.stack.push(locals.get((Short) instruction.getData()[0], 2).value, 2);
+                break;
+            case "iload_local":
+                state.stack.push(locals.get((Short) instruction.getData()[0], 4).value, 4);
+                break;
             case "lload_local":
             case "aload_local":
                 state.stack.push(locals.get((Short) instruction.getData()[0], 8).value, 8);
+                break;
+            case "bstore_local":
+                locals.set(state.stack.pop(1).value, (Short) instruction.getData()[0], 1);
+                break;
+            case "sstore_local":
+                locals.set(state.stack.pop(2).value, (Short) instruction.getData()[0], 2);
+                break;
+            case "istore_local":
+                locals.set(state.stack.pop(4).value, (Short) instruction.getData()[0], 4);
                 break;
             case "astore_local":
             case "lstore_local":
