@@ -3,7 +3,7 @@ package ga.epicpix.zpil.bytecode;
 import ga.epicpix.zpil.GeneratedData;
 import ga.epicpix.zpil.exceptions.RedefinedInstructionException;
 import ga.epicpix.zpil.exceptions.UnknownInstructionException;
-import ga.epicpix.zpil.pool.ConstantPool;
+import ga.epicpix.zpil.StringTable;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
 
@@ -177,7 +177,7 @@ public final class Bytecode implements IBytecode {
             BytecodeValueType type = values[i];
             Object val = args[i];
             if(type == BytecodeValueType.STRING) {
-                if(val instanceof String) val = data.constantPool.getStringIndex((String) val);
+                if(val instanceof String) val = data.stringTable.getStringIndex((String) val);
                 else throw new IllegalArgumentException(val.toString().getClass().getName());
             }else if(type == BytecodeValueType.FUNCTION) {
                 if(val instanceof Function) {
@@ -289,7 +289,7 @@ public final class Bytecode implements IBytecode {
         for(int i = 0; i<values.length; i++) {
             if(values[i] == BytecodeValueType.STRING) {
                 int index = ((Number) instr.getData()[i]).intValue();
-                instr.getData()[i] = data.constantPool.getString(index);
+                instr.getData()[i] = data.stringTable.getString(index);
             }else if(values[i] == BytecodeValueType.FUNCTION) {
                 int index = ((Number) instr.getData()[i]).intValue();
                 instr.getData()[i] = data.functions.get(index);
@@ -306,7 +306,7 @@ public final class Bytecode implements IBytecode {
         }
     }
 
-    public static void prepareConstantPool(IBytecodeInstruction instr, ConstantPool pool) {
+    public static void prepareConstantPool(IBytecodeInstruction instr, StringTable pool) {
         BytecodeValueType[] values = Bytecode.BYTECODE.getInstructionValueTypesRequirements(instr.getId());
         for(int i = 0; i<values.length; i++) {
             BytecodeValueType type = values[i];

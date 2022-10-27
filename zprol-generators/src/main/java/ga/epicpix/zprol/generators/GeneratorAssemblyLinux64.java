@@ -3,8 +3,7 @@ package ga.epicpix.zprol.generators;
 import ga.epicpix.zpil.GeneratedData;
 import ga.epicpix.zpil.exceptions.FunctionNotDefinedException;
 import ga.epicpix.zpil.exceptions.UnknownInstructionException;
-import ga.epicpix.zpil.pool.ConstantPool;
-import ga.epicpix.zpil.pool.ConstantPoolEntry;
+import ga.epicpix.zpil.StringTable;
 import ga.epicpix.zprol.exceptions.NotImplementedException;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
@@ -179,7 +178,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
     private static final String[] SYSCALL_REGISTERS_64 = new String[] {"rax", "rdi", "rsi", "rdx", "r10", "r8", "r9"};
     private static final String[] SYSCALL_REGISTERS_16 = new String[] {"ax", "di", "sx", "dx", "r10w", "r8w", "r9w"};
 
-    public static void generateInstruction(State st, IBytecodeInstruction i, SeekIterator<IBytecodeInstruction> s, Function f, ConstantPool lp, InstructionList instructions) {
+    public static void generateInstruction(State st, IBytecodeInstruction i, SeekIterator<IBytecodeInstruction> s, Function f, StringTable lp, InstructionList instructions) {
         String name = i.getName();
         switch(name) {
             case "vreturn" -> instructions.add("mov rsp, rbp", pop("rbp")).add(ret());
@@ -504,7 +503,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }
     }
 
-    private static void writeFunction(State state, Function function, boolean methodLike, ConstantPool localConstantPool, InstructionList assembly) {
+    private static void writeFunction(State state, Function function, boolean methodLike, StringTable localStringTable, InstructionList assembly) {
         assembly.add(push("rbp"));
         assembly.add("mov rbp, rsp");
         assembly.add("sub rsp, " + function.code.getLocalsSize());
@@ -553,7 +552,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             if(NO_OPT) {
                 assembly.add(new Instruction("; " + instruction.getName()));
             }
-            generateInstruction(state, instruction, instructions, function, localConstantPool, assembly);
+            generateInstruction(state, instruction, instructions, function, localStringTable, assembly);
         }
     }
 
@@ -618,7 +617,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         assembly.add("mov rax, 60");
         assembly.add("mov rdi, 0");
         assembly.add("syscall");
-        ConstantPool localConstantPool = new ConstantPool();
+        StringTable localStringTable = new StringTable();
         List<Field> fields;
         if(ALL_FUNCTIONS) {
             fields = generated.fields;
@@ -626,20 +625,20 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 if(FunctionModifiers.isEmptyCode(function.modifiers)) continue;
 
                 assembly.add(new FunctionStartInstruction(function));
-                writeFunction(state, function, false, localConstantPool, assembly);
+                writeFunction(state, function, false, localStringTable, assembly);
             }
             for(var clazz : generated.classes) {
                 for (var method : clazz.methods) {
                     if (FunctionModifiers.isEmptyCode(method.modifiers)) continue;
 
                     assembly.add(getMangledName(method) + ":");
-                    writeFunction(state, new Function(method.namespace, method.modifiers, method.className + "." + method.name, method.signature, method.code), true, localConstantPool, assembly);
+                    writeFunction(state, new Function(method.namespace, method.modifiers, method.className + "." + method.name, method.signature, method.code), true, localStringTable, assembly);
                 }
             }
         }else {
             if(mainFunction != null) {
                 assembly.add(new FunctionStartInstruction(mainFunction));
-                writeFunction(state, mainFunction, false, localConstantPool, assembly);
+                writeFunction(state, mainFunction, false, localStringTable, assembly);
             }
             while(!state.nextFunctions.isEmpty()) {
                 var current = state.nextFunctions.pop();
@@ -647,12 +646,12 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                     if(FunctionModifiers.isEmptyCode(f.modifiers)) continue;
 
                     assembly.add(new FunctionStartInstruction(f));
-                    writeFunction(state, f, false, localConstantPool, assembly);
+                    writeFunction(state, f, false, localStringTable, assembly);
                 }else if(current instanceof Method m) {
                     if (FunctionModifiers.isEmptyCode(m.modifiers)) continue;
 
                     assembly.add(getMangledName(m) + ":");
-                    writeFunction(state, new Function(m.namespace, m.modifiers, m.className + "." + m.name, m.signature, m.code), true, localConstantPool, assembly);
+                    writeFunction(state, new Function(m.namespace, m.modifiers, m.className + "." + m.name, m.signature, m.code), true, localStringTable, assembly);
                 }
             }
 
@@ -662,7 +661,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 fields.add(field);
                 if(field.defaultValue == null) continue;
                 if(field.type instanceof ClassType clz && clz.normalName().equals("zprol.lang.String")) {
-                    localConstantPool.getOrCreateStringIndex((String) field.defaultValue.value);
+                    localStringTable.getOrCreateStringIndex((String) field.defaultValue.value);
                 }
             }
 
@@ -696,15 +695,13 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         }
 
         int index = 1;
-        for(var constantPoolEntry : localConstantPool.entries) {
-            if(constantPoolEntry instanceof ConstantPoolEntry.StringEntry str) {
-                if(!shownReadonlyData) {
-                    assembly.add("section .rodata");
-                    shownReadonlyData = true;
-                }
-                assembly.add("_string" + index + ".chars" + ": db " + Arrays.stream(str.getString().chars().toArray()).mapToObj(x -> "0x" + Integer.toHexString(x)).collect(Collectors.joining(", ")));
-                assembly.add("_string" + index + ": dq " + str.getString().length() + ", _string" + index + ".chars");
+        for(var str : localStringTable.entries) {
+            if(!shownReadonlyData) {
+                assembly.add("section .rodata");
+                shownReadonlyData = true;
             }
+            assembly.add("_string" + index + ".chars" + ": db " + Arrays.stream(str.chars().toArray()).mapToObj(x -> "0x" + Integer.toHexString(x)).collect(Collectors.joining(", ")));
+            assembly.add("_string" + index + ": dq " + str.length() + ", _string" + index + ".chars");
             index++;
         }
 
@@ -732,12 +729,10 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 }else if(field.type instanceof ClassType clz && clz.normalName().equals("zprol.lang.String")) {
                     var s = (String) field.defaultValue.value;
                     index = 1;
-                    for(var constantPoolEntry : localConstantPool.entries) {
-                        if(constantPoolEntry instanceof ConstantPoolEntry.StringEntry str) {
-                            if(str.getString().equals(s)) {
-                                assembly.add(getMangledName(field) + ": dq _string" + index);
-                                break;
-                            }
+                    for(var str : localStringTable.entries) {
+                        if(str.equals(s)) {
+                            assembly.add(getMangledName(field) + ": dq _string" + index);
+                            break;
                         }
                         index++;
                     }

@@ -61,10 +61,10 @@ public class CompiledData {
                 }
             }
             data.functions.add(f);
-            data.constantPool.prepareConstantPool(f);
+            data.stringTable.prepareConstantPool(f);
             if(!FunctionModifiers.isEmptyCode(f.modifiers)) {
                 for (IBytecodeInstruction instruction : f.code.getInstructions()) {
-                    Bytecode.prepareConstantPool(instruction, data.constantPool);
+                    Bytecode.prepareConstantPool(instruction, data.stringTable);
                 }
             }
         }
@@ -78,9 +78,9 @@ public class CompiledData {
 
             }
             data.fields.add(f);
-            data.constantPool.prepareConstantPool(f);
+            data.stringTable.prepareConstantPool(f);
             if(f.defaultValue != null) {
-                new ConstantValueAttribute(f.defaultValue.value).prepareConstantPool(data.constantPool);
+                new ConstantValueAttribute(f.defaultValue.value).prepareConstantPool(data.stringTable);
             }
         }
 
@@ -92,16 +92,16 @@ public class CompiledData {
                 throw new RedefinedClassException((clz.namespace != null ? clz.namespace + "." : "") + clz.name);
             }
             data.classes.add(clz);
-            data.constantPool.prepareConstantPool(clz);
+            data.stringTable.prepareConstantPool(clz);
             for(ClassField field : clz.fields) {
-                data.constantPool.getOrCreateStringIndex(field.name);
-                data.constantPool.getOrCreateStringIndex(field.type.getDescriptor());
+                data.stringTable.getOrCreateStringIndex(field.name);
+                data.stringTable.getOrCreateStringIndex(field.type.getDescriptor());
             }
             for(Method m : clz.methods) {
-                data.constantPool.prepareConstantPool(m);
+                data.stringTable.prepareConstantPool(m);
                 if(!FunctionModifiers.isEmptyCode(m.modifiers)) {
                     for (IBytecodeInstruction instruction : m.code.getInstructions()) {
-                        Bytecode.prepareConstantPool(instruction, data.constantPool);
+                        Bytecode.prepareConstantPool(instruction, data.stringTable);
                     }
                 }
             }

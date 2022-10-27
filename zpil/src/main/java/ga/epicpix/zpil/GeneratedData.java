@@ -3,8 +3,6 @@ package ga.epicpix.zpil;
 import ga.epicpix.zpil.attr.Attribute;
 import ga.epicpix.zpil.attr.ConstantValueAttribute;
 import ga.epicpix.zpil.bytecode.Bytecode;
-import ga.epicpix.zpil.pool.ConstantPool;
-import ga.epicpix.zpil.pool.ConstantPoolEntry;
 import ga.epicpix.zprol.data.ConstantValue;
 import ga.epicpix.zprol.structures.*;
 import ga.epicpix.zprol.structures.Class;
@@ -21,21 +19,21 @@ public class GeneratedData {
     public final ArrayList<Function> functions = new ArrayList<>();
     public final ArrayList<Field> fields = new ArrayList<>();
     public final ArrayList<Class> classes = new ArrayList<>();
-    public final ConstantPool constantPool = new ConstantPool();
+    public final StringTable stringTable = new StringTable();
 
     public static byte[] save(GeneratedData data) throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(bytes);
         out.writeBytes("zPrl");
 
-        out.writeInt(data.constantPool.entries.size() + 1);
-        for(ConstantPoolEntry entry : data.constantPool.entries) entry.write(out);
+        out.writeInt(data.stringTable.entries.size() + 1);
+        for(String entry : data.stringTable.entries) out.writeUTF(entry);
 
         out.writeInt(data.functions.size());
         for(Function func : data.functions) {
-            out.writeInt(data.constantPool.getStringIndex(func.namespace));
-            out.writeInt(data.constantPool.getStringIndex(func.name));
-            out.writeInt(data.constantPool.getStringIndex(func.signature.toString()));
+            out.writeInt(data.stringTable.getStringIndex(func.namespace));
+            out.writeInt(data.stringTable.getStringIndex(func.name));
+            out.writeInt(data.stringTable.getStringIndex(func.signature.toString()));
             out.writeInt(FunctionModifiers.toBits(func.modifiers));
             boolean hasCode = !FunctionModifiers.isEmptyCode(func.modifiers);
             if(hasCode) {
@@ -50,17 +48,17 @@ public class GeneratedData {
 
         out.writeInt(data.classes.size());
         for(Class clz : data.classes) {
-            out.writeInt(data.constantPool.getStringIndex(clz.namespace));
-            out.writeInt(data.constantPool.getStringIndex(clz.name));
+            out.writeInt(data.stringTable.getStringIndex(clz.namespace));
+            out.writeInt(data.stringTable.getStringIndex(clz.name));
             out.writeInt(clz.fields.length);
             for(ClassField field : clz.fields) {
-                out.writeInt(data.constantPool.getStringIndex(field.name));
-                out.writeInt(data.constantPool.getStringIndex(field.type.getDescriptor()));
+                out.writeInt(data.stringTable.getStringIndex(field.name));
+                out.writeInt(data.stringTable.getStringIndex(field.type.getDescriptor()));
             }
             out.writeInt(clz.methods.length);
             for(Method func : clz.methods) {
-                out.writeInt(data.constantPool.getStringIndex(func.name));
-                out.writeInt(data.constantPool.getStringIndex(func.signature.toString()));
+                out.writeInt(data.stringTable.getStringIndex(func.name));
+                out.writeInt(data.stringTable.getStringIndex(func.signature.toString()));
                 out.writeInt(FunctionModifiers.toBits(func.modifiers));
                 boolean hasCode = !FunctionModifiers.isEmptyCode(func.modifiers);
                 if(hasCode) {
@@ -76,9 +74,9 @@ public class GeneratedData {
 
         out.writeInt(data.fields.size());
         for(Field field : data.fields) {
-            out.writeInt(data.constantPool.getStringIndex(field.namespace));
-            out.writeInt(data.constantPool.getStringIndex(field.name));
-            out.writeInt(data.constantPool.getStringIndex(field.type.getDescriptor()));
+            out.writeInt(data.stringTable.getStringIndex(field.namespace));
+            out.writeInt(data.stringTable.getStringIndex(field.name));
+            out.writeInt(data.stringTable.getStringIndex(field.type.getDescriptor()));
             out.writeInt(FieldModifiers.toBits(field.modifiers));
 
             int attributeCount = 0;
@@ -86,7 +84,7 @@ public class GeneratedData {
             out.writeInt(attributeCount);
 
             if(field.defaultValue != null) {
-                out.write(new ConstantValueAttribute(field.defaultValue.value).write(data.constantPool));
+                out.write(new ConstantValueAttribute(field.defaultValue.value).write(data.stringTable));
             }
         }
 
@@ -103,13 +101,13 @@ public class GeneratedData {
         }
 
         int length = in.readInt() - 1;
-        for(int i = 0; i<length; i++) data.constantPool.entries.add(ConstantPoolEntry.read(in));
+        for(int i = 0; i<length; i++) data.stringTable.entries.add(in.readUTF());
 
         int functionLength = in.readInt();
         for(int i = 0; i<functionLength; i++) {
-            String namespace = data.constantPool.getStringNullable(in.readInt());
-            String name = data.constantPool.getString(in.readInt());
-            String signature = data.constantPool.getString(in.readInt());
+            String namespace = data.stringTable.getStringNullable(in.readInt());
+            String name = data.stringTable.getString(in.readInt());
+            String signature = data.stringTable.getString(in.readInt());
             EnumSet<FunctionModifiers> modifiers = FunctionModifiers.getModifiers(in.readInt());
             boolean hasCode = !FunctionModifiers.isEmptyCode(modifiers);
             Function function = new Function(namespace, modifiers, name, FunctionSignature.fromDescriptor(signature), hasCode ? Bytecode.BYTECODE.createStorage() : null);
@@ -125,19 +123,19 @@ public class GeneratedData {
 
         int classLength = in.readInt();
         for(int i = 0; i<classLength; i++) {
-            String namespace = data.constantPool.getStringNullable(in.readInt());
-            String name = data.constantPool.getString(in.readInt());
+            String namespace = data.stringTable.getStringNullable(in.readInt());
+            String name = data.stringTable.getString(in.readInt());
             ClassField[] fields = new ClassField[in.readInt()];
             for(int fieldIndex = 0; fieldIndex<fields.length; fieldIndex++) {
-                String fieldName = data.constantPool.getString(in.readInt());
-                String fieldTypeDescriptor = data.constantPool.getString(in.readInt());
+                String fieldName = data.stringTable.getString(in.readInt());
+                String fieldTypeDescriptor = data.stringTable.getString(in.readInt());
                 ga.epicpix.zprol.types.Type fieldType = Types.getTypeFromDescriptor(fieldTypeDescriptor);
                 fields[fieldIndex] = new ClassField(fieldName, fieldType);
             }
             Method[] methods = new Method[in.readInt()];
             for(int methodIndex = 0; methodIndex<methods.length; methodIndex++) {
-                String mname = data.constantPool.getStringNullable(in.readInt());
-                String msignature = data.constantPool.getString(in.readInt());
+                String mname = data.stringTable.getStringNullable(in.readInt());
+                String msignature = data.stringTable.getString(in.readInt());
                 EnumSet<FunctionModifiers> mmodifiers = FunctionModifiers.getModifiers(in.readInt());
                 boolean mhasCode = !FunctionModifiers.isEmptyCode(mmodifiers);
                 Method method = new Method(namespace, mmodifiers, name, mname, FunctionSignature.fromDescriptor(msignature), mhasCode ? Bytecode.BYTECODE.createStorage() : null);
@@ -155,15 +153,15 @@ public class GeneratedData {
 
         int fieldLength = in.readInt();
         for(int i = 0; i<fieldLength; i++) {
-            String namespace = data.constantPool.getStringNullable(in.readInt());
-            String name =  data.constantPool.getString(in.readInt());
-            String type = data.constantPool.getString(in.readInt());
+            String namespace = data.stringTable.getStringNullable(in.readInt());
+            String name =  data.stringTable.getString(in.readInt());
+            String type = data.stringTable.getString(in.readInt());
             EnumSet<FieldModifiers> modifiers = FieldModifiers.getModifiers(in.readInt());
 
             int attrCount = in.readInt();
             ConstantValue constantValue = null;
             for(int j = 0; j<attrCount; j++) {
-                Attribute attr = Attribute.read(in, data.constantPool);
+                Attribute attr = Attribute.read(in, data.stringTable);
                 if(attr instanceof ConstantValueAttribute) {
                     constantValue = new ConstantValue(((ConstantValueAttribute) attr).getValue());
                 }
@@ -212,10 +210,10 @@ public class GeneratedData {
                 }
             }
             data.functions.add(f);
-            data.constantPool.prepareConstantPool(f);
+            data.stringTable.prepareConstantPool(f);
             if(!FunctionModifiers.isEmptyCode(f.modifiers)) {
                 for (IBytecodeInstruction instruction : f.code.getInstructions()) {
-                    Bytecode.prepareConstantPool(instruction, data.constantPool);
+                    Bytecode.prepareConstantPool(instruction, data.stringTable);
                 }
             }
         }
@@ -229,9 +227,9 @@ public class GeneratedData {
 
             }
             data.fields.add(f);
-            data.constantPool.prepareConstantPool(f);
+            data.stringTable.prepareConstantPool(f);
             if(f.defaultValue != null) {
-                new ConstantValueAttribute(f.defaultValue.value).prepareConstantPool(data.constantPool);
+                new ConstantValueAttribute(f.defaultValue.value).prepareConstantPool(data.stringTable);
             }
         }
 
@@ -243,16 +241,16 @@ public class GeneratedData {
                 throw new RuntimeException((clz.namespace != null ? clz.namespace + "." : "") + clz.name);
             }
             data.classes.add(clz);
-            data.constantPool.prepareConstantPool(clz);
+            data.stringTable.prepareConstantPool(clz);
             for(ClassField field : clz.fields) {
-                data.constantPool.getOrCreateStringIndex(field.name);
-                data.constantPool.getOrCreateStringIndex(field.type.getDescriptor());
+                data.stringTable.getOrCreateStringIndex(field.name);
+                data.stringTable.getOrCreateStringIndex(field.type.getDescriptor());
             }
             for(Method m : clz.methods) {
-                data.constantPool.prepareConstantPool(m);
+                data.stringTable.prepareConstantPool(m);
                 if(!FunctionModifiers.isEmptyCode(m.modifiers)) {
                     for (IBytecodeInstruction instruction : m.code.getInstructions()) {
-                        Bytecode.prepareConstantPool(instruction, data.constantPool);
+                        Bytecode.prepareConstantPool(instruction, data.stringTable);
                     }
                 }
             }

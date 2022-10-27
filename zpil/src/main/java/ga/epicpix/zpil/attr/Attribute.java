@@ -1,7 +1,6 @@
 package ga.epicpix.zpil.attr;
 
-import ga.epicpix.zpil.pool.ConstantPool;
-import ga.epicpix.zpil.pool.ConstantPoolEntry;
+import ga.epicpix.zpil.StringTable;
 
 import java.io.*;
 
@@ -17,8 +16,8 @@ public abstract class Attribute {
         return name;
     }
 
-    public static Attribute read(DataInput input, ConstantPool pool) throws IOException {
-        String name = ((ConstantPoolEntry.StringEntry) pool.entries.get(input.readInt() - 1)).getString();
+    public static Attribute read(DataInput input, StringTable pool) throws IOException {
+        String name = pool.entries.get(input.readInt() - 1);
         int length = input.readInt();
         byte[] data = new byte[length];
         for(int i = 0; i<length; i++) data[i] = input.readByte();
@@ -33,11 +32,11 @@ public abstract class Attribute {
         return inst;
     }
 
-    public void prepareConstantPool(ConstantPool pool) {
+    public void prepareConstantPool(StringTable pool) {
         pool.getOrCreateStringIndex(name);
     }
 
-    public final byte[] write(ConstantPool pool) throws IOException {
+    public final byte[] write(StringTable pool) throws IOException {
         ByteArrayOutputStream arr = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(arr);
         out.writeInt(pool.getStringIndex(name));
@@ -48,7 +47,7 @@ public abstract class Attribute {
         return arr.toByteArray();
     }
 
-    protected abstract void readData(DataInput input, ConstantPool pool) throws IOException;
-    protected abstract void writeData(DataOutputStream out, ConstantPool pool) throws IOException;
+    protected abstract void readData(DataInput input, StringTable pool) throws IOException;
+    protected abstract void writeData(DataOutputStream out, StringTable pool) throws IOException;
 
 }

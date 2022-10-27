@@ -1,7 +1,6 @@
 package ga.epicpix.zpil.attr;
 
-import ga.epicpix.zpil.pool.ConstantPool;
-import ga.epicpix.zpil.pool.ConstantPoolEntry;
+import ga.epicpix.zpil.StringTable;
 
 import java.io.DataInput;
 import java.io.DataOutputStream;
@@ -20,14 +19,14 @@ public class ConstantValueAttribute extends Attribute {
         return value;
     }
 
-    protected void readData(DataInput input, ConstantPool pool) throws IOException {
+    protected void readData(DataInput input, StringTable pool) throws IOException {
         int type = input.readUnsignedByte();
         switch(type) {
             case 'n':
                 value = null;
                 break;
             case 's':
-                value = ((ConstantPoolEntry.StringEntry) pool.entries.get(input.readInt() - 1)).getString();
+                value = pool.entries.get(input.readInt() - 1);
                 break;
             case 'b':
                 value = input.readBoolean();
@@ -49,14 +48,14 @@ public class ConstantValueAttribute extends Attribute {
         }
     }
 
-    public void prepareConstantPool(ConstantPool pool) {
+    public void prepareConstantPool(StringTable pool) {
         super.prepareConstantPool(pool);
         if(value instanceof String) {
             pool.getOrCreateStringIndex((String) value);
         }
     }
 
-    protected void writeData(DataOutputStream out, ConstantPool pool) throws IOException {
+    protected void writeData(DataOutputStream out, StringTable pool) throws IOException {
         if(value == null) {
             out.writeByte('n');
         }else if(value instanceof String) {

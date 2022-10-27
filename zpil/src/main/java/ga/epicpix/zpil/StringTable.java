@@ -1,4 +1,4 @@
-package ga.epicpix.zpil.pool;
+package ga.epicpix.zpil;
 
 import ga.epicpix.zpil.exceptions.LostConstantPoolEntryException;
 import ga.epicpix.zprol.structures.Class;
@@ -8,22 +8,20 @@ import ga.epicpix.zprol.structures.Method;
 
 import java.util.ArrayList;
 
-public class ConstantPool {
+public class StringTable {
 
-    public final ArrayList<ConstantPoolEntry> entries = new ArrayList<>();
+    public final ArrayList<String> entries = new ArrayList<>();
 
     public int getOrCreateStringIndex(String str) {
         if(str == null) return 0;
 
         for(int i = 0; i < entries.size(); i++) {
-            ConstantPoolEntry m = entries.get(i);
-            if(m instanceof ConstantPoolEntry.StringEntry) {
-                if(((ConstantPoolEntry.StringEntry) m).getString().equals(str)) {
-                    return i + 1;
-                }
+            String m = entries.get(i);
+            if(m.equals(str)) {
+                return i + 1;
             }
         }
-        entries.add(new ConstantPoolEntry.StringEntry(str));
+        entries.add(str);
         return entries.size();
     }
 
@@ -31,23 +29,21 @@ public class ConstantPool {
         if(str == null) return 0;
 
         for(int i = 0; i < entries.size(); i++) {
-            ConstantPoolEntry m = entries.get(i);
-            if(m instanceof ConstantPoolEntry.StringEntry) {
-                if(((ConstantPoolEntry.StringEntry) m).getString().equals(str)) {
-                    return i + 1;
-                }
+            String m = entries.get(i);
+            if(m.equals(str)) {
+                return i + 1;
             }
         }
-        throw new LostConstantPoolEntryException("Cannot find string ConstantPoolEntry with '" + str + "'");
+        throw new LostConstantPoolEntryException("Cannot find string '" + str + "'");
     }
 
     public String getString(int index) {
-        return ((ConstantPoolEntry.StringEntry) entries.get(index - 1)).getString();
+        return entries.get(index - 1);
     }
 
     public String getStringNullable(int index) {
         if(index == 0) return null;
-        return ((ConstantPoolEntry.StringEntry) entries.get(index - 1)).getString();
+        return entries.get(index - 1);
     }
 
     public void prepareConstantPool(Object val) {
