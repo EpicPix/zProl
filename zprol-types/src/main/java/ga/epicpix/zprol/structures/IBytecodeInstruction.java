@@ -5,5 +5,6 @@ public interface IBytecodeInstruction {
     public int getId();
     public String getName();
     public Object[] getData();
+    public int getSize();
 
 }

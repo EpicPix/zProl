@@ -35,4 +35,12 @@ final class BytecodeInstruction implements IBytecodeInstruction {
         return args;
     }
 
+    public int getSize() {
+        int s = 1;
+        for(BytecodeValueType v : data.values) {
+            s += v.getSize();
+        }
+        return s;
+    }
+
 }

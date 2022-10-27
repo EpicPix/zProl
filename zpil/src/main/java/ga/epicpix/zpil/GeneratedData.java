@@ -273,7 +273,11 @@ public class GeneratedData {
             if(!FunctionModifiers.isEmptyCode(func.modifiers)) {
                 System.out.println("    Code");
                 System.out.println("      Locals Size: " + func.code.getLocalsSize());
-                System.out.println("      Instructions");
+                int len = 0;
+                for(IBytecodeInstruction instruction : func.code.getInstructions()) {
+                    len += instruction.getSize();
+                }
+                System.out.println("      Instructions (" + len + " " + (len == 1 ? "byte":"bytes") + ")");
                 for(IBytecodeInstruction instruction : func.code.getInstructions()) {
                     System.out.println("        " + instruction);
                 }
@@ -324,7 +328,11 @@ public class GeneratedData {
                 if(!FunctionModifiers.isEmptyCode(func.modifiers)) {
                     System.out.println("        Code");
                     System.out.println("          Locals Size: " + func.code.getLocalsSize());
-                    System.out.println("          Instructions");
+                    int len = 0;
+                    for(IBytecodeInstruction instruction : func.code.getInstructions()) {
+                        len += instruction.getSize();
+                    }
+                    System.out.println("          Instructions (" + len + " " + (len == 1 ? "byte":"bytes") + ")");
                     for(IBytecodeInstruction instruction : func.code.getInstructions()) {
                         System.out.println("            " + instruction);
                     }
