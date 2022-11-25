@@ -233,8 +233,13 @@ public class Start {
             }else {
                 try {
                     long startLex = System.nanoTime();
-                    LexerResults lexedTokens = Lexer.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]));
+                    LexerResults lexedTokens = Lexer.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]), errors);
                     long endLex = System.nanoTime();
+                    if(errors.getErrorCount(ErrorType.ERROR) + errors.getErrorCount(ErrorType.CRITICAL) != 0) {
+                        System.out.printf("[%s] Failed to lex due to errors\n",file.substring(file.lastIndexOf('/') + 1));
+                        buildFailed = true;
+                        continue;
+                    }
                     if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d μs to lex\n", file.substring(file.lastIndexOf('/') + 1), (endLex - startLex)/1000);
 
                     long startToken = System.nanoTime();

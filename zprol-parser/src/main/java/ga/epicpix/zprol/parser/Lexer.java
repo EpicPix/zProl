@@ -1,5 +1,7 @@
 package ga.epicpix.zprol.parser;
 
+import ga.epicpix.zprol.errors.ErrorCodes;
+import ga.epicpix.zprol.errors.ErrorStorage;
 import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import java.util.ArrayList;
@@ -8,16 +10,16 @@ import static ga.epicpix.zprol.parser.tokens.TokenType.*;
 
 public class Lexer {
 
-    public static LexerResults lex(String filename, String[] lines) {
+    public static LexerResults lex(String filename, String[] lines, ErrorStorage errors) {
         DataParser parser = new DataParser(filename, lines);
         ArrayList<LexerToken> tokens = new ArrayList<>();
         while(parser.hasNext()) {
-            tokens.add(lexNext(parser));
+            tokens.add(lexNext(parser, errors));
         }
         return new LexerResults(tokens, parser);
     }
 
-    public static LexerToken lexNext(DataParser parser) {
+    public static LexerToken lexNext(DataParser parser, ErrorStorage errors) {
         int start = parser.getIndex();
         int first = parser.nextChar();
         if((first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z') || first == '_') {
@@ -61,13 +63,28 @@ public class Lexer {
         }else if(first >= '0' && first <= '9') {
             int value = parser.nextChar();
             if(value == 'x' || value == 'X') {
+                boolean invalid = false;
                 while((value = parser.nextChar()) != -1) {
-                    if(!((value >= '0' && value <= '9') || (value >= 'a' && value <= 'f') || (value >= 'A' && value <= 'F'))) {
+                    if(!((value >= '0' && value <= '9') || Character.isAlphabetic(value))) {
                         parser.goBack();
                         break;
+                    }else if(!((value >= '0' && value <= '9') || (value >= 'a' && value <= 'f') || (value >= 'A' && value <= 'F'))) {
+                        invalid = true;
                     }
                 }
-                if(parser.getIndex() - start <= 2) throw new ParserException("Expected a hex number after '0x'", parser);
+                if(invalid) {
+                    int length = parser.getIndex() - start - 2;
+                    ParserLocation loc = parser.getLocation(parser.getIndex());
+                    String line = parser.getLines()[loc.line];
+                    errors.addError(ErrorCodes.LEX_INVALID_HEX, line.substring(0, loc.row - length), line.substring(loc.row - length, loc.row), line.substring(loc.row));
+                    return new LexerToken(Invalid, parser.data.substring(start, parser.getIndex()), start, parser.getIndex(), parser);
+                }
+                if(parser.getIndex() - start <= 2) {
+                    ParserLocation loc = parser.getLocation(parser.getIndex());
+                    String line = parser.getLines()[loc.line];
+                    errors.addError(ErrorCodes.LEX_EXPECTED_NUMBER_AFTER_HEX, line, line.substring(0, loc.row), line.substring(loc.row));
+                    return new LexerToken(Invalid, parser.data.substring(start, parser.getIndex()), start, parser.getIndex(), parser);
+                }
             }else {
                 parser.goBack();
                 while((value = parser.nextChar()) != -1) {
@@ -81,9 +98,19 @@ public class Lexer {
         }else if(first == '"') {
             int value;
             StringBuilder str = new StringBuilder();
-            while((value = parser.nextChar()) != -1) {
+            strloop: while(true) {
+                value = parser.nextChar();
+                if(value == -1) {
+                    ParserLocation loc = parser.getLocation(parser.getIndex());
+                    String line = parser.getLines()[loc.line];
+                    errors.addError(ErrorCodes.LEX_UNEXPECTED_STRING_END, line, line.substring(0, loc.row), "\"", line.substring(loc.row));
+                    break;
+                }
                 if(value == '\n') {
-                    throw new ParserException("Unexpected new line after string", parser);
+                    ParserLocation loc = parser.getLocation(parser.getIndex() - 1);
+                    String line = parser.getLines()[loc.line];
+                    errors.addError(ErrorCodes.LEX_UNEXPECTED_STRING_END, line, line.substring(0, loc.row), "\"", line.substring(loc.row));
+                    break;
                 }
                 if(value == '"') {
                     break;
@@ -100,7 +127,12 @@ public class Lexer {
                         case 'b': str.append("\b"); break;
                         case '0': str.append("\0"); break;
                         case '"': str.append("\""); break;
-                        default: parser.goBack(); throw new ParserException("Unexpected escape sequence", parser);
+                        default:
+                            parser.goBack();
+                            ParserLocation loc = parser.getLocation(parser.getIndex());
+                            String line = parser.getLines()[loc.line];
+                            errors.addError(ErrorCodes.LEX_INVALID_ESCAPE_SEQUENCE, line, line.substring(0, loc.row - 1) + line.substring(loc.row));
+                            break strloop;
                     }
                     continue;
                 }
@@ -179,8 +211,10 @@ public class Lexer {
                 }
             }
         }
-        parser.goBack();
-        throw new ParserException("Unknown token", parser, parser.getLocation());
+        ParserLocation loc = parser.getLocation(parser.getIndex());
+        String line = parser.getLines()[loc.line];
+        errors.addError(ErrorCodes.LEX_INVALID_TOKEN, line.substring(0, loc.row - 1), line.substring(loc.row - 1, loc.row), line.substring(loc.row));
+        return new LexerToken(Invalid, Character.toString((char) first), start, parser.getIndex(), parser);
     }
 
 }
