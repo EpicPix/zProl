@@ -2,7 +2,10 @@ package ga.epicpix.zprol.interpreter;
 
 import ga.epicpix.zpil.GeneratedData;
 import ga.epicpix.zprol.structures.Function;
+import ga.epicpix.zprol.types.PrimitiveType;
+import ga.epicpix.zprol.types.Type;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 public class DefaultNativeImpl extends NativeImpl {
@@ -68,14 +71,23 @@ public class DefaultNativeImpl extends NativeImpl {
                     case "uL(LLLLLLL)":
                         return runSyscall(state, locals.getLongValue(8), locals.getLongValue(16), locals.getLongValue(24), locals.getLongValue(32), locals.getLongValue(40), locals.getLongValue(48), locals.getLongValue(56));
                     default:
-                        throw new RuntimeException("Unknown native method: " + current);
                 }
-            }else {
-                throw new RuntimeException("Unknown native method: " + current);
             }
-        }else {
-            throw new RuntimeException("Unknown native method: " + current);
         }
+        Object[] extracted = new Object[current.signature.parameters.length];
+        int loc = 0;
+        Type[] parameters = current.signature.parameters;
+        for(int i = 0; i < parameters.length; i++) {
+            Type param = parameters[i];
+            int size;
+            if(param instanceof PrimitiveType) {
+                PrimitiveType prim = (PrimitiveType) param;
+                size = prim.size;
+            } else size = 8;
+            loc += size;
+            extracted[i] = locals.get(loc, size).value;
+        }
+        throw new RuntimeException("Unknown native method: " + current + " called with " + Arrays.toString(extracted));
     }
 
 }

@@ -78,6 +78,18 @@ class InstructionImpl {
             case "lmulu":
                 state.stack.push((Long) state.stack.pop(8).value * (Long) state.stack.pop(8).value, 8);
                 break;
+            case "idiv": {
+                Integer b = (Integer) state.stack.pop(4).value;
+                Integer a = (Integer) state.stack.pop(4).value;
+                state.stack.push(a / b, 4);
+                break;
+            }
+            case "ldiv": {
+                Long b = (Long) state.stack.pop(8).value;
+                Long a = (Long) state.stack.pop(8).value;
+                state.stack.push(a / b, 8);
+                break;
+            }
             case "band":
                 state.stack.push((byte) ((Byte) state.stack.pop(1).value & (Byte) state.stack.pop(1).value), 1);
                 break;

@@ -69,7 +69,6 @@ public class Interpreter {
     public static void runFunction(GeneratedData file, VMState state, Function function) {
         LocalStorage locals = new LocalStorage();
         Type[] params = function.signature.parameters;
-        int loc = 0;
         Object[] data = new Object[params.length];
         for(int i = params.length - 1; i >= 0; i--) {
             Type param = params[i];
@@ -80,6 +79,7 @@ public class Interpreter {
             } else size = 8;
             data[i] = state.stack.pop(size).value;
         }
+        int loc = 0;
         for(int i = 0; i < params.length; i++) {
             Type param = params[i];
             int size;
