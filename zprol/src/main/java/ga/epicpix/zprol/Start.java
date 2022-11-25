@@ -214,6 +214,8 @@ public class Start {
             }
         }
 
+        boolean buildFailed = false;
+
         for(String file : files) {
             boolean load = false;
             if(new File(file).exists() && Files.size(new File(file).toPath()) >= 4) {
@@ -239,7 +241,8 @@ public class Start {
                     long endToken = System.nanoTime();
                     if(errors.getErrorCount(ErrorType.ERROR) + errors.getErrorCount(ErrorType.CRITICAL) != 0) {
                         System.out.printf("[%s] Failed to parse due to errors\n",file.substring(file.lastIndexOf('/') + 1));
-                        return;
+                        buildFailed = true;
+                        continue;
                     }
 
                     if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d μs to parse\n", file.substring(file.lastIndexOf('/') + 1), (endToken - startToken)/1000);
@@ -259,6 +262,10 @@ public class Start {
                     return;
                 }
             }
+        }
+
+        if(buildFailed) {
+            return;
         }
 
 
