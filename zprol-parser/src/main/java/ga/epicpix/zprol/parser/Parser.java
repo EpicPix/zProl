@@ -3,6 +3,7 @@ package ga.epicpix.zprol.parser;
 import ga.epicpix.zprol.errors.CriticalErrorException;
 import ga.epicpix.zprol.errors.ErrorCodes;
 import ga.epicpix.zprol.errors.ErrorStorage;
+import ga.epicpix.zprol.errors.ErrorType;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.tokens.TokenType;
@@ -146,9 +147,7 @@ public final class Parser {
                 token = expect(Identifier);
             }
             while(isNext(OpenBracket)) {
-                System.out.println(isNext(OpenBracket));
                 expect(OpenBracket);
-                System.out.println(isNext(CloseBracket));
                 expect(CloseBracket);
                 arrays++;
             }
@@ -285,15 +284,16 @@ public final class Parser {
         }else if(isNext(ReturnKeyword)) {
             return readReturnStatement();
         }else if(isNext(Identifier)) {
-            TypeTree type = null;
             errors.startCapturingErrors();
-            try {
-                type = readType();
-            }catch(TokenLocatedException e) {
+            TypeTree type = readType();
+            if(errors.hasCapturedErrors(ErrorType.ERROR)) {
+                errors.stopCapturingErrors(false);
+                type = null;
                 lexerTokens.setIndex(start);
                 readAccessor();
+            }else {
+                errors.stopCapturingErrors(false);
             }
-            errors.stopCapturingErrors(true);
             skipWhitespace();
             if(!isNext(Identifier)) {
                 lexerTokens.setIndex(start);
@@ -449,21 +449,19 @@ public final class Parser {
         int start = curr();
         if(optional(OpenParen) != null) {
             int _start = curr();
-            TypeTree type;
-            boolean hardCast;
-            try {
-                errors.startCapturingErrors();
-                type = readType();
-                hardCast = optional(HardCastIndicatorOperator) != null;
-                wexpect(CloseParen);
-            }catch(TokenLocatedException e) {
+            errors.startCapturingErrors();
+            TypeTree type = readType();
+            boolean hardCast = optional(HardCastIndicatorOperator) != null;
+            wexpect(CloseParen);
+            if(errors.hasCapturedErrors(ErrorType.ERROR)) {
                 errors.stopCapturingErrors(false);
                 lexerTokens.setIndex(_start);
                 IExpression expr = readExpression();
                 wexpect(CloseParen);
                 return expr;
+            }else {
+                errors.stopCapturingErrors(false);
             }
-            errors.stopCapturingErrors(true);
             return new CastTree(locS(start), locE(curr()), type, hardCast, readPostExpression());
         }
         skipWhitespace();
@@ -561,7 +559,7 @@ public final class Parser {
     }
 
     public LexerToken expect(TokenType type) {
-        LexerToken appendLoc = lexerTokens.hasPrevious() ? lexerTokens.get(lexerTokens.previousIndex()) : lexerTokens.current();
+        LexerToken appendLoc = lexerTokens.hasPrevious() ? lexerTokens.get(lexerTokens.currentIndex() - 1) : lexerTokens.current();
         if(!lexerTokens.hasNext()) {
             if(type.token == null) {
                 errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_EOF, type.name());

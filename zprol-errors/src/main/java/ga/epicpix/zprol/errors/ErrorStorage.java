@@ -67,4 +67,25 @@ public class ErrorStorage {
         }
         return count;
     }
+
+    public boolean hasCapturedErrors(ErrorType ofType) {
+        if(capturedErrors.size() == 0) {
+            if(ofType == null) {
+                return errors.size() != 0;
+            }
+            for(ErrorInfo err : errors) {
+                if(err.code.getType() == ofType) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if(ofType == null) return capturedErrors.peek().size() != 0;
+        for(ErrorInfo i : capturedErrors.peek()) {
+            if(i.code.getType() == ofType) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
