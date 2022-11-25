@@ -187,7 +187,7 @@ public final class Parser {
         }
         expect(OpenBrace);
         ArrayList<IStatement> statements = new ArrayList<>();
-        while(skipWhitespace() && optional(CloseBrace) == null) {
+        while(skipWhitespace() && !isNext(CloseBrace)) {
             statements.add(readStatement());
         }
         skipWhitespace();
