@@ -9,11 +9,6 @@ public class PreField {
     public PreField(IExpression defaultValue) {
         this.defaultValue = defaultValue;
     }
-    public PreField(String name, String type, IExpression defaultValue) {
-        this.name = name;
-        this.type = type;
-        this.defaultValue = defaultValue;
-    }
 
     public String type;
     public String name;
