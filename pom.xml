@@ -18,6 +18,7 @@
         <module>zprol-types</module>
         <module>zprol-utils</module>
         <module>zprol-interpreter</module>
+        <module>zprol-errors</module>
     </modules>
 
     <distributionManagement>

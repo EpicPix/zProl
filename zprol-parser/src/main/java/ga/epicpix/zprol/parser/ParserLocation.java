@@ -8,4 +8,8 @@ public final class ParserLocation {
         this.line = line;
         this.row = row;
     }
+
+    public String toString() {
+        return "ParserLocation[line=" + line + ",row=" + row + "]";
+    }
 }

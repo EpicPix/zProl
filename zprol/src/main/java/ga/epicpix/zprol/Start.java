@@ -5,6 +5,9 @@ import ga.epicpix.zprol.compiler.Compiler;
 import ga.epicpix.zprol.compiler.compiled.CompiledData;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.*;
+import ga.epicpix.zprol.errors.ErrorCodes;
+import ga.epicpix.zprol.errors.ErrorStorage;
+import ga.epicpix.zprol.errors.ErrorType;
 import ga.epicpix.zprol.generators.Generator;
 import ga.epicpix.zprol.interpreter.Interpreter;
 import ga.epicpix.zprol.parser.Lexer;
@@ -118,6 +121,8 @@ public class Start {
                 files.add(s);
             }
         }
+
+        ErrorStorage errors = new ErrorStorage();
         if(outputFile != null || !files.isEmpty()) {
             if(files.isEmpty()) {
                 throw new IllegalArgumentException("Files to compile not specified");
@@ -125,7 +130,25 @@ public class Start {
 
             String output = outputFile != null ? outputFile : "output.out";
 
-            compileFiles(files, output, ignoreCompileStdWarning, unloadStd);
+            compileFiles(files, output, ignoreCompileStdWarning, unloadStd, errors);
+
+            int warnCount = errors.getErrorCount(ErrorType.WARN);
+            int errCount = errors.getErrorCount(ErrorType.ERROR) + errors.getErrorCount(ErrorType.CRITICAL);
+            if(warnCount != 0) {
+                if(warnCount == 1) {
+                    System.out.println("1 warning");
+                }else {
+                    System.out.println(warnCount + " warnings");
+                }
+            }
+            if(errCount != 0) {
+                if(errCount == 1) {
+                    System.out.println("1 error");
+                }else {
+                    System.out.println(errCount + " errors");
+                }
+                return;
+            }
 
             String normalName = output.substring(0, output.lastIndexOf('.') == -1 ? output.length() : output.lastIndexOf('.'));
             var generated = GeneratedData.load(Files.readAllBytes(new File(normalName + ".zpil").toPath()));
@@ -174,19 +197,23 @@ public class Start {
         }
     }
 
-    public static void compileFiles(ArrayList<String> files, String output, boolean ignoreStdWarning, boolean unloadStd) throws IOException, UnknownTypeException {
+    public static void compileFiles(ArrayList<String> files, String output, boolean ignoreStdWarning, boolean unloadStd, ErrorStorage errors) throws IOException, UnknownTypeException {
         ArrayList<PreCompiledData> preCompiled = new ArrayList<>();
         ArrayList<CompiledData> compiled = new ArrayList<>();
         ArrayList<GeneratedData> includedCompiled = new ArrayList<>();
+
         if(!unloadStd) {
             var stdReader = Start.class.getClassLoader().getResourceAsStream("std.zpil");
             if (stdReader != null) {
                 var gen = GeneratedData.load(stdReader.readAllBytes());
                 includedCompiled.add(gen);
             } else {
-                if (!ignoreStdWarning) System.err.println("Warning! Standard library not found");
+                if (!ignoreStdWarning) {
+                    errors.addError(ErrorCodes.STANDARD_LIBRARY_NOT_FOUND);
+                }
             }
         }
+
         for(String file : files) {
             boolean load = false;
             if(new File(file).exists() && Files.size(new File(file).toPath()) >= 4) {
@@ -208,8 +235,13 @@ public class Start {
                     if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d μs to lex\n", file.substring(file.lastIndexOf('/') + 1), (endLex - startLex)/1000);
 
                     long startToken = System.nanoTime();
-                    FileTree tree = Parser.parse(new SeekIterator<>(lexedTokens.tokens));
+                    FileTree tree = Parser.parse(new SeekIterator<>(lexedTokens.tokens), errors);
                     long endToken = System.nanoTime();
+                    if(errors.getErrorCount(ErrorType.ERROR) + errors.getErrorCount(ErrorType.CRITICAL) != 0) {
+                        System.out.printf("[%s] Failed to parse due to errors\n",file.substring(file.lastIndexOf('/') + 1));
+                        return;
+                    }
+
                     if(!HIDE_TIMINGS) System.out.printf("[%s] Took %d μs to parse\n", file.substring(file.lastIndexOf('/') + 1), (endToken - startToken)/1000);
 
                     long startPreCompile = System.nanoTime();

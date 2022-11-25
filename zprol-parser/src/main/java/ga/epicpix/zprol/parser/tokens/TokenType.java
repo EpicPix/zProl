@@ -2,64 +2,70 @@ package ga.epicpix.zprol.parser.tokens;
 
 public enum TokenType {
 
-    // Lexer Tokens
+    Whitespace(null),
+    Comment(null),
 
-    Whitespace,
-    Comment,
+    LineCodeChars("=>"),
 
-    LineCodeChars,
+    NamespaceKeyword("namespace"),
+    UsingKeyword("using"),
+    ClassKeyword("class"),
+    ConstKeyword("const"),
+    NativeKeyword("native"),
+    VoidKeyword("void"),
+    BoolKeyword("bool"),
+    BreakKeyword("break"),
+    ContinueKeyword("continue"),
+    ReturnKeyword("return"),
+    WhileKeyword("while"),
+    IfKeyword("if"),
+    ElseKeyword("else"),
+    NullKeyword("null"),
 
-    NamespaceKeyword,
-    UsingKeyword,
-    ClassKeyword,
-    ConstKeyword,
-    NativeKeyword,
-    VoidKeyword,
-    BoolKeyword,
-    BreakKeyword,
-    ContinueKeyword,
-    ReturnKeyword,
-    WhileKeyword,
-    IfKeyword,
-    ElseKeyword,
-    NullKeyword,
+    Identifier(null),
+    String(null),
+    Integer(null),
+    TrueKeyword("true"),
+    FalseKeyword("false"),
+    Semicolon(";"),
 
-    Identifier,
-    String,
-    Integer,
-    TrueKeyword,
-    FalseKeyword,
-    Semicolon,
+    AccessorOperator("."),
+    CommaOperator(","),
+    AssignOperator("="),
+    AndOperator("&"),
+    InclusiveOrOperator("|"),
+    ShiftLeftOperator("<<"),
+    ShiftRightOperator(">>"),
+    EqualOperator("=="),
+    NotEqualOperator("!="),
+    LessEqualThanOperator("<="),
+    LessThanOperator("<"),
+    GreaterEqualThanOperator(">="),
+    GreaterThanOperator(">"),
+    AddOperator("+"),
+    SubtractOperator("-"),
+    MultiplyOperator("*"),
+    DivideOperator("/"),
+    ModuloOperator("%"),
+    HardCastIndicatorOperator("!"),
 
-    AccessorOperator,
-    CommaOperator,
-    AssignOperator,
-    AndOperator,
-    InclusiveOrOperator,
-    ShiftLeftOperator,
-    ShiftRightOperator,
-    EqualOperator,
-    NotEqualOperator,
-    LessEqualThanOperator,
-    LessThanOperator,
-    GreaterEqualThanOperator,
-    GreaterThanOperator,
-    AddOperator,
-    SubtractOperator,
-    MultiplyOperator,
-    DivideOperator,
-    ModuloOperator,
-    HardCastIndicatorOperator,
+    OpenBrace("{"),
+    CloseBrace("}"),
 
-    OpenBrace,
-    CloseBrace,
+    OpenParen("("),
+    CloseParen(")"),
 
-    OpenParen,
-    CloseParen,
+    OpenBracket("["),
+    CloseBracket("]"),
 
-    OpenBracket,
-    CloseBracket
 
+    EndOfFile(null);
+
+    public final String token;
+
+    TokenType(String token) {
+        this.token = token;
+    }
 
 
 }

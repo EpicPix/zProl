@@ -69,4 +69,8 @@ public class SeekIterator<T> implements ListIterator<T> {
     public T get(int index) {
         return elements[index];
     }
+
+    public T last() {
+        return elements[elements.length - 1];
+    }
 }
