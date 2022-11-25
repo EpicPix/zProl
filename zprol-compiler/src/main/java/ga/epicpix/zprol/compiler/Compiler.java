@@ -7,6 +7,7 @@ import ga.epicpix.zprol.compiler.compiled.locals.LocalVariable;
 import ga.epicpix.zprol.compiler.exceptions.UnknownTypeException;
 import ga.epicpix.zprol.compiler.precompiled.*;
 import ga.epicpix.zprol.parser.DataParser;
+import ga.epicpix.zprol.parser.OperatorExpression;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.tree.*;
@@ -343,32 +344,18 @@ public class Compiler {
     }
 
     public static Type runOperator(OperatorExpressionTree token, Type expectedType, CompiledData data, FunctionCodeScope scope, ArrayDeque<Type> types, IBytecodeStorage bytecode, DataParser parser) {
-
         generateInstructionsFromExpression(token.left, expectedType, types, data, scope, bytecode, false, parser);
         Type arg1 = types.pop();
-        IBytecodeStorage arg2Storage = createStorage();
-        generateInstructionsFromExpression(token.right, expectedType, types, data, scope, arg2Storage, false, parser);
-        Type arg2 = types.pop();
-        return runOperator(arg1, arg2, token.operator, token, bytecode, arg2Storage, parser);
+        int amtOperators = token.operators.length;
+        for (int i = 0; i < amtOperators; i++) {
+            OperatorExpression op = token.operators[i];
+            IBytecodeStorage arg2Storage = createStorage();
+            generateInstructionsFromExpression(op.expression, expectedType, types, data, scope, arg2Storage, false, parser);
+            Type arg2 = types.pop();
 
-        // TODO: parsing has wrong 'merge' implementation for operators ._. this would never have more than 1 operators with the issue
-
-//        var tokens = named.tokens;
-//        if (tokens[0] instanceof LexerToken lexer && lexer.name.equals("OpenParen")) {
-//            generateInstructionsFromExpression(tokens[1], expectedType, types, data, scope, bytecode, false);
-//            return types.pop();
-//        }
-//        generateInstructionsFromExpression(tokens[0], expectedType, types, data, scope, bytecode, false);
-//        var arg1 = types.pop();
-//        int amtOperators = (tokens.length - 1) / 2;
-//        for (int i = 0; i < amtOperators; i++) {
-//            var arg2Storage = createStorage();
-//            generateInstructionsFromExpression(tokens[i * 2 + 2], expectedType, types, data, scope, arg2Storage, false);
-//            var arg2 = types.pop();
-//
-//            arg1 = runOperator(arg1, arg2, tokens[i * 2 + 1].asLexerToken(), token, bytecode, arg2Storage);
-//        }
-//        return arg1;
+            arg1 = runOperator(arg1, arg2, op.operator, token, bytecode, arg2Storage, parser);
+        }
+        return arg1;
     }
 
     public static Type runOperator(Type arg1, Type arg2, LexerToken operator, ITree location, IBytecodeStorage bytecode, IBytecodeStorage arg2bytecode, DataParser parser) {

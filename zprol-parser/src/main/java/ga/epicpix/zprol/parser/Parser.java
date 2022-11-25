@@ -307,11 +307,16 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         IExpression expression = readInclusiveOrExpression();
+        ArrayList<OperatorExpression> operators = null;
         LexerToken operator;
-        if(skipWhitespace() && (operator = optional(AndOperator)) != null) {
-            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operator, readInclusiveAndExpression());
-        }else {
+        while(skipWhitespace() && (operator = optional(AndOperator)) != null) {
+            if(operators == null) operators = new ArrayList<>();
+            operators.add(new OperatorExpression(operator, readInclusiveOrExpression()));
+        }
+        if(operators == null) {
             return expression;
+        }else {
+            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operators.toArray(new OperatorExpression[0]));
         }
     }
 
@@ -319,11 +324,16 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         IExpression expression = readShiftExpression();
+        ArrayList<OperatorExpression> operators = null;
         LexerToken operator;
-        if(skipWhitespace() && (operator = optional(InclusiveOrOperator)) != null) {
-            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operator, readInclusiveOrExpression());
-        }else {
+        while(skipWhitespace() && (operator = optional(InclusiveOrOperator)) != null) {
+            if(operators == null) operators = new ArrayList<>();
+            operators.add(new OperatorExpression(operator, readShiftExpression()));
+        }
+        if(operators == null) {
             return expression;
+        }else {
+            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operators.toArray(new OperatorExpression[0]));
         }
     }
 
@@ -331,11 +341,16 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         IExpression expression = readEqualsExpression();
+        ArrayList<OperatorExpression> operators = null;
         LexerToken operator;
-        if(skipWhitespace() && (operator = optional(ShiftLeftOperator, ShiftRightOperator)) != null) {
-            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operator, readShiftExpression());
-        }else {
+        while(skipWhitespace() && (operator = optional(ShiftLeftOperator, ShiftRightOperator)) != null) {
+            if(operators == null) operators = new ArrayList<>();
+            operators.add(new OperatorExpression(operator, readEqualsExpression()));
+        }
+        if(operators == null) {
             return expression;
+        }else {
+            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operators.toArray(new OperatorExpression[0]));
         }
     }
 
@@ -344,11 +359,16 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         IExpression expression = readCompareExpression();
+        ArrayList<OperatorExpression> operators = null;
         LexerToken operator;
-        if(skipWhitespace() && (operator = optional(EqualOperator, NotEqualOperator)) != null) {
-            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operator, readEqualsExpression());
-        }else {
+        while(skipWhitespace() && (operator = optional(EqualOperator, NotEqualOperator)) != null) {
+            if(operators == null) operators = new ArrayList<>();
+            operators.add(new OperatorExpression(operator, readCompareExpression()));
+        }
+        if(operators == null) {
             return expression;
+        }else {
+            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operators.toArray(new OperatorExpression[0]));
         }
     }
 
@@ -357,11 +377,16 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         IExpression expression = readAdditiveExpression();
+        ArrayList<OperatorExpression> operators = null;
         LexerToken operator;
-        if(skipWhitespace() && (operator = optional(LessEqualThanOperator, LessThanOperator, GreaterEqualThanOperator, GreaterThanOperator)) != null) {
-            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operator, readCompareExpression());
-        }else {
+        while(skipWhitespace() && (operator = optional(LessEqualThanOperator, LessThanOperator, GreaterEqualThanOperator, GreaterThanOperator)) != null) {
+            if(operators == null) operators = new ArrayList<>();
+            operators.add(new OperatorExpression(operator, readAdditiveExpression()));
+        }
+        if(operators == null) {
             return expression;
+        }else {
+            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operators.toArray(new OperatorExpression[0]));
         }
     }
 
@@ -370,11 +395,16 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         IExpression expression = readMultiplicativeExpression();
+        ArrayList<OperatorExpression> operators = null;
         LexerToken operator;
-        if(skipWhitespace() && (operator = optional(AddOperator, SubtractOperator)) != null) {
-            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operator, readAdditiveExpression());
-        }else {
+        while(skipWhitespace() && (operator = optional(AddOperator, SubtractOperator)) != null) {
+            if(operators == null) operators = new ArrayList<>();
+            operators.add(new OperatorExpression(operator, readMultiplicativeExpression()));
+        }
+        if(operators == null) {
             return expression;
+        }else {
+            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operators.toArray(new OperatorExpression[0]));
         }
     }
 
@@ -383,11 +413,16 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         IExpression expression = readPostExpression();
+        ArrayList<OperatorExpression> operators = null;
         LexerToken operator;
-        if(skipWhitespace() && (operator = optional(MultiplyOperator, DivideOperator, ModuloOperator)) != null) {
-            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operator, readMultiplicativeExpression());
-        }else {
+        while(skipWhitespace() && (operator = optional(MultiplyOperator, DivideOperator, ModuloOperator)) != null) {
+            if(operators == null) operators = new ArrayList<>();
+            operators.add(new OperatorExpression(operator, readPostExpression()));
+        }
+        if(operators == null) {
             return expression;
+        }else {
+            return new OperatorExpressionTree(locS(start), locE(curr()), expression, operators.toArray(new OperatorExpression[0]));
         }
     }
 
