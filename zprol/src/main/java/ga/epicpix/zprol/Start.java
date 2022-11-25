@@ -210,7 +210,7 @@ public class Start {
                 includedCompiled.add(gen);
             } else {
                 if (!ignoreStdWarning) {
-                    errors.addError(ErrorCodes.STANDARD_LIBRARY_NOT_FOUND);
+                    errors.addError(ErrorCodes.STD_STANDARD_LIBRARY_NOT_FOUND);
                 }
             }
         }

@@ -288,7 +288,6 @@ public final class Parser {
             TypeTree type = readType();
             if(errors.hasCapturedErrors(ErrorType.ERROR)) {
                 errors.stopCapturingErrors(false);
-                type = null;
                 lexerTokens.setIndex(start);
                 readAccessor();
             }else {
@@ -308,7 +307,6 @@ public final class Parser {
                     return new AccessorStatementTree(locS(start), locE(curr()), accessor);
                 }
             }else {
-                if(type == null) throw new TokenLocatedException("Expected a type", lexerTokens.get(start));
                 return readCreateAssignmentStatement(start, type);
             }
         }else {
@@ -483,7 +481,10 @@ public final class Parser {
             IExpression expr = readPostExpression();
             return new NegateTree(locS(start), locE(curr()), expr);
         }
-        throw new TokenLocatedException("Expected an expression got " + lexerTokens.current().type, lexerTokens.current());
+        ParserLocation loc = lexerTokens.current().parser.getLocation(lexerTokens.current().getStart());
+        String line = lexerTokens.current().parser.getLines()[loc.line];
+        errors.addError(ErrorCodes.PARSE_EXPECTED_EXPRESSION_GOT_OTHER, lexerTokens.current().type, line, line.substring(0, loc.row), line.substring(loc.row));
+        return new InvalidExpressionTree();
     }
 
     public AccessorTree readAccessor() {
@@ -562,12 +563,12 @@ public final class Parser {
         LexerToken appendLoc = lexerTokens.hasPrevious() ? lexerTokens.get(lexerTokens.currentIndex() - 1) : lexerTokens.current();
         if(!lexerTokens.hasNext()) {
             if(type.token == null) {
-                errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_EOF, type.name());
+                errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_EOF, type.name());
                 throw new TokenLocatedException("EOL");
             }else {
                 ParserLocation loc = appendLoc.parser.getLocation(appendLoc.getEnd());
                 String line = appendLoc.parser.getLines()[loc.line];
-                errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_EOF_FIXABLE, type.name(), line, line.substring(0, loc.row), type.token, line.substring(loc.row));
+                errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_EOF_FIXABLE, type.name(), line, line.substring(0, loc.row), type.token, line.substring(loc.row));
                 return new LexerToken(type, type.token, appendLoc.getEnd(), appendLoc.getEnd() + type.token.length(), appendLoc.parser);
             }
         }
@@ -579,12 +580,12 @@ public final class Parser {
             ParserLocation sloc = appendLoc.parser.getLocation(next.getStart());
             ParserLocation eloc = appendLoc.parser.getLocation(next.getEnd());
             String line = appendLoc.parser.getLines()[eloc.line];
-            errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_OTHER, type.name(), next.type, line.substring(0, sloc.row), line.substring(sloc.row, eloc.row), line.substring(eloc.row));
+            errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_OTHER, type.name(), next.type, line.substring(0, sloc.row), line.substring(sloc.row, eloc.row), line.substring(eloc.row));
             return new LexerToken(Invalid, "", 0, 0, lexerTokens.last().parser);
         }
         ParserLocation loc = appendLoc.parser.getLocation(appendLoc.getEnd());
         String line = appendLoc.parser.getLines()[loc.line];
-        errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_OTHER_FIXABLE, type.name(), next.type, line, line.substring(0, loc.row), type.token, line.substring(loc.row));
+        errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_OTHER_FIXABLE, type.name(), next.type, line, line.substring(0, loc.row), type.token, line.substring(loc.row));
         return new LexerToken(type, type.token, appendLoc.getEnd(), appendLoc.getEnd() + type.token.length(), appendLoc.parser);
     }
 
