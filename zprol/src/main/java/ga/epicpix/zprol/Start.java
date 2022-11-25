@@ -147,6 +147,7 @@ public class Start {
                 }else {
                     System.out.println(errCount + " errors");
                 }
+                System.exit(1);
                 return;
             }
 

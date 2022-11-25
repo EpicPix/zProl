@@ -146,7 +146,9 @@ public final class Parser {
                 token = expect(Identifier);
             }
             while(isNext(OpenBracket)) {
+                System.out.println(isNext(OpenBracket));
                 expect(OpenBracket);
+                System.out.println(isNext(CloseBracket));
                 expect(CloseBracket);
                 arrays++;
             }
@@ -567,8 +569,7 @@ public final class Parser {
             }else {
                 ParserLocation loc = appendLoc.parser.getLocation(appendLoc.getEnd());
                 String line = appendLoc.parser.getLines()[loc.line];
-                String newLine = appendLoc.parser.getLines()[loc.line];
-                errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_EOF_FIXABLE, type.name(), line, newLine.substring(0, loc.row), type.token, newLine.substring(loc.row));
+                errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_EOF_FIXABLE, type.name(), line, line.substring(0, loc.row), type.token, line.substring(loc.row));
                 return new LexerToken(type, type.token, appendLoc.getEnd(), appendLoc.getEnd() + type.token.length(), appendLoc.parser);
             }
         }
@@ -577,13 +578,15 @@ public final class Parser {
             return next;
         }
         if(type.token == null) {
-            errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_OTHER, type.name(), next.type);
-            throw new TokenLocatedException("Expected '" + type.name() + "', got '" + next.type + "'", next);
+            ParserLocation sloc = appendLoc.parser.getLocation(next.getStart());
+            ParserLocation eloc = appendLoc.parser.getLocation(next.getEnd());
+            String line = appendLoc.parser.getLines()[eloc.line];
+            errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_OTHER, type.name(), next.type, line.substring(0, sloc.row), line.substring(sloc.row, eloc.row), line.substring(eloc.row));
+            return new LexerToken(Invalid, "", 0, 0, lexerTokens.last().parser);
         }
         ParserLocation loc = appendLoc.parser.getLocation(appendLoc.getEnd());
         String line = appendLoc.parser.getLines()[loc.line];
-        String newLine = appendLoc.parser.getLines()[loc.line];
-        errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_OTHER_FIXABLE, type.name(), next.type, line, newLine.substring(0, loc.row), type.token, newLine.substring(loc.row));
+        errors.addError(ErrorCodes.EXPECTED_VALUE_GOT_OTHER_FIXABLE, type.name(), next.type, line, line.substring(0, loc.row), type.token, line.substring(loc.row));
         return new LexerToken(type, type.token, appendLoc.getEnd(), appendLoc.getEnd() + type.token.length(), appendLoc.parser);
     }
 

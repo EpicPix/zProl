@@ -59,7 +59,7 @@ public enum TokenType {
     CloseBracket("]"),
 
 
-    EndOfFile(null);
+    Invalid(null);
 
     public final String token;
 
