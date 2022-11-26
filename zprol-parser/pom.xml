@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>zprol-parser</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
 
     <build>
         <plugins>
@@ -55,7 +55,7 @@
         <dependency>
             <groupId>ga.epicpix</groupId>
             <artifactId>zprol-errors</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

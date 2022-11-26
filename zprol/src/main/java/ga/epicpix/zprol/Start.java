@@ -29,7 +29,7 @@ import static ga.epicpix.zprol.generators.Generator.initGenerators;
 public class Start {
 
     public static final boolean HIDE_TIMINGS = Boolean.parseBoolean(System.getProperty("HIDE_TIMINGS"));
-    public static final String VERSION = "1.1.1";
+    public static final String VERSION = "1.1.2";
 
     static {
         initGenerators();

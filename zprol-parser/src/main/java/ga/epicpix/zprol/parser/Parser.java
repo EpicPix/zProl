@@ -186,10 +186,16 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         if(!isNext(OpenBrace)) {
-            if(!isNext(LineCodeChars)) {
-                texpect(OpenBrace);
+            errors.startCapturingErrors();
+            LexerToken loc = texpect(LineCodeChars);
+            if(errors.hasCapturedErrors(ErrorType.ERROR)) {
+                errors.stopCapturingErrors(false);
+                DataParser parser = lexerTokens.current().parser;
+                ParserLocation s = parser.getLocation(loc.getStart());
+                errors.addError(ErrorCodes.PARSE_CODE_OPEN_BRACE_OR_LINE_CODE, new ErrorLocation(s.row, s.line, parser.getFileName(), parser.getLines()), "=> ");
+            }else {
+                errors.stopCapturingErrors(false);
             }
-            expect(LineCodeChars);
             IStatement statement = readStatement();
             return new CodeTree(locS(start), locE(curr()), new ArrayList<>(Collections.singleton(statement)));
         }

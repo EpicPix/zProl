@@ -19,6 +19,7 @@ public enum ErrorCodes {
     PARSE_EXPECTED_EXPRESSION_GOT_OTHER    ("PARSE0004", "Expected an expression, but got '%s'", LINE_REPLACE_UNKNOWN, ErrorType.ERROR   ),
     PARSE_ARGS_NOT_VALID_PAREN_OR_SEMICOLON("PARSE0005", "Expected a ')' or ','",                        LINE_REPLACE, ErrorType.ERROR   ),
     PARSE_PARAM_REQUIRED_NAME              ("PARSE0006", "Expected an identifier",                 LINE_START_UNKNOWN, ErrorType.ERROR   ),
+    PARSE_CODE_OPEN_BRACE_OR_LINE_CODE     ("PARSE0007", "Expected '{' or '=>'",                         LINE_REPLACE, ErrorType.ERROR   ),
 
 
 
