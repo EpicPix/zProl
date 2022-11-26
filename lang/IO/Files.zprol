@@ -29,7 +29,7 @@ byte[] file_map(int fd) {
     return mmap(0, file_length(fd), PROT_READ, MAP_PRIVATE, fd, 0);
 }
 
-int file_read(int fd, byte[] buf, int length) {
+int file_read(int fd, byte[] buf, long length) {
     return syscall(SYSCALL_READ, fd, (long!) buf, length);
 }
 
