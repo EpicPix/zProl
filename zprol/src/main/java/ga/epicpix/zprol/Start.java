@@ -233,7 +233,7 @@ public class Start {
             }else {
                 try {
                     long startLex = System.nanoTime();
-                    LexerResults lexedTokens = Lexer.lex(new File(file).getName(), Files.readAllLines(new File(file).toPath()).toArray(new String[0]), errors);
+                    LexerResults lexedTokens = Lexer.lex(file, Files.readAllLines(new File(file).toPath()).toArray(new String[0]), errors);
                     long endLex = System.nanoTime();
                     if(errors.getErrorCount(ErrorType.ERROR) + errors.getErrorCount(ErrorType.CRITICAL) != 0) {
                         System.out.printf("[%s] Failed to lex due to errors\n",file.substring(file.lastIndexOf('/') + 1));

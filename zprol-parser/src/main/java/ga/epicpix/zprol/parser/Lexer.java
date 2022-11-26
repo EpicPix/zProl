@@ -1,8 +1,8 @@
 package ga.epicpix.zprol.parser;
 
 import ga.epicpix.zprol.errors.ErrorCodes;
+import ga.epicpix.zprol.errors.ErrorLocation;
 import ga.epicpix.zprol.errors.ErrorStorage;
-import ga.epicpix.zprol.parser.exceptions.ParserException;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import java.util.ArrayList;
 
@@ -75,14 +75,13 @@ public class Lexer {
                 if(invalid) {
                     int length = parser.getIndex() - start - 2;
                     ParserLocation loc = parser.getLocation(parser.getIndex());
-                    String line = parser.getLines()[loc.line];
-                    errors.addError(ErrorCodes.LEX_INVALID_HEX, line.substring(0, loc.row - length), line.substring(loc.row - length, loc.row), line.substring(loc.row));
+                    errors.addError(ErrorCodes.LEX_INVALID_HEX, new ErrorLocation(loc.row-length, loc.line, loc.row, loc.line, parser.getFileName(), parser.getLines()));
                     return new LexerToken(Invalid, parser.data.substring(start, parser.getIndex()), start, parser.getIndex(), parser);
                 }
                 if(parser.getIndex() - start <= 2) {
                     ParserLocation loc = parser.getLocation(parser.getIndex());
                     String line = parser.getLines()[loc.line];
-                    errors.addError(ErrorCodes.LEX_EXPECTED_NUMBER_AFTER_HEX, line, line.substring(0, loc.row), line.substring(loc.row));
+                    errors.addError(ErrorCodes.LEX_EXPECTED_NUMBER_AFTER_HEX, new ErrorLocation(loc.row, loc.line, parser.getFileName(), parser.getLines()));
                     return new LexerToken(Invalid, parser.data.substring(start, parser.getIndex()), start, parser.getIndex(), parser);
                 }
             }else {
@@ -103,13 +102,13 @@ public class Lexer {
                 if(value == -1) {
                     ParserLocation loc = parser.getLocation(parser.getIndex());
                     String line = parser.getLines()[loc.line];
-                    errors.addError(ErrorCodes.LEX_UNEXPECTED_STRING_END, line, line.substring(0, loc.row), "\"", line.substring(loc.row));
+                    errors.addError(ErrorCodes.LEX_UNEXPECTED_STRING_END, new ErrorLocation(loc.row, loc.line, parser.getFileName(), parser.getLines()), "\"");
                     break;
                 }
                 if(value == '\n') {
                     ParserLocation loc = parser.getLocation(parser.getIndex() - 1);
                     String line = parser.getLines()[loc.line];
-                    errors.addError(ErrorCodes.LEX_UNEXPECTED_STRING_END, line, line.substring(0, loc.row), "\"", line.substring(loc.row));
+                    errors.addError(ErrorCodes.LEX_UNEXPECTED_STRING_END, new ErrorLocation(loc.row, loc.line, parser.getFileName(), parser.getLines()), "\"");
                     break;
                 }
                 if(value == '"') {
@@ -131,7 +130,7 @@ public class Lexer {
                             parser.goBack();
                             ParserLocation loc = parser.getLocation(parser.getIndex());
                             String line = parser.getLines()[loc.line];
-                            errors.addError(ErrorCodes.LEX_INVALID_ESCAPE_SEQUENCE, line, line.substring(0, loc.row - 1) + line.substring(loc.row));
+                            errors.addError(ErrorCodes.LEX_INVALID_ESCAPE_SEQUENCE, new ErrorLocation(loc.row - 1, loc.line, loc.row, loc.line, parser.getFileName(), parser.getLines()), line.substring(0, loc.row - 1) + line.substring(loc.row));
                             break strloop;
                     }
                     continue;
@@ -212,8 +211,7 @@ public class Lexer {
             }
         }
         ParserLocation loc = parser.getLocation(parser.getIndex());
-        String line = parser.getLines()[loc.line];
-        errors.addError(ErrorCodes.LEX_INVALID_TOKEN, line.substring(0, loc.row - 1), line.substring(loc.row - 1, loc.row), line.substring(loc.row));
+        errors.addError(ErrorCodes.LEX_INVALID_TOKEN, new ErrorLocation(loc.row - 1, loc.line, loc.row, loc.line, parser.getFileName(), parser.getLines()));
         return new LexerToken(Invalid, Character.toString((char) first), start, parser.getIndex(), parser);
     }
 

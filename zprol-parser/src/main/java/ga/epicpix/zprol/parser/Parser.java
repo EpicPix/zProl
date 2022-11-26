@@ -1,9 +1,6 @@
 package ga.epicpix.zprol.parser;
 
-import ga.epicpix.zprol.errors.CriticalErrorException;
-import ga.epicpix.zprol.errors.ErrorCodes;
-import ga.epicpix.zprol.errors.ErrorStorage;
-import ga.epicpix.zprol.errors.ErrorType;
+import ga.epicpix.zprol.errors.*;
 import ga.epicpix.zprol.parser.exceptions.TokenLocatedException;
 import ga.epicpix.zprol.parser.tokens.LexerToken;
 import ga.epicpix.zprol.parser.tokens.TokenType;
@@ -563,7 +560,9 @@ public final class Parser {
         LexerToken appendLoc = lexerTokens.hasPrevious() ? lexerTokens.get(lexerTokens.currentIndex() - 1) : lexerTokens.current();
         if(!lexerTokens.hasNext()) {
             if(type.token == null) {
-                errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_EOF, type.name());
+                DataParser parser = lexerTokens.last().parser;
+                ParserLocation lastLoc = parser.getLocation(lexerTokens.last().getEnd());
+                errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_EOF, new ErrorLocation(lastLoc.row, lastLoc.line, parser.getFileName(), parser.getLines()), type.name());
                 throw new TokenLocatedException("EOL");
             }else {
                 ParserLocation loc = appendLoc.parser.getLocation(appendLoc.getEnd());

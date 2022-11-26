@@ -9,8 +9,6 @@ class ErrorStrings {
     public static final String ANSI_CYAN = "\u001b[36m";
 
     public static final String LINE_HIGHLIGHT = ANSI_YELLOW + "~ %s" + ANSI_CYAN + "%s" + ANSI_YELLOW + "%s" + ANSI_RESET;
-    public static final String LINE_UNKNOWN = ANSI_YELLOW + "~ %s" + ANSI_CYAN + "???" + ANSI_YELLOW + "%s" + ANSI_RESET;
-
     public static final String LINE_REPLACE = ANSI_RED + "- %s\n" + ANSI_GREEN + "+ %s" + ANSI_CYAN + "%s" + ANSI_GREEN + "%s" + ANSI_RESET;
     public static final String LINE_REPLACE_FULL = ANSI_RED + "- %s\n" + ANSI_GREEN + "+ %s" + ANSI_RESET;
     public static final String LINE_REPLACE_UNKNOWN = ANSI_RED + "- %s\n" + ANSI_GREEN + "+ %s" + ANSI_CYAN + "???" + ANSI_GREEN + "%s" + ANSI_RESET;

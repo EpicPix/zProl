@@ -3,25 +3,24 @@ package ga.epicpix.zprol.errors;
 import java.util.ArrayList;
 import java.util.Stack;
 
+import static ga.epicpix.zprol.errors.LineMode.*;
+
 public class ErrorStorage {
 
     private final ArrayList<ErrorInfo> errors = new ArrayList<>();
 
     public void addError(ErrorCodes err, Object... format) {
-        ErrorInfo info = new ErrorInfo(err, err.getMessage(), format);
+        addError(err, null, format);
+    }
+
+    public void addError(ErrorCodes err, ErrorLocation location, Object... format) {
+        ErrorInfo info = new ErrorInfo(err, location, err.getMessage(), format);
         if(capturedErrors.size() != 0) {
             capturedErrors.peek().add(info);
             return;
         }
         errors.add(info);
-        if(err.getType() == ErrorType.ERROR || err.getType() == ErrorType.CRITICAL) {
-            System.err.println(err.getCode() + ": " + String.format(err.getMessage(), format));
-            if(err.getType() == ErrorType.CRITICAL) {
-                throw new CriticalErrorException();
-            }
-        }else {
-            System.out.println(err.getCode() + ": " + String.format(err.getMessage(), format));
-        }
+        showError(info);
     }
 
     public void addError(ErrorInfo err) {
@@ -30,13 +29,56 @@ public class ErrorStorage {
             return;
         }
         errors.add(err);
+        showError(err);
+    }
+
+    private void showError(ErrorInfo err) {
+        String location = err.location == null ? "???:??:??" : (err.location.filename + ":" + (err.location.startLine+1) + ":" + (err.location.startRow+1));
+        Object[] format = err.format;
+        if(err.location != null) {
+            LineMode mode = err.code.getMode();
+            if(mode == LINE_HIGHLIGHT) {
+                Object[] newFormat = new Object[format.length + 3];
+                System.arraycopy(format, 0, newFormat, 0, format.length);
+                String line = err.location.lines[err.location.startLine];
+                newFormat[format.length] = line.substring(0, err.location.startRow);
+                newFormat[format.length + 1] = line.substring(err.location.startRow, err.location.endRow);
+                newFormat[format.length + 2] = line.substring(err.location.endRow);
+                format = newFormat;
+            }else if(mode == LINE_REPLACE_UNKNOWN) {
+                Object[] newFormat = new Object[format.length + 3];
+                System.arraycopy(format, 0, newFormat, 0, format.length);
+                String line = err.location.lines[err.location.startLine];
+                newFormat[format.length] = line;
+                newFormat[format.length + 1] = line.substring(0, err.location.startRow);
+                newFormat[format.length + 2] = line.substring(err.location.endRow);
+                format = newFormat;
+            }else if(mode == LINE_REPLACE) { // last value must be the replacement
+                Object[] newFormat = new Object[format.length + 3];
+                System.arraycopy(format, 0, newFormat, 0, format.length);
+                String line = err.location.lines[err.location.startLine];
+                newFormat[format.length - 1] = line;
+                newFormat[format.length] = line.substring(0, err.location.startRow);
+                newFormat[format.length + 1] = format[format.length - 1];
+                newFormat[format.length + 2] = line.substring(err.location.endRow);
+                format = newFormat;
+            }else if(mode == LINE_REPLACE_FULL) { // last value is the line replacement
+                Object[] newFormat = new Object[format.length + 1];
+                System.arraycopy(format, 0, newFormat, 0, format.length);
+                String line = err.location.lines[err.location.startLine];
+                newFormat[format.length - 1] = line;
+                newFormat[format.length] = format[format.length - 1];
+                format = newFormat;
+            }
+        }
+        String formatted = err.code.getCode() + ": " + (err.code.getMode() == LineMode.NONE ? "" : (ErrorStrings.ANSI_CYAN + location + ErrorStrings.ANSI_RESET + " ")) + String.format(err.message + (err.code.getMode() != LineMode.NONE ? ("\n" + err.code.getMode().display) : ""), format);
         if(err.code.getType() == ErrorType.ERROR || err.code.getType() == ErrorType.CRITICAL) {
-            System.err.println(err.code.getCode() + ": " + String.format(err.message, err.format));
+            System.err.println(formatted);
             if(err.code.getType() == ErrorType.CRITICAL) {
                 throw new CriticalErrorException();
             }
         }else {
-            System.out.println(err.code.getCode() + ": " + String.format(err.message, err.format));
+            System.out.println(formatted);
         }
     }
 
