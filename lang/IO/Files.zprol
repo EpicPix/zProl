@@ -8,9 +8,12 @@ const int O_RDONLY = 0;
 const int O_WRONLY = 1;
 const int O_RDWR = 2;
 
-// make sure that the file location has a null terminator
 int file_open(String file_location, int flags, int mode) {
-    return syscall(SYSCALL_OPEN, (long!) file_location.bytes, flags, mode);
+    String file_loc = file_location.null_terminate();
+    ulong fd = syscall(SYSCALL_OPEN, (long!) file_loc.bytes, flags, mode);
+    // have to free this manually
+    free((byte[]!) file_loc);
+    return fd;
 }
 
 long file_length(int fd) {
