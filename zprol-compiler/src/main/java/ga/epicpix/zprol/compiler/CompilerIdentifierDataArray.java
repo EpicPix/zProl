@@ -25,7 +25,7 @@ public class CompilerIdentifierDataArray extends CompilerIdentifierData {
 
     public Type loadArray(ArrayType arrayType, CompiledData data, FunctionCodeScope scope, IBytecodeStorage bytecode, DataParser parser) {
         ArrayDeque<Type> types = new ArrayDeque<Type>();
-        generateInstructionsFromExpression(expression, null, types, data, scope, bytecode, false, parser);
+        generateInstructionsFromExpression(expression, data.resolveType("uint64"), types, data, scope, bytecode, false, parser);
         Type expressionType = types.pop();
         if(!(expressionType instanceof PrimitiveType)) {
             throw new TokenLocatedException("Expected a primitive number", location, parser);
@@ -41,7 +41,7 @@ public class CompilerIdentifierDataArray extends CompilerIdentifierData {
 
     public Type storeArray(ArrayType arrayType, CompiledData data, FunctionCodeScope scope, IBytecodeStorage bytecode, DataParser parser) {
         ArrayDeque<Type> types = new ArrayDeque<Type>();
-        generateInstructionsFromExpression(expression, null, types, data, scope, bytecode, false, parser);
+        generateInstructionsFromExpression(expression, data.resolveType("uint64"), types, data, scope, bytecode, false, parser);
         Type expressionType = types.pop();
         if(!(expressionType instanceof PrimitiveType)) {
             throw new TokenLocatedException("Expected a primitive number", location, parser);

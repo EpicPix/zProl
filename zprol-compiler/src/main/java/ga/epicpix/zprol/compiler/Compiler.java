@@ -270,8 +270,13 @@ public class Compiler {
                     bytecode.pushInstruction(getConstructedSizeInstruction(primitive.getSize(), "push", number));
                     types.push(primitive);
                 } else if(expectedType == null) {
-                    bytecode.pushInstruction(getConstructedSizeInstruction(4, "push", number));
-                    types.push(data.resolveType("int32"));
+                    if((long)number.intValue() == number.longValue()) {
+                        bytecode.pushInstruction(getConstructedSizeInstruction(4, "push", number));
+                        types.push(data.resolveType("int32"));
+                    }else {
+                        bytecode.pushInstruction(getConstructedSizeInstruction(8, "push", number));
+                        types.push(data.resolveType("int64"));
+                    }
                 } else {
                     throw new TokenLocatedException("Cannot infer size of number from a non-primitive type (" + expectedType.getName() + ")", token, parser);
                 }
