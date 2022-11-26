@@ -529,14 +529,20 @@ public final class Parser {
             ParserLocation e = parser.getLocation(expr.getEndIndex());
             errors.addError(ErrorCodes.PARSE_ARGS_NOT_VALID_PAREN_OR_SEMICOLON, new ErrorLocation(s.row, s.line, e.row, e.line, parser.getFileName(), parser.getLines()), ")");
         }else {
+            int last = curr();
             while(skipWhitespace() && !isNext(endToken)) {
                 if(isNext(CloseBrace)) {
                     expect(endToken);
                     break;
                 }
-                expect(CommaOperator);
-                arguments.add(readExpression());
+                if(expect(CommaOperator).type != Invalid) {
+                    arguments.add(readExpression());
+                    last = curr();
+                }else {
+                    break;
+                }
             }
+            lexerTokens.setIndex(last);
         }
         return new ArgumentsTree(locS(start), locE(curr()), arguments.toArray(new IExpression[0]));
     }
@@ -578,7 +584,7 @@ public final class Parser {
             }else {
                 ParserLocation loc = appendLoc.parser.getLocation(appendLoc.getEnd());
                 errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_EOF_FIXABLE, new ErrorLocation(loc.row, loc.line, appendLoc.parser.getFileName(), appendLoc.parser.getLines()), type.name(), type.token);
-                return new LexerToken(type, type.token, appendLoc.getEnd(), appendLoc.getEnd() + type.token.length(), appendLoc.parser);
+                return new LexerToken(Invalid, type.token, appendLoc.getEnd(), appendLoc.getEnd() + type.token.length(), appendLoc.parser);
             }
         }
         LexerToken next = lexerTokens.next();
@@ -593,7 +599,7 @@ public final class Parser {
         }
         ParserLocation loc = appendLoc.parser.getLocation(appendLoc.getEnd());
         errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_OTHER_FIXABLE, new ErrorLocation(loc.row, loc.line, appendLoc.parser.getFileName(), appendLoc.parser.getLines()), type.name(), next.type, type.token);
-        return new LexerToken(type, type.token, appendLoc.getEnd(), appendLoc.getEnd() + type.token.length(), appendLoc.parser);
+        return new LexerToken(Invalid, type.token, appendLoc.getEnd(), appendLoc.getEnd() + type.token.length(), appendLoc.parser);
     }
 
     public LexerToken wexpect(TokenType type) {
