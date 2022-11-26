@@ -153,13 +153,13 @@ public class CompiledData {
             for(Class c : data.classes) {
                 if(namespace != null) {
                     if(!Objects.equals(namespace, c.namespace)) continue;
-                    if(c.name.equals(name)) {
-                        t = new ClassType(c.namespace, c.name);
-                        for(int i = 0; i<arrAmount; i++) {
-                            t = new ArrayType(t);
-                        }
-                        return t;
+                }
+                if(c.name.equals(name)) {
+                    t = new ClassType(c.namespace, c.name);
+                    for(int i = 0; i<arrAmount; i++) {
+                        t = new ArrayType(t);
                     }
+                    return t;
                 }
             }
         }
