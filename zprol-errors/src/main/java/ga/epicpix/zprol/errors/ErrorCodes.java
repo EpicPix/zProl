@@ -1,6 +1,5 @@
 package ga.epicpix.zprol.errors;
 
-
 import static ga.epicpix.zprol.errors.LineMode.*;
 
 public enum ErrorCodes {
@@ -18,6 +17,7 @@ public enum ErrorCodes {
     PARSE_EXPECTED_VALUE_GOT_OTHER         ("PARSE0002", "Expected '%s' got '%s'",                     LINE_HIGHLIGHT, ErrorType.ERROR   ),
     PARSE_EXPECTED_VALUE_GOT_EOF_FIXABLE   ("PARSE0003", "Expected '%s' got end of file, fix:",          LINE_REPLACE, ErrorType.CRITICAL),
     PARSE_EXPECTED_EXPRESSION_GOT_OTHER    ("PARSE0004", "Expected an expression, but got '%s'", LINE_REPLACE_UNKNOWN, ErrorType.ERROR   ),
+    PARSE_ARGS_NOT_VALID_PAREN_OR_SEMICOLON("PARSE0005", "Expected a ')' or ','",                        LINE_REPLACE, ErrorType.ERROR   ),
 
 
 

@@ -480,7 +480,7 @@ public final class Parser {
         }
         ParserLocation loc = lexerTokens.current().parser.getLocation(lexerTokens.current().getStart());
         errors.addError(ErrorCodes.PARSE_EXPECTED_EXPRESSION_GOT_OTHER, new ErrorLocation(loc.row, loc.line, lexerTokens.current().parser.getFileName(), lexerTokens.current().parser.getLines()), lexerTokens.current().type);
-        return new InvalidExpressionTree();
+        return new InvalidExpressionTree(locS(start), locE(curr()));
     }
 
     public AccessorTree readAccessor() {
@@ -521,10 +521,22 @@ public final class Parser {
             return new ArgumentsTree(locS(start), locE(curr()), new IExpression[0]);
         }
         ArrayList<IExpression> arguments = new ArrayList<>();
-        arguments.add(readExpression());
-        while(skipWhitespace() && !isNext(endToken)) {
-            expect(CommaOperator);
-            arguments.add(readExpression());
+        IExpression expr = readExpression();
+        arguments.add(expr);
+        if(expr instanceof InvalidExpressionTree) {
+            DataParser parser = lexerTokens.current().parser;
+            ParserLocation s = parser.getLocation(expr.getStartIndex());
+            ParserLocation e = parser.getLocation(expr.getEndIndex());
+            errors.addError(ErrorCodes.PARSE_ARGS_NOT_VALID_PAREN_OR_SEMICOLON, new ErrorLocation(s.row, s.line, e.row, e.line, parser.getFileName(), parser.getLines()), ")");
+        }else {
+            while(skipWhitespace() && !isNext(endToken)) {
+                if(isNext(CloseBrace)) {
+                    expect(endToken);
+                    break;
+                }
+                expect(CommaOperator);
+                arguments.add(readExpression());
+            }
         }
         return new ArgumentsTree(locS(start), locE(curr()), arguments.toArray(new IExpression[0]));
     }
