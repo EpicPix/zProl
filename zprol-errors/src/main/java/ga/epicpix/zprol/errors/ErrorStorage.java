@@ -53,6 +53,22 @@ public class ErrorStorage {
                 newFormat[format.length + 1] = line.substring(0, err.location.startRow);
                 newFormat[format.length + 2] = line.substring(err.location.endRow);
                 format = newFormat;
+            }else if(mode == LINE_START_UNKNOWN) {
+                Object[] newFormat = new Object[format.length + 3];
+                System.arraycopy(format, 0, newFormat, 0, format.length);
+                String line = err.location.lines[err.location.startLine];
+                newFormat[format.length] = line;
+                newFormat[format.length + 1] = line.substring(0, err.location.startRow);
+                newFormat[format.length + 2] = line.substring(err.location.startRow);
+                format = newFormat;
+            }else if(mode == LINE_END_UNKNOWN) {
+                Object[] newFormat = new Object[format.length + 3];
+                System.arraycopy(format, 0, newFormat, 0, format.length);
+                String line = err.location.lines[err.location.startLine];
+                newFormat[format.length] = line;
+                newFormat[format.length + 1] = line.substring(0, err.location.endRow);
+                newFormat[format.length + 2] = line.substring(err.location.endRow);
+                format = newFormat;
             }else if(mode == LINE_REPLACE) { // last value must be the replacement
                 Object[] newFormat = new Object[format.length + 3];
                 System.arraycopy(format, 0, newFormat, 0, format.length);

@@ -1,6 +1,8 @@
 package ga.epicpix.zprol.parser.tokens;
 
+import ga.epicpix.zprol.errors.ErrorLocation;
 import ga.epicpix.zprol.parser.DataParser;
+import ga.epicpix.zprol.parser.ParserLocation;
 
 public final class LexerToken extends Token {
 
@@ -31,4 +33,11 @@ public final class LexerToken extends Token {
     public int getEnd() {
         return end;
     }
+
+    public ErrorLocation toErrorLocation(DataParser parser) {
+        ParserLocation s = parser.getLocation(start);
+        ParserLocation e = parser.getLocation(end);
+        return new ErrorLocation(s.row, s.line, e.row, e.line, parser.getFileName(), parser.getLines());
+    }
+
 }

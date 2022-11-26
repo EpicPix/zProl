@@ -171,7 +171,14 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         TypeTree type = readType();
-        LexerToken name = wexpect(Identifier);
+        errors.startCapturingErrors();
+        LexerToken name = wtexpect(Identifier);
+        if(errors.hasCapturedErrors(ErrorType.ERROR)) {
+            errors.stopCapturingErrors(false);
+            errors.addError(ErrorCodes.PARSE_PARAM_REQUIRED_NAME, name.toErrorLocation(lexerTokens.last().parser));
+        }else {
+            errors.stopCapturingErrors(false);
+        }
         return new ParameterTree(locS(start), locE(curr()), type, name);
     }
 
@@ -179,6 +186,7 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         if(!isNext(OpenBrace)) {
+            texpect(OpenBrace);
             expect(LineCodeChars);
             IStatement statement = readStatement();
             return new CodeTree(locS(start), locE(curr()), new ArrayList<>(Collections.singleton(statement)));
@@ -604,7 +612,7 @@ public final class Parser {
             ParserLocation sloc = appendLoc.parser.getLocation(next.getStart());
             ParserLocation eloc = appendLoc.parser.getLocation(next.getEnd());
             errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_OTHER, new ErrorLocation(sloc.row, sloc.line, eloc.row, eloc.line, appendLoc.parser.getFileName(), appendLoc.parser.getLines()), type.name(), next.type);
-            return new LexerToken(Invalid, "", 0, 0, lexerTokens.last().parser);
+            return new LexerToken(Invalid, "", next.getStart(), next.getEnd(), lexerTokens.last().parser);
         }
         ParserLocation loc = appendLoc.parser.getLocation(appendLoc.getEnd());
         errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_OTHER_FIXABLE, new ErrorLocation(loc.row, loc.line, appendLoc.parser.getFileName(), appendLoc.parser.getLines()), type.name(), next.type, type.token);
