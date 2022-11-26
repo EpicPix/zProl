@@ -1,0 +1,23 @@
+namespace zprol.compiler.lexer;
+
+using zprol.lang.linux.amd64;
+using zprol.lang.memory;
+using zprol.lang.io;
+using zprol.lang;
+
+int lex_test(String file) {
+    int fd = file_open(file, O_RDONLY, 0);
+    if(fd < 0) {
+        return 1;
+    }
+    long length = file_length(fd);
+    byte[] contents = malloc(length);
+    file_read(fd, contents, length);
+    file_close(fd);
+
+    // show the file contents, so you know if it worked
+    write(STDOUT, contents, length);
+
+    free(contents);
+    return 0;
+}
