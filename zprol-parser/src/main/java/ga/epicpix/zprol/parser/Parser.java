@@ -479,8 +479,7 @@ public final class Parser {
             return new NegateTree(locS(start), locE(curr()), expr);
         }
         ParserLocation loc = lexerTokens.current().parser.getLocation(lexerTokens.current().getStart());
-        String line = lexerTokens.current().parser.getLines()[loc.line];
-        errors.addError(ErrorCodes.PARSE_EXPECTED_EXPRESSION_GOT_OTHER, lexerTokens.current().type, line, line.substring(0, loc.row), line.substring(loc.row));
+        errors.addError(ErrorCodes.PARSE_EXPECTED_EXPRESSION_GOT_OTHER, new ErrorLocation(loc.row, loc.line, lexerTokens.current().parser.getFileName(), lexerTokens.current().parser.getLines()), lexerTokens.current().type);
         return new InvalidExpressionTree();
     }
 
@@ -566,8 +565,7 @@ public final class Parser {
                 throw new TokenLocatedException("EOL");
             }else {
                 ParserLocation loc = appendLoc.parser.getLocation(appendLoc.getEnd());
-                String line = appendLoc.parser.getLines()[loc.line];
-                errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_EOF_FIXABLE, type.name(), line, line.substring(0, loc.row), type.token, line.substring(loc.row));
+                errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_EOF_FIXABLE, new ErrorLocation(loc.row, loc.line, appendLoc.parser.getFileName(), appendLoc.parser.getLines()), type.name(), type.token);
                 return new LexerToken(type, type.token, appendLoc.getEnd(), appendLoc.getEnd() + type.token.length(), appendLoc.parser);
             }
         }
@@ -578,13 +576,11 @@ public final class Parser {
         if(type.token == null) {
             ParserLocation sloc = appendLoc.parser.getLocation(next.getStart());
             ParserLocation eloc = appendLoc.parser.getLocation(next.getEnd());
-            String line = appendLoc.parser.getLines()[eloc.line];
-            errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_OTHER, type.name(), next.type, line.substring(0, sloc.row), line.substring(sloc.row, eloc.row), line.substring(eloc.row));
+            errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_OTHER, new ErrorLocation(sloc.row, sloc.line, eloc.row, eloc.line, appendLoc.parser.getFileName(), appendLoc.parser.getLines()), type.name(), next.type);
             return new LexerToken(Invalid, "", 0, 0, lexerTokens.last().parser);
         }
         ParserLocation loc = appendLoc.parser.getLocation(appendLoc.getEnd());
-        String line = appendLoc.parser.getLines()[loc.line];
-        errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_OTHER_FIXABLE, type.name(), next.type, line, line.substring(0, loc.row), type.token, line.substring(loc.row));
+        errors.addError(ErrorCodes.PARSE_EXPECTED_VALUE_GOT_OTHER_FIXABLE, new ErrorLocation(loc.row, loc.line, appendLoc.parser.getFileName(), appendLoc.parser.getLines()), type.name(), next.type, type.token);
         return new LexerToken(type, type.token, appendLoc.getEnd(), appendLoc.getEnd() + type.token.length(), appendLoc.parser);
     }
 
