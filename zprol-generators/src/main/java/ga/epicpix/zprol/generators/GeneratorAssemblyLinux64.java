@@ -510,7 +510,6 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         int localsIndex = 0;
         var parameters = function.signature.parameters;
         int off = methodLike ? 1 : 0;
-        assembly.add("; " + parameters.length + " " + off + " " + methodLike);
         for (int i = 0; i < parameters.length + off; i++) {
             if(methodLike && i == 0) {
                 localsIndex += 8;
