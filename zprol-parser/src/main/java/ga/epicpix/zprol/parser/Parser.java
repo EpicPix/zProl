@@ -186,7 +186,9 @@ public final class Parser {
         skipWhitespace();
         int start = curr();
         if(!isNext(OpenBrace)) {
-            texpect(OpenBrace);
+            if(!isNext(LineCodeChars)) {
+                texpect(OpenBrace);
+            }
             expect(LineCodeChars);
             IStatement statement = readStatement();
             return new CodeTree(locS(start), locE(curr()), new ArrayList<>(Collections.singleton(statement)));
