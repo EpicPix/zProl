@@ -1,6 +1,27 @@
 namespace zprol.lang;
 
+using zprol.lang.memory;
+
 class String {
     uint64 length;
     byte[] bytes;
+
+    // you have to free this manually
+    String null_terminate() {
+        // allocate for: length (8 bytes) + bytes pointer (8 bytes) + string length + null terminated (1 byte)
+        String strCopy = (String!) malloc(16 + length + 1);
+        strCopy.length = length + 1;
+        // we allocated enough memory to put the bytes right after the string
+        byte[] tbytes = (byte[]!) ((ulong!) strCopy + 16);
+        // copy the string
+        int i = 0;
+        while(i < length) {
+            tbytes[i] = bytes[i];
+            i = i + 1;
+        }
+        // put the null terminator
+        tbytes[strCopy.length - 1] = 0;
+        strCopy.bytes = tbytes;
+        return strCopy;
+    }
 }
