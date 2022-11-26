@@ -113,7 +113,7 @@ public class ErrorStorage {
                 (err.location == null ? -1 : err.location.startLine) + ", " +
                 (err.location == null ? -1 : err.location.endRow) + ", " +
                 (err.location == null ? -1 : err.location.endLine) + ", " +
-                (err.location == null ? -1 : err.location.filename) + ", " +
+                (err.location == null ? -1 : err.location.filename) +
                 (err.format.length != 0 ? (", " + Arrays.stream(err.format).map(Object::toString).collect(Collectors.joining(", "))) : "");
             System.err.println(formatted);
         }
