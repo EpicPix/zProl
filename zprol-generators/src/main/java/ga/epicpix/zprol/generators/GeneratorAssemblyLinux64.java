@@ -414,16 +414,16 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             case "bcastl" -> instructions.add(pop("cx"), "movsx rcx, cx", push("rcx"));
             case "icastl" -> instructions.add(pop("rcx"), "movsxd rcx, ecx", push("rcx"));
             case "lcasts" -> instructions.add(pop("rcx"), push("cx"));
-            case "invoke" -> invokeFunction(st, (Function) i.getData()[0], false, instructions);
+            case "invoke" -> invokeFunction(st, (Function) i.getData()[0], null, false, instructions);
             case "invoke_class" -> {
                 var method = (Method) i.getData()[0];
-                invokeFunction(st, new Function(method.namespace, method.modifiers, method.className + "." + method.name, method.signature, method.code), true, instructions);
+                invokeFunction(st, new Function(method.namespace, method.modifiers, method.className + "." + method.name, method.signature, method.code), method, true, instructions);
             }
             default -> throw new UnknownInstructionException("Unable to generate instructions for the " + i.getName() + " instruction");
         };
     }
 
-    private static void invokeFunction(State state, Function f, boolean methodLike, InstructionList instructions) {
+    private static void invokeFunction(State state, Function f, Method m, boolean methodLike, InstructionList instructions) {
         boolean isSyscall = false;
         if(FunctionModifiers.isEmptyCode(f.modifiers)) {
             boolean isFound = false;
@@ -476,7 +476,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             var mangledName = getMangledName(f);
             if(!ALL_FUNCTIONS) {
                 if(!state.definedFunctions.contains(mangledName)) {
-                    state.nextFunctions.add(f);
+                    state.nextFunctions.add(m != null ? m : f);
                     state.definedFunctions.add(mangledName);
                 }
             }
@@ -510,6 +510,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
         int localsIndex = 0;
         var parameters = function.signature.parameters;
         int off = methodLike ? 1 : 0;
+        assembly.add("; " + parameters.length + " " + off + " " + methodLike);
         for (int i = 0; i < parameters.length + off; i++) {
             if(methodLike && i == 0) {
                 localsIndex += 8;

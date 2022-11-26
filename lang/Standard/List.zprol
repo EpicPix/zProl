@@ -18,7 +18,7 @@ class List {
 
     void removeIndex(uint64 index) {
         usedLength = usedLength - 1;
-        uint64 currentIndex = 0;
+        uint64 currentIndex = index;
         while(currentIndex < usedLength) {
             pointer[currentIndex] = pointer[currentIndex + 1];
             currentIndex = currentIndex + 1;
