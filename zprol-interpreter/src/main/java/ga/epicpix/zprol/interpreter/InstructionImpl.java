@@ -90,6 +90,12 @@ class InstructionImpl {
                 state.stack.push(a / b, 8);
                 break;
             }
+            case "lmod": {
+                Long b = (Long) state.stack.pop(8).value;
+                Long a = (Long) state.stack.pop(8).value;
+                state.stack.push(a % b, 8);
+                break;
+            }
             case "band":
                 state.stack.push((byte) ((Byte) state.stack.pop(1).value & (Byte) state.stack.pop(1).value), 1);
                 break;
