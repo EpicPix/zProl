@@ -508,7 +508,7 @@ public final class Parser {
         LexerToken ident = expect(Identifier);
         if(optional(OpenParen) != null) {
             ArgumentsTree args = readArgumentList(CloseParen);
-            wexpect(CloseParen);
+            wtexpect(CloseParen);
             return new FunctionCallTree(locS(start), locE(curr()), ident, args);
         }
         return new FieldAccessTree(locS(start), locE(curr()), ident);
@@ -573,6 +573,15 @@ public final class Parser {
         return false;
     }
 
+    public LexerToken texpect(TokenType type) {
+        int cur = curr();
+        LexerToken r = expect(type);
+        if(r.type == Invalid) {
+            lexerTokens.setIndex(cur);
+        }
+        return r;
+    }
+
     public LexerToken expect(TokenType type) {
         LexerToken appendLoc = lexerTokens.hasPrevious() ? lexerTokens.get(lexerTokens.currentIndex() - 1) : lexerTokens.current();
         if(!lexerTokens.hasNext()) {
@@ -605,6 +614,11 @@ public final class Parser {
     public LexerToken wexpect(TokenType type) {
         skipWhitespace();
         return expect(type);
+    }
+
+    public LexerToken wtexpect(TokenType type) {
+        skipWhitespace();
+        return texpect(type);
     }
 
     public boolean isNext(TokenType type) {
