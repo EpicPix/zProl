@@ -39,6 +39,7 @@ public class Start {
         ArrayList<Generator> generators = new ArrayList<>();
         boolean ignoreCompileStdWarning = false;
         boolean unloadStd = false;
+        boolean errorInfo = false;
         String interpretFile = null;
         String outputFile = null;
         String printFile = null;
@@ -90,6 +91,10 @@ public class Start {
                         unloadStd = true;
                         continue;
                     }
+                    case "--error-info" -> {
+                        errorInfo = true;
+                        continue;
+                    }
                     case "-i" -> {
                         if(interpretFile != null) {
                             throw new IllegalArgumentException("Tried to declare interpreter file multiple times");
@@ -122,7 +127,7 @@ public class Start {
             }
         }
 
-        ErrorStorage errors = new ErrorStorage();
+        ErrorStorage errors = new ErrorStorage(errorInfo);
         if(outputFile != null || !files.isEmpty()) {
             if(files.isEmpty()) {
                 throw new IllegalArgumentException("Files to compile not specified");
@@ -188,6 +193,7 @@ public class Start {
         System.out.println("-o <file>                        File where the generated zpil should be put");
         System.out.println("-p [file]                        Shows compiled zpil code, optional file if the output file is provided");
         System.out.println("-v                               Shows version of the currently running zProl version");
+        System.out.println("--error-info                     Shows errors with more info");
         System.out.println("--ignore-std-not-found-warning   Will not show a warning message when the std was not found (used for compiling the std itself)");
         System.out.println("--unload-std                     Will not load the std while compiling (will use other libraries though)");
         System.out.println("--version                        Shows version of the currently running zProl version");

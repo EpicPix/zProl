@@ -127,7 +127,7 @@ public class Lexer {
                         case '0': str.append("\0"); break;
                         case '"': str.append("\""); break;
                         default:
-                            parser.goBack();
+                            if(check != -1) parser.goBack();
                             ParserLocation loc = parser.getLocation(parser.getIndex());
                             String line = parser.getLines()[loc.line];
                             errors.addError(ErrorCodes.LEX_INVALID_ESCAPE_SEQUENCE, new ErrorLocation(loc.row - 1, loc.line, loc.row, loc.line, parser.getFileName(), parser.getLines()), line.substring(0, loc.row - 1) + line.substring(loc.row));
