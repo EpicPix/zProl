@@ -1,5 +1,6 @@
 namespace zprol.compiler.lexer;
 
+using zprol.compiler.lexer.utils;
 using zprol.lang.linux.amd64;
 using zprol.lang.memory;
 using zprol.lang.io;
@@ -20,33 +21,85 @@ int lex_test(String file) {
     ulong index = 0;
     while(index < length) {
         ulong start = index;
-        while(index < length) {
-            bool valid = false;
-            if(contents[index] >= 0x61) {
-                if(contents[index] <= 0x7A) {
-                    valid = true;
-                }
-            }
-            if(contents[index] >= 0x41) {
-                if(contents[index] <= 0x5A) {
-                    valid = true;
-                }
-            }
-            if(contents[index] == 0x5F) {
-                valid = true;
-            }
-            if(valid == false) {
-                break;
-            }
+        if(is_alphabet_or_underscore(contents[index])) {
             index = index + 1;
-        }
-        if(index-start != 0) {
-            byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-            write(STDOUT, byteLoc, index-start);
-            if(string_compare_bytes("namespace", byteLoc, index-start)) {
-                stdout(" = keyword namespace!!!");
+            while(index < length) {
+                if(is_alphanumeric_or_underscore(contents[index]) == false) {
+                    break;
+                }
+                index = index + 1;
             }
+            byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+            stdout("Word: ");
+            write(STDOUT, byteLoc, index-start);
             stdout("\n");
+        }else {
+            if(contents[index] == 0x30) {
+                if(index + 1 < length) {
+                    if((contents[index + 1] | 0x20) == 0x78) {
+                        index = index + 2;
+                        bool validHex = true;
+                        while(index < length) {
+                            if(is_alphanumeric_or_underscore(contents[index]) == false) {
+                                break;
+                            }
+                            if(is_hexadecimal(contents[index]) == false) {
+                                validHex = false;
+                            }
+                            index = index + 1;
+                        }
+                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+                        stdout("Hex: ");
+                        if(validHex == false) {
+                            stdout("[invalid] ");
+                        }
+                        write(STDOUT, byteLoc, index-start);
+                        stdout("\n");
+                    }else {
+                        index = index + 1;
+                        bool validNum = true;
+                        while(index < length) {
+                            if(is_alphanumeric_or_underscore(contents[index]) == false) {
+                                break;
+                            }
+                            if(is_octal(contents[index]) == false) {
+                                validNum = false;
+                            }
+                            index = index + 1;
+                        }
+                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+                        if(index - start == 1) {
+                            stdout("Zero: ");
+                        }else {
+                            stdout("Octal: ");
+                            if(validNum == false) {
+                                stdout("[invalid] ");
+                            }
+                        }
+                        write(STDOUT, byteLoc, index-start);
+                        stdout("\n");
+                    }
+                }
+            }else => if(is_digit(contents[index])) {
+                index = index + 1;
+                bool validNum = true;
+                while(index < length) {
+                    if(is_alphanumeric_or_underscore(contents[index]) == false) {
+                        break;
+                    }
+                    if(is_digit(contents[index]) == false) {
+                        validNum = false;
+                    }
+                    index = index + 1;
+                }
+                byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+                stdout("Decimal: ");
+                if(validNum == false) {
+                    stdout("[invalid] ");
+                }
+                write(STDOUT, byteLoc, index-start);
+                stdout("\n");
+            }
         }
         index = index + 1;
     }

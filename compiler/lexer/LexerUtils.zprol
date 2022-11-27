@@ -1,0 +1,29 @@
+namespace zprol.compiler.lexer.utils;
+
+bool is_alphabet_or_underscore(int value) {
+    if(value >= 0x61) => if(value <= 0x7A) => return true;
+    if(value >= 0x41) => if(value <= 0x5A) => return true;
+    if(value == 0x5F) => return true;
+    return false;
+}
+
+bool is_alphanumeric_or_underscore(int value) {
+    if(is_alphabet_or_underscore(value)) => return true;
+    return is_digit(value);
+}
+
+bool is_hexadecimal(int value) {
+    if(value >= 0x61) => if(value <= 0x66) => return true;
+    if(value >= 0x41) => if(value <= 0x46) => return true;
+    return is_digit(value);
+}
+
+bool is_digit(int value) {
+    if(value >= 0x30) => if(value <= 0x39) => return true;
+    return false;
+}
+
+bool is_octal(int value) {
+    if(value >= 0x30) => if(value <= 0x37) => return true;
+    return false;
+}
