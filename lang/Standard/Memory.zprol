@@ -200,6 +200,15 @@ void free(byte[] location) {
     }
 }
 
+bool memory_compare(byte[] a, byte[] b, ulong length) {
+    ulong i = 0;
+    while(i < length) {
+        if(a[i] != b[i]) => return false;
+        i = i + 1;
+    }
+    return true;
+}
+
 byte[] mmap_alloc(uint64 length) => return mmap(0, length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 
 byte[] mmap(uint64 addr, uint64 length, uint64 protection, uint64 flags, uint64 fd, uint64 offset) =>
