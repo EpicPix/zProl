@@ -11,12 +11,46 @@ int lex_test(String file) {
         return 1;
     }
     long length = file_length(fd);
+
     byte[] contents = malloc(length);
     file_read(fd, contents, length);
     file_close(fd);
 
-    // show the file contents, so you know if it worked
-    write(STDOUT, contents, length);
+    // no utf8 support, iterating byte by byte
+    ulong index = 0;
+    while(index < length) {
+        ulong start = index;
+        while(index < length) {
+            bool valid = false;
+            if(contents[index] >= 0x61) {
+                if(contents[index] <= 0x7A) {
+                    valid = true;
+                }
+            }
+            if(contents[index] >= 0x41) {
+                if(contents[index] <= 0x5A) {
+                    valid = true;
+                }
+            }
+            if(contents[index] == 0x5F) {
+                valid = true;
+            }
+            if(valid == false) {
+                break;
+            }
+            index = index + 1;
+        }
+        if(index-start != 0) {
+            byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+            write(STDOUT, byteLoc, index-start);
+            String a = "namespace";
+            if(a.compare_with_bytes(byteLoc, index-start)) {
+                stdout(" = keyword namespace!!!");
+            }
+            stdout("\n");
+        }
+        index = index + 1;
+    }
 
     free(contents);
     return 0;
