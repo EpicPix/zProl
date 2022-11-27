@@ -164,7 +164,7 @@ public class Compiler {
                     bytecode.pushInstruction(getConstructedInstruction("int"));
                     ArrayList<IStatement> elseStatements = new ArrayList<>(ifStatement.elseStatement.code.statements);
                     parseFunctionCode(data, new SeekIterator<>(elseStatements), sig, bytecode, new FunctionCodeScope(FunctionCodeScope.ScopeType.ELSE, scope), parser);
-                    bytecode.replaceInstruction(postInstr, getConstructedInstruction("jmp", bytecode.getInstructions().size()-postInstr+1));
+                    bytecode.replaceInstruction(postInstr, getConstructedInstruction("jmp", bytecode.getInstructions().size()-postInstr));
                     postInstr++;
                 }
                 bytecode.replaceInstruction(preInstr, getConstructedInstruction("neqjmp", postInstr-preInstr));
