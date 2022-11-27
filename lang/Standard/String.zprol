@@ -30,3 +30,11 @@ class String {
         return memory_compare(this.bytes, bytes, length);
     }
 }
+
+bool string_compare(String a, String b) {
+    return a.compare_with_bytes(b.bytes, b.length);
+}
+
+bool string_compare_bytes(String a, byte[] bytes, ulong length) {
+    return a.compare_with_bytes(bytes, length);
+}

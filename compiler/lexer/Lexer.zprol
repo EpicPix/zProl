@@ -43,8 +43,7 @@ int lex_test(String file) {
         if(index-start != 0) {
             byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
             write(STDOUT, byteLoc, index-start);
-            String a = "namespace";
-            if(a.compare_with_bytes(byteLoc, index-start)) {
+            if(string_compare_bytes("namespace", byteLoc, index-start)) {
                 stdout(" = keyword namespace!!!");
             }
             stdout("\n");
