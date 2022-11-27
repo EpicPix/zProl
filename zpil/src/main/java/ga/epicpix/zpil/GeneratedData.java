@@ -40,8 +40,11 @@ public class GeneratedData {
                 out.writeInt(func.code.getLocalsSize());
                 List<IBytecodeInstruction> instructions = func.code.getInstructions();
                 out.writeInt(instructions.size());
+                int i = 0;
                 for (IBytecodeInstruction instruction : instructions) {
+                    if(instruction.getId() < 0) throw new RuntimeException("Tried to write internal instruction: " + func + "@" + i);
                     Bytecode.write(instruction, data, out);
+                    i++;
                 }
             }
         }
@@ -65,8 +68,11 @@ public class GeneratedData {
                     out.writeInt(func.code.getLocalsSize());
                     List<IBytecodeInstruction> instructions = func.code.getInstructions();
                     out.writeInt(instructions.size());
+                    int i = 0;
                     for (IBytecodeInstruction instruction : instructions) {
+                        if(instruction.getId() < 0) throw new RuntimeException("Tried to write internal instruction: " + func + "@" + i);
                         Bytecode.write(instruction, data, out);
+                        i++;
                     }
                 }
             }
