@@ -7,11 +7,11 @@ public class BooleanType extends Type {
     }
 
     public String getName() {
-        return "boolean";
+        return "bool";
     }
 
     public String normalName() {
-        return "boolean";
+        return "bool";
     }
 
     public boolean equals(Object o) {

@@ -80,7 +80,7 @@ public class FieldCompiler {
             }else {
                 IBytecodeStorage bytecode = createStorage();
                 ArrayDeque<Type> got = new ArrayDeque<Type>();
-                generateInstructionsFromExpression(value, null, got, data, new FunctionCodeScope(new LocalScopeManager(), thisClass), bytecode, false, parser);
+                generateInstructionsFromExpression(value, null, got, data, new FunctionCodeScope(new LocalScopeManager(), null), bytecode, false, parser);
                 doCast(got.pop(), type, false, bytecode, value, parser);
                 if(type instanceof PrimitiveType) {
                     bytecode.pushInstruction(getConstructedSizeInstruction(((PrimitiveType) type).getSize(), "store_field", f));
