@@ -331,13 +331,13 @@ public final class GeneratorAssemblyLinux64 extends Generator {
                 else if(size == 8) instructions.add("pop qword [rcx+" + offset + "]");
                 else throw new IllegalStateException("Unsupported size " + size);
             }
-            case "bneq" -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cl, dl", "mov cx, 1", "cmovne ax, cx", push("ax"));
-            case "sneq" -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cx, dx", "mov cx, 1", "cmovne ax, cx", push("ax"));
+            case "bneq" -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cl, dl", "mov rcx, 1", "cmovne rax, rcx", push("rax"));
+            case "sneq" -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cx, dx", "mov rcx, 1", "cmovne rax, rcx", push("rax"));
             case "ineq" -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp ecx, edx", "mov rcx, 1", "cmovne rax, rcx", push("rax"));
             case "lneq" -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmovne rax, rcx", push("rax"));
             case "aneq" -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmovne rax, rcx", push("rax"));
-            case "beq" -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cl, dl", "mov cx, 1", "cmove ax, cx", push("ax"));
-            case "seq" -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cx, dx", "mov cx, 1", "cmove ax, cx", push("ax"));
+            case "beq" -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cl, dl", "mov rcx, 1", "cmove rax, rcx", push("rax"));
+            case "seq" -> instructions.add(pop("dx"), pop("cx"), "xor ax, ax", "cmp cx, dx", "mov rcx, 1", "cmove rax, rcx", push("rax"));
             case "ieq" -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp ecx, edx", "mov rcx, 1", "cmove rax, rcx", push("rax"));
             case "leq" -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmove rax, rcx", push("rax"));
             case "aeq" -> instructions.add(pop("rdx"), pop("rcx"), "xor rax, rax", "cmp rcx, rdx", "mov rcx, 1", "cmove rax, rcx", push("rax"));
