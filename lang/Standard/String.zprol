@@ -24,4 +24,9 @@ class String {
         strCopy.bytes = tbytes;
         return strCopy;
     }
+
+    bool compare_with_bytes(byte[] bytes, ulong length) {
+        if(this.length != length) => return false;
+        return memory_compare(this.bytes, bytes, length);
+    }
 }
