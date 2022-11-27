@@ -27,3 +27,22 @@ bool is_octal(int value) {
     if(value >= 0x30) => if(value <= 0x37) => return true;
     return false;
 }
+
+bool is_newline(int value) {
+    if(value == 0x0A) => return true;
+    if(value == 0x0D) => return true;
+    return false;
+}
+
+bool is_valid_escape_character(int value) {
+    if(value == 0x5C) => return true;
+    if(value == 0x6E) => return true;
+    if(value == 0x72) => return true;
+    if(value == 0x66) => return true;
+    if(value == 0x27) => return true;
+    if(value == 0x74) => return true;
+    if(value == 0x62) => return true;
+    if(value == 0x30) => return true;
+    if(value == 0x22) => return true;
+    return false;
+}
