@@ -99,6 +99,19 @@ int lex_test(String file) {
                 }
                 write(STDOUT, byteLoc, index-start);
                 stdout("\n");
+            }else => if(contents[index] == 0x22) {
+                index = index + 1;
+                while(index < length) {
+                    if(contents[index] == 0x22) {
+                        index = index + 1;
+                        break;
+                    }
+                    index = index + 1;
+                }
+                byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+                stdout("String: ");
+                write(STDOUT, byteLoc, index-start);
+                stdout("\n");
             }
         }
         index = index + 1;
