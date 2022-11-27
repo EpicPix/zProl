@@ -14,11 +14,14 @@ public class DefaultNativeImpl extends NativeImpl {
         if(num == Long.valueOf(1) /* SYS_WRITE */) {
             if(arg0 instanceof Long) {
                 Long alg0 = (Long) arg0;
-                if(!(arg1 instanceof byte[])) {
+                if(!(arg1 instanceof byte[] || arg1 instanceof Long)) {
                     throw new RuntimeException("Expected syscall arg1 to be a byte array of characters");
                 }
                 if(!(arg2 instanceof Long)) {
                     throw new RuntimeException("Expected syscall arg2 to be a number which has the amount of characters");
+                }
+                if(arg1 instanceof Long) {
+                    arg1 = state.memory.cloneBytes((Long) arg1, (Long) arg2);
                 }
                 if(alg0 == 0 /* STDOUT */) {
                     System.out.write((byte[]) arg1, 0, Math.toIntExact((Long) arg2));

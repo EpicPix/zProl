@@ -41,6 +41,15 @@ public abstract class MemoryImpl {
         set(addr + 7, (byte) ((val >>> 56) & 0xff));
     }
 
+    public byte[] cloneBytes(Long pointer, Long length) {
+        byte[] v = new byte[Math.toIntExact(length)];
+        for(int i = 0; i<length; i++) {
+            v[i] = get(pointer + i);
+        }
+        return v;
+    }
+
     public abstract Long objectToPointer(ILocatable data);
     public abstract ILocatable pointerToObject(long addr);
+
 }

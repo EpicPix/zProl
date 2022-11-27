@@ -33,6 +33,9 @@ class InstructionImpl {
             case "vreturn":
                 state.returnFunction(null, 0);
                 break;
+            case "ireturn":
+                state.returnFunction(state.stack.pop(4).value, 4);
+                break;
             case "areturn":
             case "lreturn":
                 state.returnFunction(state.stack.pop(8).value, 8);
@@ -141,6 +144,42 @@ class InstructionImpl {
                 state.stack.push(Long.compareUnsigned(a, b) > 0 ? 1L : 0L, 8);
                 break;
             }
+            case "lle": {
+                Long b = (Long) state.stack.pop(8).value;
+                Long a = (Long) state.stack.pop(8).value;
+                state.stack.push(a <= b ? 1L : 0L, 8);
+                break;
+            }
+            case "llt": {
+                Long b = (Long) state.stack.pop(8).value;
+                Long a = (Long) state.stack.pop(8).value;
+                state.stack.push(a < b ? 1L : 0L, 8);
+                break;
+            }
+            case "lge": {
+                Long b = (Long) state.stack.pop(8).value;
+                Long a = (Long) state.stack.pop(8).value;
+                state.stack.push(a >= b ? 1L : 0L, 8);
+                break;
+            }
+            case "lgt": {
+                Long b = (Long) state.stack.pop(8).value;
+                Long a = (Long) state.stack.pop(8).value;
+                state.stack.push(a > b ? 1L : 0L, 8);
+                break;
+            }
+            case "ile": {
+                Integer b = (Integer) state.stack.pop(4).value;
+                Integer a = (Integer) state.stack.pop(4).value;
+                state.stack.push(a <= b ? 1L : 0L, 8);
+                break;
+            }
+            case "ige": {
+                Integer b = (Integer) state.stack.pop(4).value;
+                Integer a = (Integer) state.stack.pop(4).value;
+                state.stack.push(a >= b ? 1L : 0L, 8);
+                break;
+            }
             case "ieq": {
                 Integer b = (Integer) state.stack.pop(4).value;
                 Integer a = (Integer) state.stack.pop(4).value;
@@ -152,6 +191,12 @@ class InstructionImpl {
                 Object b = state.stack.pop(8).value;
                 Object a = state.stack.pop(8).value;
                 state.stack.push(Objects.equals(a, b) ? 1L : 0L, 8);
+                break;
+            }
+            case "bneq": {
+                Byte b = (Byte) state.stack.pop(1).value;
+                Byte a = (Byte) state.stack.pop(1).value;
+                state.stack.push(!Objects.equals(a, b) ? 1L : 0L, 8);
                 break;
             }
             case "ineq": {
@@ -174,6 +219,9 @@ class InstructionImpl {
                 break;
             case "jmp":
                 state.currentInstruction += (Short) instruction.getData()[0] - 1;
+                break;
+            case "ipop":
+                state.stack.pop(4);
                 break;
             case "apop":
             case "lpop":
@@ -244,9 +292,10 @@ class InstructionImpl {
                 state.memory.setLong(lp + idx * 8, val);
                 break;
             }
-            case "lload_array": {
+            case "bstore_array": {
                 Object index = state.stack.pop(8).value;
                 Object pointer = state.stack.pop(8).value;
+                Object value = state.stack.pop(1).value;
                 if(!(pointer instanceof Long)) {
                     throw new RuntimeException("The array must be a pointer");
                 }
@@ -255,7 +304,48 @@ class InstructionImpl {
                     throw new RuntimeException("The index must be a long");
                 }
                 Long idx = (Long) index;
-                state.stack.push(state.memory.getLong(lp + idx * 8), 8);
+                Byte val = (Byte) value;
+                state.memory.set(lp + idx, val);
+                break;
+            }
+            case "bload_array": {
+                Object index = state.stack.pop(8).value;
+                Object pointer = state.stack.pop(8).value;
+                if(!(pointer instanceof Long || pointer instanceof byte[])) {
+                    throw new RuntimeException("The array must be a pointer");
+                }
+                if(!(index instanceof Long)) {
+                    throw new RuntimeException("The index must be a long");
+                }
+                Long idx = (Long) index;
+                if(pointer instanceof Long) {
+                    Long lp = (Long) pointer;
+                    state.stack.push(state.memory.get(lp + idx), 1);
+                }else {
+                    byte[] lp = (byte[]) pointer;
+                    state.stack.push(lp[Math.toIntExact(idx)], 1);
+                }
+                break;
+            }
+            case "lload_array": {
+                Object index = state.stack.pop(8).value;
+                Object pointer = state.stack.pop(8).value;
+                if(!(pointer instanceof Long || pointer instanceof byte[])) {
+                    throw new RuntimeException("The array must be a pointer");
+                }
+                if(!(index instanceof Long)) {
+                    throw new RuntimeException("The index must be a long");
+                }
+                Long idx = (Long) index;
+                if(pointer instanceof Long) {
+                    Long lp = (Long) pointer;
+                    state.stack.push(state.memory.getLong(lp + idx * 8), 8);
+                }else {
+                    byte[] lp = (byte[]) pointer;
+                    int addr = Math.toIntExact(idx * 8);
+                    long val = (lp[addr]&0xff) | ((lp[addr + 1]&0xff) << 8) | ((lp[addr + 2]&0xff) << 16) | (((long)lp[addr + 3]&0xff) << 24) | (((long)lp[addr + 4]&0xff) << 32) | (((long)lp[addr + 5]&0xff) << 40) | (((long)lp[addr + 6]&0xff) << 48) | (((long)lp[addr + 7]&0xff) << 56);
+                    state.stack.push(val, 8);
+                }
                 break;
             }
             case "class_field_load": {
