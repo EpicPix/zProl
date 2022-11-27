@@ -208,7 +208,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             case "lstore_local" -> instructions.add("pop qword [rbp-" + i.getData()[0] + "]");
             case "astore_local" -> instructions.add("pop qword [rbp-" + i.getData()[0] + "]");
             case "push_string" -> instructions.add("push _string" + lp.getOrCreateStringIndex((String) i.getData()[0]));
-            case "bload_array" -> instructions.add(pop("rcx"), pop("rdx"), "mov cl, [rdx + rcx]", push("cx"));
+            case "bload_array" -> instructions.add(pop("rcx"), pop("rdx"), "mov cl, [rdx + rcx]", "movzx cx, cl", push("cx"));
             case "sload_array" -> instructions.add(pop("rcx"), pop("rdx"), "mov cx, [rdx + rcx * 2]", push("cx"));
             case "iload_array" -> instructions.add(pop("rcx"), pop("rdx"), "mov ecx, [rdx + rcx * 4]", push("rcx"));
             case "lload_array" -> instructions.add(pop("rcx"), pop("rdx"), "mov rcx, [rdx + rcx * 8]", push("rcx"));
