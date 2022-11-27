@@ -161,9 +161,10 @@ public class Compiler {
                 parseFunctionCode(data, new SeekIterator<>(statements), sig, bytecode, new FunctionCodeScope(FunctionCodeScope.ScopeType.IF, scope), parser);
                 int postInstr = bytecode.getInstructions().size();
                 if(ifStatement.elseStatement != null) {
+                    bytecode.pushInstruction(getConstructedInstruction("int"));
                     ArrayList<IStatement> elseStatements = new ArrayList<>(ifStatement.elseStatement.code.statements);
                     parseFunctionCode(data, new SeekIterator<>(elseStatements), sig, bytecode, new FunctionCodeScope(FunctionCodeScope.ScopeType.ELSE, scope), parser);
-                    bytecode.pushInstruction(postInstr, getConstructedInstruction("jmp", bytecode.getInstructions().size()-postInstr+1));
+                    bytecode.replaceInstruction(postInstr, getConstructedInstruction("jmp", bytecode.getInstructions().size()-postInstr+1));
                     postInstr++;
                 }
                 bytecode.replaceInstruction(preInstr, getConstructedInstruction("neqjmp", postInstr-preInstr));
@@ -670,6 +671,9 @@ public class Compiler {
         IBytecodeStorage bytecode = null;
         if(function.hasCode()) {
             bytecode = parseFunctionCode(data, null, new SeekIterator<>(function.code), signature, names, parser);
+            for(IBytecodeInstruction instruction : bytecode.getInstructions()) {
+                System.out.println("        " + instruction);
+            }
         }
         EnumSet<FunctionModifiers> fMods = EnumSet.noneOf(FunctionModifiers.class);
         fMods.addAll(function.modifiers);
