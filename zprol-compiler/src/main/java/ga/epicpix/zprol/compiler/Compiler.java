@@ -671,9 +671,6 @@ public class Compiler {
         IBytecodeStorage bytecode = null;
         if(function.hasCode()) {
             bytecode = parseFunctionCode(data, null, new SeekIterator<>(function.code), signature, names, parser);
-            for(IBytecodeInstruction instruction : bytecode.getInstructions()) {
-                System.out.println("        " + instruction);
-            }
         }
         EnumSet<FunctionModifiers> fMods = EnumSet.noneOf(FunctionModifiers.class);
         fMods.addAll(function.modifiers);
