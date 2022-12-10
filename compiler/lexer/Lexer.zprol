@@ -29,10 +29,11 @@ int lex_test(String file) {
                 }
                 index = index + 1;
             }
-            byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-            stdout("Word: ");
-            write(STDOUT, byteLoc, index-start);
-            stdout("\n");
+//            byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+//            stdout("Word: ");
+//            write(STDOUT, byteLoc, index-start);
+//            stdout("\n");
+            continue;
         }else {
             if(contents[index] == 0x30) {
                 if(index + 1 < length) {
@@ -48,13 +49,13 @@ int lex_test(String file) {
                             }
                             index = index + 1;
                         }
-                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-                        stdout("Hex: ");
-                        if(validHex == false) {
-                            stdout("[invalid] ");
-                        }
-                        write(STDOUT, byteLoc, index-start);
-                        stdout("\n");
+//                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+//                        stdout("Hex: ");
+//                        if(validHex == false) {
+//                            stdout("[invalid] ");
+//                        }
+//                        write(STDOUT, byteLoc, index-start);
+//                        stdout("\n");
                     }else {
                         index = index + 1;
                         bool validNum = true;
@@ -67,19 +68,20 @@ int lex_test(String file) {
                             }
                             index = index + 1;
                         }
-                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-                        if(index - start == 1) {
-                            stdout("Zero: ");
-                        }else {
-                            stdout("Octal: ");
-                            if(validNum == false) {
-                                stdout("[invalid] ");
-                            }
-                        }
-                        write(STDOUT, byteLoc, index-start);
-                        stdout("\n");
+//                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+//                        if(index - start == 1) {
+//                            stdout("Zero: ");
+//                        }else {
+//                            stdout("Octal: ");
+//                            if(validNum == false) {
+//                                stdout("[invalid] ");
+//                            }
+//                        }
+//                        write(STDOUT, byteLoc, index-start);
+//                        stdout("\n");
                     }
                 }
+                continue;
             }else => if(is_digit(contents[index])) {
                 index = index + 1;
                 bool validNum = true;
@@ -92,13 +94,14 @@ int lex_test(String file) {
                     }
                     index = index + 1;
                 }
-                byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-                stdout("Decimal: ");
-                if(validNum == false) {
-                    stdout("[invalid] ");
-                }
-                write(STDOUT, byteLoc, index-start);
-                stdout("\n");
+//                byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+//                stdout("Decimal: ");
+//                if(validNum == false) {
+//                    stdout("[invalid] ");
+//                }
+//                write(STDOUT, byteLoc, index-start);
+//                stdout("\n");
+                continue;
             }else => if(contents[index] == 0x22) {
                 index = index + 1;
                 ulong strValueLen = 0;
@@ -118,7 +121,7 @@ int lex_test(String file) {
                         }else => if(is_valid_escape_character(next)) {
                             strValueLen = strValueLen + 1;
                         }else {
-                            stdout("invalid: bad escape sequence");
+                            stdout("invalid: bad escape sequence\n");
                         }
                         continue;
                     }else => if(is_newline(contents[index])) {
@@ -183,7 +186,7 @@ int lex_test(String file) {
                                 strIndex = strIndex + 1;
                             }
                         }else {
-                            stdout("invalid: bad escape sequence");
+                            stdout("invalid: bad escape sequence\n");
                         }
                         continue;
                     }else => if(is_newline(contents[index])) {
@@ -193,13 +196,28 @@ int lex_test(String file) {
                     index = index + 1;
                     strIndex = strIndex + 1;
                 }
-                byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-                stdout("String: ");
-                write(STDOUT, byteLoc, index-start);
-                stdout(" | value: ");
-                stdout(str);
-                stdout("\n");
+//                byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+//                stdout("String: ");
+//                write(STDOUT, byteLoc, index-start);
+//                stdout(" | value: ");
+//                stdout(str);
+//                stdout("\n");
                 free((byte[]!) str);
+                continue;
+            }else => if(is_whitespace(contents[index])) {
+                index = index + 1;
+                while(index < length) {
+                    if(is_whitespace(contents[index]) == false) {
+                        break;
+                    }
+                    index = index + 1;
+                }
+//                stdout("Whitespace\n");
+                continue;
+            }else {
+                stdout("Unknown: ");
+                write(STDOUT, (byte[]!) ((ulong!) contents + start), 1);
+                stdout("\n");
             }
         }
         index = index + 1;
