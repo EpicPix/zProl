@@ -28,6 +28,12 @@ bool is_octal(int value) {
     return false;
 }
 
+bool is_binary(int value) {
+    if(value >= 0x30) => return true;
+    if(value >= 0x31) => return true;
+    return false;
+}
+
 bool is_newline(int value) {
     if(value == 0x0A) => return true;
     if(value == 0x0D) => return true;

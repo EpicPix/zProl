@@ -56,7 +56,26 @@ int lex_test(String file) {
 //                        }
 //                        write(STDOUT, byteLoc, index-start);
 //                        stdout("\n");
-                    }else {
+                    }else => if((contents[index + 1] | 0x20) == 0x62) {
+                        index = index + 2;
+                        bool validBin = true;
+                        while(index < length) {
+                            if(is_alphanumeric_or_underscore(contents[index]) == false) {
+                                break;
+                            }
+                            if(is_binary(contents[index]) == false) {
+                                validBin = false;
+                            }
+                            index = index + 1;
+                        }
+//                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+//                        stdout("Binary: ");
+//                        if(validBin == false) {
+//                            stdout("[invalid] ");
+//                        }
+//                        write(STDOUT, byteLoc, index-start);
+//                        stdout("\n");
+                    } else {
                         index = index + 1;
                         bool validNum = true;
                         while(index < length) {
@@ -215,6 +234,7 @@ int lex_test(String file) {
 //                stdout("Whitespace\n");
                 continue;
             }else {
+                // either unknown or actually a token like ; ( ) + - ,
                 stdout("Unknown: ");
                 write(STDOUT, (byte[]!) ((ulong!) contents + start), 1);
                 stdout("\n");
