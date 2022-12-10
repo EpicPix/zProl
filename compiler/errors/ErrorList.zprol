@@ -1,17 +1,77 @@
 namespace zprol.compiler.errors;
 
+using zprol.compiler.errors;
 using zprol.lang.collection;
+using zprol.lang.linux.amd64;
 using zprol.lang.memory;
 
 class ErrorList {
 
     List errors;
 
-    // will need for file errors: error code, error message, file content, file path, start offset, end offset, format info
-    //     or for project errors: error code, error message
-    void add_error() {
-
+    void add_error(uint64 errorCode) {
+        ErrorListItem item = (ErrorListItem!) malloc(42);
+        item.errorCode = errorCode;
+        item.fileContent = null;
+        item.filePath = null;
+        item.startOffset = 0;
+        item.endOffset = 0;
+        item.formatInfo = null;
+        errors.add((uint64!) item);
     }
+
+    ErrorListFile create_list_for_file(String fileContent, String filePath) {
+        ErrorListFile file = (ErrorListFile!) malloc(24);
+        file.errorList = this;
+        file.fileContent = fileContent;
+        file.filePath = filePath;
+        return file;
+    }
+
+}
+
+class ErrorListFile {
+
+    ErrorList errorList;
+    String fileContent;
+    String filePath;
+
+    void add_error(uint64 errorCode, ulong startOffset, ulong endOffset, FormatInfo format) {
+        ErrorListItem item = (ErrorListItem!) malloc(42);
+        item.errorCode = errorCode;
+        item.fileContent = fileContent;
+        item.filePath = filePath;
+        item.startOffset = startOffset;
+        item.endOffset = endOffset;
+        item.formatInfo = format;
+        errorList.errors.add((uint64!) item);
+    }
+
+}
+
+class ErrorListItem {
+
+    uint64 errorCode;
+
+    String fileContent;
+    String filePath;
+    ulong startOffset;
+    ulong endOffset;
+
+    FormatInfo formatInfo;
+
+    void print() {
+        stdout(error_code_str(errorCode));
+        stdout(": ");
+        stdout(error_code_message(errorCode));
+        stdout("\n");
+    }
+
+}
+
+class FormatInfo {
+
+    uint8 type;
 
 }
 

@@ -1,2 +1,22 @@
 namespace zprol.compiler.errors;
 
+// E0000-E0999 : Project/Global Errors
+// E1000-E1999 : Lexer Errors
+// E2000-E2999 : Parser Errors
+// E3000-E3999 : Compilation Errors
+// E4000-E4999 : Bytecode Errors
+// E5000-E5999 : Assembler Errors
+// E6000-E6999 : ??? Errors
+// E7000-E7999 : ??? Errors
+// E8000-E8999 : ??? Errors
+// E9000-E9999 : ??? Errors
+
+String error_code_message(uint64 errorCode) {
+    if(errorCode == 1000) => return "Invalid Hex Number";
+    return "???";
+}
+
+String error_code_str(uint64 errorCode) {
+    if(errorCode == 1000) => return "E1000";
+    return "Invalid Error";
+}

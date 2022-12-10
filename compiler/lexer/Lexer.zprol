@@ -7,7 +7,9 @@ using zprol.lang.memory;
 using zprol.lang.io;
 using zprol.lang;
 
-void lex(byte[] contents, long length, ErrorList errors) {
+void lex(String inContent, ErrorListFile errors) {
+    byte[] contents = inContent.bytes;
+    long length = inContent.length;
     // no utf8 support, iterating byte by byte
     ulong index = 0;
     while(index < length) {
@@ -41,7 +43,7 @@ void lex(byte[] contents, long length, ErrorList errors) {
                             index = index + 1;
                         }
                         if(validHex == false) {
-                            errors.add_error();
+                            errors.add_error(1000, start, index - start, null);
                         }
 //                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
 //                        stdout("Hex: ");
