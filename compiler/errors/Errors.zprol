@@ -12,11 +12,25 @@ namespace zprol.compiler.errors;
 // E9000-E9999 : ??? Errors
 
 String error_code_message(uint64 errorCode) {
-    if(errorCode == 1000) => return "Invalid Hex Number";
+    if(errorCode == 1000) => return "Invalid Hexadecimal Number";
+    if(errorCode == 1001) => return "Invalid Binary Number";
+    if(errorCode == 1002) => return "Invalid Octal Number";
+    if(errorCode == 1003) => return "Invalid Number";
+    if(errorCode == 1004) => return "Reached EOF in a string";
+    if(errorCode == 1005) => return "Did not expect a new line in a string";
+    if(errorCode == 1006) => return "Invalid escape sequence";
+    if(errorCode == 1007) => return "Invalid token";
     return "???";
 }
 
 String error_code_str(uint64 errorCode) {
     if(errorCode == 1000) => return "E1000";
+    if(errorCode == 1001) => return "E1001";
+    if(errorCode == 1002) => return "E1002";
+    if(errorCode == 1003) => return "E1003";
+    if(errorCode == 1004) => return "E1004";
+    if(errorCode == 1005) => return "E1005";
+    if(errorCode == 1006) => return "E1006";
+    if(errorCode == 1007) => return "E1007";
     return "Invalid Error";
 }

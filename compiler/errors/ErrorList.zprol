@@ -17,7 +17,7 @@ class ErrorList {
         item.startOffset = 0;
         item.endOffset = 0;
         item.formatType = FORMAT_NONE;
-        item.formatInfo = 0;
+        item.formatInfo = null;
         errors.add((uint64!) item);
     }
 
@@ -37,7 +37,7 @@ class ErrorListFile {
     String fileContent;
     String filePath;
 
-    void add_error(uint64 errorCode, ulong startOffset, ulong endOffset, uint64 formatType, uint64 format) {
+    void add_error(uint64 errorCode, ulong startOffset, ulong endOffset, uint64 formatType, String format) {
         ErrorListItem item = (ErrorListItem!) malloc(56);
         item.errorCode = errorCode;
         item.fileContent = fileContent;
@@ -50,7 +50,7 @@ class ErrorListFile {
     }
 
     void add_error(uint64 errorCode, ulong startOffset, ulong endOffset, uint64 formatType) =>
-        add_error(errorCode, startOffset, endOffset, formatType, 0);
+        add_error(errorCode, startOffset, endOffset, formatType, null);
 
 }
 
@@ -64,7 +64,7 @@ class ErrorListItem {
     ulong endOffset;
 
     uint64 formatType;
-    uint64 formatInfo;
+    String formatInfo;
 
     void print() {
         stdout(error_code_str(errorCode));
@@ -92,7 +92,7 @@ class ErrorListItem {
                     if(foundLine) => break;
                     isLineStart = true;
                 }
-                if(i == startOffset) => foundLine = true;
+                if(i == endOffset) => foundLine = true;
                 i = i + 1;
             }
 
@@ -124,18 +124,14 @@ class ErrorListItem {
                 stdout("\n");
 
                 if(formatType == FORMAT_REPLACE) {
-                    // formatInfo should be a pointer to String
-
                     stdout("+ ");
                     stdout(lineStart, startOffset - startLineIndex);
-                    stdout((String!) formatInfo);
+                    stdout(formatInfo);
                     stdout((byte[]!) (((ulong!) fileContent.bytes) + endOffset), i - endOffset);
                     stdout("\n");
                 }else => if(formatType == FORMAT_REPLACE_LINE) {
-                    // formatInfo should be a pointer to String
-
                     stdout("+ ");
-                    stdout((String!) formatInfo);
+                    stdout(formatInfo);
                     stdout("\n");
                 }
             }

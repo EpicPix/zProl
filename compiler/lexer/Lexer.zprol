@@ -42,16 +42,8 @@ void lex(String inContent, ErrorListFile errors) {
                             }
                             index = index + 1;
                         }
-                        if(validHex == false) {
+                        if(validHex == false) =>
                             errors.add_error(1000, start, index, FORMAT_HIGHLIGHT);
-                        }
-//                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-//                        stdout("Hex: ");
-//                        if(validHex == false) {
-//                            stdout("[invalid] ");
-//                        }
-//                        write(STDOUT, byteLoc, index-start);
-//                        stdout("\n");
                     }else => if((contents[index + 1] | 0x20) == 0x62) {
                         index = index + 2;
                         bool validBin = true;
@@ -64,13 +56,8 @@ void lex(String inContent, ErrorListFile errors) {
                             }
                             index = index + 1;
                         }
-//                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-//                        stdout("Binary: ");
-//                        if(validBin == false) {
-//                            stdout("[invalid] ");
-//                        }
-//                        write(STDOUT, byteLoc, index-start);
-//                        stdout("\n");
+                        if(validBin == false) =>
+                            errors.add_error(1001, start, index, FORMAT_HIGHLIGHT);
                     } else {
                         index = index + 1;
                         bool validNum = true;
@@ -83,17 +70,13 @@ void lex(String inContent, ErrorListFile errors) {
                             }
                             index = index + 1;
                         }
-//                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-//                        if(index - start == 1) {
+                        if(index - start == 1) {
 //                            stdout("Zero: ");
-//                        }else {
+                        }else {
 //                            stdout("Octal: ");
-//                            if(validNum == false) {
-//                                stdout("[invalid] ");
-//                            }
-//                        }
-//                        write(STDOUT, byteLoc, index-start);
-//                        stdout("\n");
+                            if(validNum == false) =>
+                                errors.add_error(1002, start, index, FORMAT_HIGHLIGHT);
+                        }
                     }
                 }
                 continue;
@@ -109,115 +92,108 @@ void lex(String inContent, ErrorListFile errors) {
                     }
                     index = index + 1;
                 }
-//                byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-//                stdout("Decimal: ");
-//                if(validNum == false) {
-//                    stdout("[invalid] ");
-//                }
-//                write(STDOUT, byteLoc, index-start);
-//                stdout("\n");
+                if(validNum == false) =>
+                    errors.add_error(1003, start, index, FORMAT_HIGHLIGHT);
                 continue;
             }else => if(contents[index] == 0x22) {
                 index = index + 1;
                 ulong strValueLen = 0;
                 ulong startStr = index;
+                bool has_errors = false;
                 while(index < length) {
                     if(contents[index] == 0x22) {
                         index = index + 1;
                         break;
                     }else => if(contents[index] == 0x5C) {
                         if(index + 1 > length) {
-                            stdout("invalid: backslash eof\n");
+                            errors.add_error(1004, start, index, FORMAT_HIGHLIGHT);
+                            return;
                         }
                         index = index + 1;
                         byte next = contents[index];
                         if(is_newline(next)) {
-                            stdout("invalid: new line in string after backslash\n");
+                            errors.add_error(1005, start, index - 1, FORMAT_HIGHLIGHT);
+                            has_errors = true;
                         }else => if(is_valid_escape_character(next)) {
                             strValueLen = strValueLen + 1;
                         }else {
-                            stdout("invalid: bad escape sequence\n");
+                            errors.add_error(1006, index - 1, index, FORMAT_REPLACE, "");
+                            has_errors = true;
                         }
                         continue;
                     }else => if(is_newline(contents[index])) {
-                        stdout("invalid: new line in string\n");
+                        errors.add_error(1005, start, index - 1, FORMAT_HIGHLIGHT);
+                        has_errors = true;
                     }
                     strValueLen = strValueLen + 1;
                     index = index + 1;
                 }
-                index = startStr;
-                String str = (String!) malloc(16 + strValueLen);
-                str.length = strValueLen;
-                str.bytes = (byte[]!) ((long!) str + 16);
-                ulong strIndex = 0;
-                while(index < length) {
-                    if(contents[index] == 0x22) {
-                        index = index + 1;
-                        break;
-                    }else => if(contents[index] == 0x5C) {
-                        if(index + 1 > length) {
-                            stdout("invalid: backslash eof\n");
-                        }
-                        index = index + 1;
-                        byte next = contents[index];
-                        if(is_newline(next)) {
-                            stdout("invalid: new line in string after backslash\n");
-                        }else => if(is_valid_escape_character(next)) {
+                if(has_errors == false) {
+                    index = startStr;
+                    String str = (String!) malloc(16 + strValueLen);
+                    str.length = strValueLen;
+                    str.bytes = (byte[]!) ((long!) str + 16);
+                    ulong strIndex = 0;
+                    while(index < length) {
+                        if(contents[index] == 0x22) {
                             index = index + 1;
-                            if(next == 0x5C) {
-                                str.bytes[strIndex] = 0x5C;
-                                strIndex = strIndex + 1;
+                            break;
+                        }else => if(contents[index] == 0x5C) {
+                            index = index + 1;
+                            byte next = contents[index];
+                            if(is_valid_escape_character(next)) {
+                                index = index + 1;
+                                if(next == 0x5C) {
+                                    str.bytes[strIndex] = 0x5C;
+                                    strIndex = strIndex + 1;
+                                }
+                                if(next == 0x6E) {
+                                    str.bytes[strIndex] = 0x0A;
+                                    strIndex = strIndex + 1;
+                                }
+                                if(next == 0x72) {
+                                    str.bytes[strIndex] = 0x0D;
+                                    strIndex = strIndex + 1;
+                                }
+                                if(next == 0x66) {
+                                    str.bytes[strIndex] = 0x0C;
+                                    strIndex = strIndex + 1;
+                                }
+                                if(next == 0x27) {
+                                    str.bytes[strIndex] = 0x27;
+                                    strIndex = strIndex + 1;
+                                }
+                                if(next == 0x74) {
+                                    str.bytes[strIndex] = 0x09;
+                                    strIndex = strIndex + 1;
+                                }
+                                if(next == 0x62) {
+                                    str.bytes[strIndex] = 0x08;
+                                    strIndex = strIndex + 1;
+                                }
+                                if(next == 0x30) {
+                                    str.bytes[strIndex] = 0x00;
+                                    strIndex = strIndex + 1;
+                                }
+                                if(next == 0x22) {
+                                    str.bytes[strIndex] = 0x22;
+                                    strIndex = strIndex + 1;
+                                }
                             }
-                            if(next == 0x6E) {
-                                str.bytes[strIndex] = 0x0A;
-                                strIndex = strIndex + 1;
-                            }
-                            if(next == 0x72) {
-                                str.bytes[strIndex] = 0x0D;
-                                strIndex = strIndex + 1;
-                            }
-                            if(next == 0x66) {
-                                str.bytes[strIndex] = 0x0C;
-                                strIndex = strIndex + 1;
-                            }
-                            if(next == 0x27) {
-                                str.bytes[strIndex] = 0x27;
-                                strIndex = strIndex + 1;
-                            }
-                            if(next == 0x74) {
-                                str.bytes[strIndex] = 0x09;
-                                strIndex = strIndex + 1;
-                            }
-                            if(next == 0x62) {
-                                str.bytes[strIndex] = 0x08;
-                                strIndex = strIndex + 1;
-                            }
-                            if(next == 0x30) {
-                                str.bytes[strIndex] = 0x00;
-                                strIndex = strIndex + 1;
-                            }
-                            if(next == 0x22) {
-                                str.bytes[strIndex] = 0x22;
-                                strIndex = strIndex + 1;
-                            }
-                        }else {
-                            stdout("invalid: bad escape sequence\n");
+                            continue;
                         }
-                        continue;
-                    }else => if(is_newline(contents[index])) {
-                        stdout("invalid: new line in string\n");
+                        str.bytes[strIndex] = contents[index];
+                        index = index + 1;
+                        strIndex = strIndex + 1;
                     }
-                    str.bytes[strIndex] = contents[index];
-                    index = index + 1;
-                    strIndex = strIndex + 1;
+//                    byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
+//                    stdout("String: ");
+//                    write(STDOUT, byteLoc, index-start);
+//                    stdout(" | value: ");
+//                    stdout(str);
+//                    stdout("\n");
+                    free((byte[]!) str);
                 }
-//                byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-//                stdout("String: ");
-//                write(STDOUT, byteLoc, index-start);
-//                stdout(" | value: ");
-//                stdout(str);
-//                stdout("\n");
-                free((byte[]!) str);
                 continue;
             }else => if(is_whitespace(contents[index])) {
                 index = index + 1;
@@ -231,9 +207,10 @@ void lex(String inContent, ErrorListFile errors) {
                 continue;
             }else {
                 // either unknown or actually a token like ; ( ) + - ,
-                stdout("Unknown: ");
-                write(STDOUT, (byte[]!) ((ulong!) contents + start), 1);
-                stdout("\n");
+                errors.add_error(1007, start, start+1, FORMAT_HIGHLIGHT);
+//                stdout("Unknown: ");
+//                write(STDOUT, (byte[]!) ((ulong!) contents + start), 1);
+//                stdout("\n");
             }
         }
         index = index + 1;
