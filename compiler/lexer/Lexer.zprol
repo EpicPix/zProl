@@ -43,7 +43,7 @@ void lex(String inContent, ErrorListFile errors) {
                             index = index + 1;
                         }
                         if(validHex == false) {
-                            errors.add_error(1000, start, index - start, FORMAT_HIGHLIGHT, 0);
+                            errors.add_error(1000, start, index, FORMAT_HIGHLIGHT);
                         }
 //                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
 //                        stdout("Hex: ");

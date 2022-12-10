@@ -10,7 +10,7 @@ class ErrorList {
     List errors;
 
     void add_error(uint64 errorCode) {
-        ErrorListItem item = (ErrorListItem!) malloc(49);
+        ErrorListItem item = (ErrorListItem!) malloc(56);
         item.errorCode = errorCode;
         item.fileContent = null;
         item.filePath = null;
@@ -38,7 +38,7 @@ class ErrorListFile {
     String filePath;
 
     void add_error(uint64 errorCode, ulong startOffset, ulong endOffset, uint64 formatType, uint64 format) {
-        ErrorListItem item = (ErrorListItem!) malloc(49);
+        ErrorListItem item = (ErrorListItem!) malloc(56);
         item.errorCode = errorCode;
         item.fileContent = fileContent;
         item.filePath = filePath;
@@ -48,6 +48,9 @@ class ErrorListFile {
         item.formatInfo = format;
         errorList.errors.add((uint64!) item);
     }
+
+    void add_error(uint64 errorCode, ulong startOffset, ulong endOffset, uint64 formatType) =>
+        add_error(errorCode, startOffset, endOffset, formatType, 0);
 
 }
 
@@ -73,6 +76,70 @@ class ErrorListItem {
         }
         stdout(error_code_message(errorCode));
         stdout("\n");
+        if(formatType != FORMAT_NONE) {
+            uint64 i = 0;
+            uint64 startLineIndex = 0;
+            uint64 line = 0;
+            bool isLineStart = false;
+            bool foundLine = false;
+            while(i < fileContent.length) {
+                if(isLineStart) {
+                    startLineIndex = i;
+                    line = line + 1;
+                    isLineStart = false;
+                }
+                if(fileContent.bytes[i] == 0xa) {
+                    if(foundLine) => break;
+                    isLineStart = true;
+                }
+                if(i == startOffset) => foundLine = true;
+                i = i + 1;
+            }
+
+            byte[] lineStart = (byte[]!) (((ulong!) fileContent.bytes) + startLineIndex);
+            ulong lineLength = i - startLineIndex;
+
+            if(formatType == FORMAT_HIGHLIGHT) {
+                stdout("~ ");
+                stdout(lineStart, lineLength);
+                stdout("\n");
+                uint64 pad = startOffset - startLineIndex;
+
+                stdout("  ");
+                uint64 j = 0;
+                while(j < pad) {
+                    stdout(" ");
+                    j = j + 1;
+                }
+                uint64 k = 0;
+                uint64 len = endOffset - startOffset;
+                while(k < len) {
+                    stdout("^");
+                    k = k + 1;
+                }
+                stdout("\n");
+            }else {
+                stdout("- ");
+                stdout(lineStart, lineLength);
+                stdout("\n");
+
+                if(formatType == FORMAT_REPLACE) {
+                    // formatInfo should be a pointer to String
+
+                    stdout("+ ");
+                    stdout(lineStart, startOffset - startLineIndex);
+                    stdout((String!) formatInfo);
+                    stdout((byte[]!) (((ulong!) fileContent.bytes) + endOffset), i - endOffset);
+                    stdout("\n");
+                }else => if(formatType == FORMAT_REPLACE_LINE) {
+                    // formatInfo should be a pointer to String
+
+                    stdout("+ ");
+                    stdout((String!) formatInfo);
+                    stdout("\n");
+                }
+            }
+        }
     }
 
 }
@@ -81,9 +148,6 @@ const uint64 FORMAT_NONE = 0;
 const uint64 FORMAT_HIGHLIGHT = 1;
 const uint64 FORMAT_REPLACE = 2;
 const uint64 FORMAT_REPLACE_LINE = 3;
-const uint64 FORMAT_REPLACE_UNKNOWN = 4;
-const uint64 FORMAT_SHOW_UNKNOWN_PRE = 5;
-const uint64 FORMAT_SHOW_UNKNOWN_POST = 6;
 
 ErrorList create_error_list() {
     List list = List_new();
