@@ -1,0 +1,23 @@
+namespace zprol.compiler.errors;
+
+using zprol.lang.collection;
+using zprol.lang.memory;
+
+class ErrorList {
+
+    List errors;
+
+    // will need for file errors: error code, error message, file content, file path, start offset, end offset, format info
+    //     or for project errors: error code, error message
+    void add_error() {
+
+    }
+
+}
+
+ErrorList create_error_list() {
+    List list = List_new();
+    ErrorList errors = (ErrorList!) malloc(8);
+    errors.errors = list;
+    return errors;
+}

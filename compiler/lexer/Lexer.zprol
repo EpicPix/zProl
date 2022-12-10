@@ -1,12 +1,13 @@
 namespace zprol.compiler.lexer;
 
+using zprol.compiler.errors;
 using zprol.compiler.lexer.utils;
 using zprol.lang.linux.amd64;
 using zprol.lang.memory;
 using zprol.lang.io;
 using zprol.lang;
 
-int lex(byte[] contents, long length) {
+void lex(byte[] contents, long length, ErrorList errors) {
     // no utf8 support, iterating byte by byte
     ulong index = 0;
     while(index < length) {
@@ -38,6 +39,9 @@ int lex(byte[] contents, long length) {
                                 validHex = false;
                             }
                             index = index + 1;
+                        }
+                        if(validHex == false) {
+                            errors.add_error();
                         }
 //                        byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
 //                        stdout("Hex: ");
@@ -232,7 +236,4 @@ int lex(byte[] contents, long length) {
         }
         index = index + 1;
     }
-
-    free(contents);
-    return 0;
 }
