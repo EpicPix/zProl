@@ -10,13 +10,14 @@ class ErrorList {
     List errors;
 
     void add_error(uint64 errorCode) {
-        ErrorListItem item = (ErrorListItem!) malloc(48);
+        ErrorListItem item = (ErrorListItem!) malloc(49);
         item.errorCode = errorCode;
         item.fileContent = null;
         item.filePath = null;
         item.startOffset = 0;
         item.endOffset = 0;
-        item.formatInfo = null;
+        item.formatType = FORMAT_NONE;
+        item.formatInfo = 0;
         errors.add((uint64!) item);
     }
 
@@ -36,13 +37,14 @@ class ErrorListFile {
     String fileContent;
     String filePath;
 
-    void add_error(uint64 errorCode, ulong startOffset, ulong endOffset, FormatInfo format) {
-        ErrorListItem item = (ErrorListItem!) malloc(42);
+    void add_error(uint64 errorCode, ulong startOffset, ulong endOffset, uint64 formatType, uint64 format) {
+        ErrorListItem item = (ErrorListItem!) malloc(49);
         item.errorCode = errorCode;
         item.fileContent = fileContent;
         item.filePath = filePath;
         item.startOffset = startOffset;
         item.endOffset = endOffset;
+        item.formatType = formatType;
         item.formatInfo = format;
         errorList.errors.add((uint64!) item);
     }
@@ -58,22 +60,30 @@ class ErrorListItem {
     ulong startOffset;
     ulong endOffset;
 
-    FormatInfo formatInfo;
+    uint64 formatType;
+    uint64 formatInfo;
 
     void print() {
         stdout(error_code_str(errorCode));
         stdout(": ");
+        if(filePath != null) {
+            stdout(filePath);
+            // TODO: Seperate offset to line and row, and print it like `filePath:line:row`
+            stdout(" ");
+        }
         stdout(error_code_message(errorCode));
         stdout("\n");
     }
 
 }
 
-class FormatInfo {
-
-    uint8 type;
-
-}
+const uint64 FORMAT_NONE = 0;
+const uint64 FORMAT_HIGHLIGHT = 1;
+const uint64 FORMAT_REPLACE = 2;
+const uint64 FORMAT_REPLACE_LINE = 3;
+const uint64 FORMAT_REPLACE_UNKNOWN = 4;
+const uint64 FORMAT_SHOW_UNKNOWN_PRE = 5;
+const uint64 FORMAT_SHOW_UNKNOWN_POST = 6;
 
 ErrorList create_error_list() {
     List list = List_new();
