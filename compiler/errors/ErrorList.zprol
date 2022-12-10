@@ -10,7 +10,7 @@ class ErrorList {
     List errors;
 
     void add_error(uint64 errorCode) {
-        ErrorListItem item = (ErrorListItem!) malloc(42);
+        ErrorListItem item = (ErrorListItem!) malloc(48);
         item.errorCode = errorCode;
         item.fileContent = null;
         item.filePath = null;
