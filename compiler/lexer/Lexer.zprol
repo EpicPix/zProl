@@ -6,17 +6,7 @@ using zprol.lang.memory;
 using zprol.lang.io;
 using zprol.lang;
 
-int lex_test(String file) {
-    int fd = file_open(file, O_RDONLY, 0);
-    if(fd < 0) {
-        return 1;
-    }
-    long length = file_length(fd);
-
-    byte[] contents = malloc(length);
-    file_read(fd, contents, length);
-    file_close(fd);
-
+int lex(byte[] contents, long length) {
     // no utf8 support, iterating byte by byte
     ulong index = 0;
     while(index < length) {
