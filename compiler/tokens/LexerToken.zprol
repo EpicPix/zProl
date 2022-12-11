@@ -1,5 +1,24 @@
 namespace zprol.compiler.tokens;
 
+using zprol.compiler.tokens;
+using zprol.lang.memory;
+
+class StringToken {
+    uint64 type;
+    uint64 start;
+    uint64 end;
+    String string;
+}
+
+Token create_string_token(uint64 type, uint64 start, uint64 end, String str) {
+    StringToken t = (StringToken!) malloc(32);
+    t.type = type;
+    t.start = start;
+    t.end = end;
+    t.string = str;
+    return (Token!) t;
+}
+
 const uint32 TokenIdentifier = 0x0001;
 const uint32 TokenNumber = 0x0002;
 const uint32 TokenString = 0x0003;

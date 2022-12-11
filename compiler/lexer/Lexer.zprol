@@ -25,10 +25,6 @@ TokenList lex(String inContent, ErrorListFile errors) {
                 index = index + 1;
             }
             tokens.add(create_simple_token(TokenIdentifier, start, index));
-//            byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-//            stdout("Word: ");
-//            write(STDOUT, byteLoc, index-start);
-//            stdout("\n");
             continue;
         }else {
             if(contents[index] == 0x30) {
@@ -45,8 +41,12 @@ TokenList lex(String inContent, ErrorListFile errors) {
                             }
                             index = index + 1;
                         }
-                        if(validHex == false) =>
+                        if(validHex == false) {
                             errors.add_error(1000, start, index, FORMAT_HIGHLIGHT);
+                            tokens.add(create_simple_token(TokenInvalid, start, index));
+                        }else {
+                            tokens.add(create_simple_token(TokenNumber, start, index));
+                        }
                     }else => if((contents[index + 1] | 0x20) == 0x62) {
                         index = index + 2;
                         bool validBin = true;
@@ -59,8 +59,12 @@ TokenList lex(String inContent, ErrorListFile errors) {
                             }
                             index = index + 1;
                         }
-                        if(validBin == false) =>
+                        if(validBin == false) {
                             errors.add_error(1001, start, index, FORMAT_HIGHLIGHT);
+                            tokens.add(create_simple_token(TokenInvalid, start, index));
+                        }else {
+                            tokens.add(create_simple_token(TokenNumber, start, index));
+                        }
                     } else {
                         index = index + 1;
                         bool validNum = true;
@@ -73,12 +77,15 @@ TokenList lex(String inContent, ErrorListFile errors) {
                             }
                             index = index + 1;
                         }
-                        if(index - start == 1) {
-//                            stdout("Zero: ");
-                        }else {
-//                            stdout("Octal: ");
-                            if(validNum == false) =>
+                        if(index - start == 1) { // zero
+                            tokens.add(create_simple_token(TokenNumber, start, index));
+                        }else { // octal number
+                            if(validNum == false) {
                                 errors.add_error(1002, start, index, FORMAT_HIGHLIGHT);
+                                tokens.add(create_simple_token(TokenInvalid, start, index));
+                            }else {
+                                tokens.add(create_simple_token(TokenNumber, start, index));
+                            }
                         }
                     }
                 }
@@ -95,8 +102,12 @@ TokenList lex(String inContent, ErrorListFile errors) {
                     }
                     index = index + 1;
                 }
-                if(validNum == false) =>
+                if(validNum == false) {
                     errors.add_error(1003, start, index, FORMAT_HIGHLIGHT);
+                    tokens.add(create_simple_token(TokenInvalid, start, index));
+                }else {
+                    tokens.add(create_simple_token(TokenNumber, start, index));
+                }
                 continue;
             }else => if(contents[index] == 0x22) {
                 index = index + 1;
@@ -189,13 +200,9 @@ TokenList lex(String inContent, ErrorListFile errors) {
                         index = index + 1;
                         strIndex = strIndex + 1;
                     }
-//                    byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
-//                    stdout("String: ");
-//                    write(STDOUT, byteLoc, index-start);
-//                    stdout(" | value: ");
-//                    stdout(str);
-//                    stdout("\n");
-                    free((byte[]!) str);
+                    tokens.add(create_string_token(TokenString, start, index, str));
+                }else {
+                    tokens.add(create_simple_token(TokenInvalid, start, index));
                 }
                 continue;
             }else => if(is_whitespace(contents[index])) {
@@ -206,7 +213,7 @@ TokenList lex(String inContent, ErrorListFile errors) {
                     }
                     index = index + 1;
                 }
-//                stdout("Whitespace\n");
+                tokens.add(create_simple_token(TokenWhitespace, start, index));
                 continue;
             }else {
                 if(contents[index] == 0x2f) {
@@ -220,6 +227,7 @@ TokenList lex(String inContent, ErrorListFile errors) {
                                 }
                                 index = index + 1;
                             }
+                            tokens.add(create_simple_token(TokenComment, start, index));
                             continue;
                         }else => if(contents[index + 1] == 0x2a) {
                             // checks for a multi line comment
@@ -236,19 +244,18 @@ TokenList lex(String inContent, ErrorListFile errors) {
                                 index = index + 1;
                             }
                             if(finished == false) {
+                                tokens.add(create_simple_token(TokenInvalid, start, index));
                                 errors.add_error(1008, start, start+2, FORMAT_HIGHLIGHT);
                                 break;
                             }
-
+                            tokens.add(create_simple_token(TokenComment, start, index));
                             continue;
                         }
                     }
                 }
                 // either unknown or actually a token like ; ( ) + - ,
                 errors.add_error(1007, start, start+1, FORMAT_HIGHLIGHT);
-//                stdout("Unknown: ");
-//                write(STDOUT, (byte[]!) ((ulong!) contents + start), 1);
-//                stdout("\n");
+                tokens.add(create_simple_token(TokenInvalid, start, index+1));
             }
         }
         index = index + 1;
