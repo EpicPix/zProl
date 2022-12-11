@@ -206,6 +206,41 @@ void lex(String inContent, ErrorListFile errors) {
 //                stdout("Whitespace\n");
                 continue;
             }else {
+                if(contents[index] == 0x2f) {
+                    if(index + 1 < length) {
+                        if(contents[index + 1] == 0x2f) {
+                            // checks for a single line comment
+                            index = index + 2;
+                            while(index < length) {
+                                if(contents[index] == 0xa) {
+                                    break;
+                                }
+                                index = index + 1;
+                            }
+                            continue;
+                        }else => if(contents[index + 1] == 0x2a) {
+                            // checks for a multi line comment
+                            index = index + 2;
+                            bool finished = false;
+                            while(index + 1 < length) {
+                                if(contents[index] == 0x2a) {
+                                    if(contents[index + 1] == 0x2f) {
+                                        finished = true;
+                                        index = index + 2;
+                                        break;
+                                    }
+                                }
+                                index = index + 1;
+                            }
+                            if(finished == false) {
+                                errors.add_error(1008, start, start+2, FORMAT_HIGHLIGHT);
+                                break;
+                            }
+
+                            continue;
+                        }
+                    }
+                }
                 // either unknown or actually a token like ; ( ) + - ,
                 errors.add_error(1007, start, start+1, FORMAT_HIGHLIGHT);
 //                stdout("Unknown: ");

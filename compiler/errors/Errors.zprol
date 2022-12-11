@@ -20,6 +20,7 @@ String error_code_message(uint64 errorCode) {
     if(errorCode == 1005) => return "Did not expect a new line in a string";
     if(errorCode == 1006) => return "Invalid escape sequence";
     if(errorCode == 1007) => return "Invalid token";
+    if(errorCode == 1008) => return "Multi line comment not finished";
     return "???";
 }
 
@@ -32,5 +33,6 @@ String error_code_str(uint64 errorCode) {
     if(errorCode == 1005) => return "E1005";
     if(errorCode == 1006) => return "E1006";
     if(errorCode == 1007) => return "E1007";
+    if(errorCode == 1008) => return "E1008";
     return "Invalid Error";
 }
