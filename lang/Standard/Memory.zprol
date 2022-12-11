@@ -4,199 +4,192 @@ using zprol.lang.linux.amd64;
 using zprol.lang.collection;
 using zprol.lang;
 
-class _BinElement {
-    ubyte binType;
+class _mem_item {
+    uint32 data;
 }
 
-class _QuickBinElement { // 25 bytes total
-    ubyte binType;
-    _QuickBinElement next;
-    _QuickBinElement prev;
-    bool nextBlockFree;
+class _mem_item_malloc { // 20 bytes
+    uint32 next; // offset
+    uint32 prev; // offset
+    _mem_element parent;
+    uint32 data;
 }
 
-class _mmapedBinElement { // 17 bytes total
-    ubyte binType;
-    uint64 length;
-    uint64 mmapedLength;
+class _mem_item_mmap { // 8 bytes
+    uint32 data2;
+    uint32 data;
 }
 
-class mmapedArea { // 24 bytes total
-    _bigBinElement startElement;
-    ulong mmapStart;
-    ulong size;
+class _mem_element { // 24 bytes
+    _mem_element next;
+    _mem_element prev;
+    uint64 biggest_available_segment;
 }
 
-class _bigBinElement { // 26 bytes total
-    ubyte binType;
-    ubyte flags;
-    // xxxx xxx1 - previous element is available
-    // xxxx xx1x - element is freed
-
-    ulong length;
-    _bigBinElement next;
-    _bigBinElement prev;
-}
-
-List quickBinList;
-List mmapedList;
+List _mem_elements;
 
 byte[] malloc(ulong length) {
-    if(length <= 64) {
-        if(quickBinList == null) {
-            quickBinList = (List!) mmap_alloc(4096);
-            quickBinList.pointer = (uint64[]!) ((uint64!) quickBinList + 24);
-            quickBinList.usedLength = 0;
-            quickBinList.usableLength = 509;
-            _QuickBinElement quickBin = (_QuickBinElement!) mmap_alloc(32768);
-            quickBin.nextBlockFree = true;
-            quickBinList.add((ulong!) quickBin);
-            // first element is never actually used
-        }
-        _QuickBinElement useElement = null;
-        ulong index = 0;
-        while(index < quickBinList.usedLength) {
-            _QuickBinElement start = (_QuickBinElement!) quickBinList.get(index);
-            _QuickBinElement element = start;
-            while(element.nextBlockFree == false) {
-                if(element.next == null) => break;
-                element = element.next;
-            }
-            if((ulong!) element + 192 <= (ulong!) start + 32768) {
-                useElement = element;
-                break;
-            }else => if(index == quickBinList.usedLength - 1) {
-                _QuickBinElement quickBin = (_QuickBinElement!) mmap_alloc(32768);
-                quickBin.nextBlockFree = true;
-                quickBinList.add((ulong!) quickBin);
-            }
-            index = index + 1;
-        }
-
-        _QuickBinElement thisElement = (_QuickBinElement!) ((uint64!) useElement + 64 + 32);
-        thisElement.binType = 0;
-        thisElement.nextBlockFree = true;
-        useElement.nextBlockFree = false;
-        if(useElement.next != null) {
-            thisElement.next = useElement.next;
-            useElement.next.prev = thisElement;
-        }
-        useElement.next = thisElement;
-        thisElement.prev = useElement;
-        return (byte[]!) ((uint64!) thisElement + 32);
-    }else => if(length >= 0x10000) {
-        uint64 mmapedLength = (length + 0xffff + 32) & 0xFFFFFFFFFFFF0000;
-        _mmapedBinElement thisElement = (_mmapedBinElement!) mmap_alloc(mmapedLength);
-        thisElement.binType = 1;
-        thisElement.length = length;
-        thisElement.mmapedLength = mmapedLength;
-        return (byte[]!) ((uint64!) thisElement + 32);
+    if(length >= 0x80000 - 24 - 20) {
+        length = length + 8;
+        _mem_item_mmap data = (_mem_item_mmap!) mmap_alloc(length);
+        data.data = (uint32) ((length & 0x7fffffff) | 0x80000000);
+        data.data2 = (uint32) (length >> 31);
+        return (byte[]!) ((ulong!) data + 8);
     }else {
-        if(mmapedList == null) => mmapedList = List_new(4);
-        long index = 0;
-        while(index < mmapedList.usedLength) {
-            mmapedArea area = (mmapedArea!) mmapedList.get(index);
-            _bigBinElement current = area.startElement;
-            while(current != null) {
-                if((current.flags & 0x02) != 0) {
-                    _bigBinElement check = current;
-                    ulong usedAmount = 32 + length;
-                    if((ulong!) check + usedAmount <= area.mmapStart + area.size) {
-                        if(current.next != null) => if((ulong!) check + usedAmount >= (ulong!) current.next) {
-                            current = current.next;
-                            continue;
-                        }
-                        check.flags = check.flags & 0xfd;
-                        bool canFragment = (ulong!) check + (ulong)64 + usedAmount <= area.mmapStart + area.size;
-                        if(canFragment) {
-                            _bigBinElement fragment = check;
-                            check = (_bigBinElement!) ((ulong!) check + check.length - usedAmount);
-                            fragment.binType = 2;
-                            fragment.next = check;
-                            check.prev = fragment;
-                            fragment.length = fragment.length - usedAmount;
-                            fragment.flags = 0x02;
-                            if(fragment.prev != null) {
-                                fragment.prev.next = fragment;
-                                if((fragment.prev.flags & 0x02) != 0) => fragment.flags = fragment.flags | 0x01;
-                            }
-                            if((fragment.flags & 0x02) != 0) => check.flags = check.flags | 0x01;
-                            if(check.next != null) => check.next.prev = check;
-                        }else {
-                            if(check.prev != null) => check.prev.next = check;
-                            if(check.next != null) => check.next.flags = check.next.flags & 0xfe;
-                        }
-                        check.binType = 2;
-                        check.length = length;
-                        return (_bigBinElement!) ((ulong!) check + 32);
-                    }
-                }else => if((current.flags & 0x01) != 0) {
-                    _bigBinElement check = current.prev;
-                    ulong usedAmount = 32 + length;
-                    if((ulong!) check + usedAmount <= area.mmapStart + area.size) {
-                        if((ulong!) check + usedAmount < (ulong!) current) {
-                            check.flags = check.flags & 0xfc;
-                            if(check.prev != null) {
-                                check.prev.next = check;
-                                if((check.prev.flags & 0x02) != 0) => check.flags = check.flags | 0x01;
-                            }
-                            check.next = current;
-                            current.prev = check;
-                            check.length = length;
-                            current.flags = current.flags & 0xfe;
-                            check.binType = 2;
-                            return (_bigBinElement!) ((ulong!) check + 32);
-                        }
-                    }
-                }
-                current = current.next;
-            }
-            index = index + 1;
+        if(_mem_elements == null) {
+            List i = (List!) mmap_alloc(24 + 509 * 8);
+            i.usedLength = 0;
+            i.usableLength = 509;
+            i.pointer = (uint64[]!) ((ulong!) i + 24);
+            _mem_elements = i;
         }
-
-        mmapedArea area = (mmapedArea!) malloc(24);
-        area.size = 0x40000;
-        area.mmapStart = (ulong!) mmap_alloc(0x40000);
-        _bigBinElement element = (_bigBinElement!) area.mmapStart;
-        element.binType = 2;
-        element.flags = 0x02;
-        element.length = area.size;
-        element.next = null;
-        element.prev = null;
-        area.startElement = element;
-        mmapedList.add((uint64!) area);
-        return malloc(length);
+        if(_mem_elements.usedLength == 0) {
+            _mem_element i = (_mem_element!) mmap_alloc(0x80000);
+            i.next = null;
+            i.prev = null;
+            i.biggest_available_segment = 0x80000 - 24;
+            _mem_elements.add((uint64!) i);
+            __malloc_init_element(i);
+        }
+        ulong i = 0;
+        while(i < _mem_elements.usedLength) {
+            _mem_element y = (_mem_element!) _mem_elements.get(i);
+            if(y.biggest_available_segment >= length + 20) {
+                return __malloc_from_element(y, length);
+            }
+            i = i + 1;
+        }
+        __malloc_ensure_element_storage();
+        _mem_element j = (_mem_element!) mmap_alloc(0x80000);
+        _mem_element last = (_mem_element!) _mem_elements.get(_mem_elements.usedLength - 1);
+        j.next = null;
+        last.next = j;
+        j.prev = last;
+        j.biggest_available_segment = 0x80000 - 24;
+        _mem_elements.add((uint64!) j);
+        __malloc_init_element(j);
+        return __malloc_from_element(j, length);
     }
-    return null; // unreachable
+    return null;
+}
+
+void __malloc_ensure_element_storage() {
+    if(_mem_elements.usedLength + 1 >= _mem_elements.usableLength) {
+        List i = (List!) mmap_alloc(24 + _mem_elements.usableLength * 2 * 8);
+        i.usedLength = _mem_elements.usedLength;
+        i.usableLength = _mem_elements.usableLength * 2 + 3;
+        i.pointer = (uint64[]!) ((ulong!) i + 24);
+        uint64 j = 0;
+        while(j < _mem_elements.usableLength) {
+            i.pointer[j] = _mem_elements.pointer[j];
+            j = j + 1;
+        }
+        munmap((ulong!) _mem_elements, 24 + _mem_elements.usableLength * 8);
+
+        _mem_elements = i;
+    }
+}
+
+void __malloc_init_element(_mem_element element) {
+    _mem_item_malloc item = (_mem_item_malloc!) ((ulong!) element + 24);
+    // flag 0x01 - item unused
+    item.data = 0x01000000 | (0x80000 - 24);
+    item.next = 0;
+    item.prev = 0;
+    item.parent = element;
+}
+
+byte[] __malloc_from_element(_mem_element element, uint64 length) {
+    _mem_item_malloc c = (_mem_item_malloc!) ((ulong!)element + 24);
+    while(c != null) {
+        uint64 data = (uint64) c.data & 0xffffffff;
+        uint64 flags = data >> 24;
+        bool unused = (flags & (uint64)0x01) == (uint64) 1;
+        uint64 clen = data & 0x00ffffff;
+        if(unused) {
+            if(clen >= length) {
+                _mem_item_malloc n = (_mem_item_malloc!) ((ulong!) c + clen - length - 20); // set up the new item at the end of the current element
+                n.data = (uint32) length;
+                n.next = 0;
+
+                if(c.next != 0) {
+                    _mem_item_malloc next = (_mem_item_malloc!) ((ulong!) c + c.next);
+                    next.prev = (uint32) ((uint64!) next - (uint64!) n);
+                    n.next = (uint32) ((uint64!) next - (uint64!) n);
+                }
+
+                uint32 dist = (uint32) ((uint64!) n - (uint64!) c);
+                n.prev = dist;
+                c.next = dist;
+                c.data = (uint32) (c.data - length - 20); // shouldn't underflow the flags if everything is correct
+                n.parent = element;
+                __malloc_recalculate_max_segment_size(element);
+                return (byte[]!) ((ulong!) n + 20);
+            }
+        }
+        if(c.next == 0) {
+            return null; // somehow failed, even though the sizes should be correct, this shouldn't happen!
+        }
+        c = (_mem_item_malloc!) ((ulong!) c + c.next);
+    }
+    return null; // not possible
+}
+
+void __malloc_recalculate_max_segment_size(_mem_element element) {
+    _mem_item_malloc c = (_mem_item_malloc!) ((ulong!)element + 24);
+    uint64 biggest = 0;
+    while(c != null) {
+        uint64 data = (uint64) c.data & 0xffffffff;
+        uint64 flags = data >> 24;
+        bool unused = (flags & (uint64)0x01) == (uint64) 1;
+        uint64 clen = data & 0x00ffffff;
+        if(unused) {
+            if(biggest < clen) => biggest = clen;
+        }
+        if(c.next == 0) {
+            element.biggest_available_segment = biggest;
+            break;
+        }
+        c = (_mem_item_malloc!) ((ulong!) c + c.next);
+    }
 }
 
 void free(byte[] location) {
-    _BinElement element = (_BinElement!) ((uint64!) location - 32);
-    if(element.binType == 0) {
-        _QuickBinElement qElement = (_QuickBinElement!) element;
-        if(qElement.prev != null) {
-            qElement.prev.next = qElement.next;
-            qElement.prev.nextBlockFree = true;
+    _mem_item item = (_mem_item!) ((ulong!) location - 4);
+    if((item.data & 0x80000000) != 0) {
+        _mem_item_mmap mmap_item = (_mem_item_mmap!) ((ulong!) location - 8);
+        ulong length = (mmap_item.data & 0x7fffffff) | ((ulong) mmap_item.data2 << 31);
+        munmap((ulong!) item, length);
+    }else {
+        _mem_item_malloc malloc_item = (_mem_item_malloc!) ((ulong!) location - 20);
+        _mem_element element = malloc_item.parent;
+        malloc_item.data = malloc_item.data | 0x01000000;
+        ulong containingLength = malloc_item.data & 0x00ffffff;
+        _mem_item_malloc next_item = null;
+        _mem_item_malloc prev_item = null;
+        if(malloc_item.next != 0) {
+            next_item = (_mem_item_malloc!) ((ulong!) malloc_item + malloc_item.next);
+            if((next_item.data & 0x01000000) != 0) {
+                containingLength = containingLength + (next_item.data & 0x00ffffff) + 20;
+                if(next_item.next == 0) => next_item = null;
+                else => next_item = (_mem_item_malloc!) ((ulong!) next_item + next_item.next);
+            }
         }
-        if(qElement.next != null) {
-            qElement.next.prev = qElement.prev;
+        if(malloc_item.prev != 0) {
+            prev_item = (_mem_item_malloc!) ((ulong!) malloc_item - malloc_item.prev);
+            if((prev_item.data & 0x01000000) != 0) {
+                containingLength = containingLength + (prev_item.data & 0x00ffffff) + 20;
+                malloc_item = prev_item;
+                if(prev_item.prev == 0) => prev_item = null;
+                else => prev_item = (_mem_item_malloc!) ((ulong!) prev_item + prev_item.prev);
+            }
         }
-    }else => if(element.binType == 1) {
-        _mmapedBinElement mElement = (_mmapedBinElement!) element;
-        munmap((uint64!) mElement, mElement.mmapedLength);
-    }else => if(element.binType == 2) {
-        _bigBinElement bElement = (_bigBinElement!) element;
-        bElement.flags = bElement.flags | 0x02;
-        if(bElement.next != null) {
-            bElement.next = bElement.next.next;
-            if(bElement.next.next != null) => bElement.next.next.prev = bElement;
-            bElement.length = bElement.length + 32 + bElement.next.length;
-        }
-        if((bElement.flags & 0x01) != 0) {
-            if(bElement.next != null) => bElement.next.prev = bElement.prev;
-            bElement.prev.next = bElement.next;
-            bElement.prev.length = bElement.prev.length + 32 + bElement.length;
-        }
+        if(next_item == null) => malloc_item.next = 0;
+        else => malloc_item.next = (uint32) ((ulong!) next_item - (ulong!) malloc_item);
+        if(prev_item == null) => malloc_item.prev = 0;
+        else => malloc_item.prev = (uint32) ((ulong!) prev_item - (ulong!) malloc_item);
+        malloc_item.data = (uint32) (0x01000000 | containingLength);
+        if(element.biggest_available_segment < containingLength) => element.biggest_available_segment = containingLength;
     }
 }
 
