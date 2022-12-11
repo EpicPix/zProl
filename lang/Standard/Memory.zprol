@@ -158,37 +158,37 @@ void free(byte[] location) {
         _mem_item_mmap mmap_item = (_mem_item_mmap!) ((ulong!) location - 8);
         ulong length = (mmap_item.data & 0x7fffffff) | ((ulong) mmap_item.data2 << 31);
         munmap((ulong!) item, length);
-    }else {
-        _mem_item_malloc malloc_item = (_mem_item_malloc!) ((ulong!) location - 20);
-        _mem_element element = malloc_item.parent;
-        malloc_item.data = malloc_item.data | 0x01000000;
-        ulong containingLength = malloc_item.data & 0x00ffffff;
-        _mem_item_malloc next_item = null;
-        _mem_item_malloc prev_item = null;
-        if(malloc_item.next != 0) {
-            next_item = (_mem_item_malloc!) ((ulong!) malloc_item + malloc_item.next);
-            if((next_item.data & 0x01000000) != 0) {
-                containingLength = containingLength + (next_item.data & 0x00ffffff) + 20;
-                if(next_item.next == 0) => next_item = null;
-                else => next_item = (_mem_item_malloc!) ((ulong!) next_item + next_item.next);
-            }
-        }
-        if(malloc_item.prev != 0) {
-            prev_item = (_mem_item_malloc!) ((ulong!) malloc_item - malloc_item.prev);
-            if((prev_item.data & 0x01000000) != 0) {
-                containingLength = containingLength + (prev_item.data & 0x00ffffff) + 20;
-                malloc_item = prev_item;
-                if(prev_item.prev == 0) => prev_item = null;
-                else => prev_item = (_mem_item_malloc!) ((ulong!) prev_item + prev_item.prev);
-            }
-        }
-        if(next_item == null) => malloc_item.next = 0;
-        else => malloc_item.next = (uint32) ((ulong!) next_item - (ulong!) malloc_item);
-        if(prev_item == null) => malloc_item.prev = 0;
-        else => malloc_item.prev = (uint32) ((ulong!) prev_item - (ulong!) malloc_item);
-        malloc_item.data = (uint32) (0x01000000 | containingLength);
-        if(element.biggest_available_segment < containingLength) => element.biggest_available_segment = containingLength;
+        return;
     }
+    _mem_item_malloc malloc_item = (_mem_item_malloc!) ((ulong!) location - 20);
+    _mem_element element = malloc_item.parent;
+    malloc_item.data = malloc_item.data | 0x01000000;
+    ulong containingLength = malloc_item.data & 0x00ffffff;
+    _mem_item_malloc next_item = null;
+    _mem_item_malloc prev_item = null;
+    if(malloc_item.next != 0) {
+        next_item = (_mem_item_malloc!) ((ulong!) malloc_item + malloc_item.next);
+        if((next_item.data & 0x01000000) != 0) {
+            containingLength = containingLength + (next_item.data & 0x00ffffff) + 20;
+            if(next_item.next == 0) => next_item = null;
+            else => next_item = (_mem_item_malloc!) ((ulong!) next_item + next_item.next);
+        }
+    }
+    if(malloc_item.prev != 0) {
+        prev_item = (_mem_item_malloc!) ((ulong!) malloc_item - malloc_item.prev);
+        if((prev_item.data & 0x01000000) != 0) {
+            containingLength = containingLength + (prev_item.data & 0x00ffffff) + 20;
+            malloc_item = prev_item;
+            if(prev_item.prev == 0) => prev_item = null;
+            else => prev_item = (_mem_item_malloc!) ((ulong!) prev_item + prev_item.prev);
+        }
+    }
+    if(next_item == null) => malloc_item.next = 0;
+    else => malloc_item.next = (uint32) ((ulong!) next_item - (ulong!) malloc_item);
+    if(prev_item == null) => malloc_item.prev = 0;
+    else => malloc_item.prev = (uint32) ((ulong!) prev_item - (ulong!) malloc_item);
+    malloc_item.data = (uint32) (0x01000000 | containingLength);
+    if(element.biggest_available_segment < containingLength) => element.biggest_available_segment = containingLength;
 }
 
 bool memory_compare(byte[] a, byte[] b, ulong length) {
