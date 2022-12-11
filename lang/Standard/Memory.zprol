@@ -35,42 +35,40 @@ byte[] malloc(ulong length) {
         data.data = (uint32) ((length & 0x7fffffff) | 0x80000000);
         data.data2 = (uint32) (length >> 31);
         return (byte[]!) ((ulong!) data + 8);
-    }else {
-        if(_mem_elements == null) {
-            List i = (List!) mmap_alloc(24 + 509 * 8);
-            i.usedLength = 0;
-            i.usableLength = 509;
-            i.pointer = (uint64[]!) ((ulong!) i + 24);
-            _mem_elements = i;
-        }
-        if(_mem_elements.usedLength == 0) {
-            _mem_element i = (_mem_element!) mmap_alloc(0x80000);
-            i.next = null;
-            i.prev = null;
-            i.biggest_available_segment = 0x80000 - 24;
-            _mem_elements.add((uint64!) i);
-            __malloc_init_element(i);
-        }
-        ulong i = 0;
-        while(i < _mem_elements.usedLength) {
-            _mem_element y = (_mem_element!) _mem_elements.get(i);
-            if(y.biggest_available_segment >= length + 20) {
-                return __malloc_from_element(y, length);
-            }
-            i = i + 1;
-        }
-        __malloc_ensure_element_storage();
-        _mem_element j = (_mem_element!) mmap_alloc(0x80000);
-        _mem_element last = (_mem_element!) _mem_elements.get(_mem_elements.usedLength - 1);
-        j.next = null;
-        last.next = j;
-        j.prev = last;
-        j.biggest_available_segment = 0x80000 - 24;
-        _mem_elements.add((uint64!) j);
-        __malloc_init_element(j);
-        return __malloc_from_element(j, length);
     }
-    return null;
+    if(_mem_elements == null) {
+        List i = (List!) mmap_alloc(24 + 509 * 8);
+        i.usedLength = 0;
+        i.usableLength = 509;
+        i.pointer = (uint64[]!) ((ulong!) i + 24);
+        _mem_elements = i;
+    }
+    if(_mem_elements.usedLength == 0) {
+        _mem_element i = (_mem_element!) mmap_alloc(0x80000);
+        i.next = null;
+        i.prev = null;
+        i.biggest_available_segment = 0x80000 - 24;
+        _mem_elements.add((uint64!) i);
+        __malloc_init_element(i);
+    }
+    ulong i = 0;
+    while(i < _mem_elements.usedLength) {
+        _mem_element y = (_mem_element!) _mem_elements.get(i);
+        if(y.biggest_available_segment >= length + 20) {
+            return __malloc_from_element(y, length);
+        }
+        i = i + 1;
+    }
+    __malloc_ensure_element_storage();
+    _mem_element j = (_mem_element!) mmap_alloc(0x80000);
+    _mem_element last = (_mem_element!) _mem_elements.get(_mem_elements.usedLength - 1);
+    j.next = null;
+    last.next = j;
+    j.prev = last;
+    j.biggest_available_segment = 0x80000 - 24;
+    _mem_elements.add((uint64!) j);
+    __malloc_init_element(j);
+    return __malloc_from_element(j, length);
 }
 
 void __malloc_ensure_element_storage() {
@@ -132,7 +130,7 @@ byte[] __malloc_from_element(_mem_element element, uint64 length) {
         }
         c = (_mem_item_malloc!) ((ulong!) c + c.next);
     }
-    return null; // not possible
+    return null; // impossible
 }
 
 void __malloc_recalculate_max_segment_size(_mem_element element) {
