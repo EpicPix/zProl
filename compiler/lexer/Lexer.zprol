@@ -2,12 +2,14 @@ namespace zprol.compiler.lexer;
 
 using zprol.compiler.errors;
 using zprol.compiler.lexer.utils;
+using zprol.compiler.tokens;
 using zprol.lang.linux.amd64;
 using zprol.lang.memory;
 using zprol.lang.io;
 using zprol.lang;
 
-void lex(String inContent, ErrorListFile errors) {
+TokenList lex(String inContent, ErrorListFile errors) {
+    TokenList tokens = create_token_list();
     byte[] contents = inContent.bytes;
     long length = inContent.length;
     // no utf8 support, iterating byte by byte
@@ -22,6 +24,7 @@ void lex(String inContent, ErrorListFile errors) {
                 }
                 index = index + 1;
             }
+            tokens.add(create_simple_token(TokenIdentifier, start, index));
 //            byte[] byteLoc = (byte[]!) ((ulong!) contents + start);
 //            stdout("Word: ");
 //            write(STDOUT, byteLoc, index-start);
@@ -107,7 +110,7 @@ void lex(String inContent, ErrorListFile errors) {
                     }else => if(contents[index] == 0x5C) {
                         if(index + 1 > length) {
                             errors.add_error(1004, start, index, FORMAT_HIGHLIGHT);
-                            return;
+                            return tokens;
                         }
                         index = index + 1;
                         byte next = contents[index];
@@ -250,4 +253,5 @@ void lex(String inContent, ErrorListFile errors) {
         }
         index = index + 1;
     }
+    return tokens;
 }

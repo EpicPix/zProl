@@ -1,0 +1,43 @@
+namespace zprol.compiler.tokens;
+
+using zprol.lang.collection;
+using zprol.lang.memory;
+
+class TokenList {
+    List tokenList;
+
+    void add(Token token) {
+        tokenList.add((ulong!) token);
+    }
+
+    Token get(ulong index) {
+        return (Token!) tokenList.get(index);
+    }
+}
+
+TokenList create_token_list() {
+    TokenList tlist = (TokenList!) malloc(8);
+    tlist.tokenList = List_new();
+    return tlist;
+}
+
+void free_token_list(TokenList list) {
+    free((byte[]!) list.tokenList);
+    free((byte[]!) list);
+}
+
+class Token {
+    uint64 type;
+    uint64 start;
+    uint64 end;
+}
+
+Token create_simple_token(uint64 type, uint64 start, uint64 end) {
+    Token t = (Token!) malloc(24);
+    t.type = type;
+    t.start = start;
+    t.end = end;
+    return t;
+}
+
+const uint32 TokenInvalid = 0xffff;

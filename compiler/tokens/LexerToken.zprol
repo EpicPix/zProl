@@ -1,0 +1,7 @@
+namespace zprol.compiler.tokens;
+
+const uint32 TokenIdentifier = 0x0001;
+const uint32 TokenNumber = 0x0002;
+const uint32 TokenString = 0x0003;
+const uint32 TokenWhitespace = 0x0004;
+const uint32 TokenComment = 0x0005;
