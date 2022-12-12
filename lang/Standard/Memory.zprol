@@ -135,7 +135,9 @@ byte[] __malloc_from_element(_mem_element element, uint64 length) {
 
 void __malloc_recalculate_max_segment_size(_mem_element element) {
     _mem_item_malloc c = (_mem_item_malloc!) ((ulong!)element + 24);
+    uint64 end = 0x80000 - 24;
     uint64 biggest = 0;
+    uint64 datai = 0;
     while(c != null) {
         uint64 data = (uint64) c.data & 0xffffffff;
         uint64 flags = data >> 24;
@@ -144,6 +146,11 @@ void __malloc_recalculate_max_segment_size(_mem_element element) {
         if(unused) {
             if(biggest < clen) => biggest = clen;
         }
+        if(end-biggest >= datai) {
+            element.biggest_available_segment = biggest;
+            break;
+        }
+        datai = datai + 20 + clen;
         if(c.next == 0) {
             element.biggest_available_segment = biggest;
             break;
