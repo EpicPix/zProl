@@ -252,6 +252,122 @@ TokenList lex(String inContent, ErrorListFile errors) {
                             continue;
                         }
                     }
+                }else => if(contents[index] == 0x3b) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenSemicolon, start, index));
+                    continue;
+                }else => if(contents[index] == 0x2b) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenPlus, start, index));
+                    continue;
+                }else => if(contents[index] == 0x2d) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenMinus, start, index));
+                    continue;
+                }else => if(contents[index] == 0x5b) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenBracketLeft, start, index));
+                    continue;
+                }else => if(contents[index] == 0x5d) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenBracketRight, start, index));
+                    continue;
+                }else => if(contents[index] == 0x7b) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenBraceRight, start, index));
+                    continue;
+                }else => if(contents[index] == 0x7d) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenBraceRight, start, index));
+                    continue;
+                }else => if(contents[index] == 0x28) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenParenthesisLeft, start, index));
+                    continue;
+                }else => if(contents[index] == 0x29) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenParenthesisRight, start, index));
+                    continue;
+                }else => if(contents[index] == 0x2e) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenDot, start, index));
+                    continue;
+                }else => if(contents[index] == 0x2c) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenComma, start, index));
+                    continue;
+                }else => if(contents[index] == 0x7c) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenOr, start, index));
+                    continue;
+                }else => if(contents[index] == 0x26) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenAnd, start, index));
+                    continue;
+                }else => if(contents[index] == 0x2a) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenMultiply, start, index));
+                    continue;
+                }else => if(contents[index] == 0x2f) {
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenDivide, start, index));
+                    continue;
+                }else => if(contents[index] == 0x3d) {
+                    if(index + 1 < length) {
+                        if(contents[index + 1] == 0x3e) {
+                            index = index + 2;
+                            tokens.add(create_simple_token(TokenLineCode, start, index));
+                            continue;
+                        }else => if(contents[index + 1] == 0x3d) {
+                            index = index + 2;
+                            tokens.add(create_simple_token(TokenEquals, start, index));
+                            continue;
+                        }
+                    }
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenAssign, start, index));
+                    continue;
+                }else => if(contents[index] == 0x21) {
+                    if(index + 1 < length) {
+                        if(contents[index + 1] == 0x3d) {
+                            index = index + 2;
+                            tokens.add(create_simple_token(TokenNotEquals, start, index));
+                            continue;
+                        }
+                    }
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenNot, start, index));
+                    continue;
+                }else => if(contents[index] == 0x3c) {
+                    if(index + 1 < length) {
+                        if(contents[index + 1] == 0x3c) {
+                            index = index + 2;
+                            tokens.add(create_simple_token(TokenBitShiftLeft, start, index));
+                            continue;
+                        }else => if(contents[index + 1] == 0x3d) {
+                            index = index + 2;
+                            tokens.add(create_simple_token(TokenLessEqual, start, index));
+                            continue;
+                        }
+                    }
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenLessThan, start, index));
+                    continue;
+                }else => if(contents[index] == 0x3e) {
+                    if(index + 1 < length) {
+                        if(contents[index + 1] == 0x3e) {
+                            index = index + 2;
+                            tokens.add(create_simple_token(TokenBitShiftRight, start, index));
+                            continue;
+                        }else => if(contents[index + 1] == 0x3d) {
+                            index = index + 2;
+                            tokens.add(create_simple_token(TokenGreaterEqual, start, index));
+                            continue;
+                        }
+                    }
+                    index = index + 1;
+                    tokens.add(create_simple_token(TokenGreaterThan, start, index));
+                    continue;
                 }
                 // either unknown or actually a token like ; ( ) + - ,
                 errors.add_error(1007, start, start+1, FORMAT_HIGHLIGHT);
