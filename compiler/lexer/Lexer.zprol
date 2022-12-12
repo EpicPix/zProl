@@ -24,7 +24,7 @@ TokenList lex(String inContent, ErrorListFile errors) {
                 }
                 index = index + 1;
             }
-            tokens.add(create_simple_token(TokenIdentifier, start, index));
+            tokens.add(create_simple_token(get_token_type_word((byte[]!) ((ulong!) contents + start), index-start), start, index));
             continue;
         }else {
             if(contents[index] == 0x30) {

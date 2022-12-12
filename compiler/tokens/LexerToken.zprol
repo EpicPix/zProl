@@ -19,8 +19,45 @@ Token create_string_token(uint64 type, uint64 start, uint64 end, String str) {
     return (Token!) t;
 }
 
+uint32 get_token_type_word(byte[] start, ulong len) {
+    if(string_compare_bytes("namespace", start, len)) => return TokenNamespace;
+    if(string_compare_bytes("using", start, len)) => return TokenUsing;
+    if(string_compare_bytes("class", start, len)) => return TokenClass;
+    if(string_compare_bytes("return", start, len)) => return TokenReturn;
+    if(string_compare_bytes("if", start, len)) => return TokenIf;
+    if(string_compare_bytes("else", start, len)) => return TokenElse;
+    if(string_compare_bytes("while", start, len)) => return TokenWhile;
+    if(string_compare_bytes("break", start, len)) => return TokenBreak;
+    if(string_compare_bytes("continue", start, len)) => return TokenContinue;
+    if(string_compare_bytes("true", start, len)) => return TokenTrue;
+    if(string_compare_bytes("false", start, len)) => return TokenFalse;
+    if(string_compare_bytes("null", start, len)) => return TokenNull;
+    if(string_compare_bytes("void", start, len)) => return TokenVoid;
+    if(string_compare_bytes("bool", start, len)) => return TokenBool;
+    if(string_compare_bytes("native", start, len)) => return TokenNative;
+    if(string_compare_bytes("const", start, len)) => return TokenConst;
+    return TokenIdentifier;
+}
+
 const uint32 TokenIdentifier = 0x0001;
 const uint32 TokenNumber = 0x0002;
 const uint32 TokenString = 0x0003;
 const uint32 TokenWhitespace = 0x0004;
 const uint32 TokenComment = 0x0005;
+
+const uint32 TokenNamespace = 0x0006;
+const uint32 TokenUsing = 0x0007;
+const uint32 TokenClass = 0x0008;
+const uint32 TokenReturn = 0x0009;
+const uint32 TokenIf = 0x000a;
+const uint32 TokenElse = 0x000b;
+const uint32 TokenWhile = 0x000c;
+const uint32 TokenBreak = 0x000d;
+const uint32 TokenContinue = 0x000e;
+const uint32 TokenTrue = 0x000f;
+const uint32 TokenFalse = 0x0010;
+const uint32 TokenNull = 0x0011;
+const uint32 TokenVoid = 0x0012;
+const uint32 TokenBool = 0x0013;
+const uint32 TokenNative = 0x0014;
+const uint32 TokenConst = 0x0015;
