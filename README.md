@@ -24,10 +24,28 @@ Current progress:
     - [x] Numbers
     - [x] String
 - [ ] Parsing
+  - [ ] Error Support
+  - [ ] AST
+    - [ ] Expression
+    - [ ] Correct Operator Order
+    - [ ] Negative Numbers
 - [ ] Compiling
+  - [ ] Error Support
+  - [ ] Constant Evaluation
+  - [ ] Classes
+  - [ ] Fields
+  - [ ] Functions
+    - [ ] Impossible Code Removal
 - [ ] `zpil` format
+  - [ ] String Table
+  - [ ] Classes
+  - [ ] Fields
+  - [ ] Functions
+    - [ ] Bytecode
 - [ ] Target Generation
   - [ ] x86_64 Assembly for Linux
+    - [ ] Inlining functions
+    - [ ] Simplifying code
 
 ## HTTP Api
 
