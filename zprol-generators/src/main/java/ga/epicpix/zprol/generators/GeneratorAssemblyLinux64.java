@@ -413,6 +413,7 @@ public final class GeneratorAssemblyLinux64 extends Generator {
             case "bcasti" -> instructions.add(pop("cx"), "movsx ecx, cx", push("rcx"));
             case "bcastl" -> instructions.add(pop("cx"), "movsx rcx, cx", push("rcx"));
             case "icastl" -> instructions.add(pop("rcx"), "movsxd rcx, ecx", push("rcx"));
+            case "lcastb" -> instructions.add(pop("rcx"), "mov rdx, 0xff", "and rcx, rdx", push("cx"));
             case "lcasti" -> instructions.add(pop("rcx"), "mov rdx, 0xffffffff", "and rcx, rdx", push("rcx"));
             case "lcasts" -> instructions.add(pop("rcx"), push("cx"));
             case "invoke" -> invokeFunction(st, (Function) i.getData()[0], null, false, instructions);
