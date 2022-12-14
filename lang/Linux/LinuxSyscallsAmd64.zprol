@@ -1,6 +1,7 @@
 namespace zprol.lang.linux.amd64;
 
 using zprol.lang;
+using zprol.lang.memory;
 
 native uint64 syscall(int64 a);
 native uint64 syscall(int64 a, int64 b);
@@ -358,6 +359,15 @@ void write(uint64 fd, byte[] buf, uint64 length) => syscall(SYSCALL_WRITE, fd, (
 
 void stdout(byte[] buf, uint64 length) => write(STDOUT, buf, length);
 void stdout(String str) => write(STDOUT, str.bytes, str.length);
+
+byte[] __character_storage;
+void put_character(ulong character) {
+    if((ulong!) __character_storage == 0) {
+        __character_storage = malloc(1);
+    }
+    __character_storage[0] = (byte) (character & 0xff);
+    stdout(__character_storage, 1);
+}
 
 void exit(uint64 exitCode) => syscall(SYSCALL_EXIT, exitCode);
 void exit() => exit(EXIT_SUCCESS);
