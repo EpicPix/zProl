@@ -4,9 +4,9 @@ Z Programming Language
 
 For actual usage check the [wiki](https://github.com/EpicPix/zProl/wiki).
 
-Ideas/Proposals for this language create at https://zprol.epicpix.ga/
+Ideas/Proposals for this language create at https://zprol.epicpix.dev/
 
-You can also run zProl online on https://zprol.epicpix.ga/runner
+You can also run zProl online on https://zprol.epicpix.dev/runner
 
 ## Self Hosting
 
@@ -49,7 +49,7 @@ Current progress:
 
 ## HTTP Api
 
-You can run zProl online using an api which is on https://zprol.epicpix.ga/api/v1/run
+You can run zProl online using an api which is on https://zprol.epicpix.dev/api/v1/run
 
 You have to use the `POST` method with the `Content-Type` set to `application/json`.
 
@@ -69,7 +69,7 @@ To use parts of this project like `zprol-parser` you can use my repository
     <repository>
         <id>epicpix</id>
         <name>EpicPix</name>
-        <url>https://maven.epicpix.ga/releases/</url>
+        <url>https://maven.epicpix.dev/releases/</url>
     </repository>
 </repositories>
 ```
@@ -86,4 +86,4 @@ and then to use `zprol-parser` you can do
 </dependencies>
 ```
 
-To check all other available modules you can check my [maven repository](https://maven.epicpix.ga/)
+To check all other available modules you can check my [maven repository](https://maven.epicpix.dev/)
