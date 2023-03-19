@@ -25,7 +25,7 @@
         <repository>
             <id>epicpix-releases</id>
             <name>Maven EpicPix Repository</name>
-            <url>https://maven.epicpix.ga/releases/</url>
+            <url>https://maven.epicpix.dev/releases/</url>
         </repository>
     </distributionManagement>
 
@@ -43,7 +43,7 @@
         <repository>
             <id>epicpix-releases</id>
             <name>Maven EpicPix Repository</name>
-            <url>https://maven.epicpix.ga/releases/</url>
+            <url>https://maven.epicpix.dev/releases/</url>
         </repository>
     </repositories>
 

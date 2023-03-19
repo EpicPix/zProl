@@ -58,7 +58,7 @@ jobs:
       - name: Notify API
         uses: fjogeleit/http-request-action@v1
         with:
-          url: 'https://zprol.epicpix.ga/api/v1/get_commit'
+          url: 'https://zprol.epicpix.dev/api/v1/get_commit'
           method: 'POST'
           timeout: 15000
           customHeaders: '{"Content-Type": "application/json"}'
